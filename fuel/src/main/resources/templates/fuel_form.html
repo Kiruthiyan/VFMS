@@ -4,62 +4,109 @@
     <meta charset="UTF-8">
     <title>Fuel Management Form</title>
     <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-          font-family: Arial, sans-serif;
-          background-color: #f3f4f6;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f0f4f8, #d9e2ec);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
         .form-container {
-          background: white;
-          padding: 25px;
-          border-radius: 10px;
-          width: 400px;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background: #ffffff;
+            padding: 35px 30px;
+            border-radius: 15px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
         }
 
         h2 {
-          text-align: center;
-          color: #1e3a8a;
+            text-align: center;
+            color: #1d4ed8;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
         }
 
         label {
-          display: block;
-          margin-top: 10px;
-          font-weight: bold;
+            display: block;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.95rem;
         }
 
         input {
-          width: 100%;
-          padding: 8px;
-          margin-top: 5px;
-          border: 1px solid #ccc;
-          border-radius: 5px;
+            width: 100%;
+            padding: 10px 12px;
+            margin-top: 5px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 5px rgba(37, 99, 235, 0.5);
         }
 
         button {
-          background-color: #2563eb;
-          color: white;
-          border: none;
-          padding: 10px;
-          margin-top: 15px;
-          width: 100%;
-          border-radius: 5px;
-          cursor: pointer;
-          font-weight: bold;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px;
+            margin-top: 25px;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
-          background-color: #1e40af;
+            background-color: #1e40af;
+            transform: translateY(-2px);
         }
 
         .message {
-          text-align: center;
-          color: green;
-          margin-top: 10px;
+            text-align: center;
+            color: #16a34a;
+            margin-top: 15px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .form-container {
+                padding: 25px 20px;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                font-size: 0.95rem;
+            }
         }
     </style>
 </head>
@@ -69,17 +116,17 @@
     <h2>Fuel Management Form</h2>
 
     <form th:action="@{/saveFuel}" th:object="${fuelRecord}" method="post">
-        <label>Vehicle ID:</label>
-        <input type="text" th:field="*{vehicleId}" placeholder="Enter Vehicle ID" required>
+        <label for="vehicleId">Vehicle ID:</label>
+        <input type="text" id="vehicleId" th:field="*{vehicleId}" placeholder="Enter Vehicle ID" required>
 
-        <label>Date:</label>
-        <input type="date" th:field="*{fuelDate}" required>
+        <label for="fuelDate">Date:</label>
+        <input type="date" id="fuelDate" th:field="*{fuelDate}" required>
 
-        <label>Fuel Amount (Litres):</label>
-        <input type="number" step="0.01" th:field="*{fuelAmount}" placeholder="Enter litres" required>
+        <label for="fuelAmount">Fuel Amount (Litres):</label>
+        <input type="number" id="fuelAmount" step="0.01" th:field="*{fuelAmount}" placeholder="Enter litres" required>
 
-        <label>Fuel Cost (LKR):</label>
-        <input type="number" step="0.01" th:field="*{fuelCost}" placeholder="Enter cost" required>
+        <label for="fuelCost">Fuel Cost (LKR):</label>
+        <input type="number" id="fuelCost" step="0.01" th:field="*{fuelCost}" placeholder="Enter cost" required>
 
         <button type="submit">Submit</button>
     </form>
