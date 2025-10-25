@@ -1,4 +1,4 @@
-package com.example.fuelmanagement.entity;
+package com.example.fuel.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -24,7 +24,7 @@ public class FuelRecord {
         this.fuelCost = fuelCost;
     }
 
-    // Getters and Setters
+    // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
