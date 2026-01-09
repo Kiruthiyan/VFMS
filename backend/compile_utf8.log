@@ -1,0 +1,78 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.vfms:vfms-backend >------------------------
+[INFO] Building VFMS-Backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.0:clean (default-clean) @ vfms-backend ---
+[INFO] Deleting E:\SoftWare Project\fleetpro\backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ vfms-backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vfms-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 24 source files with javac [debug parameters release 21] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[32,13] cannot find symbol
+  symbol:   class User
+  location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[36,13] cannot find symbol
+  symbol:   class Vehicle
+  location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[32,18] cannot find symbol
+  symbol:   class User
+  location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[36,21] cannot find symbol
+  symbol:   class Vehicle
+  location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[11,1] cannot find symbol
+  symbol:   class User
+  location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[14,1] cannot find symbol
+  symbol:   class User
+  location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[12,1] cannot find symbol
+  symbol:   class User
+  location: class com.vfms.trip.model.Trip.TripBuilder
+[INFO] 7 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  40.780 s
+[INFO] Finished at: 2026-01-04T12:02:32+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project vfms-backend: Compilation failure: Compilation failure: 
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[32,13] cannot find symbol
+[ERROR]   symbol:   class User
+[ERROR]   location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[36,13] cannot find symbol
+[ERROR]   symbol:   class Vehicle
+[ERROR]   location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[32,18] cannot find symbol
+[ERROR]   symbol:   class User
+[ERROR]   location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[36,21] cannot find symbol
+[ERROR]   symbol:   class Vehicle
+[ERROR]   location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[11,1] cannot find symbol
+[ERROR]   symbol:   class User
+[ERROR]   location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[14,1] cannot find symbol
+[ERROR]   symbol:   class User
+[ERROR]   location: class com.vfms.trip.model.Trip
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/model/Trip.java:[12,1] cannot find symbol
+[ERROR]   symbol:   class User
+[ERROR]   location: class com.vfms.trip.model.Trip.TripBuilder
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
