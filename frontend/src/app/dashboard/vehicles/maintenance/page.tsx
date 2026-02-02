@@ -109,7 +109,7 @@ export default function MaintenancePage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600">117</div>
-                        <p className="text-xs text-slate-500 mt-1">Operational vehicles</p>
+                        <p className="text-xs text-slate-500 mt-1">Opeirational vehicles</p>
                     </CardContent>
                 </Card>
             </div>
