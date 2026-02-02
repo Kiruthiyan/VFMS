@@ -2,90 +2,54 @@
 
 ![VFMS Banner](public/hero-poster.jpg)
 
-> **Focus:** Fuel Management Module & Core Infrastructure
-> **Role:** Student B Implementation
+> **Status:** Fully Integrated System
+> **Branch:** `main` (Merged: Students A, B, C, D, E)
 
 ## 📖 Project Overview
-The **Vehicle Fleet Management System (VFMS)** is an enterprise-grade solution designed to automate and streamline vehicle-related operations. This repository specifically hosts the **Fuel Management Module**, a critical component for tracking fuel consumption, monitoring costs, and ensuring accurate mileage reporting across the fleet.
-
-### 🎯 Key Objectives
-- **Automate Fuel Tracking:** Digitize manual fuel entry logs.
-- **Cost Control:** Monitor fuel expenses per vehicle and driver.
-- **Efficiency Analysis:** Calculate mileage and identify high-consumption vehicles.
+The **Vehicle Fleet Management System (VFMS)** is a comprehensive, enterprise-grade solution designed to automate and streamline the entire lifecycle of fleet operations. This unified platform integrates vehicle maintenance, fuel tracking, driver management, trip scheduling, and advanced analytics into a single, cohesive interface.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Modules & Key Features
 
-### 📂 Project Structure
-A high-level view of the current project structure, focused on the implemented modules:
+### 🚗 Vehicle Management (Student A)
+*Centralized registry for all fleet assets.*
+- **Vehicle Profiles:** Detailed tracking of make, model, VIN, and status.
+- **Maintenance Logs:** Schedule services and track repair history.
+- **Rentals:** Manage external vehicle rentals and availability.
 
-```text
-e:\SoftWare Project\VFMS\
-├── backend/ (Spring Boot 3.x)
-│   ├── src/main/java/com/vfms/
-│   │   ├── admin/      # Admin Configurations
-│   │   ├── auth/       # JWT Authentication & Security
-│   │   ├── fuel/       # [Student B] Fuel Management Logic
-│   │   │   ├── controller/ # API Endpoints
-│   │   │   └── model/      # Database Entities (FuelRecord)
-│   │   └── config/     # Global App Config
-│   └── src/main/resources/
-│       └── application.properties
-│
-└── frontend/ (Next.js 14)
-    ├── src/app/
-    │   ├── admin/
-    │   │   ├── fuel/   # Fuel Management Admin UI
-    │   │   └── users/  # User Management
-    │   └── dashboard/
-    │       ├── fuel/   # Fuel Analytics Dashboard
-    │       └── users/  # User & Staff Views
-    └── public/
-```
+### ⛽ Fuel Management (Student B)
+*Precision tracking of fuel consumption and costs.*
+- **Transaction Logs:** Record fuel entries with receipt uploads.
+- **Efficiency Analysis:** Monitor MPG/KPL per vehicle.
+- **Cost Reports:** Identify high-consumption assets and potential leakage.
 
----
+### 👮 Driver & Staff Management (Student C)
+*Human resource management for the fleet.*
+- **Driver Profiles:** Track licenses, certifications, and shift schedules.
+- **Performance Scoring:** Monitor safety records and assignments.
+- **User Roles:** granular access control for Admins, Approvers, and Drivers.
 
-## ⛽ Fuel Management Module (Student B)
+### 📅 Trip Scheduling & Booking (Student D)
+*Seamless dispatching and route planning.*
+- **Trip Requests:** Automated booking workflow for staff.
+- **Dispatching:** Assign drivers and vehicles based on availability.
+- **Route Tracking:** Log trip milestones and odometer readings.
 
-This module is the core focus of this branch, providing end-to-end functionality for managing fuel data.
-
-### 🔌 Backend API (`/api/fuel`)
-The backend exposes a RESTful API for handling fuel records.
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/fuel` | Retrieve a list of all fuel transaction records. |
-| `POST` | `/api/fuel` | Register a new fuel transaction (quantity, cost, mileage). |
-| `GET` | `/api/fuel/vehicle/{id}` | Fetch fuel history for a specific vehicle. |
-
-#### Data Model (`FuelRecord`)
-The core entity tracking fuel data includes:
-- **Vehicle:** Link to the specific vehicle refueled.
-- **Driver:** The driver responsible for the transaction.
-- **Quantity:** Amount of fuel in liters.
-- **Cost:** Total cost of the transaction.
-- **Mileage:** Odometer reading at the time of refueling.
-- **Date:** Transaction date.
-
-### 💻 Frontend Features
-- **Admin Panel (`/admin/fuel`):**
-    - comprehensive data table of all fuel logs.
-    - specialized forms for adding new records with validation.
-    - Edit and Delete capabilities for authorized admins.
-- **User Dashboard (`/dashboard/fuel`):**
-    - Analytical views for quick insights.
-    - Personal fuel history for logged-in drivers.
+### 📊 Reporting & Analytics (Student E)
+*Data-driven insights for decision makers.*
+- **Executive Dashboard:** High-level KPIs and fleet health summaries.
+- **Custom Reports:** Exportable data for audit and compliance.
+- **Visualizations:** Interactive charts for cost, usage, and efficiency trends.
 
 ---
 
 ## 🛠️ Technology Stack
 
 ### Backend
-- **Language:** Java 17
+- **Language:** Java 17 / 21
 - **Framework:** Spring Boot 3.2.x
 - **Database:** PostgreSQL
-- **ORM:** Hibernate / Spring Data JPA
 - **Security:** Spring Security + JWT
 - **Build Tool:** Maven
 
@@ -93,7 +57,7 @@ The core entity tracking fuel data includes:
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS + Shadcn/UI
-- **State:** Zustand
+- **State Management:** Zustand
 - **Forms:** React Hook Form + Zod
 
 ---
@@ -103,7 +67,7 @@ The core entity tracking fuel data includes:
 ### 1️⃣ Backend Setup
 ```bash
 cd backend
-# Update database credentials in src/main/resources/application.properties
+# Configure database in src/main/resources/application.properties
 ./mvnw spring-boot:run
 ```
 
@@ -117,11 +81,13 @@ Access the application at `http://localhost:3000`.
 
 ---
 
-## 👥 User Roles
-- **Administrator:** Full access to system settings, user management, and all fuel records.
-- **Approver:** Can review and validate fuel entries.
-- **Driver:** specific access to view their own vehicle assignments and fuel history.
+## 👥 Contributors (Team Breakdown)
+- **Student A:** Vehicle Maintenance & Rentals (`origin/Abhinaya-J`)
+- **Student B:** Fuel Management (`origin/kiruthiyan`)
+- **Student C:** Driver & Staff Management (`origin/Kavishanth-N`)
+- **Student D:** Trip Scheduling & Booking (`origin/Niruthigan-P`)
+- **Student E:** Reporting & Analytics (`origin/P.-Hephzibah-Peries`)
 
 ---
 
-> Verified by **Student B** | Branch: `kiruthiyan`
+> **VFMS Project** | Full Integration Complete
