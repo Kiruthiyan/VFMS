@@ -33,7 +33,7 @@ export default function FuelPage() {
                 </div>
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-orange-600 hover:bg-orange-700">
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 font-bold rounded-xl px-6">
                             <Plus className="mr-2 h-4 w-4" /> Add Fuel Entry
                         </Button>
                     </DialogTrigger>
@@ -44,22 +44,22 @@ export default function FuelPage() {
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Vehicle License Plate</label>
-                                <Input placeholder="e.g. ABC-1234" />
+                                <label className="text-sm font-bold text-slate-700">Vehicle License Plate</label>
+                                <Input placeholder="e.g. ABC-1234" className="h-11 rounded-xl bg-white text-slate-900 border-slate-200 focus:border-slate-400" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Quantity (L)</label>
-                                    <Input type="number" placeholder="0.00" />
+                                    <label className="text-sm font-bold text-slate-700">Quantity (L)</label>
+                                    <Input type="number" placeholder="0.00" className="h-11 rounded-xl bg-white text-slate-900 border-slate-200 focus:border-slate-400" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Total Cost ($)</label>
-                                    <Input type="number" placeholder="0.00" />
+                                    <label className="text-sm font-bold text-slate-700">Total Cost ($)</label>
+                                    <Input type="number" placeholder="0.00" className="h-11 rounded-xl bg-white text-slate-900 border-slate-200 focus:border-slate-400" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Odometer Reading</label>
-                                <Input type="number" placeholder="123456" />
+                                <label className="text-sm font-bold text-slate-700">Odometer Reading</label>
+                                <Input type="number" placeholder="123456" className="h-11 rounded-xl bg-white text-slate-900 border-slate-200 focus:border-slate-400" />
                             </div>
                             {/* File Upload Placeholder */}
                             <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center text-sm text-slate-500">
@@ -67,7 +67,7 @@ export default function FuelPage() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button onClick={() => setIsAddOpen(false)}>Save Log</Button>
+                            <Button onClick={() => setIsAddOpen(false)} className="w-full h-11 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800">Save Log</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
