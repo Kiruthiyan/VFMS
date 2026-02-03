@@ -18,18 +18,34 @@ import {
     LogOut,
     PlusCircle,
     CheckSquare,
-    UserCircle
+    UserCircle,
+    ChevronLeft,
+    ChevronRight,
+    PanelLeftClose,
+    PanelLeftOpen
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [role, setRole] = useState<string | null>(null);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     useEffect(() => {
         setRole(authService.getRole());
+        const savedState = localStorage.getItem("sidebarCollapsed");
+        if (savedState) {
+            setIsCollapsed(savedState === "true");
+        }
     }, []);
+
+    const toggleSidebar = () => {
+        const newState = !isCollapsed;
+        setIsCollapsed(newState);
+        localStorage.setItem("sidebarCollapsed", String(newState));
+    };
 
     const handleLogout = () => {
         authService.clearAuth();
@@ -78,22 +94,46 @@ export function Sidebar() {
     if (!role) return null; // Hydration handling
 
     return (
-        <div className="flex h-full w-72 flex-col border-r border-slate-800 bg-slate-900 text-slate-100 shadow-2xl z-50">
-            <div className="flex h-20 items-center px-6 border-b border-slate-800/50 bg-slate-950/50 backdrop-blur-md sticky top-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
+        <motion.div
+            animate={{ width: isCollapsed ? 80 : 288 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="flex h-full flex-col border-r border-slate-800 bg-slate-900 text-slate-100 shadow-2xl z-50 overflow-hidden"
+        >
+            <div className="flex h-20 items-center justify-between px-4 border-b border-slate-800/50 bg-slate-950/50 backdrop-blur-md sticky top-0 shrink-0">
+                <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
                         <span className="font-black text-slate-900 text-sm">F</span>
                     </div>
-                    <div>
-                        <h1 className="font-black text-lg tracking-tight text-white leading-none">FLEETPRO<span className="text-amber-400">.</span></h1>
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{role} Portal</span>
-                    </div>
+                    {!isCollapsed && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="whitespace-nowrap"
+                        >
+                            <h1 className="font-black text-lg tracking-tight text-white leading-none">FLEETPRO<span className="text-amber-400">.</span></h1>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{role} Portal</span>
+                        </motion.div>
+                    )}
                 </div>
+
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleSidebar}
+                    className="ml-auto text-slate-500 hover:text-white hover:bg-slate-800 rounded-full h-8 w-8 shrink-0"
+                >
+                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-6 custom-scrollbar">
-                <nav className="grid gap-1 px-4">
-                    <p className="px-4 text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-2">Main Menu</p>
+            <div className="flex-1 overflow-y-auto py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:none]">
+                <nav className="grid gap-1 px-3">
+                    {!isCollapsed && (
+                        <p className="px-4 text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-2 animate-in fade-in slide-in-from-left-2 whitespace-nowrap">
+                            Main Menu
+                        </p>
+                    )}
                     {sidebarItems.map((item) => {
                         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                         return (
@@ -101,30 +141,36 @@ export function Sidebar() {
                                 key={item.href}
                                 href={item.href}
                                 className={cn(
-                                    "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200 border border-transparent",
+                                    "group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold transition-all duration-200 border border-transparent whitespace-nowrap",
                                     isActive
-                                        ? "bg-amber-400 text-slate-900 shadow-lg shadow-amber-400/20 translate-x-1"
-                                        : "text-slate-400 hover:bg-slate-800 hover:text-white hover:border-slate-700 hover:translate-x-1"
+                                        ? "bg-amber-400 text-slate-900 shadow-lg shadow-amber-400/20"
+                                        : "text-slate-400 hover:bg-slate-800 hover:text-white hover:border-slate-700",
+                                    isCollapsed && "justify-center px-0"
                                 )}>
-                                <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-slate-900" : "text-slate-500 group-hover:text-amber-400")} />
-                                {item.name}
-                                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-slate-900" />}
+                                <item.icon className={cn("h-5 w-5 shrink-0 transition-colors", isActive ? "text-slate-900" : "text-slate-500 group-hover:text-amber-400")} />
+                                {!isCollapsed && (
+                                    <span className="animate-in fade-in slide-in-from-left-2">{item.name}</span>
+                                )}
+                                {!isCollapsed && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-slate-900" />}
                             </Link>
                         );
                     })}
                 </nav>
             </div>
 
-            <div className="p-4 border-t border-slate-800 bg-slate-950/30">
+            <div className="p-3 border-t border-slate-800 bg-slate-950/30 shrink-0">
                 <Button
                     onClick={handleLogout}
                     variant="ghost"
-                    className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent h-12 rounded-xl"
+                    className={cn(
+                        "w-full text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent h-12 rounded-xl transition-all",
+                        isCollapsed ? "justify-center px-0" : "justify-start px-4"
+                    )}
                 >
-                    <LogOut className="h-4 w-4 mr-3" />
-                    Sign Out
+                    <LogOut className={cn("h-5 w-5 shrink-0 transition-all", !isCollapsed && "mr-3")} />
+                    {!isCollapsed && <span className="animate-in fade-in slide-in-from-left-2">Sign Out</span>}
                 </Button>
             </div>
-        </div>
+        </motion.div>
     );
 }

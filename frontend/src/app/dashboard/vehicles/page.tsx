@@ -103,67 +103,67 @@ export default function VehiclesPage() {
                 </div>
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-slate-900 hover:bg-slate-800">
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20">
                             <Plus className="mr-2 h-4 w-4" /> Add Vehicle
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
+                    <DialogContent className="sm:max-w-[500px] bg-white">
                         <DialogHeader>
-                            <DialogTitle>Register New Vehicle</DialogTitle>
-                            <DialogDescription>
+                            <DialogTitle className="text-slate-900">Register New Vehicle</DialogTitle>
+                            <DialogDescription className="text-slate-500">
                                 Enter vehicle details to add to the fleet.
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onAddSubmit)} className="space-y-4 py-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">License Plate</label>
-                                    <Input placeholder="ABC-1234" {...register("licensePlate")} />
-                                    {errors.licensePlate && <p className="text-xs text-red-500">{errors.licensePlate.message}</p>}
+                                    <label className="text-sm font-bold text-slate-700">License Plate</label>
+                                    <Input placeholder="ABC-1234" {...register("licensePlate")} className="bg-white text-slate-900 border-slate-200 focus:border-slate-400" />
+                                    {errors.licensePlate && <p className="text-xs text-red-500 font-medium">{errors.licensePlate.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Model / Make</label>
-                                    <Input placeholder="Toyota Camry" {...register("model")} />
-                                    {errors.model && <p className="text-xs text-red-500">{errors.model.message}</p>}
+                                    <label className="text-sm font-bold text-slate-700">Model / Make</label>
+                                    <Input placeholder="Toyota Camry" {...register("model")} className="bg-white text-slate-900 border-slate-200 focus:border-slate-400" />
+                                    {errors.model && <p className="text-xs text-red-500 font-medium">{errors.model.message}</p>}
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Category</label>
+                                    <label className="text-sm font-bold text-slate-700">Category</label>
                                     <Select onValueChange={(val) => setValue("category", val as any)}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="bg-white text-slate-900 border-slate-200">
                                             <SelectValue placeholder="Select Category" />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="SEDAN">Sedan</SelectItem>
-                                            <SelectItem value="SUV">SUV</SelectItem>
-                                            <SelectItem value="VAN">Van</SelectItem>
-                                            <SelectItem value="TRUCK">Truck</SelectItem>
-                                            <SelectItem value="BUS">Bus</SelectItem>
+                                        <SelectContent className="bg-white border-slate-200">
+                                            <SelectItem value="SEDAN" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Sedan</SelectItem>
+                                            <SelectItem value="SUV" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">SUV</SelectItem>
+                                            <SelectItem value="VAN" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Van</SelectItem>
+                                            <SelectItem value="TRUCK" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Truck</SelectItem>
+                                            <SelectItem value="BUS" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Bus</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.category && <p className="text-xs text-red-500">{errors.category.message}</p>}
+                                    {errors.category && <p className="text-xs text-red-500 font-medium">{errors.category.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Fuel Type</label>
+                                    <label className="text-sm font-bold text-slate-700">Fuel Type</label>
                                     <Select onValueChange={(val) => setValue("fuelType", val as any)}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="bg-white text-slate-900 border-slate-200">
                                             <SelectValue placeholder="Select Fuel" />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="PETROL">Petrol</SelectItem>
-                                            <SelectItem value="DIESEL">Diesel</SelectItem>
-                                            <SelectItem value="ELECTRIC">Electric</SelectItem>
-                                            <SelectItem value="HYBRID">Hybrid</SelectItem>
+                                        <SelectContent className="bg-white border-slate-200">
+                                            <SelectItem value="PETROL" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Petrol</SelectItem>
+                                            <SelectItem value="DIESEL" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Diesel</SelectItem>
+                                            <SelectItem value="ELECTRIC" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Electric</SelectItem>
+                                            <SelectItem value="HYBRID" className="text-slate-700 hover:bg-slate-50 hover:text-slate-900">Hybrid</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.fuelType && <p className="text-xs text-red-500">{errors.fuelType.message}</p>}
+                                    {errors.fuelType && <p className="text-xs text-red-500 font-medium">{errors.fuelType.message}</p>}
                                 </div>
                             </div>
 
                             <DialogFooter className="mt-4">
-                                <Button type="submit" disabled={isLoading}>
+                                <Button type="submit" disabled={isLoading} className="bg-slate-900 text-white hover:bg-slate-800">
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Register Vehicle
                                 </Button>

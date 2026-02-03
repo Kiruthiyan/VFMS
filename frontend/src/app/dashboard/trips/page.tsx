@@ -16,7 +16,7 @@ export default function TripsPage() {
                     <p className="text-slate-500 mt-1">Manage and view trip schedules</p>
                 </div>
                 <Link href="/dashboard/trips/new">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 font-bold rounded-xl px-6">
                         <Plus className="mr-2 h-4 w-4" /> New Booking Request
                     </Button>
                 </Link>
