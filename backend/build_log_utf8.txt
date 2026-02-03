@@ -1,0 +1,54 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.vfms:vfms-backend >------------------------
+[INFO] Building VFMS-Backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.0:clean (default-clean) @ vfms-backend ---
+[INFO] Deleting E:\SoftWare Project\fleetpro\backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ vfms-backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vfms-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 36 source files with javac [debug parameters release 21] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/service/TripService.java:[58,63] cannot find symbol
+  symbol:   variable ASSIGNED
+  location: class com.vfms.trip.model.TripStatus
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/service/TripService.java:[61,54] cannot find symbol
+  symbol:   variable STARTED
+  location: class com.vfms.trip.model.TripStatus
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/service/TripService.java:[76,64] cannot find symbol
+  symbol:   variable STARTED
+  location: class com.vfms.trip.model.TripStatus
+[INFO] 3 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  20.358 s
+[INFO] Finished at: 2026-02-02T20:02:19+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project vfms-backend: Compilation failure: Compilation failure: 
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/service/TripService.java:[58,63] cannot find symbol
+[ERROR]   symbol:   variable ASSIGNED
+[ERROR]   location: class com.vfms.trip.model.TripStatus
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/service/TripService.java:[61,54] cannot find symbol
+[ERROR]   symbol:   variable STARTED
+[ERROR]   location: class com.vfms.trip.model.TripStatus
+[ERROR] /E:/SoftWare Project/fleetpro/backend/src/main/java/com/vfms/trip/service/TripService.java:[76,64] cannot find symbol
+[ERROR]   symbol:   variable STARTED
+[ERROR]   location: class com.vfms.trip.model.TripStatus
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

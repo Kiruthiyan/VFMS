@@ -231,7 +231,7 @@ export default function UsersPage() {
                 {/* Create Invite Dialog */}
                 <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 font-bold rounded-xl px-6">
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 font-bold rounded-xl px-6">
                             <Plus className="mr-2 h-5 w-5" /> Create User
                         </Button>
                     </DialogTrigger>
@@ -244,13 +244,13 @@ export default function UsersPage() {
                         </DialogHeader>
                         <form onSubmit={handleSubmitInvite(onInviteSubmit)} className="space-y-6 pt-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Full Name</label>
-                                <Input placeholder="e.g. Sarah Smith" {...registerInvite("name")} className="h-11 rounded-xl bg-slate-50 border-slate-200 focus:bg-white transition-all" />
+                                <label className="text-sm font-bold text-slate-700">Full Name</label>
+                                <Input placeholder="e.g. Sarah Smith" {...registerInvite("name")} className="h-11 rounded-xl bg-white text-slate-900 border-slate-200 focus:border-slate-400 transition-all" />
                                 {errorsInvite.name && <p className="text-xs text-red-500 font-bold mt-1">{errorsInvite.name.message}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Role</label>
+                                <label className="text-sm font-bold text-slate-700">Role</label>
                                 <Select
                                     onValueChange={(val) => setValueInvite("role", val as any)}
                                     defaultValue="SYSTEM_USER"

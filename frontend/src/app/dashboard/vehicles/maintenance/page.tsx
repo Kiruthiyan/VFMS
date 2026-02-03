@@ -42,7 +42,7 @@ export default function MaintenancePage() {
                 </div>
                 <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-red-600 hover:bg-red-700 text-white">
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 font-bold rounded-xl px-6">
                             <Plus className="mr-2 h-4 w-4" /> Report Issue
                         </Button>
                     </DialogTrigger>
@@ -53,13 +53,13 @@ export default function MaintenancePage() {
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Vehicle License Plate</label>
-                                <Input placeholder="e.g. ABC-1234" />
+                                <label className="text-sm font-bold text-slate-700">Vehicle License Plate</label>
+                                <Input placeholder="e.g. ABC-1234" className="h-11 rounded-xl bg-white text-slate-900 border-slate-200 focus:border-slate-400" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Issue Type</label>
+                                <label className="text-sm font-bold text-slate-700">Issue Type</label>
                                 <Select>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="h-11 rounded-xl bg-white text-slate-900 border-slate-200 focus:border-slate-400">
                                         <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -72,12 +72,12 @@ export default function MaintenancePage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Description</label>
-                                <Textarea placeholder="Describe the issue in detail..." />
+                                <label className="text-sm font-bold text-slate-700">Description</label>
+                                <Textarea placeholder="Describe the issue in detail..." className="bg-white text-slate-900 border-slate-200 focus:border-slate-400 min-h-[100px] rounded-xl" />
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button onClick={handleReport} className="bg-red-600 hover:bg-red-700">Submit Request</Button>
+                            <Button onClick={handleReport} className="bg-slate-900 text-white h-11 w-full rounded-xl font-bold hover:bg-slate-800">Submit Request</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -109,7 +109,7 @@ export default function MaintenancePage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600">117</div>
-                        <p className="text-xs text-slate-500 mt-1">Opeirational vehicles</p>
+                        <p className="text-xs text-slate-500 mt-1">Operational vehicles</p>
                     </CardContent>
                 </Card>
             </div>
