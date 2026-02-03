@@ -1,25 +1,51 @@
 package com.vfms.trip.model;
 
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import com.vfms.auth.model.User;
+import com.vfms.vehicle.model.Vehicle;
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "trip")
 public class Trip {
-    private Long id;
-    private String destination;
-    private String date;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    public Trip(Long id, String destination, String date) {
-        this.id = id;
-        this.destination = destination;
-        this.date = date;
-    }
+    private String startLocation;
+    private String endLocation;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
-    public Long getId() {
-        return id;
-    }
+    @Enumerated(EnumType.STRING)
+    private TripStatus status;
 
-    public String getDestination() {
-        return destination;
-    }
+    @ManyToOne
+    @JoinColumn(name = "driver_id")
+    private User driver;
 
-    public String getDate() {
-        return date;
-    }
+    @ManyToOne
+    @JoinColumn(name = "vehicle_id")
+    private Vehicle vehicle;
+
+    @ManyToOne
+    @JoinColumn(name = "requester_id")
+    private User requester;
+
+    // Distance string e.g. "32 km" (from frontend mock)
+    private String distance;
+
+    private Double startOdometer;
+    private Double endOdometer;
+    private Double fuelConsumed; // in Liters
+    private String notes;
 }
