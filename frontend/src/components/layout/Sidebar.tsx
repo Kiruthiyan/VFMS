@@ -40,15 +40,11 @@ export function Sidebar() {
         switch (role) {
             case "ADMIN":
                 return [
-                    { name: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
                     { name: "Vehicles", href: "/vehicles", icon: Car },
                     { name: "Drivers", href: "/dashboard/drivers", icon: Users },
                     { name: "Trips", href: "/trips", icon: Calendar },
                     { name: "Maintenance", href: "/dashboard/vehicles/maintenance", icon: Wrench },
                     { name: "Fuel Logs", href: "/fuel", icon: Fuel },
-                    { name: "Reports", href: "/reports", icon: FileBarChart },
-                    { name: "Users", href: "/dashboard/users", icon: ShieldAlert },
-                    { name: "Settings", href: "/dashboard/settings", icon: Settings },
                 ];
             case "DRIVER":
                 return [
