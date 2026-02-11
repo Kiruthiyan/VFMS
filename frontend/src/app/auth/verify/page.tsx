@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle, ShieldCheck } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuthStore } from "@/store/authStore";
 
 const setPasswordSchema = z.object({
     password: z.string().min(8, "Password must be at least 8 characters"),
@@ -28,7 +29,7 @@ function VerifyPageContent() {
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
     const { toast } = useToast();
-    const { setAuth } = useAuth();
+    const { setAuth } = useAuthStore();
 
     const [status, setStatus] = useState<"verifying" | "verified" | "error" | "success">("verifying");
     const [errorMessage, setErrorMessage] = useState("");
