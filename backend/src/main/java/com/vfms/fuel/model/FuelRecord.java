@@ -1,7 +1,5 @@
 package com.vfms.fuel.model;
 
-import com.vfms.auth.model.User;
-import com.vfms.vehicle.model.Vehicle;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,22 +13,43 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "fuel_record")
+@Table(name = "fuel_logs") // Updated table name per requirements
 public class FuelRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "vehicle_id")
-    private Vehicle vehicle;
+    @Column(name = "vehicle_id", nullable = false)
+    private Integer vehicleId;
 
-    @ManyToOne
-    @JoinColumn(name = "driver_id")
-    private User driver;
+    @Column(name = "driver_id")
+    private Integer driverId;
 
-    private Double quantity; // in liters
-    private Double cost; // total cost
-    private Double mileage; // current odometer reading
+    @Column(name = "fuel_amount")
+    private Double quantity; // liters
+
+    @Column(name = "total_cost")
+    private Double cost;
+
+    @Column(name = "price_per_liter")
+    private Double pricePerLiter;
+
+    private Double mileage; // current odometer
+
+    @Column(name = "station_name")
+    private String stationName;
+
+    @Column(name = "receipt_path")
+    private String receiptPath;
+
+    @Column(name = "purchase_date")
     private LocalDate date;
+
+    @Column(name = "created_at")
+    private LocalDate createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDate.now();
+    }
 }

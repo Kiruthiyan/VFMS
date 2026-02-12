@@ -16,6 +16,9 @@ api.interceptors.request.use(
     const authHeader = authService.getAuthHeader()
     if ("Authorization" in authHeader) {
       config.headers.Authorization = authHeader.Authorization
+      // console.log("Attaching Auth Header:", authHeader.Authorization.substring(0, 20) + "...") 
+    } else {
+      console.warn("No Auth Header found in request to", config.url)
     }
     return config
   },

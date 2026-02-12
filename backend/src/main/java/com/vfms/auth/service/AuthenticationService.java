@@ -16,10 +16,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-        private final UserRepository repository;
-        private final PasswordEncoder passwordEncoder;
-        private final JwtService jwtService;
-        private final AuthenticationManager authenticationManager;
+    private final UserRepository repository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
 
     /**
      * Admin creates a new user (Invite flow).
@@ -28,24 +28,24 @@ public class AuthenticationService {
      * Admin creates a new user (Auto-generate credentials).
      */
     public AuthenticationResponse signup(RegisterRequest request) {
-        // Auto-generate company email: name.role@fleetpro.com (simplified)
-        String sanitizedName = request.getName().toLowerCase().replaceAll("\\s+", ".");
-        String generatedEmail = sanitizedName + "." + request.getRole().name().toLowerCase() + "@fleetpro.com";
-        // Ensure uniqueness (simple append for MVP)
-        if (repository.findByEmail(generatedEmail).isPresent()) {
-            generatedEmail = sanitizedName + "." + request.getRole().name().toLowerCase() + (int)(Math.random() * 1000) + "@fleetpro.com";
+        // Check if email already exists
+        if (repository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists");
         }
 
         // Auto-generate password
-        String generatedPassword = "Pass" + (int)(Math.random() * 10000) + "!";
+        String generatedPassword = "Temp" + (int) (Math.random() * 10000) + "!";
 
         var user = User.builder()
                 .name(request.getName())
-                .email(generatedEmail)
+                .email(request.getEmail()) // Use provided email
+                .phone(request.getPhone()) // Use provided phone
                 .role(request.getRole())
                 .emailVerified(true) // Admin verified
                 .passwordChangeRequired(true) // Force change on first login
                 .password(passwordEncoder.encode(generatedPassword))
+                .joinedDate(java.time.LocalDate.now())
+                .status("ACTIVE")
                 .build();
 
         repository.save(user);
@@ -76,9 +76,10 @@ public class AuthenticationService {
                         request.getPassword()));
         var user = repository.findByEmail(request.getEmail())
                 .orElseThrow();
-        
-        // No email verification check needed for this flow as admin creates verified users
-        
+
+        // No email verification check needed for this flow as admin creates verified
+        // users
+
         var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
@@ -93,11 +94,11 @@ public class AuthenticationService {
     public void forgotPassword(String email) {
         var user = repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
-        
+
         user.setPasswordResetToken(java.util.UUID.randomUUID().toString());
         user.setPasswordResetTokenExpiry(java.time.LocalDateTime.now().plusHours(1));
         repository.save(user);
-        
+
         // TODO: Send email
     }
 
@@ -114,6 +115,7 @@ public class AuthenticationService {
         user.setPasswordResetTokenExpiry(null);
         repository.save(user);
     }
+
     public void changePassword(Integer userId, String newPassword) {
         var user = repository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

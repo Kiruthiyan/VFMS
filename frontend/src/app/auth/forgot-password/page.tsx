@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Mail, ArrowLeft, Shield } from "lucide-react";
+import { AxiosError } from "axios";
 
 const forgotPasswordSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -39,7 +40,8 @@ export default function ForgotPasswordPage() {
                 email: data.email,
             });
             setIsSuccess(true);
-        } catch (err: any) {
+        } catch (error) {
+            const err = error as AxiosError<{ message: string }>;
             setError(err.response?.data?.message || "Failed to process request.");
         } finally {
             setIsLoading(false);

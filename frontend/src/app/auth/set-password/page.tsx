@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Lock, ShieldCheck, ArrowLeft } from "lucide-react";
+import { AxiosError } from "axios";
 
 const setPasswordSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
@@ -26,7 +27,7 @@ const setPasswordSchema = z.object({
 
 type SetPasswordValues = z.infer<typeof setPasswordSchema>;
 
-export default function SetPasswordPage() {
+function SetPasswordContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get("token");
@@ -69,7 +70,8 @@ export default function SetPasswordPage() {
                 password: data.password,
             });
             router.push("/auth/login?message=Password set successfully. Please login.");
-        } catch (err: any) {
+        } catch (error) {
+            const err = error as AxiosError<{ message: string }>;
             setError(err.response?.data?.message || "Failed to set password.");
         } finally {
             setIsLoading(false);
@@ -141,5 +143,13 @@ export default function SetPasswordPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function SetPasswordPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <SetPasswordContent />
+        </Suspense>
     );
 }

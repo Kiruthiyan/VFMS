@@ -37,32 +37,19 @@ export function Sidebar() {
     };
 
     const getItems = () => {
+        // Since this branch is for Fuel Module only (Student B), we can simplify or keep role logic.
+        // Assuming strict "Student B" view, they likely access as ADMIN or specific role.
+        // If they are testing, they might want access regardless of role, but let's stick to valid roles.
+
         switch (role) {
             case "ADMIN":
+            case "SYSTEM_USER": // Allow others to see for testing? Or strictly Admin? Fuel is usually Admin/Manager.
                 return [
-                    { name: "Vehicles", href: "/vehicles", icon: Car },
-                    { name: "Drivers", href: "/dashboard/drivers", icon: Users },
-                    { name: "Trips", href: "/trips", icon: Calendar },
-                    { name: "Maintenance", href: "/dashboard/vehicles/maintenance", icon: Wrench },
-                    { name: "Fuel Logs", href: "/fuel", icon: Fuel },
-                ];
-            case "DRIVER":
-                return [
-                    { name: "Dashboard", href: "/dashboard/driver", icon: LayoutDashboard },
-                    { name: "My Trips", href: "/dashboard/trips", icon: Calendar },
-                    { name: "My Profile", href: "/dashboard/profile", icon: UserCircle },
-                ];
-            case "SYSTEM_USER":
-            case "STAFF":
-                return [
-                    { name: "Dashboard", href: "/dashboard/staff", icon: LayoutDashboard },
-                    { name: "Book Trip", href: "/dashboard/trips/new", icon: PlusCircle },
-                    { name: "My Requests", href: "/dashboard/trips", icon: Calendar },
-                ];
-            case "APPROVER":
-                return [
-                    { name: "Dashboard", href: "/dashboard/approver", icon: LayoutDashboard },
-                    { name: "Approvals", href: "/dashboard/approvals", icon: CheckSquare },
+                    { name: "Fuel Dashboard", href: "/fuel/analytics", icon: LayoutDashboard },
+                    { name: "Users", href: "/admin/users", icon: Users },
+                    { name: "Fuel Records", href: "/fuel", icon: Fuel },
+                    { name: "Add Purchase", href: "/fuel/entry", icon: PlusCircle },
+                    { name: "Vehicle Summary", href: "/fuel/summary", icon: Car },
                 ];
             default:
                 return [];

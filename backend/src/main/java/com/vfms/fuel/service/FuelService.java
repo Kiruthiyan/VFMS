@@ -17,9 +17,15 @@ public class FuelService {
     }
 
     public FuelRecord addFuelRecord(FuelRecord record) {
+        // Validation or business logic can go here
+        // e.g. Calculate price per liter if not provided
+        if (record.getPricePerLiter() == null && record.getCost() != null && record.getQuantity() != null
+                && record.getQuantity() > 0) {
+            record.setPricePerLiter(record.getCost() / record.getQuantity());
+        }
         return repository.save(record);
     }
-    
+
     public List<FuelRecord> getFuelRecordsByVehicle(Integer vehicleId) {
         return repository.findByVehicleId(vehicleId);
     }

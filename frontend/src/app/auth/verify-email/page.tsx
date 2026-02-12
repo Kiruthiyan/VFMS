@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, MailCheck } from "lucide-react";
+import { AxiosError } from "axios";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get("token");
@@ -29,7 +30,8 @@ export default function VerifyEmailPage() {
                 setTimeout(() => {
                     router.push(`/auth/set-password?token=${token}`);
                 }, 2000);
-            } catch (err: any) {
+            } catch (error) {
+                const err = error as AxiosError<{ message: string }>;
                 setStatus("error");
                 setMessage(err.response?.data?.message || "Verification failed. Token may be invalid or expired.");
             }
@@ -93,5 +95,13 @@ export default function VerifyEmailPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function VerifyEmailPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <VerifyEmailContent />
+        </Suspense>
     );
 }

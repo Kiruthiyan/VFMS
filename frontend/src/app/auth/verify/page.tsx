@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle, ShieldCheck } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useToast } from "@/components/ui/use-toast";
+
 import { useAuthStore } from "@/store/authStore";
 
 const setPasswordSchema = z.object({
@@ -73,7 +73,7 @@ function VerifyPageContent() {
             });
 
             // Login the user immediately after setting password
-            setAuth(response.data);
+            setAuth(response.data.user, response.data.token);
 
             setStatus("success");
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,62 +12,73 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Plus, Search, Filter, Fuel, User, MapPin } from "lucide-react";
+import { MoreHorizontal, Plus, Search, Filter, Fuel, User, MapPin, Loader2, AlertCircle, FileText } from "lucide-react";
 import ModuleLayout from "@/components/layout/ModuleLayout";
+import api from "@/lib/api";
+import { format } from "date-fns";
+import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
 
-// Mock Data
-const fuelLogs = [
-    {
-        id: "F-201",
-        vehicle: "Toyota Camry (ABC-1234)",
-        driver: "John Doe",
-        date: "2024-03-21",
-        liters: "45.5 L",
-        cost: "$65.20",
-        station: "Shell Station #42",
-        status: "Verified",
-    },
-    {
-        id: "F-202",
-        vehicle: "Ford Transit (XYZ-5678)",
-        driver: "Jane Smith",
-        date: "2024-03-20",
-        liters: "60.0 L",
-        cost: "$88.50",
-        station: "BP Connect",
-        status: "Pending",
-    },
-    {
-        id: "F-203",
-        vehicle: "Isuzu NQR (TRK-5544)",
-        driver: "Michael Brown",
-        date: "2024-03-19",
-        liters: "85.2 L",
-        cost: "$125.80",
-        station: "Chevron City",
-        status: "Verified",
-    },
-    {
-        id: "F-204",
-        vehicle: "Toyota Hiace (VAN-3322)",
-        driver: "Sarah Wilson",
-        date: "2024-03-18",
-        liters: "52.3 L",
-        cost: "$74.10",
-        station: "Texaco",
-        status: "Rejected",
-    },
-];
+interface Vehicle {
+    id: number;
+    make: string;
+    model: string;
+    licensePlate: string;
+}
+
+interface FuelRecord {
+    id: number;
+    vehicleId: number;
+    driverId: number;
+    quantity: number;
+    cost: number;
+    mileage: number;
+    stationName: string;
+    receiptPath: string;
+    date: string;
+}
 
 export default function FuelLogsPage() {
+    const [logs, setLogs] = useState<FuelRecord[]>([]);
+    const [vehicles, setVehicles] = useState<Record<number, Vehicle>>({});
+    const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [fuelRes, vehicleRes] = await Promise.all([
+                    api.get("/fuel"),
+                    api.get("/vehicles")
+                ]);
+
+                setLogs(fuelRes.data);
+
+                // Create a map of vehicle ID to Vehicle object for easy lookup
+                const vehicleMap: Record<number, Vehicle> = {};
+                vehicleRes.data.forEach((v: Vehicle) => {
+                    vehicleMap[v.id] = v;
+                });
+                setVehicles(vehicleMap);
+
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Error fetching data",
+                    description: "Could not load fuel logs."
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [toast]);
+
+    const getVehicleDetails = (id: number) => {
+        return vehicles[id] || { make: "Unknown", model: "Vehicle", licensePlate: "N/A" };
+    };
+
     return (
         <ModuleLayout title="Fuel Management">
             <div className="space-y-6">
@@ -76,9 +88,11 @@ export default function FuelLogsPage() {
                         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Fuel Logs</h1>
                         <p className="text-slate-500 mt-1">Monitor fuel consumption and expenses.</p>
                     </div>
-                    <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
-                        <Plus className="mr-2 h-4 w-4" /> Add Fuel Log
-                    </Button>
+                    <Link href="/fuel/entry">
+                        <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
+                            <Plus className="mr-2 h-4 w-4" /> Add Fuel Log
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Filters */}
@@ -97,77 +111,79 @@ export default function FuelLogsPage() {
                 </div>
 
                 {/* Data Table */}
-                <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
-                    <Table>
-                        <TableHeader className="bg-slate-50">
-                            <TableRow>
-                                <TableHead className="w-[100px]">ID</TableHead>
-                                <TableHead>Vehicle</TableHead>
-                                <TableHead>Driver</TableHead>
-                                <TableHead>Station</TableHead>
-                                <TableHead>Volume</TableHead>
-                                <TableHead>Cost</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {fuelLogs.map((log) => (
-                                <TableRow key={log.id} className="hover:bg-slate-50 transition-colors">
-                                    <TableCell className="font-mono font-medium text-slate-900">{log.id}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Fuel className="h-3.5 w-3.5 text-slate-400" />
-                                            <span className="font-medium text-slate-800 text-sm truncate max-w-[150px]">{log.vehicle}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <User className="h-3.5 w-3.5" />
-                                            {log.driver}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <MapPin className="h-3.5 w-3.5" />
-                                            {log.station}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-slate-900 font-medium">{log.liters}</TableCell>
-                                    <TableCell className="text-slate-900 font-bold">{log.cost}</TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant="outline"
-                                            className={`
-                                                ${log.status === 'Verified' ? 'bg-green-50 text-green-700 border-green-200' : ''}
-                                                ${log.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''}
-                                                ${log.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' : ''}
-                                            `}
-                                        >
-                                            {log.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem>View receipt</DropdownMenuItem>
-                                                <DropdownMenuItem>Edit log</DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
+                <div className="rounded-xl border bg-white shadow-sm overflow-hidden min-h-[300px]">
+                    {loading ? (
+                        <div className="flex h-full items-center justify-center p-12">
+                            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        </div>
+                    ) : logs.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center p-12 text-slate-500">
+                            <AlertCircle className="h-10 w-10 mb-4 opacity-20" />
+                            <p className="text-lg font-medium">No fuel records found</p>
+                            <p className="text-sm">Get started by adding a new fuel log.</p>
+                        </div>
+                    ) : (
+                        <Table>
+                            <TableHeader className="bg-slate-50">
+                                <TableRow>
+                                    <TableHead className="w-[80px]">ID</TableHead>
+                                    <TableHead>Vehicle</TableHead>
+                                    <TableHead>Station</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Mileage</TableHead>
+                                    <TableHead>Volume</TableHead>
+                                    <TableHead>Cost</TableHead>
+                                    <TableHead>Receipt</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {logs.map((log) => {
+                                    const vehicle = getVehicleDetails(log.vehicleId);
+                                    return (
+                                        <TableRow key={log.id} className="hover:bg-slate-50 transition-colors">
+                                            <TableCell className="font-mono font-medium text-slate-900">#{log.id}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Fuel className="h-3.5 w-3.5 text-slate-400" />
+                                                    <span className="font-medium text-slate-800 text-sm">
+                                                        {vehicle.make} {vehicle.model}
+                                                        <span className="block text-xs text-slate-500 font-normal">{vehicle.licensePlate}</span>
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2 text-sm text-slate-600">
+                                                    <MapPin className="h-3.5 w-3.5" />
+                                                    {log.stationName || "Unknown"}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-slate-600 text-sm">
+                                                {format(new Date(log.date), "MMM d, yyyy")}
+                                            </TableCell>
+                                            <TableCell className="text-slate-600 text-sm">
+                                                {log.mileage?.toLocaleString()} km
+                                            </TableCell>
+                                            <TableCell className="text-slate-900 font-medium">
+                                                {log.quantity} L
+                                            </TableCell>
+                                            <TableCell className="text-slate-900 font-bold">
+                                                ${log.cost.toFixed(2)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {log.receiptPath ? (
+                                                    <Badge variant="outline" className="text-slate-500 gap-1">
+                                                        <FileText className="h-3 w-3" /> Receipt
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">No Receipt</span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    )}
                 </div>
             </div>
         </ModuleLayout>

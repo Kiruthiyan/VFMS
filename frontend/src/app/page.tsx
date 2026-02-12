@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence, useScroll, useSpring, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useSpring, useInView, Variants } from 'framer-motion';
 import {
   Shield, Fuel, Car, Users, Calendar, FileText, ArrowRight,
   BarChart3, CheckCircle2, Truck, MapPin, Layout, Star,
   Smartphone, Zap, Clock, ChevronRight, Play, Globe, Menu, X,
-  TrendingUp, Check, Coins
+  TrendingUp, Check
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,

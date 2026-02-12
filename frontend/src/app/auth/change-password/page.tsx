@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { authService } from "@/lib/auth";
+import { AxiosError } from "axios";
 
 const changePasswordSchema = z.object({
     password: z.string().min(8, "Password must be at least 8 characters"),
@@ -71,10 +72,11 @@ export default function ChangePasswordPage() {
                 else router.push('/dashboard');
             }, 1500);
 
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as AxiosError<{ message: string }>;
             toast({
                 title: "Error",
-                description: error.response?.data?.message || "Failed to update password",
+                description: err.response?.data?.message || "Failed to update password",
                 variant: "destructive"
             });
         } finally {
