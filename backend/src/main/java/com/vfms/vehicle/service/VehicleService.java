@@ -29,10 +29,12 @@ public class VehicleService {
         vehicle.setMake(vehicleDetails.getMake());
         vehicle.setModel(vehicleDetails.getModel());
         vehicle.setLicensePlate(vehicleDetails.getLicensePlate());
-        vehicle.setType(vehicleDetails.getType());
+        vehicle.setCategory(vehicleDetails.getCategory());
         vehicle.setStatus(vehicleDetails.getStatus());
+        vehicle.setFuelType(vehicleDetails.getFuelType());
         vehicle.setFuelLevel(vehicleDetails.getFuelLevel());
         vehicle.setLastServiceDate(vehicleDetails.getLastServiceDate());
+        vehicle.setCurrentOdometer(vehicleDetails.getCurrentOdometer());
         vehicle.setYear(vehicleDetails.getYear());
         return repository.save(vehicle);
     }

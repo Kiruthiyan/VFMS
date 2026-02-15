@@ -11,13 +11,21 @@ WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
 [INFO] 
 [INFO] --- clean:3.4.0:clean (default-clean) @ vfms-backend ---
 [INFO] Deleting D:\interim\backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ vfms-backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vfms-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 7 source files with javac [debug parameters release 21] to target\classes
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  2.068 s
-[INFO] Finished at: 2026-02-15T16:06:15+05:30
+[INFO] Total time:  5.731 s
+[INFO] Finished at: 2026-02-15T16:11:14+05:30
 [INFO] ------------------------------------------------------------------------
-[ERROR] Failed to execute goal org.apache.maven.plugins:maven-clean-plugin:3.4.0:clean (default-clean) on project vfms-backend: Failed to clean project: Failed to delete D:\interim\backend\target\vfms-backend-0.0.1-SNAPSHOT.jar -> [Help 1]
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project vfms-backend: Fatal error compiling: java.lang.ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag :: UNKNOWN -> [Help 1]
 [ERROR] 
 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
 [ERROR] Re-run Maven using the -X switch to enable full debug logging.

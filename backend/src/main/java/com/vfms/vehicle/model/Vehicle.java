@@ -25,13 +25,16 @@ public class Vehicle {
     @Column(unique = true)
     private String licensePlate;
 
-    // Sedan, Van, SUV, Truck
-    private String type;
+    // Sedan, Van, SUV, Truck, Bus
+    private String category;
 
-    // AVAILABLE, IN_USE, MAINTENANCE
+    // AVAILABLE, MAINTENANCE, ON_TRIP, RENTED, INACTIVE
     private String status;
 
     private Integer year;
+
+    // e.g. "PETROL", "DIESEL", "ELECTRIC", "HYBRID"
+    private String fuelType;
 
     // e.g. "75%"
     private String fuelLevel;

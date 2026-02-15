@@ -14,6 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { authService } from "@/lib/auth";
@@ -23,8 +30,8 @@ import { cn } from "@/lib/utils";
  * Validation Schema
  */
 const loginSchema = z.object({
-    email: z.string().email("Please enter a valid business email address"),
-    password: z.string().min(6, "Security protocol requires at least 6 characters"),
+    email: z.string().optional(), // Relaxed for demo
+    password: z.string().optional(), // Relaxed for demo
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -40,6 +47,7 @@ export default function SlidingAuthPage({ initialMode = "login" }: SlidingAuthPa
     const [isInfoMode, setIsInfoMode] = useState(initialMode === "signup");
     const [loginError, setLoginError] = useState("");
     const [loginLoading, setLoginLoading] = useState(false);
+    const [demoRole, setDemoRole] = useState("ADMIN"); // Default demo role
 
     const {
         register,
@@ -76,30 +84,29 @@ export default function SlidingAuthPage({ initialMode = "login" }: SlidingAuthPa
     const onLoginSubmit = async (data: LoginValues) => {
         setLoginError("");
         setLoginLoading(true);
-        try {
-            // API call to Spring Boot Backend
-            const response = await api.post("/auth/authenticate", data);
-            const authData = response.data;
 
-            // Store JWT and User data
-            authService.setAuth(authData);
+        // --- MOCK AUTHENTICATION FOR DEMO ---
+        // Since backend is not connected, we simulate a successful login
+        setTimeout(() => {
+            const mockUser = {
+                token: "mock-jwt-token-12345",
+                role: demoRole,
+                name: "Demo User",
+                email: data.email || "demo@example.com", // Fallback for optional email
+                id: 1,
+                passwordChangeRequired: false
+            };
 
-            // Check if password change is required
-            if (authData.passwordChangeRequired) {
-                router.push("/auth/change-password");
-                return;
-            }
+            // Store Mock Auth Data
+            authService.setAuth(mockUser);
+            console.log("LOGGED IN AS:", demoRole);
 
-            // Trigger redirection based on role embedded in JWT
-            redirectByRole(authData.role);
-        } catch (err: any) {
-            setLoginError(
-                err.response?.data?.message ||
-                "Authentication failed. Please check your credentials or contact the Admin."
-            );
-        } finally {
+            // Redirect based on selected role
+            redirectByRole(demoRole);
             setLoginLoading(false);
-        }
+        }, 1000);
+
+        /* api.post("/auth/authenticate", data) .... (Commented out for frontend-only demo) */
     };
 
     return (
@@ -226,6 +233,22 @@ export default function SlidingAuthPage({ initialMode = "login" }: SlidingAuthPa
                                     />
                                 </div>
                                 {errors.password && <span className="text-xs text-red-500 font-bold flex items-center gap-1 mt-1"><AlertCircle size={12} /> {errors.password.message}</span>}
+                            </div>
+
+                            {/* DEMO ROLE SELECTOR */}
+                            <div className="space-y-2">
+                                <Label className="text-[11px] uppercase tracking-[0.2em] font-black text-slate-400">Select Demo Role</Label>
+                                <Select value={demoRole} onValueChange={setDemoRole}>
+                                    <SelectTrigger className="h-14 bg-slate-50 border-slate-200 focus:bg-white focus:ring-amber-500 rounded-2xl font-bold text-slate-900">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ADMIN">System Admin</SelectItem>
+                                        <SelectItem value="APPROVER">Approver / Manager</SelectItem>
+                                        <SelectItem value="SYSTEM_USER">System User / Staff</SelectItem>
+                                        <SelectItem value="DRIVER">Driver</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 

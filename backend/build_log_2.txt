@@ -14,8 +14,8 @@ WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  2.068 s
-[INFO] Finished at: 2026-02-15T16:06:15+05:30
+[INFO] Total time:  2.391 s
+[INFO] Finished at: 2026-02-15T16:10:00+05:30
 [INFO] ------------------------------------------------------------------------
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-clean-plugin:3.4.0:clean (default-clean) on project vfms-backend: Failed to clean project: Failed to delete D:\interim\backend\target\vfms-backend-0.0.1-SNAPSHOT.jar -> [Help 1]
 [ERROR] 
