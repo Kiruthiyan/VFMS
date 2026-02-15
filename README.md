@@ -1,14 +1,14 @@
-Vehicle Maintenance and Rentals Module
-1. Module Overview
+##Vehicle Maintenance and Rentals Module
+##1. Module Overview
 This module implements the Vehicle Maintenance and Rentals functionality for the Vehicle Fleet Management System (VFMS). It serves as a comprehensive system for managing the lifecycle of fleet vehicles, specifically focusing on maintenance tracking and rental bookings.
 
-Frontend: Provides a responsive, role-based dashboard for visualizing vehicle status, submitting maintenance requests, and managing rental reservations. Currently operates as a functional prototype using Mock Data and Local Storage for state persistence.
-Backend: Provides a robust RESTful API and database structure for managing 
-Vehicle
- entities, supporting critical status states like MAINTENANCE and RENTED.
-2. Features Implemented
-Frontend Features
-Maintenance Dashboard:
+#Frontend: Provides a responsive, role-based dashboard for visualizing vehicle status, submitting maintenance requests, and managing rental reservations. Currently operates as a functional prototype using Mock              Data and Local Storage for state persistence.
+#Backend: Provides a robust RESTful API and database structure for managing entities, supporting critical status states like MAINTENANCE and RENTED.
+
+##2. Features Implemented
+
+#Frontend Features
+      #Maintenance Dashboard:
 
 Tabbed Navigation: Instant switching between "Maintenance & Repairs" and "Vehicle Bookings" views.
 Request Lifecycle Management: Visual tracking of maintenance requests through Pending, In Progress, Completed, and Rejected states.
@@ -16,13 +16,15 @@ Interactive Forms: Dialog-based forms for creating new maintenance requests (Veh
 Role-Based Access Control (UI): Conditional rendering of "Approve/Reject" actions based on user role (e.g., Approver vs. Driver).
 Mock Data & Persistence: Uses localStorage to persist requests and bookings across sessions, initialized with sample data.
 Document Attachment UI: Interface for uploading and listing maintenance-related documents (e.g., invoices).
-Vehicle Rentals:
+
+     #Vehicle Rentals:
 
 Interactive Vehicle Catalog: Card-based grid displaying available vehicles with details (Rate, Fuel Type, Seats).
 Booking Wizard: Step-by-step modal for selecting vehicles and specifying rental dates.
 Availability Tracking: Visual badges differentiating Available vehicles from those In Maintenance or Rented.
 Status Management: Admin controls for approving or rejecting rental requests.
-Backend Features
+
+#Backend Features
 Vehicle Entity Management:
 Comprehensive 
 Vehicle
