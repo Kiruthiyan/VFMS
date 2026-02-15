@@ -39,6 +39,9 @@ export default function FuelEntryPage() {
     const [liters, setLiters] = useState("");
     const [cost, setCost] = useState("");
     const [mileage, setMileage] = useState("");
+    const [stationName, setStationName] = useState("");
+    const [receipt, setReceipt] = useState<File | null>(null);
+    const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchVehicles = async () => {
@@ -57,6 +60,45 @@ export default function FuelEntryPage() {
         fetchVehicles();
     }, [toast]);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                toast({
+                    variant: "destructive",
+                    title: "File too large",
+                    description: "Please upload a file smaller than 5MB."
+                });
+                return;
+            }
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                toast({
+                    variant: "destructive",
+                    title: "Invalid file type",
+                    description: "Please upload a JPG, PNG, or PDF file."
+                });
+                return;
+            }
+
+            setReceipt(file);
+
+            // Create preview for images
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setReceiptPreview(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                setReceiptPreview(null);
+            }
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -71,12 +113,26 @@ export default function FuelEntryPage() {
 
         setLoading(true);
         try {
+            // First, upload receipt if provided
+            let receiptPath = "";
+            if (receipt) {
+                const formData = new FormData();
+                formData.append("file", receipt);
+
+                const uploadRes = await api.post("/fuel/upload-receipt", formData, {
+                    headers: { "Content-Type": "multipart/form-data" }
+                });
+                receiptPath = uploadRes.data.path || uploadRes.data;
+            }
+
             const payload = {
                 vehicle: { id: parseInt(selectedVehicle) },
-                driver: { id: user.id }, // Assuming user.id is the correct type (check backend if it needs int or uuid)
+                driver: { id: user.id },
                 quantity: parseFloat(liters),
                 cost: parseFloat(cost),
                 mileage: parseFloat(mileage),
+                stationName: stationName || undefined,
+                receiptPath: receiptPath || undefined,
                 date: format(date, "yyyy-MM-dd")
             };
 
@@ -92,6 +148,9 @@ export default function FuelEntryPage() {
             setLiters("");
             setCost("");
             setMileage("");
+            setStationName("");
+            setReceipt(null);
+            setReceiptPreview(null);
             setDate(undefined);
             setSelectedVehicle("");
 
@@ -205,12 +264,39 @@ export default function FuelEntryPage() {
                             </div>
 
                             <div className="space-y-2">
+                                <Label htmlFor="station">Fuel Station (Optional)</Label>
+                                <Input
+                                    id="station"
+                                    placeholder="e.g., Shell Station, Main St"
+                                    value={stationName}
+                                    onChange={(e) => setStationName(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
                                 <Label htmlFor="receipt">Upload Receipt (Optional)</Label>
-                                <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer">
+                                <input
+                                    id="receipt"
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
+                                <label
+                                    htmlFor="receipt"
+                                    className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer block"
+                                >
                                     <Upload className="h-8 w-8 text-slate-400 mb-2" />
-                                    <p className="text-sm text-slate-600 font-medium">Click to upload or drag and drop</p>
+                                    <p className="text-sm text-slate-600 font-medium">
+                                        {receipt ? receipt.name : "Click to upload or drag and drop"}
+                                    </p>
                                     <p className="text-xs text-slate-400">PDF, PNG, JPG up to 5MB</p>
-                                </div>
+                                </label>
+                                {receiptPreview && (
+                                    <div className="mt-2">
+                                        <img src={receiptPreview} alt="Receipt preview" className="max-h-40 rounded-lg border" />
+                                    </div>
+                                )}
                             </div>
 
                             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>

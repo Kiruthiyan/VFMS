@@ -1,6 +1,5 @@
 package com.vfms.auth.dto;
 
-import com.vfms.auth.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

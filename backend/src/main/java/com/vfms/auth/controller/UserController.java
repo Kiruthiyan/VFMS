@@ -17,7 +17,7 @@ public class UserController {
     private final UserRepository repository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_USER')")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(repository.findAll());
     }

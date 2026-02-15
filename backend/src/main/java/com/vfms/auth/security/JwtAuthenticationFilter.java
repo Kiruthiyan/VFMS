@@ -40,14 +40,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         try {
             username = jwtService.extractUsername(jwt);
-            System.out.println("JwtFilter: Extracted username: " + username);
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            System.out.println("JwtFilter: Token expired");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Token expired");
             return;
         } catch (Exception e) {
-            System.out.println("JwtFilter: Failed to extract username: " + e.getMessage());
             filterChain.doFilter(request, response);
             return;
         }
@@ -56,7 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
             if (jwtService.isTokenValid(jwt, userDetails)) {
-                System.out.println("JwtFilter: Token valid for user: " + username);
+                System.out.println("DEBUG: User " + username + " Authorities: " + userDetails.getAuthorities());
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,

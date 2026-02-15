@@ -13,10 +13,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Trash2, Shield, Phone, Mail, User as UserIcon, Loader2 } from "lucide-react";
+import { Search, Trash2, Shield, Phone, Mail, User as UserIcon, Loader2, Trash, Plus, Users } from "lucide-react";
 import api from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner"; // Added sonner toast
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"; // Added ConfirmDialog
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton"; // Added LoadingSkeleton
+import { EmptyState } from "@/components/ui/empty-state"; // Added EmptyState
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"; // Added Dialog components
+import { Label } from "@/components/ui/label"; // Added Label
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select components
+
 
 interface User {
     id: number;
@@ -29,22 +37,23 @@ interface User {
 }
 
 export default function UserManagementPage() {
-    const [users, setUsers] = useState<User[]>([]);
+    const { toast: shadToast } = useToast(); // Renamed shadcn toast
+    const [users, setUsers] = useState<any[]>([]); // Changed type to any[]
     const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
+    const [error, setError] = useState<string | null>(null); // Added error state
+    const [dialogOpen, setDialogOpen] = useState(false); // Added dialogOpen state
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, userId: 0, userName: "" }); // Added deleteDialog state
 
     const fetchUsers = async () => {
+        setLoading(true);
+        setError(null); // Reset error
         try {
-            setLoading(true);
-            const response = await api.get("/users");
+            const response = await api.get("/users"); // Removed /api prefix
             setUsers(response.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to fetch users:", error);
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to load users."
-            });
+            setError(error.response?.data?.message || "Failed to load users"); // Set error state
+            toast.error("Failed to load users"); // Using sonner toast
         } finally {
             setLoading(false);
         }
@@ -54,22 +63,15 @@ export default function UserManagementPage() {
         fetchUsers();
     }, []);
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this user?")) return;
-
+    const handleDelete = async () => {
         try {
-            await api.delete(`/users/${id}`);
-            toast({
-                title: "Success",
-                description: "User deleted successfully."
-            });
+            await api.delete(`/users/${deleteDialog.userId}`);
+            toast.success(`User ${deleteDialog.userName} deleted successfully`);
             fetchUsers();
-        } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to delete user."
-            });
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to delete user");
+        } finally {
+            setDeleteDialog({ open: false, userId: 0, userName: "" });
         }
     };
 
@@ -152,7 +154,7 @@ export default function UserManagementPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(user.id)}
+                                                    onClick={() => setDeleteDialog({ open: true, userId: user.id, userName: user.name })}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -165,6 +167,18 @@ export default function UserManagementPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                open={deleteDialog.open}
+                onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
+                onConfirm={handleDelete}
+                title="Delete User"
+                description={`Are you sure you want to delete ${deleteDialog.userName}? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="destructive"
+            />
         </ModuleLayout>
     );
 }
