@@ -115,8 +115,15 @@ export function Sidebar() {
             </div>
           ) : (
             sidebarItems.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(item.href + "/");
+              // Fix: Only highlight if exact match or sub-path match (BUT exclude maintenance path from vehicles highlight)
+              const isMaintenancePage = pathname.includes("/vehicles/maintenance");
+              const isVehiclesLink = item.href === "/dashboard/vehicles";
+
+              let isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+
+              if (isVehiclesLink && isMaintenancePage) {
+                isActive = false;
+              }
 
               return (
                 <Link
