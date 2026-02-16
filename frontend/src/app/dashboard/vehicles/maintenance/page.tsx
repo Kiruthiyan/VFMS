@@ -79,6 +79,7 @@ export default function FleetOperationsPage() {
     const [newRequestVehicle, setNewRequestVehicle] = useState("");
     const [newRequestType, setNewRequestType] = useState("service");
     const [newRequestDesc, setNewRequestDesc] = useState("");
+    const [newRequestFiles, setNewRequestFiles] = useState<FileList | null>(null);
 
     // Booking State
     const [bookings, setBookings] = useState<any[]>([]); // Start empty to avoid overwrite
@@ -124,6 +125,9 @@ export default function FleetOperationsPage() {
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+    const [selectedBooking, setSelectedBooking] = useState<any>(null);
+    const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+
     // --- Handlers: Maintenance ---
     const handleReport = () => {
         // Find selected vehicle details
@@ -138,7 +142,12 @@ export default function FleetOperationsPage() {
             date: new Date().toISOString().split('T')[0],
             cost: "TBD",
             downtime: "N/A",
-            documents: []
+
+            documents: newRequestFiles ? Array.from(newRequestFiles).map(file => ({
+                name: file.name,
+                url: "#",
+                date: new Date().toISOString().split('T')[0]
+            })) : []
         };
         setRequests([newReq, ...requests]);
         toast({ title: "Request Submitted", description: "Your maintenance request is pending approval." });
@@ -148,6 +157,7 @@ export default function FleetOperationsPage() {
         setNewRequestVehicle("");
         setNewRequestType("service");
         setNewRequestDesc("");
+        setNewRequestFiles(null);
     };
 
     const handleApprove = (id: string) => {
@@ -203,6 +213,11 @@ export default function FleetOperationsPage() {
     const handleApproveBooking = (id: string) => {
         setBookings(bookings.map(b => b.id === id ? { ...b, status: "Approved" } : b));
         toast({ title: "Booking Approved", description: `Vehicle booking ${id} confirmed.` });
+    };
+
+    const handleViewBooking = (booking: any) => {
+        setSelectedBooking(booking);
+        setIsBookingDetailsOpen(true);
     };
 
     return (
@@ -278,6 +293,15 @@ export default function FleetOperationsPage() {
                                             onChange={(e) => setNewRequestDesc(e.target.value)}
                                             placeholder="Describe the issue..."
                                             className="font-medium bg-white text-slate-900 border-slate-200"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold">Upload Documents (Optional)</label>
+                                        <Input
+                                            type="file"
+                                            multiple
+                                            className="bg-white text-slate-900 border-slate-200 file:text-slate-900 file:font-bold"
+                                            onChange={(e) => setNewRequestFiles(e.target.files)}
                                         />
                                     </div>
                                 </div>
@@ -543,7 +567,7 @@ export default function FleetOperationsPage() {
                                                     <Button size="sm" className="bg-emerald-500 text-white font-bold h-7" onClick={() => handleApproveBooking(booking.id)}>Approve</Button>
                                                 </div>
                                             ) : (
-                                                <Button variant="ghost" size="sm" className="font-bold text-slate-400">View</Button>
+                                                <Button variant="ghost" size="sm" className="font-bold text-slate-400 hover:text-slate-900" onClick={() => handleViewBooking(booking)}>View</Button>
                                             )}
                                         </TableCell>
                                     </TableRow>
@@ -551,6 +575,65 @@ export default function FleetOperationsPage() {
                             </TableBody>
                         </Table>
                     </Card>
+
+                    {/* --- BOOKING DETAILS DIALOG --- */}
+                    <Dialog open={isBookingDetailsOpen} onOpenChange={setIsBookingDetailsOpen}>
+                        <DialogContent className="sm:max-w-[500px] bg-white text-slate-900">
+                            <DialogHeader>
+                                <DialogTitle className="text-xl font-bold">Booking Details</DialogTitle>
+                                <DialogDescription>Review vehicle reservation information.</DialogDescription>
+                            </DialogHeader>
+                            {selectedBooking && (
+                                <div className="space-y-6 py-2">
+                                    <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                        <div><span className="text-xs font-bold text-slate-400 uppercase">Booking ID</span><div className="font-mono font-bold text-sm">{selectedBooking.id}</div></div>
+                                        <div>
+                                            <span className="text-xs font-bold text-slate-400 uppercase">Status</span>
+                                            <div>
+                                                <Badge variant="outline" className={`${selectedBooking.status === 'Approved' ? 'bg-green-50 text-green-700 border-green-200' : ''} ${selectedBooking.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''} mt-1`}>
+                                                    {selectedBooking.status}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        <div className="col-span-2"><span className="text-xs font-bold text-slate-400 uppercase">Vehicle</span><div className="font-bold">{selectedBooking.vehicle}</div></div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center p-3 border border-slate-100 rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-blue-50 text-blue-600 p-2 rounded-full"><User className="w-4 h-4" /></div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-slate-400 uppercase">Assigned Driver</p>
+                                                    <p className="font-bold text-sm">{selectedBooking.requestedBy}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-3 border border-slate-100 rounded-lg">
+                                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Check-out</p>
+                                                <div className="flex items-center gap-2 font-bold text-sm">
+                                                    <Calendar className="w-4 h-4 text-slate-400" /> {selectedBooking.startDate}
+                                                </div>
+                                            </div>
+                                            <div className="p-3 border border-slate-100 rounded-lg">
+                                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Check-in</p>
+                                                <div className="flex items-center gap-2 font-bold text-sm">
+                                                    <Calendar className="w-4 h-4 text-slate-400" /> {selectedBooking.endDate}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <DialogFooter>
+                                <Button variant="ghost" onClick={() => setIsBookingDetailsOpen(false)}>Close</Button>
+                                {currentRole === 'APPROVER' && selectedBooking?.status === 'Pending' && (
+                                    <Button onClick={() => { handleApproveBooking(selectedBooking.id); setIsBookingDetailsOpen(false); }} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold">Approve Request</Button>
+                                )}
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </TabsContent>
             </Tabs>
         </div>
