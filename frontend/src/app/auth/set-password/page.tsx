@@ -67,6 +67,13 @@ function SetPasswordContent() {
     const onVerifyOtp = async (data: VerifyOtpValues) => {
         setIsLoading(true);
         setError("");
+
+        if (!email) {
+            setError("Email parameter is missing. Please restart the password reset process.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             // Call backend to verify OTP
             await api.post("/auth/verify-otp", {

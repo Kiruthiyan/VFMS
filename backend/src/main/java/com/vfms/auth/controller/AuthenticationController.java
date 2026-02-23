@@ -20,7 +20,26 @@ public class AuthenticationController {
     private final AuthenticationService service;
 
     /**
-     * Admin creates a new user (Invite).
+     * Step 1: Send OTP to the proposed email to verify it is valid and reachable.
+     */
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<String> sendVerificationCode(@RequestBody java.util.Map<String, String> request) {
+        service.sendVerificationCode(request.get("email"));
+        return ResponseEntity.ok("Verification code sent");
+    }
+
+    /**
+     * Step 2: Verify the OTP the user received.
+     */
+    @PostMapping("/verify-email-code")
+    public ResponseEntity<String> verifyEmailCode(@RequestBody java.util.Map<String, String> request) {
+        service.verifyEmailOtp(request.get("email"), request.get("code"));
+        return ResponseEntity.ok("Email verified");
+    }
+
+    /**
+     * Step 3: Admin creates a new user. Temp password is emailed directly to user —
+     * not returned here.
      */
     @PostMapping("/signup")
     public ResponseEntity<AuthenticationResponse> signup(
@@ -41,7 +60,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<String> verifyOtp(@Valid @RequestBody com.vfms.auth.dto.SetPasswordRequest request) {
+    public ResponseEntity<String> verifyOtp(@Valid @RequestBody com.vfms.auth.dto.VerifyOtpRequest request) {
         service.verifyOtp(request.getEmail(), request.getToken());
         return ResponseEntity.ok("OTP verified successfully");
     }

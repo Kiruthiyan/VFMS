@@ -10,12 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Upload, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { CalendarIcon, Upload, Loader2, CheckCircle, Fuel } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface Vehicle {
     id: number;
@@ -24,15 +24,31 @@ interface Vehicle {
     licensePlate: string;
 }
 
+// Pre-populated fuel stations based on sample data
+const FUEL_STATIONS = [
+    "Shell Station",
+    "BP Fuel",
+    "Total Gas",
+    "Chevron",
+    "Exxon",
+    "Mobil",
+    "Gulf Oil",
+    "Texaco",
+    "Shell Diesel",
+    "Total Diesel",
+    "Chevron Diesel",
+    "Other"
+];
+
 export default function FuelEntryPage() {
     const router = useRouter();
     const { user } = useAuthStore();
-    const { toast } = useToast();
 
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [date, setDate] = useState<Date>();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [loadingVehicles, setLoadingVehicles] = useState(true);
 
     // Form States
     const [selectedVehicle, setSelectedVehicle] = useState<string>("");
@@ -43,44 +59,70 @@ export default function FuelEntryPage() {
     const [receipt, setReceipt] = useState<File | null>(null);
     const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
+    // Validation errors
+    const [errors, setErrors] = useState({
+        liters: "",
+        cost: "",
+        mileage: ""
+    });
+
     useEffect(() => {
         const fetchVehicles = async () => {
+            setLoadingVehicles(true);
             try {
                 const response = await api.get("/vehicles");
-                setVehicles(response.data);
+                setVehicles(response.data || []);
             } catch (error) {
                 console.error("Failed to fetch vehicles:", error);
-                toast({
-                    variant: "destructive",
-                    title: "Error fetching vehicles",
-                    description: "Please try again later."
-                });
+                toast.error("Failed to load vehicles. Please refresh the page.");
+            } finally {
+                setLoadingVehicles(false);
             }
         };
         fetchVehicles();
-    }, [toast]);
+    }, []);
+
+    const validateNumber = (value: string, field: string): boolean => {
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+            setErrors(prev => ({ ...prev, [field]: "Must be a positive number" }));
+            return false;
+        }
+        setErrors(prev => ({ ...prev, [field]: "" }));
+        return true;
+    };
+
+    const handleLitersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setLiters(value);
+        if (value) validateNumber(value, 'liters');
+    };
+
+    const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setCost(value);
+        if (value) validateNumber(value, 'cost');
+    };
+
+    const handleMileageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setMileage(value);
+        if (value) validateNumber(value, 'mileage');
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             // Validate file size (5MB max)
             if (file.size > 5 * 1024 * 1024) {
-                toast({
-                    variant: "destructive",
-                    title: "File too large",
-                    description: "Please upload a file smaller than 5MB."
-                });
+                toast.error("File too large. Please upload a file smaller than 5MB.");
                 return;
             }
 
             // Validate file type
             const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
             if (!validTypes.includes(file.type)) {
-                toast({
-                    variant: "destructive",
-                    title: "Invalid file type",
-                    description: "Please upload a JPG, PNG, or PDF file."
-                });
+                toast.error("Invalid file type. Please upload a JPG, PNG, or PDF file.");
                 return;
             }
 
@@ -102,12 +144,29 @@ export default function FuelEntryPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!date || !selectedVehicle || !user) {
-            toast({
-                variant: "destructive",
-                title: "Missing fields",
-                description: "Please fill in all required fields."
-            });
+        // Validate all required fields
+        if (!date) {
+            toast.error("Please select a date");
+            return;
+        }
+
+        if (!selectedVehicle) {
+            toast.error("Please select a vehicle");
+            return;
+        }
+
+        if (!liters || !cost || !mileage) {
+            toast.error("Please fill in all required fields");
+            return;
+        }
+
+        // Validate numbers
+        const isLitersValid = validateNumber(liters, 'liters');
+        const isCostValid = validateNumber(cost, 'cost');
+        const isMileageValid = validateNumber(mileage, 'mileage');
+
+        if (!isLitersValid || !isCostValid || !isMileageValid) {
+            toast.error("Please enter valid positive numbers");
             return;
         }
 
@@ -122,14 +181,15 @@ export default function FuelEntryPage() {
                 const uploadRes = await api.post("/fuel/upload-receipt", formData, {
                     headers: { "Content-Type": "multipart/form-data" }
                 });
-                receiptPath = uploadRes.data.path || uploadRes.data;
+                receiptPath = uploadRes.data.receiptPath || uploadRes.data.path || "";
             }
 
             const payload = {
-                vehicle: { id: parseInt(selectedVehicle) },
-                driver: { id: user.id },
+                vehicleId: parseInt(selectedVehicle),
+                driverId: user?.id || null,
                 quantity: parseFloat(liters),
                 cost: parseFloat(cost),
+                pricePerLiter: parseFloat(cost) / parseFloat(liters),
                 mileage: parseFloat(mileage),
                 stationName: stationName || undefined,
                 receiptPath: receiptPath || undefined,
@@ -139,10 +199,7 @@ export default function FuelEntryPage() {
             await api.post("/fuel", payload);
 
             setSuccess(true);
-            toast({
-                title: "Success",
-                description: "Fuel record saved successfully."
-            });
+            toast.success("Fuel record saved successfully!");
 
             // Reset form
             setLiters("");
@@ -157,15 +214,12 @@ export default function FuelEntryPage() {
             // Redirect after short delay
             setTimeout(() => {
                 router.push("/fuel");
-            }, 1000);
+            }, 1500);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving fuel record:", error);
-            toast({
-                variant: "destructive",
-                title: "Failed to save",
-                description: "Could not save the fuel record. Please try again."
-            });
+            const errorMsg = error.response?.data?.message || "Could not save the fuel record. Please try again.";
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -173,78 +227,123 @@ export default function FuelEntryPage() {
 
     return (
         <ModuleLayout title="Record Fuel Purchase">
-            <div className="max-w-2xl mx-auto">
-                <Card className="border-slate-200 shadow-sm">
-                    <CardHeader>
-                        <CardTitle>New Fuel Entry</CardTitle>
-                        <CardDescription>Record a new fuel purchase receipt details.</CardDescription>
+            <div className="max-w-3xl mx-auto">
+                <Card className="border-slate-200 shadow-lg">
+                    <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-blue-50 to-white">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                                <Fuel className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-2xl font-bold text-slate-900">New Fuel Entry</CardTitle>
+                                <CardDescription className="text-slate-600">Record a new fuel purchase with receipt details</CardDescription>
+                            </div>
+                        </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6">
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Vehicle Selection */}
                             <div className="space-y-2">
-                                <Label htmlFor="vehicle">Select Vehicle</Label>
-                                <Select value={selectedVehicle} onValueChange={setSelectedVehicle} required>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select vehicle..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {vehicles.map((v) => (
-                                            <SelectItem key={v.id} value={v.id.toString()}>
-                                                {v.make} {v.model} ({v.licensePlate})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Label htmlFor="vehicle" className="text-sm font-semibold text-slate-700">
+                                    Select Vehicle <span className="text-red-500">*</span>
+                                </Label>
+                                {loadingVehicles ? (
+                                    <div className="flex items-center gap-2 p-3 border rounded-lg bg-slate-50">
+                                        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                                        <span className="text-sm text-slate-500">Loading vehicles...</span>
+                                    </div>
+                                ) : vehicles.length === 0 ? (
+                                    <div className="p-4 border border-amber-200 rounded-lg bg-amber-50 text-amber-700">
+                                        <p className="text-sm font-medium">No vehicles available</p>
+                                        <p className="text-xs mt-1">Please contact admin to add vehicles</p>
+                                    </div>
+                                ) : (
+                                    <Select value={selectedVehicle} onValueChange={setSelectedVehicle} required>
+                                        <SelectTrigger className="h-12 border-slate-300 bg-white">
+                                            <SelectValue placeholder="Choose a vehicle..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white">
+                                            {vehicles.map((v) => (
+                                                <SelectItem key={v.id} value={v.id.toString()} className="bg-white hover:bg-slate-100">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold">{v.make} {v.model}</span>
+                                                        <span className="text-slate-500">({v.licensePlate})</span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Quantity and Cost */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="liters">Fuel Quantity (Liters)</Label>
+                                    <Label htmlFor="liters" className="text-sm font-semibold text-slate-700">
+                                        Fuel Quantity (Liters) <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
                                         id="liters"
                                         type="number"
-                                        step="0.1"
-                                        placeholder="0.00"
+                                        step="0.01"
+                                        min="0.01"
+                                        placeholder="45.50"
                                         value={liters}
-                                        onChange={(e) => setLiters(e.target.value)}
+                                        onChange={handleLitersChange}
+                                        className={cn("h-12", errors.liters && "border-red-500")}
                                         required
                                     />
+                                    {errors.liters && <p className="text-xs text-red-500 font-medium">{errors.liters}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="cost">Total Cost ($)</Label>
+                                    <Label htmlFor="cost" className="text-sm font-semibold text-slate-700">
+                                        Total Cost ($) <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
                                         id="cost"
                                         type="number"
                                         step="0.01"
-                                        placeholder="0.00"
+                                        min="0.01"
+                                        placeholder="145.60"
                                         value={cost}
-                                        onChange={(e) => setCost(e.target.value)}
+                                        onChange={handleCostChange}
+                                        className={cn("h-12", errors.cost && "border-red-500")}
                                         required
                                     />
+                                    {errors.cost && <p className="text-xs text-red-500 font-medium">{errors.cost}</p>}
                                 </div>
                             </div>
 
+                            {/* Mileage */}
                             <div className="space-y-2">
-                                <Label htmlFor="mileage">Current Odometer (km)</Label>
+                                <Label htmlFor="mileage" className="text-sm font-semibold text-slate-700">
+                                    Current Odometer (km) <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="mileage"
                                     type="number"
                                     step="0.1"
-                                    placeholder="e.g. 50120.5"
+                                    min="0"
+                                    placeholder="e.g., 50120.5"
                                     value={mileage}
-                                    onChange={(e) => setMileage(e.target.value)}
+                                    onChange={handleMileageChange}
+                                    className={cn("h-12", errors.mileage && "border-red-500")}
                                     required
                                 />
+                                {errors.mileage && <p className="text-xs text-red-500 font-medium">{errors.mileage}</p>}
                             </div>
 
+                            {/* Date */}
                             <div className="space-y-2">
-                                <Label>Date of Purchase</Label>
+                                <Label className="text-sm font-semibold text-slate-700">
+                                    Date of Purchase <span className="text-red-500">*</span>
+                                </Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant={"outline"}
                                             className={cn(
-                                                "w-full justify-start text-left font-normal",
+                                                "w-full h-12 justify-start text-left font-normal border-slate-300",
                                                 !date && "text-muted-foreground"
                                             )}
                                         >
@@ -263,18 +362,30 @@ export default function FuelEntryPage() {
                                 </Popover>
                             </div>
 
+                            {/* Fuel Station Dropdown */}
                             <div className="space-y-2">
-                                <Label htmlFor="station">Fuel Station (Optional)</Label>
-                                <Input
-                                    id="station"
-                                    placeholder="e.g., Shell Station, Main St"
-                                    value={stationName}
-                                    onChange={(e) => setStationName(e.target.value)}
-                                />
+                                <Label htmlFor="station" className="text-sm font-semibold text-slate-700">
+                                    Fuel Station (Optional)
+                                </Label>
+                                <Select value={stationName} onValueChange={setStationName}>
+                                    <SelectTrigger className="h-12 border-slate-300 bg-white">
+                                        <SelectValue placeholder="Select fuel station..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white">
+                                        {FUEL_STATIONS.map((station) => (
+                                            <SelectItem key={station} value={station} className="bg-white hover:bg-slate-100">
+                                                {station}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
+                            {/* Receipt Upload */}
                             <div className="space-y-2">
-                                <Label htmlFor="receipt">Upload Receipt (Optional)</Label>
+                                <Label htmlFor="receipt" className="text-sm font-semibold text-slate-700">
+                                    Upload Receipt (Optional)
+                                </Label>
                                 <input
                                     id="receipt"
                                     type="file"
@@ -284,31 +395,37 @@ export default function FuelEntryPage() {
                                 />
                                 <label
                                     htmlFor="receipt"
-                                    className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer block"
+                                    className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-blue-400 transition-all cursor-pointer block"
                                 >
-                                    <Upload className="h-8 w-8 text-slate-400 mb-2" />
-                                    <p className="text-sm text-slate-600 font-medium">
+                                    <Upload className="h-10 w-10 text-slate-400 mb-3" />
+                                    <p className="text-sm text-slate-700 font-semibold">
                                         {receipt ? receipt.name : "Click to upload or drag and drop"}
                                     </p>
-                                    <p className="text-xs text-slate-400">PDF, PNG, JPG up to 5MB</p>
+                                    <p className="text-xs text-slate-500 mt-1">PDF, PNG, JPG up to 5MB</p>
                                 </label>
                                 {receiptPreview && (
-                                    <div className="mt-2">
-                                        <img src={receiptPreview} alt="Receipt preview" className="max-h-40 rounded-lg border" />
+                                    <div className="mt-3 p-3 border rounded-lg bg-slate-50">
+                                        <p className="text-xs font-semibold text-slate-600 mb-2">Preview:</p>
+                                        <img src={receiptPreview} alt="Receipt preview" className="max-h-48 rounded-lg border mx-auto" />
                                     </div>
                                 )}
                             </div>
 
-                            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                            {/* Submit Button */}
+                            <Button
+                                type="submit"
+                                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base"
+                                disabled={loading || loadingVehicles}
+                            >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                         Saving...
                                     </>
                                 ) : success ? (
                                     <>
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Saved Successfully
+                                        <CheckCircle className="mr-2 h-5 w-5" />
+                                        Saved Successfully!
                                     </>
                                 ) : (
                                     "Save Fuel Record"

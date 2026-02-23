@@ -11,11 +11,26 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const role = authService.getRole();
-        if (role === 'ADMIN') router.push('/dashboard/admin');
-        else if (role === 'APPROVER') router.push('/dashboard/approver'); // Ensure these pages exist or redirect to implemented modules
-        else if (role === 'SYSTEM_USER' || role === 'STAFF') router.push('/dashboard/staff');
-        else if (role === 'DRIVER') router.push('/fuel'); // Fallback to Fuel for now
-        else router.push('/fuel');
+
+        // Role-based dashboard routing
+        switch (role) {
+            case 'ADMIN':
+                router.push('/dashboard/admin');
+                break;
+            case 'APPROVER':
+                router.push('/dashboard/approver');
+                break;
+            case 'SYSTEM_USER':
+            case 'STAFF':
+                router.push('/dashboard/staff');
+                break;
+            case 'DRIVER':
+                router.push('/dashboard/driver');
+                break;
+            default:
+                // Fallback to staff dashboard for unknown roles
+                router.push('/dashboard/staff');
+        }
     }, [router]);
 
     return (
