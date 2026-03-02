@@ -89,6 +89,20 @@ public class AuthenticationService {
             throw new RuntimeException("Email already exists");
         }
 
+        // Ensure email was OTP-verified before allowing account creation
+        String[] verificationData = pendingEmailVerifications.get(request.getEmail());
+        if (verificationData == null) {
+            throw new RuntimeException("Email verification is required before creating this account");
+        }
+        long verificationExpiry = Long.parseLong(verificationData[1]);
+        if (System.currentTimeMillis() > verificationExpiry) {
+            pendingEmailVerifications.remove(request.getEmail());
+            throw new RuntimeException("Email verification has expired. Please request a new code.");
+        }
+        if (!"VERIFIED".equals(verificationData[0])) {
+            throw new RuntimeException("Email verification is incomplete. Please verify the OTP first.");
+        }
+
         // Auto-generate a secure temporary password
         String generatedPassword = "Temp" + (int) (Math.random() * 9000 + 1000) + "!";
 
