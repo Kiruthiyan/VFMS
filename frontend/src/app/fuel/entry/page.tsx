@@ -70,11 +70,29 @@ export default function FuelEntryPage() {
         const fetchVehicles = async () => {
             setLoadingVehicles(true);
             try {
+                console.log("🚗 Fetching vehicles from API...");
                 const response = await api.get("/vehicles");
-                setVehicles(response.data || []);
-            } catch (error) {
-                console.error("Failed to fetch vehicles:", error);
-                toast.error("Failed to load vehicles. Please refresh the page.");
+                console.log("✅ Vehicles fetched successfully:", response.data);
+                const vehicleData = Array.isArray(response.data) ? response.data : [];
+                
+                if (vehicleData.length === 0) {
+                    console.warn("⚠️ No vehicles returned from API");
+                    toast.warning("No vehicles available. Please ask admin to add vehicles.");
+                } else {
+                    console.log(`✅ ${vehicleData.length} vehicles loaded successfully`);
+                }
+                
+                setVehicles(vehicleData);
+            } catch (error: any) {
+                console.error("❌ Failed to fetch vehicles:", error);
+                const errorMsg = error.response?.data?.message || error.message || "Failed to load vehicles";
+                console.error("Error details:", {
+                    status: error.response?.status,
+                    message: errorMsg,
+                    url: error.config?.url
+                });
+                toast.error(`Could not load vehicles: ${errorMsg}`);
+                setVehicles([]);
             } finally {
                 setLoadingVehicles(false);
             }

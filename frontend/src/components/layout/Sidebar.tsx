@@ -86,11 +86,9 @@ export function Sidebar() {
         },
         {
             type: "section",
-            label: "Management",
+            label: "User Management",
             items: [
                 { name: "Users", href: "/admin/users", icon: Users },
-                { name: "Vehicles", href: "/vehicles", icon: Car },
-                { name: "Trips", href: "/trips", icon: Calendar },
             ],
         },
         {
@@ -102,53 +100,29 @@ export function Sidebar() {
                     items: [
                         { name: "Fuel Records", href: "/fuel", icon: ClipboardList },
                         { name: "Add Fuel Entry", href: "/fuel/entry", icon: PlusCircle },
-                        { name: "Analytics", href: "/fuel/analytics", icon: BarChart3 },
-                        { name: "Summary Report", href: "/fuel/summary", icon: FileBarChart },
-                        { name: "Alerts", href: "/fuel/alerts", icon: AlertCircle },
+                        { name: "Fuel Summary", href: "/fuel/summary", icon: FileBarChart },
+                        { name: "Fuel Alerts", href: "/fuel/alerts", icon: AlertCircle },
                     ],
                 },
             ],
         },
-        {
-            type: "section",
-            label: "Reporting",
-            items: [
-                { name: "Reports", href: "/reports", icon: FileBarChart },
-            ],
-        },
-    ];
-
-    /* ──────────────────────────────── STAFF CONFIG ─────────────────────────── */
-    const staffItems: NavItem[] = [
-        { name: "Dashboard", href: "/dashboard/staff", icon: LayoutDashboard },
-        { name: "Vehicles", href: "/vehicles", icon: Car },
-        { name: "Trips", href: "/trips", icon: Calendar },
-        { name: "Fuel Records", href: "/fuel", icon: ClipboardList },
-        { name: "Add Fuel Entry", href: "/fuel/entry", icon: PlusCircle },
-        { name: "Fuel Summary", href: "/fuel/summary", icon: FileBarChart },
-        { name: "Fuel Alerts", href: "/fuel/alerts", icon: AlertCircle },
-        { name: "Reports", href: "/reports", icon: FileBarChart },
     ];
 
     /* ──────────────────────────────── DRIVER CONFIG ─────────────────────────── */
     const driverItems: NavItem[] = [
         { name: "Dashboard", href: "/dashboard/driver", icon: LayoutDashboard },
-        { name: "My Trips", href: "/trips", icon: Calendar },
         { name: "Add Fuel Entry", href: "/fuel/entry", icon: PlusCircle },
-        { name: "Fuel Records", href: "/fuel", icon: ClipboardList },
+        { name: "My Fuel Records", href: "/fuel", icon: ClipboardList },
         { name: "Profile", href: "/profile", icon: UserCircle },
     ];
 
     /* ──────────────────────────────── APPROVER CONFIG ─────────────────────────── */
     const approverItems: NavItem[] = [
         { name: "Dashboard", href: "/dashboard/approver", icon: LayoutDashboard },
-        { name: "Approvals", href: "/approvals", icon: CheckSquare },
-        { name: "Fuel Analytics", href: "/fuel/analytics", icon: BarChart3 },
-        { name: "Fuel Summary", href: "/fuel/summary", icon: FileBarChart },
-        { name: "Fuel Alerts", href: "/fuel/alerts", icon: AlertCircle },
         { name: "Fuel Records", href: "/fuel", icon: ClipboardList },
-        { name: "Reports", href: "/reports", icon: FileBarChart },
+        { name: "Fuel Summary", href: "/fuel/summary", icon: FileBarChart },
     ];
+
 
     if (!role) return null;
 
@@ -308,9 +282,7 @@ export function Sidebar() {
                         <div className="grid gap-0.5">
                             {(role === "DRIVER"
                                 ? driverItems
-                                : role === "APPROVER"
-                                    ? approverItems
-                                    : staffItems
+                                : approverItems
                             ).map((item) => (
                                 <NavLink key={item.href} item={item} />
                             ))}

@@ -47,8 +47,14 @@ export default function VehicleFuelSummaryPage() {
         const fetchData = async () => {
             try {
                 const [vehiclesRes, fuelRes] = await Promise.all([
-                    api.get("/vehicles"),
-                    api.get("/fuel")
+                    api.get("/vehicles").catch(err => {
+                        console.error("Failed to fetch vehicles:", err);
+                        return { data: [] };
+                    }),
+                    api.get("/fuel").catch(err => {
+                        console.error("Failed to fetch fuel records:", err);
+                        return { data: [] };
+                    })
                 ]);
 
                 const vehicles: Vehicle[] = vehiclesRes.data || [];

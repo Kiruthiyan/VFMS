@@ -17,7 +17,7 @@ import ModuleLayout from "@/components/layout/ModuleLayout";
 import api from "@/lib/api";
 import { format } from "date-fns";
 import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface Vehicle {
     id: number;
@@ -42,38 +42,39 @@ export default function FuelLogsPage() {
     const [logs, setLogs] = useState<FuelRecord[]>([]);
     const [vehicles, setVehicles] = useState<Record<number, Vehicle>>({});
     const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const [fuelRes, vehicleRes] = await Promise.all([
-                    api.get("/fuel"),
-                    api.get("/vehicles")
+                    api.get("/fuel").catch(err => {
+                        console.error("Failed to fetch fuel records:", err);
+                        return { data: [] };
+                    }),
+                    api.get("/vehicles").catch(err => {
+                        console.error("Failed to fetch vehicles:", err);
+                        return { data: [] };
+                    })
                 ]);
 
-                setLogs(fuelRes.data);
+                setLogs(fuelRes.data || []);
 
                 // Create a map of vehicle ID to Vehicle object for easy lookup
                 const vehicleMap: Record<number, Vehicle> = {};
-                vehicleRes.data.forEach((v: Vehicle) => {
+                (vehicleRes.data || []).forEach((v: Vehicle) => {
                     vehicleMap[v.id] = v;
                 });
                 setVehicles(vehicleMap);
 
             } catch (error) {
                 console.error("Failed to fetch data:", error);
-                toast({
-                    variant: "destructive",
-                    title: "Error fetching data",
-                    description: "Could not load fuel logs."
-                });
+                toast.error("Could not load fuel logs");
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
-    }, [toast]);
+    }, []);
 
     const getVehicleDetails = (id: number) => {
         return vehicles[id] || { make: "Unknown", model: "Vehicle", licensePlate: "N/A" };

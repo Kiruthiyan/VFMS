@@ -1,12 +1,11 @@
 package com.vfms.auth.controller;
 
-import com.vfms.auth.dto.AuthenticationRequest;
-import com.vfms.auth.dto.AuthenticationResponse;
-import com.vfms.auth.dto.RegisterRequest;
+import com.vfms.auth.dto.*;
 import com.vfms.auth.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,8 +22,8 @@ public class AuthenticationController {
      * Step 1: Send OTP to the proposed email to verify it is valid and reachable.
      */
     @PostMapping("/send-verification-code")
-    public ResponseEntity<String> sendVerificationCode(@RequestBody java.util.Map<String, String> request) {
-        service.sendVerificationCode(request.get("email"));
+    public ResponseEntity<String> sendVerificationCode(@Valid @RequestBody SendVerificationRequest request) {
+        service.sendVerificationCode(request.getEmail());
         return ResponseEntity.ok("Verification code sent");
     }
 
@@ -32,8 +31,8 @@ public class AuthenticationController {
      * Step 2: Verify the OTP the user received.
      */
     @PostMapping("/verify-email-code")
-    public ResponseEntity<String> verifyEmailCode(@RequestBody java.util.Map<String, String> request) {
-        service.verifyEmailOtp(request.get("email"), request.get("code"));
+    public ResponseEntity<String> verifyEmailCode(@Valid @RequestBody VerifyEmailCodeRequest request) {
+        service.verifyEmailOtp(request.getEmail(), request.getCode());
         return ResponseEntity.ok("Email verified");
     }
 
@@ -54,9 +53,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody java.util.Map<String, String> request) {
-        service.forgotPassword(request.get("email"));
-        return ResponseEntity.ok("Password reset link sent");
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        service.forgotPassword(request.getEmail());
+        return ResponseEntity.ok("Password reset code sent to your email");
     }
 
     @PostMapping("/verify-otp")
@@ -72,7 +71,8 @@ public class AuthenticationController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(@Valid @RequestBody com.vfms.auth.dto.ChangePasswordRequest request) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         service.changePassword(request.getUserId(), request.getNewPassword());
         return ResponseEntity.ok("Password changed successfully");
     }

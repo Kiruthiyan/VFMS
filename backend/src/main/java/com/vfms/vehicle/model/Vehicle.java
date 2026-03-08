@@ -31,6 +31,7 @@ public class Vehicle {
     // AVAILABLE, IN_USE, MAINTENANCE
     private String status;
 
+    @Column(name = "\"year\"")
     private Integer year;
 
     // e.g. "75%"

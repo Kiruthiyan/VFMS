@@ -37,12 +37,25 @@ export default function FuelAlertsPage() {
         setLoading(true);
         try {
             const [fuelRes, vehiclesRes] = await Promise.all([
-                api.get("/fuel"),
-                api.get("/vehicles")
+                api.get("/fuel").catch(err => {
+                    console.error("Failed to fetch fuel records:", err);
+                    return { data: [] };
+                }),
+                api.get("/vehicles").catch(err => {
+                    console.error("Failed to fetch vehicles:", err);
+                    return { data: [] };
+                })
             ]);
 
-            const records = fuelRes.data;
-            const vehicles = vehiclesRes.data;
+            const records = fuelRes.data || [];
+            const vehicles = vehiclesRes.data || [];
+            
+            if (!records || records.length === 0) {
+                setAlerts([]);
+                setLoading(false);
+                return;
+            }
+
             const detectedAlerts: MisuseAlert[] = [];
 
             // Group records by vehicle

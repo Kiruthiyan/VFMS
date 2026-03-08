@@ -211,24 +211,15 @@ public class AuthenticationService {
         var user = repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        System.out.println("=== OTP Verification Debug ===");
-        System.out.println("Email: " + email);
-        System.out.println("Entered OTP: [" + otp + "]");
-        System.out.println("Stored OTP: [" + user.getPasswordResetToken() + "]");
-        System.out.println(
-                "OTP Match: " + (user.getPasswordResetToken() != null && user.getPasswordResetToken().equals(otp)));
-        System.out.println("Token Expiry: " + user.getPasswordResetTokenExpiry());
-        System.out.println("Current Time: " + java.time.LocalDateTime.now());
-        System.out.println("Is Expired: " + (user.getPasswordResetTokenExpiry() != null
-                && user.getPasswordResetTokenExpiry().isBefore(java.time.LocalDateTime.now())));
-        System.out.println("============================");
-
         if (user.getPasswordResetToken() == null || !user.getPasswordResetToken().equals(otp)) {
-            throw new RuntimeException("Invalid OTP");
+            throw new RuntimeException("Invalid verification code");
         }
 
-        if (user.getPasswordResetTokenExpiry().isBefore(java.time.LocalDateTime.now())) {
-            throw new RuntimeException("OTP has expired");
+        if (user.getPasswordResetTokenExpiry() == null || user.getPasswordResetTokenExpiry().isBefore(java.time.LocalDateTime.now())) {
+            user.setPasswordResetToken(null);
+            user.setPasswordResetTokenExpiry(null);
+            repository.save(user);
+            throw new RuntimeException("Verification code has expired. Please request a new one");
         }
     }
 

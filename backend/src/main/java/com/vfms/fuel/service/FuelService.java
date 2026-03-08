@@ -17,12 +17,21 @@ public class FuelService {
     }
 
     public FuelRecord addFuelRecord(FuelRecord record) {
-        // Validation or business logic can go here
-        // e.g. Calculate price per liter if not provided
-        if (record.getPricePerLiter() == null && record.getCost() != null && record.getQuantity() != null
-                && record.getQuantity() > 0) {
+        if (record.getQuantity() == null || record.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Fuel quantity must be a positive value");
+        }
+        if (record.getCost() == null || record.getCost() < 0) {
+            throw new IllegalArgumentException("Fuel cost cannot be negative");
+        }
+        if (record.getVehicleId() == null) {
+            throw new IllegalArgumentException("Vehicle ID is required");
+        }
+        
+        // Calculate price per liter if not provided
+        if (record.getPricePerLiter() == null && record.getCost() != null && record.getQuantity() > 0) {
             record.setPricePerLiter(record.getCost() / record.getQuantity());
         }
+        
         return repository.save(record);
     }
 

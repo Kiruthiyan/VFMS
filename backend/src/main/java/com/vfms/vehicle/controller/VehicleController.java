@@ -4,6 +4,7 @@ import com.vfms.vehicle.model.Vehicle;
 import com.vfms.vehicle.service.VehicleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class VehicleController {
      * @return List of all vehicles.
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_USER', 'DRIVER', 'APPROVER')")
     public ResponseEntity<List<Vehicle>> getAllVehicles() {
         return ResponseEntity.ok(service.getAllVehicles());
     }
@@ -31,6 +33,7 @@ public class VehicleController {
      * @return The vehicle details.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_USER', 'DRIVER', 'APPROVER')")
     public ResponseEntity<Vehicle> getVehicle(@PathVariable Integer id) {
         return ResponseEntity.ok(service.getVehicleById(id));
     }
@@ -42,6 +45,7 @@ public class VehicleController {
      * @return The created vehicle.
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
         return ResponseEntity.ok(service.createVehicle(vehicle));
     }
@@ -54,6 +58,7 @@ public class VehicleController {
      * @return The updated vehicle.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vehicle> updateVehicle(@PathVariable Integer id, @RequestBody Vehicle vehicle) {
         return ResponseEntity.ok(service.updateVehicle(id, vehicle));
     }
@@ -65,6 +70,7 @@ public class VehicleController {
      * @return No content.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteVehicle(@PathVariable Integer id) {
         service.deleteVehicle(id);
         return ResponseEntity.ok().build();

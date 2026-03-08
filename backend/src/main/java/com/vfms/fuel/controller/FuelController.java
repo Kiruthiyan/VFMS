@@ -4,6 +4,7 @@ import com.vfms.fuel.model.FuelRecord;
 import com.vfms.fuel.service.FuelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,38 +25,36 @@ public class FuelController {
     private final FuelService service;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_USER', 'APPROVER')")
     public ResponseEntity<List<FuelRecord>> getAllFuelRecords() {
         return ResponseEntity.ok(service.getAllFuelRecords());
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER')")
     public ResponseEntity<?> addFuelRecord(@RequestBody FuelRecord record) {
         try {
-            System.out.println("=== FUEL RECORD RECEIVED ===");
-            System.out.println("Vehicle ID: " + record.getVehicleId());
-            System.out.println("Driver ID: " + record.getDriverId());
-            System.out.println("Quantity: " + record.getQuantity());
-            System.out.println("Cost: " + record.getCost());
-            System.out.println("Mileage: " + record.getMileage());
-            System.out.println("Station: " + record.getStationName());
-            System.out.println("Date: " + record.getDate());
-            System.out.println("===========================");
-
+            if (record.getVehicleId() == null || record.getQuantity() == null || record.getCost() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Vehicle ID, quantity, and cost are required"));
+            }
+            if (record.getQuantity() <= 0 || record.getCost() <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Quantity and cost must be positive values"));
+            }
             FuelRecord saved = service.addFuelRecord(record);
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
-            System.err.println("ERROR saving fuel record: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to save fuel record"));
         }
     }
 
     @GetMapping("/vehicle/{vehicleId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_USER', 'APPROVER')")
     public ResponseEntity<List<FuelRecord>> getByVehicle(@PathVariable Integer vehicleId) {
         return ResponseEntity.ok(service.getFuelRecordsByVehicle(vehicleId));
     }
 
     @PostMapping("/upload-receipt")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER')")
     public ResponseEntity<Map<String, String>> uploadReceipt(@RequestParam("file") MultipartFile file) {
         try {
             // Validate file
@@ -82,11 +81,20 @@ public class FuelController {
                 Files.createDirectories(uploadPath);
             }
 
-            // Generate unique filename
+            // Generate unique filename (sanitized)
             String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+            if (originalFilename == null || originalFilename.trim().isEmpty()) {
+                throw new IllegalArgumentException("Invalid file name");
+            }
+            
+            String extension = originalFilename.contains(".")
+                    ? originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase()
                     : "";
+            
+            if (!extension.matches("\\.(jpg|jpeg|png|pdf)$")) {
+                throw new IllegalArgumentException("Invalid file extension");
+            }
+            
             String filename = UUID.randomUUID().toString() + extension;
 
             // Save file
