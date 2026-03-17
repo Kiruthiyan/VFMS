@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* UOM Primary: #FFB401 (Amber) */
+    --primary: 42 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    /* UOM Secondary: #953002 (Rust) */
+    --secondary: 19 97% 30%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* UOM State Colors */
+    --info: 214 84% 56%;
+    /* #2F80ED */
+    --success: 145 63% 42%;
+    /* #27AE60 */
+    --warning: 42 74% 56%;
+    /* #E2B93B */
+    --destructive: 360 79% 63%;
+    /* #EB5757 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* UOM Black/Gray Scale */
+    --background: 0 0% 100%;
+    /* White */
+    --foreground: 0 0% 20%;
+    /* Gray 1 #333333 = 0 0% 20% */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
+
+    --muted: 0 0% 96%;
+    /* Gray 6 equivalent */
+    --muted-foreground: 0 0% 45%;
+
+    --border: 0 0% 88%;
+    /* Gray 5 #E0E0E0 */
+    --input: 0 0% 88%;
+    --ring: 42 100% 50%;
+    /* Ring matches Primary */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Adapting UOM colors for Dark Mode (Not strictly defined, inferring) */
+    --background: 0 0% 11%;
+    /* Black 2 #1D1D1D */
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 16%;
+    /* Black 3 #282828 */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 42 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 19 97% 30%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 42 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 360 81% 63%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 42 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.dark .glass-panel {
+  background: rgba(29, 29, 29, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Sliding Auth Page Styles */
+.auth-container.right-panel-active .sign-in-container {
+  transform: translateX(100%);
+  opacity: 0;
+  z-index: 1;
+}
+
+.auth-container.right-panel-active .sign-up-container {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: show 0.6s;
+}
+
+@keyframes show {
+
+  0%,
+  49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 1;
+    z-index: 5;
+  }
+}
+
+.auth-container.right-panel-active .overlay-container {
+  transform: translateX(-100%);
+}
+
+.auth-container.right-panel-active .overlay {
+  transform: translateX(50%);
+}
+
+.auth-container.right-panel-active .overlay-left {
+  transform: translateX(0);
+}
+
+.auth-container.right-panel-active .overlay-right {
+  transform: translateX(20%);
+}
+
+/* Utility Animations */
+.animate-gradient-slow {
+  background-size: 200% 200%;
+  animation: gradient 8s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .5;
+  }
+}
