@@ -18,14 +18,21 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "_user")
+@Table(name = "_user", indexes = {
+        @Index(name = "idx_email", columnList = "email"),
+        @Index(name = "idx_status", columnList = "status"),
+        @Index(name = "idx_role", columnList = "role"),
+        @Index(name = "idx_email_status", columnList = "email,status")
+})
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String name;
+    private String firstName;
+    
+    private String lastName;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -37,11 +44,16 @@ public class User implements UserDetails {
     private Role role;
 
     // Driver specific fields
-    private String phone;
+    private String phoneNumber;
+    
     @Column(unique = true)
     private String licenseNumber;
-    private String status; // Active, Inactive, etc.
+    
+    @Builder.Default
+    private Boolean status = true; // true = active, false = deactivated
+    
     private LocalDate joinedDate;
+    
     private String avatarUrl;
 
     @Builder.Default
@@ -52,6 +64,20 @@ public class User implements UserDetails {
 
     private String passwordResetToken;
     private java.time.LocalDateTime passwordResetTokenExpiry;
+
+    /**
+     * Get full name by combining first and last name
+     */
+    public String getFullName() {
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        } else if (firstName != null) {
+            return firstName;
+        } else if (lastName != null) {
+            return lastName;
+        }
+        return "";
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -80,6 +106,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return status != null && status;
     }
 }

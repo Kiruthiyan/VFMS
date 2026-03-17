@@ -21,6 +21,8 @@ export const authService = {
       localStorage.setItem(NAME_KEY, response.name)
       localStorage.setItem(EMAIL_KEY, response.email)
       localStorage.setItem(ID_KEY, response.id.toString())
+      // Set cookie so Next.js middleware can read the token for route protection
+      document.cookie = `auth_token=${response.token}; path=/; SameSite=Strict`
     }
   },
 
@@ -71,6 +73,8 @@ export const authService = {
       localStorage.removeItem(NAME_KEY)
       localStorage.removeItem(EMAIL_KEY)
       localStorage.removeItem(ID_KEY)
+      // Clear the auth cookie
+      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
     }
   },
 

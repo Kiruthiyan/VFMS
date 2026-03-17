@@ -36,7 +36,7 @@ import {
 
 interface FuelRecord {
     id: number;
-    vehicleId: number;
+    vehiclePlate: string;
     quantity: number;
     cost: number;
     mileage: number;
@@ -48,6 +48,7 @@ interface Vehicle {
     id: number;
     make: string;
     model: string;
+    licensePlate: string;
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
@@ -72,12 +73,19 @@ export default function FuelAnalyticsPage() {
         const fetchAnalytics = async () => {
             try {
                 const [recordsRes, vehiclesRes] = await Promise.all([
-                    api.get("/fuel"),
-                    api.get("/vehicles")
+                    api.get("/fuel").catch(err => {
+                        console.error("Failed to fetch fuel:", err);
+                        return { data: { content: [] } };
+                    }),
+                    api.get("/vehicles").catch(err => {
+                        console.error("Failed to fetch vehicles:", err);
+                        return { data: [] };
+                    })
                 ]);
 
-                const records: FuelRecord[] = recordsRes.data || [];
-                const vehicles: Vehicle[] = vehiclesRes.data || [];
+                // Extract content from paginated response
+                const records: FuelRecord[] = (recordsRes.data && recordsRes.data.content) ? recordsRes.data.content : (Array.isArray(recordsRes.data) ? recordsRes.data : []);
+                const vehicles: Vehicle[] = (vehiclesRes.data && vehiclesRes.data.content) ? vehiclesRes.data.content : (Array.isArray(vehiclesRes.data) ? vehiclesRes.data : []);
 
                 if (records.length === 0) {
                     setLoading(false);
@@ -142,16 +150,16 @@ export default function FuelAnalyticsPage() {
 
                 setMonthlyData(monthly);
 
-                // Vehicle-wise breakdown
-                const vehicleMap = new Map<number, { name: string, cost: number, volume: number, count: number }>();
+                // Vehicle-wise breakdown — keyed by licensePlate
+                const vehicleMap = new Map<string, { name: string, cost: number, volume: number, count: number }>();
                 records.forEach(record => {
-                    const vehicle = vehicles.find(v => v.id === record.vehicleId);
-                    const vehicleName = vehicle ? `${vehicle.make} ${vehicle.model}` : `Vehicle ${record.vehicleId}`;
+                    const vehicle = vehicles.find(v => v.licensePlate === record.vehiclePlate);
+                    const vehicleName = vehicle ? `${vehicle.make} ${vehicle.model}` : record.vehiclePlate;
 
-                    if (!vehicleMap.has(record.vehicleId)) {
-                        vehicleMap.set(record.vehicleId, { name: vehicleName, cost: 0, volume: 0, count: 0 });
+                    if (!vehicleMap.has(record.vehiclePlate)) {
+                        vehicleMap.set(record.vehiclePlate, { name: vehicleName, cost: 0, volume: 0, count: 0 });
                     }
-                    const data = vehicleMap.get(record.vehicleId)!;
+                    const data = vehicleMap.get(record.vehiclePlate)!;
                     data.cost += record.cost || 0;
                     data.volume += record.quantity || 0;
                     data.count += 1;
@@ -297,7 +305,7 @@ export default function FuelAnalyticsPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="w-12 h12 rounded-xl bg-purple-50 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
                                     <Calendar className="h-6 w-6 text-purple-600" />
                                 </div>
                             </div>

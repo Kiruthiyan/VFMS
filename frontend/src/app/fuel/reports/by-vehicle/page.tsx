@@ -48,14 +48,23 @@ export default function ByVehicleReportsPage() {
 
     const fetchVehicles = async () => {
         try {
-            const response = await api.get("/vehicles");
-            setVehicles(response.data);
-            if (response.data.length > 0) {
-                setSelectedVehicle(response.data[0].id.toString());
+            // Fetch fuel records to extract unique vehicles
+            const response = await api.get("/fuel");
+            const allFuelRecords = response.data.content || response.data || [];
+            
+            // Extract unique vehicle plates
+            const uniquePlates = [...new Set(allFuelRecords.map((r: any) => r.vehiclePlate))].filter(Boolean);
+            const vehicleList = uniquePlates.map((plate: string) => ({ id: plate, plate }));
+            
+            setVehicles(vehicleList);
+            if (vehicleList.length > 0) {
+                setSelectedVehicle(vehicleList[0].id.toString());
             }
         } catch (error: any) {
             console.error("Failed to fetch vehicles:", error);
-            toast.error("Failed to load vehicles");
+            // Gracefully handle missing vehicles
+            setVehicles([]);
+            toast.error("Failed to load vehicles. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -65,7 +74,7 @@ export default function ByVehicleReportsPage() {
         setLoading(true);
         try {
             const response = await api.get("/fuel");
-            const allRecords = response.data;
+            const allRecords = response.data.content || response.data || [];
 
             // Filter records for selected vehicle
             const vehicleRecords = allRecords.filter((r: any) =>

@@ -19,8 +19,7 @@ interface Vehicle {
 
 interface FuelRecord {
     id: number;
-    vehicle?: { id: number };
-    vehicleId?: number;
+    vehiclePlate: string;
     quantity: number;
     cost: number;
     mileage: number;
@@ -52,25 +51,28 @@ export default function VehicleFuelSummaryPage() {
                         return { data: [] };
                     }),
                     api.get("/fuel").catch(err => {
+<<<<<<< HEAD
                         console.error("Failed to fetch fuel records:", err);
+=======
+                        console.error("Failed to fetch fuel:", err);
+>>>>>>> 0c49f51 (fixed user verification)
                         return { data: [] };
                     })
                 ]);
 
-                const vehicles: Vehicle[] = vehiclesRes.data || [];
-                const fuelRecords: FuelRecord[] = fuelRes.data || [];
+                const vehicles: Vehicle[] = (vehiclesRes.data && vehiclesRes.data.content) ? vehiclesRes.data.content : (Array.isArray(vehiclesRes.data) ? vehiclesRes.data : []);
+                const fuelRecords: FuelRecord[] = (fuelRes.data && fuelRes.data.content) ? fuelRes.data.content : (Array.isArray(fuelRes.data) ? fuelRes.data : []);
 
                 if (vehicles.length === 0) {
+                    toast.warning("No vehicles available. Please contact admin to add vehicles.");
                     setSummaries([]);
+                    setError(false);
                     setLoading(false);
                     return;
                 }
 
                 const vehicleStats = vehicles.map(vehicle => {
-                    const records = fuelRecords.filter(r => {
-                        const vId = r.vehicle?.id || r.vehicleId;
-                        return vId === vehicle.id;
-                    });
+                    const records = fuelRecords.filter(r => r.vehiclePlate === vehicle.licensePlate);
 
                     const totalSpent = records.reduce((sum, r) => sum + (r.cost || 0), 0);
                     const totalLiters = records.reduce((sum, r) => sum + (r.quantity || 0), 0);
@@ -106,6 +108,7 @@ export default function VehicleFuelSummaryPage() {
                 console.error("Failed to fetch summary data:", error);
                 toast.error("Failed to load vehicle summaries");
                 setError(true);
+                setSummaries([]);
             } finally {
                 setLoading(false);
             }

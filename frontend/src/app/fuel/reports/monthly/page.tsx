@@ -45,7 +45,7 @@ export default function MonthlyReportsPage() {
         setLoading(true);
         try {
             const response = await api.get("/fuel");
-            const records = response.data;
+            const records = response.data.content || response.data || [];
 
             // Filter by selected year
             const yearRecords = records.filter((r: any) => {

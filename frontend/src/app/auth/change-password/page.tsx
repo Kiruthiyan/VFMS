@@ -42,7 +42,7 @@ export default function ChangePasswordPage() {
     const onSubmit = async (data: ChangePasswordValues) => {
         if (!user?.id) {
             toast({ title: "Error", description: "User session not found. Please log in again." });
-            router.push("/login");
+            router.push("/auth/login");
             return;
         }
 

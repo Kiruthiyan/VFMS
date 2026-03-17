@@ -110,7 +110,7 @@ export default function FuelDashboardPage() {
         const fetchData = async () => {
             try {
                 const res = await api.get("/fuel");
-                const data: FuelRecord[] = res.data || [];
+                const data: FuelRecord[] = (res.data.content || res.data || []);
                 setRecords(data);
 
                 const now = new Date();

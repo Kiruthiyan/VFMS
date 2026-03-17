@@ -13,47 +13,36 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Trash2, Shield, Phone, Mail, User as UserIcon, Loader2, Trash, Plus, Users } from "lucide-react";
+import { Search, Trash2, Phone, Mail, User as UserIcon, Loader2 } from "lucide-react";
 import api from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
-import { toast } from "sonner"; // Added sonner toast
+import { toast } from "sonner";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"; // Added ConfirmDialog
-import { LoadingSkeleton } from "@/components/ui/loading-skeleton"; // Added LoadingSkeleton
-import { EmptyState } from "@/components/ui/empty-state"; // Added EmptyState
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"; // Added Dialog components
-import { Label } from "@/components/ui/label"; // Added Label
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select components
-
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface User {
     id: number;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
-    phone: string;
+    phoneNumber: string;
     role: string;
-    status: string;
+    status: boolean;
     joinedDate: string;
 }
 
 export default function UserManagementPage() {
-    const { toast: shadToast } = useToast(); // Renamed shadcn toast
-    const [users, setUsers] = useState<any[]>([]); // Changed type to any[]
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null); // Added error state
-    const [dialogOpen, setDialogOpen] = useState(false); // Added dialogOpen state
-    const [deleteDialog, setDeleteDialog] = useState({ open: false, userId: 0, userName: "" }); // Added deleteDialog state
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, userId: 0, userName: "" });
 
     const fetchUsers = async () => {
         setLoading(true);
-        setError(null); // Reset error
         try {
-            const response = await api.get("/users"); // Removed /api prefix
-            setUsers(response.data);
+            const response = await api.get("/users");
+            setUsers(response.data.content || []);
         } catch (error: any) {
             console.error("Failed to fetch users:", error);
-            setError(error.response?.data?.message || "Failed to load users"); // Set error state
-            toast.error("Failed to load users"); // Using sonner toast
+            toast.error("Failed to load users");
         } finally {
             setLoading(false);
         }
@@ -66,10 +55,10 @@ export default function UserManagementPage() {
     const handleDelete = async () => {
         try {
             await api.delete(`/users/${deleteDialog.userId}`);
-            toast.success(`User ${deleteDialog.userName} deleted successfully`);
+            toast.success(`User ${deleteDialog.userName} deactivated successfully`);
             fetchUsers();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to delete user");
+            toast.error(error.response?.data?.message || "Failed to deactivate user");
         } finally {
             setDeleteDialog({ open: false, userId: 0, userName: "" });
         }
@@ -127,7 +116,7 @@ export default function UserManagementPage() {
                                                         <UserIcon className="h-4 w-4 text-slate-500" />
                                                     </div>
                                                     <div>
-                                                        <div className="font-medium">{user.name}</div>
+                                                        <div className="font-medium">{user.firstName} {user.lastName}</div>
                                                         <div className="text-xs text-muted-foreground flex items-center gap-1">
                                                             <Mail className="h-3 w-3" /> {user.email}
                                                         </div>
@@ -141,12 +130,12 @@ export default function UserManagementPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                                    <Phone className="h-3 w-3" /> {user.phone || "N/A"}
+                                                    <Phone className="h-3 w-3" /> {user.phoneNumber || "N/A"}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="secondary" className={user.status === 'ACTIVE' ? "bg-green-100 text-green-700" : ""}>
-                                                    {user.status}
+                                                <Badge variant="secondary" className={user.status ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}>
+                                                    {user.status ? "Active" : "Inactive"}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -154,7 +143,7 @@ export default function UserManagementPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => setDeleteDialog({ open: true, userId: user.id, userName: user.name })}
+                                                    onClick={() => setDeleteDialog({ open: true, userId: user.id, userName: `${user.firstName} ${user.lastName}` })}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

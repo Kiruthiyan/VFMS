@@ -28,7 +28,7 @@ interface Vehicle {
 
 interface FuelRecord {
     id: number;
-    vehicleId: number;
+    vehiclePlate: string;
     driverId: number;
     quantity: number;
     cost: number;
@@ -40,7 +40,7 @@ interface FuelRecord {
 
 export default function FuelLogsPage() {
     const [logs, setLogs] = useState<FuelRecord[]>([]);
-    const [vehicles, setVehicles] = useState<Record<number, Vehicle>>({});
+    const [vehicles, setVehicles] = useState<Record<string, Vehicle>>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -57,18 +57,39 @@ export default function FuelLogsPage() {
                     })
                 ]);
 
+<<<<<<< HEAD
                 setLogs(fuelRes.data || []);
 
                 // Create a map of vehicle ID to Vehicle object for easy lookup
                 const vehicleMap: Record<number, Vehicle> = {};
                 (vehicleRes.data || []).forEach((v: Vehicle) => {
                     vehicleMap[v.id] = v;
+=======
+                // Extract content from paginated response
+                const fuelLogs = (fuelRes.data && fuelRes.data.content) ? fuelRes.data.content : (Array.isArray(fuelRes.data) ? fuelRes.data : []);
+                setLogs(fuelLogs);
+
+                // Create a map of licensePlate -> Vehicle for lookup
+                const vehicleMap: Record<string, Vehicle> = {};
+                const vehicleList = (vehicleRes.data && vehicleRes.data.content) ? vehicleRes.data.content : (Array.isArray(vehicleRes.data) ? vehicleRes.data : []);
+                vehicleList.forEach((v: Vehicle) => {
+                    vehicleMap[v.licensePlate] = v;
+>>>>>>> 0c49f51 (fixed user verification)
                 });
                 setVehicles(vehicleMap);
+                
+                if (fuelLogs.length === 0) {
+                    toast.info("No fuel records yet. Start by adding a fuel entry.");
+                }
 
             } catch (error) {
                 console.error("Failed to fetch data:", error);
+<<<<<<< HEAD
                 toast.error("Could not load fuel logs");
+=======
+                toast.error("Could not load fuel logs. Please refresh.");
+                setLogs([]);
+>>>>>>> 0c49f51 (fixed user verification)
             } finally {
                 setLoading(false);
             }
@@ -76,8 +97,8 @@ export default function FuelLogsPage() {
         fetchData();
     }, []);
 
-    const getVehicleDetails = (id: number) => {
-        return vehicles[id] || { make: "Unknown", model: "Vehicle", licensePlate: "N/A" };
+    const getVehicleDetails = (plate: string) => {
+        return vehicles[plate] || { make: "Unknown", model: "Vehicle", licensePlate: plate || "N/A" };
     };
 
     return (
@@ -139,7 +160,7 @@ export default function FuelLogsPage() {
                             </TableHeader>
                             <TableBody>
                                 {logs.map((log) => {
-                                    const vehicle = getVehicleDetails(log.vehicleId);
+                                    const vehicle = getVehicleDetails(log.vehiclePlate);
                                     return (
                                         <TableRow key={log.id} className="hover:bg-slate-50 transition-colors">
                                             <TableCell className="font-mono font-medium text-slate-900">#{log.id}</TableCell>

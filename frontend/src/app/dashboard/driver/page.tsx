@@ -37,8 +37,9 @@ export default function DriverDashboard() {
     const fetchDriverData = async () => {
         setLoading(true);
         try {
-            const response = await api.get("/trips/my-trips");
-            const tripsData = response.data || [];
+            // Note: /trips endpoint not yet implemented
+            // For now, use empty data
+            const tripsData: Trip[] = [];
             setTrips(tripsData.slice(0, 5));
 
             const today = new Date().toDateString();

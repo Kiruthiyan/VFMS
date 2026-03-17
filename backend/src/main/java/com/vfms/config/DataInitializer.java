@@ -6,13 +6,18 @@ import com.vfms.auth.repository.UserRepository;
 import com.vfms.vehicle.model.Vehicle;
 import com.vfms.vehicle.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDate;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class DataInitializer {
 
     private final UserRepository userRepository;
@@ -20,8 +25,10 @@ public class DataInitializer {
     private final PasswordEncoder passwordEncoder;
 
     @Bean
+    @Order(1)
     public CommandLineRunner commandLineRunner() {
         return args -> {
+<<<<<<< HEAD
             try {
                 System.out.println("\n======================================");
                 System.out.println("🔄 Initializing database with test data...");
@@ -163,7 +170,46 @@ public class DataInitializer {
                 System.err.println("❌ Error during initialization: " + e.getMessage());
                 System.err.println("❌ =====================================\n");
                 e.printStackTrace();
+=======
+            // Create test admin user
+            if (repository.findByEmail("admin@fleet.com").isEmpty()) {
+                var admin = User.builder()
+                        .firstName("Admin")
+                        .lastName("User")
+                        .email("admin@fleet.com")
+                        .password(passwordEncoder.encode("password"))
+                        .role(Role.ADMIN)
+                        .emailVerified(true)
+                        .status(true)
+                        .joinedDate(java.time.LocalDate.now())
+                        .build();
+                repository.save(admin);
+                log.info("✅ Default Admin created: admin@fleet.com / password");
+>>>>>>> 0c49f51 (fixed user verification)
             }
+            
+            // Create test driver user
+            if (repository.findByEmail("driver@example.com").isEmpty()) {
+                var driver = User.builder()
+                        .firstName("Driver")
+                        .lastName("User")
+                        .email("driver@example.com")
+                        .password(passwordEncoder.encode("password"))
+                        .role(Role.DRIVER)
+                        .emailVerified(true)
+                        .licenseNumber("DL-2024-12345")
+                        .status(true)
+                        .joinedDate(java.time.LocalDate.now())
+                        .build();
+                repository.save(driver);
+                log.info("✅ Test Driver created: driver@example.com / password");
+            }
+            
+            log.info("\n✅ ==========================================");
+            log.info("✅ Test Data Initialized Successfully!");
+            log.info("✅ System Ready for Testing!");
+            log.info("✅ ==========================================\n");
         };
     }
 }
+

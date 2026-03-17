@@ -7,19 +7,14 @@ import { authService } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
     LayoutDashboard,
-    Car,
     Users,
-    Calendar,
     Fuel,
     FileBarChart,
-    Settings,
     LogOut,
     PlusCircle,
-    CheckSquare,
     UserCircle,
     AlertCircle,
     BarChart3,
-    ListFilter,
     ClipboardList,
     ChevronDown,
     ChevronRight,
@@ -106,6 +101,25 @@ export function Sidebar() {
                 },
             ],
         },
+        {
+            type: "section",
+            label: "Reporting",
+            items: [
+                { name: "Reports", href: "/reports", icon: FileBarChart },
+            ],
+        },
+    ];
+
+    /* ──────────────────────────────── STAFF CONFIG ─────────────────────────── */
+    const staffItems: NavItem[] = [
+        { name: "Dashboard", href: "/dashboard/staff", icon: LayoutDashboard },
+        { name: "Vehicles", href: "/vehicles", icon: Car },
+        { name: "Trips", href: "/trips", icon: Calendar },
+        { name: "Fuel Records", href: "/fuel", icon: ClipboardList },
+        { name: "Add Fuel Entry", href: "/fuel/entry", icon: PlusCircle },
+        { name: "Fuel Summary", href: "/fuel/summary", icon: FileBarChart },
+        { name: "Fuel Alerts", href: "/fuel/alerts", icon: AlertCircle },
+        { name: "Reports", href: "/reports", icon: FileBarChart },
     ];
 
     /* ──────────────────────────────── DRIVER CONFIG ─────────────────────────── */
@@ -119,8 +133,12 @@ export function Sidebar() {
     /* ──────────────────────────────── APPROVER CONFIG ─────────────────────────── */
     const approverItems: NavItem[] = [
         { name: "Dashboard", href: "/dashboard/approver", icon: LayoutDashboard },
-        { name: "Fuel Records", href: "/fuel", icon: ClipboardList },
+        { name: "Approvals", href: "/approvals", icon: CheckSquare },
+        { name: "Fuel Analytics", href: "/fuel/analytics", icon: BarChart3 },
         { name: "Fuel Summary", href: "/fuel/summary", icon: FileBarChart },
+        { name: "Fuel Alerts", href: "/fuel/alerts", icon: AlertCircle },
+        { name: "Fuel Records", href: "/fuel", icon: ClipboardList },
+        { name: "Reports", href: "/reports", icon: FileBarChart },
     ];
 
 

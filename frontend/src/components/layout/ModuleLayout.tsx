@@ -25,9 +25,6 @@ export default function ModuleLayout({
                 </header>
 
                 <main className="flex-1 overflow-y-auto p-8 relative scroll-smooth">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-
                     <div className="max-w-7xl mx-auto relative z-10 space-y-8 pb-20">
                         {children}
                     </div>

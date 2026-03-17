@@ -47,30 +47,30 @@ export default function FuelAlertsPage() {
                 })
             ]);
 
-            const records = fuelRes.data || [];
-            const vehicles = vehiclesRes.data || [];
-            
-            if (!records || records.length === 0) {
+            const records = fuelRes.data;
+            const vehicles = vehiclesRes.data;
+            const detectedAlerts: MisuseAlert[] = [];
+
+            if (records.length === 0 || vehicles.length === 0) {
+                toast.info("No fuel records or vehicles available for analysis.");
                 setAlerts([]);
                 setLoading(false);
                 return;
             }
 
-            const detectedAlerts: MisuseAlert[] = [];
-
-            // Group records by vehicle
-            const vehicleRecords = new Map<number, any[]>();
+            // Group records by vehiclePlate
+            const vehicleRecords = new Map<string, any[]>();
             records.forEach((r: any) => {
-                const vehicleId = r.vehicle?.id || r.vehicleId;
-                if (!vehicleRecords.has(vehicleId)) {
-                    vehicleRecords.set(vehicleId, []);
+                const plate = r.vehiclePlate;
+                if (!vehicleRecords.has(plate)) {
+                    vehicleRecords.set(plate, []);
                 }
-                vehicleRecords.get(vehicleId)!.push(r);
+                vehicleRecords.get(plate)!.push(r);
             });
 
             // Analyze each vehicle's records
-            vehicleRecords.forEach((vRecords, vehicleId) => {
-                const vehicle = vehicles.find((v: any) => v.id === vehicleId);
+            vehicleRecords.forEach((vRecords, plate) => {
+                const vehicle = vehicles.find((v: any) => v.licensePlate === plate);
                 if (!vehicle) return;
 
                 const sorted = [...vRecords].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -167,6 +167,7 @@ export default function FuelAlertsPage() {
         } catch (error: any) {
             console.error("Failed to detect misuse:", error);
             toast.error("Failed to analyze fuel records");
+            setAlerts([]);
         } finally {
             setLoading(false);
         }
