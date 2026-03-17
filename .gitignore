@@ -1,0 +1,25 @@
+# Backend
+backend/target/
+backend/data/
+backend/uploads/
+*.log
+*.db
+*.mv.db
+*.lock.db
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/dist/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
