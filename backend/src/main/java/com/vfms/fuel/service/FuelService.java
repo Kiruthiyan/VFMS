@@ -49,24 +49,6 @@ public class FuelService {
      * Add new fuel record with validation
      */
     public FuelRecord addFuelRecord(FuelRecord record) {
-<<<<<<< HEAD
-        if (record.getQuantity() == null || record.getQuantity() <= 0) {
-            throw new IllegalArgumentException("Fuel quantity must be a positive value");
-        }
-        if (record.getCost() == null || record.getCost() < 0) {
-            throw new IllegalArgumentException("Fuel cost cannot be negative");
-        }
-        if (record.getVehicleId() == null) {
-            throw new IllegalArgumentException("Vehicle ID is required");
-        }
-        
-        // Calculate price per liter if not provided
-        if (record.getPricePerLiter() == null && record.getCost() != null && record.getQuantity() > 0) {
-            record.setPricePerLiter(record.getCost() / record.getQuantity());
-        }
-        
-        return repository.save(record);
-=======
         // Validation
         if (record.getVehiclePlate() == null || record.getVehiclePlate().trim().isEmpty()) {
             throw new IllegalArgumentException("Vehicle plate is required");
@@ -94,7 +76,6 @@ public class FuelService {
         log.info("Fuel record added successfully - ID: {}, Vehicle: {}, Quantity: {}L, Cost: Rs.{}", 
                 saved.getId(), saved.getVehiclePlate(), saved.getQuantity(), saved.getCost());
         return saved;
->>>>>>> 0c49f51 (fixed user verification)
     }
 
     /**

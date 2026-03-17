@@ -26,16 +26,10 @@ public class VehicleController {
      * Get all vehicles with pagination
      */
     @GetMapping
-<<<<<<< HEAD
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_USER', 'DRIVER', 'APPROVER')")
-    public ResponseEntity<List<Vehicle>> getAllVehicles() {
-        return ResponseEntity.ok(service.getAllVehicles());
-=======
     @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER', 'USER')")
     public ResponseEntity<Page<Vehicle>> getAllVehicles(Pageable pageable) {
         log.info("Fetching all vehicles with pagination");
         return ResponseEntity.ok(vehicleService.getAllVehicles(pageable));
->>>>>>> 0c49f51 (fixed user verification)
     }
 
     /**
@@ -62,18 +56,12 @@ public class VehicleController {
      * Get vehicle by ID
      */
     @GetMapping("/{id}")
-<<<<<<< HEAD
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_USER', 'DRIVER', 'APPROVER')")
-    public ResponseEntity<Vehicle> getVehicle(@PathVariable Integer id) {
-        return ResponseEntity.ok(service.getVehicleById(id));
-=======
     @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER', 'USER')")
     public ResponseEntity<Vehicle> getVehicleById(@PathVariable Integer id) {
         log.info("Fetching vehicle with id: {}", id);
         return vehicleService.getVehicleById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
->>>>>>> 0c49f51 (fixed user verification)
     }
 
     /**
@@ -104,15 +92,10 @@ public class VehicleController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-<<<<<<< HEAD
-    public ResponseEntity<Vehicle> updateVehicle(@PathVariable Integer id, @RequestBody Vehicle vehicle) {
-        return ResponseEntity.ok(service.updateVehicle(id, vehicle));
-=======
     public ResponseEntity<Vehicle> updateVehicle(@PathVariable Integer id, @RequestBody Vehicle vehicleDetails) {
         log.info("Updating vehicle with id: {}", id);
         Vehicle updatedVehicle = vehicleService.updateVehicle(id, vehicleDetails);
         return ResponseEntity.ok(updatedVehicle);
->>>>>>> 0c49f51 (fixed user verification)
     }
 
     /**
@@ -120,11 +103,6 @@ public class VehicleController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-<<<<<<< HEAD
-    public ResponseEntity<Void> deleteVehicle(@PathVariable Integer id) {
-        service.deleteVehicle(id);
-        return ResponseEntity.ok().build();
-=======
     public ResponseEntity<Map<String, String>> deleteVehicle(@PathVariable Integer id) {
         log.info("Deleting vehicle with id: {}", id);
         vehicleService.deleteVehicle(id);
@@ -198,6 +176,5 @@ public class VehicleController {
         stats.put("totalVehicles", vehicleService.countAllVehicles());
         stats.put("activeVehicles", vehicleService.countActiveVehicles());
         return ResponseEntity.ok(stats);
->>>>>>> 0c49f51 (fixed user verification)
     }
 }

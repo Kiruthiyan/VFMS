@@ -57,14 +57,6 @@ export default function FuelLogsPage() {
                     })
                 ]);
 
-<<<<<<< HEAD
-                setLogs(fuelRes.data || []);
-
-                // Create a map of vehicle ID to Vehicle object for easy lookup
-                const vehicleMap: Record<number, Vehicle> = {};
-                (vehicleRes.data || []).forEach((v: Vehicle) => {
-                    vehicleMap[v.id] = v;
-=======
                 // Extract content from paginated response
                 const fuelLogs = (fuelRes.data && fuelRes.data.content) ? fuelRes.data.content : (Array.isArray(fuelRes.data) ? fuelRes.data : []);
                 setLogs(fuelLogs);
@@ -74,7 +66,6 @@ export default function FuelLogsPage() {
                 const vehicleList = (vehicleRes.data && vehicleRes.data.content) ? vehicleRes.data.content : (Array.isArray(vehicleRes.data) ? vehicleRes.data : []);
                 vehicleList.forEach((v: Vehicle) => {
                     vehicleMap[v.licensePlate] = v;
->>>>>>> 0c49f51 (fixed user verification)
                 });
                 setVehicles(vehicleMap);
                 
@@ -84,12 +75,8 @@ export default function FuelLogsPage() {
 
             } catch (error) {
                 console.error("Failed to fetch data:", error);
-<<<<<<< HEAD
-                toast.error("Could not load fuel logs");
-=======
                 toast.error("Could not load fuel logs. Please refresh.");
                 setLogs([]);
->>>>>>> 0c49f51 (fixed user verification)
             } finally {
                 setLoading(false);
             }

@@ -182,17 +182,6 @@ public class AuthenticationService {
         var user = repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-<<<<<<< HEAD
-        if (user.getPasswordResetToken() == null || !user.getPasswordResetToken().equals(otp)) {
-            throw new RuntimeException("Invalid verification code");
-        }
-
-        if (user.getPasswordResetTokenExpiry() == null || user.getPasswordResetTokenExpiry().isBefore(java.time.LocalDateTime.now())) {
-            user.setPasswordResetToken(null);
-            user.setPasswordResetTokenExpiry(null);
-            repository.save(user);
-            throw new RuntimeException("Verification code has expired. Please request a new one");
-=======
         log.debug("OTP Verification - Email: {}, Token expiry: {}, Current time: {}", 
                 email, user.getPasswordResetTokenExpiry(), java.time.LocalDateTime.now());
 
@@ -204,7 +193,6 @@ public class AuthenticationService {
         if (user.getPasswordResetTokenExpiry().isBefore(java.time.LocalDateTime.now())) {
             log.warn("Expired OTP attempt for email: {}", email);
             throw new RuntimeException("OTP has expired");
->>>>>>> 0c49f51 (fixed user verification)
         }
         
         log.info("OTP verified successfully for email: {}", email);

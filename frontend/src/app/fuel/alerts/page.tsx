@@ -47,8 +47,8 @@ export default function FuelAlertsPage() {
                 })
             ]);
 
-            const records = fuelRes.data;
-            const vehicles = vehiclesRes.data;
+            const records = (fuelRes.data && fuelRes.data.content) ? fuelRes.data.content : (Array.isArray(fuelRes.data) ? fuelRes.data : []);
+            const vehicles = (vehiclesRes.data && vehiclesRes.data.content) ? vehiclesRes.data.content : (Array.isArray(vehiclesRes.data) ? vehiclesRes.data : []);
             const detectedAlerts: MisuseAlert[] = [];
 
             if (records.length === 0 || vehicles.length === 0) {

@@ -77,19 +77,10 @@ export default function FuelEntryPage() {
     const [submitted, setSubmitted] = useState(false);
 
     useEffect(() => {
-        const fetchVehicles = async () => {
-            setLoadingVehicles(true);
-            try {
-                const response = await api.get("/vehicles");
-                setVehicles(response.data || []);
-            } catch (error) {
-                console.error("Failed to fetch vehicles:", error);
-                toast.error("Failed to load vehicles. Please refresh the page.");
-            } finally {
-                setLoadingVehicles(false);
-            }
-        };
-        fetchVehicles();
+        api.get("/vehicles/list")
+            .then(res => setVehicles(res.data.filter((v: Vehicle) => v.status === "ACTIVE")))
+            .catch(() => toast.error("Could not load vehicles list"))
+            .finally(() => setVehiclesLoading(false));
     }, []);
 
     // Validate a positive number field; returns error string or ""

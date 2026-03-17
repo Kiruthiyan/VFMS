@@ -51,11 +51,7 @@ export default function VehicleFuelSummaryPage() {
                         return { data: [] };
                     }),
                     api.get("/fuel").catch(err => {
-<<<<<<< HEAD
-                        console.error("Failed to fetch fuel records:", err);
-=======
                         console.error("Failed to fetch fuel:", err);
->>>>>>> 0c49f51 (fixed user verification)
                         return { data: [] };
                     })
                 ]);

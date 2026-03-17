@@ -36,13 +36,8 @@ public class Vehicle {
     @NotNull(message = "Year is required")
     private Integer yearOfManufacture; // Manufacturing year
 
-<<<<<<< HEAD
-    @Column(name = "\"year\"")
-    private Integer year;
-=======
     @Column(length = 50)
     private String fuelType; // PETROL, DIESEL, CNG, ELECTRIC, HYBRID
->>>>>>> 0c49f51 (fixed user verification)
 
     @Column(length = 20)
     private String vehicleType; // SEDAN, SUV, TRUCK, VAN, AUTO, COMMERCIAL, HEAVY_TRUCK

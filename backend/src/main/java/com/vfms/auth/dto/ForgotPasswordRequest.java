@@ -7,15 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-<<<<<<< HEAD
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class ForgotPasswordRequest {
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-=======
 /**
  * Request to initiate a forgotten password reset.
  * Sends an OTP and reset token to the specified email address.
@@ -28,6 +19,5 @@ public class ForgotPasswordRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
->>>>>>> 0c49f51 (fixed user verification)
     private String email;
 }
