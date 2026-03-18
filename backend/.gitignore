@@ -1,10 +1,49 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# ===============================
+# GENERAL
+# ===============================
+.DS_Store
+Thumbs.db
+*.log
 
-### STS ###
+# ===============================
+# ENV FILES (IMPORTANT)
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# SPRING BOOT / MAVEN BUILD
+# ===============================
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# ===============================
+# DATABASE FILES (LOCAL ONLY)
+# ===============================
+*.db
+*.mv.db
+*.lock.db
+data/
+uploads/
+
+# ===============================
+# IDE FILES
+# ===============================
+
+## IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+## Eclipse / STS
 .apt_generated
 .classpath
 .factorypath
@@ -13,21 +52,26 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
+## NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+## VS Code
 .vscode/
+
+# ===============================
+# TEST / TEMP FILES
+# ===============================
+test_output.txt
+test_results_*.txt
+*.tmp
+
+# ===============================
+# OS TEMP FILES
+# ===============================
+*.swp
+*.swo
