@@ -209,3 +209,91 @@ body {
     opacity: .5;
   }
 }
+
+/* Auth Page Motion (reusable for login and future signup) */
+@keyframes authCardSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-32px) translateY(6px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes authSideSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes authGlowDrift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(8px, -10px, 0) scale(1.03);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.auth-login-card {
+  animation: authCardSlideIn 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.auth-login-side {
+  animation: authSideSlideIn 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both;
+}
+
+.auth-login-glow-left,
+.auth-login-glow-right {
+  animation: authGlowDrift 9s ease-in-out infinite;
+}
+
+.auth-login-glow-right {
+  animation-delay: 1.1s;
+}
+
+/* Reusable class names for both /auth/login and upcoming /auth/signup */
+.auth-card-enter {
+  animation: authCardSlideIn 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.auth-side-enter {
+  animation: authSideSlideIn 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both;
+}
+
+.auth-glow-left,
+.auth-glow-right {
+  animation: authGlowDrift 9s ease-in-out infinite;
+}
+
+.auth-glow-right {
+  animation-delay: 1.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .auth-card-enter,
+  .auth-side-enter,
+  .auth-glow-left,
+  .auth-glow-right,
+  .auth-login-card,
+  .auth-login-side,
+  .auth-login-glow-left,
+  .auth-login-glow-right {
+    animation: none;
+  }
+}
