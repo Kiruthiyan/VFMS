@@ -3,6 +3,13 @@
 
 export type UserRole = "ADMIN" | "APPROVER" | "SYSTEM_USER" | "DRIVER";
 
+export type UserStatus =
+  | "EMAIL_UNVERIFIED"
+  | "PENDING_APPROVAL"
+  | "APPROVED"
+  | "REJECTED"
+  | "DEACTIVATED";
+
 export interface AuthUser {
   email: string;
   fullName: string;
