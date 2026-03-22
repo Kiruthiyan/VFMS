@@ -1,146 +1,149 @@
-# FleetPro - Vehicle Fleet Management System (VFMS)
+# VFMS - Staff Profile Management
 
-![Java](https://img.shields.io/badge/Java-17-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-green)
-![Next.js](https://img.shields.io/badge/Next.js-14-black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-cyan)
+Vehicle Fleet Management System (VFMS) module for managing staff profiles.
 
-![FleetPro Dashboard](https://github.com/user-attachments/assets/placeholder-dashboard-image)
-*(Note: Replace with actual hosted image URL or local path if supported by your repo host)*
+This branch/project currently implements the Staff Management domain with a Spring Boot backend and a Next.js frontend.
 
-> **Module Focus:** Fuel Management System (Student B)
-> **Status:** Active Development
+## Module Owner
 
-## 📖 Project Overview
+- Kavishanth (Student C)
 
-**FleetPro** is an enterprise-grade Vehicle Fleet Management System designed to streamline logistics, reduce operational costs, and enhance fleet visibility.
+## Tech Stack
 
-This repository hosts the **Fuel Management Module**, a specialized component responsible for:
-- **Tracking Fuel Consumption:** Digitizing fuel logs for entire fleets.
-- **Cost Analytics:** Visualizing standardized fuel costs and identification of inefficiencies.
-- **Mileage Monitoring:** Correlating fuel usage with distance traveled.
-- **Secure Access:** Role-Based Access Control (RBAC) ensuring data integrity.
+- Backend: Java 21, Spring Boot 3.4, Spring Data JPA, Spring Security, Validation, PostgreSQL
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui, Axios, React Hook Form, Zod
+- Build Tools: Maven Wrapper and npm
 
-## ✨ Key Features
+## Current Scope
 
-### ⛽ Fuel Management (Core)
-- **Digital Fuel Logging:** Drivers or admins can log fuel entries (Volume, Cost, Station, Mileage).
-- **Smart Analytics:** Real-time dashboards showing Monthly Spend, Fuel Efficiency (Km/L), and Abnormal Consumption.
-- **Vehicle History:** Complete audit trail of every refueling event per vehicle.
+Implemented:
+- Create staff profile
+- Get staff by id
+- List staff with pagination
+- Update staff profile
+- Deactivate staff profile
+- Basic frontend staff page with search and add-staff dialog
 
-### 🔐 Advanced Security
-- **JWT Authentication:** Stateless, secure session management.
-- **Role-Based Access Control (RBAC):**
-    - **Admin:** Full system control.
-    - **Approver:** Validate records.
-    - **Driver:** View-only access to assigned vehicle data.
-    - **System User:** Staff-level access.
-- **2-Step OTP Password Reset:** Enhanced security flow (Verify OTP -> Reset Password) via Email.
+In progress / placeholders:
+- Authentication login/signup pages are placeholders in frontend
+- Security config currently permits all requests and is marked for JWT integration later
 
-### 👥 User Management
-- **Onboarding Workflow:** Admin-initiated user creation with temporary passwords.
-- **Profile Management:** Users can update profiles and avatars.
-- **Secure Password Policy:** Enforced complexity and rotation.
-
-## 🏗️ Technical Architecture
-
-### Backend (Spring Boot)
-- **Framework:** Spring Boot 3.4.0
-- **Database:** PostgreSQL (JPA/Hibernate)
-- **Security:** Spring Security 6 + JWT (Phone/Email verification)
-- **Architecture:** Monolithic REST API (clean separation of concerns)
-
-### Frontend (Next.js)
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS + Shadcn/UI (Radix Primitives)
-- **State Management:** React Query + Zustand
-- **Forms:** React Hook Form + Zod Validation
-
-## 📂 Project Structure
+## Project Structure
 
 ```text
-e:\SoftWare Project\VFMS\
-├── backend/                  # Java Spring Boot Backend
-│   ├── src/main/java/com/vfms/
-│   │   ├── auth/             # Authentication & User Management
-│   │   ├── fuel/             # Fuel Module (Controllers, Services, Repos)
-│   │   ├── vehicle/          # Vehicle Core Entities
-│   │   └── config/           # Global Configurations (CORS, Security)
-│   └── src/main/resources/   # App Properties & Email Templates
-│
-└── frontend/                 # Next.js Frontend
-    ├── src/app/
-    │   ├── admin/            # Protected Admin Routes (Users, Fuel)
-    │   ├── auth/             # Login, Forgot Password, OTP Flows
-    │   └── dashboard/        # Role-specific Dashboards
-    ├── src/components/       # Reusable UI Components
-    └── src/lib/              # API Clients & Utility Functions
+VFMS/
+├── backend/
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/vfms/
+│       │   ├── config/
+│       │   └── dsm/
+│       │       ├── controller/
+│       │       ├── dto/
+│       │       ├── entity/
+│       │       ├── exception/
+│       │       ├── repository/
+│       │       └── service/
+│       └── resources/
+│           ├── application.properties
+│           └── db/migration/
+└── frontend/
+    ├── package.json
+    └── src/
+    ├── app/
+    │   ├── auth/
+    │   └── staff/
+    ├── components/
+    ├── lib/
+    └── types/
 ```
 
-## 🚀 Getting Started
+## Backend API (Staff)
 
-### Prerequisites
-- **Java JDK 21+**
-- **Node.js 18+**
-- **PostgreSQL** running locally on default port `5432`.
-- **Maven** (optional, wrapper included).
+Base path: /api/staff
 
-### 1️⃣ Backend Setup
+- POST /api/staff
+    - Create a staff profile
+- GET /api/staff/{id}
+    - Fetch one staff profile
+- GET /api/staff?page=0&size=10
+    - Fetch paginated staff profiles
+- PUT /api/staff/{id}
+    - Update a staff profile
+- PATCH /api/staff/{id}/deactivate
+    - Mark staff as inactive
 
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
-2.  Configure Database:
-    Open `src/main/resources/application.properties` and update your PostgreSQL credentials:
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/vfms_db
-    spring.datasource.username=your_username
-    spring.datasource.password=your_password
-    ```
-3.  Run the application:
-    ```bash
-    ./mvnw spring-boot:run
-    ```
-    *The server will start on `http://localhost:8080`.*
+## Database
 
-### 2️⃣ Frontend Setup
+Staff table migration is available in:
+- backend/src/main/resources/db/migration/V2__create_staff.sql
 
-1.  Navigate to the frontend directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
-3.  Run the development server:
-    ```bash
-    npm run dev
-    ```
-4.  Open [http://localhost:3000](http://localhost:3000) in your browser.
+Required database environment variables in backend:
+- DB_URL
+- DB_USER
+- DB_PASSWORD
 
-## 🧪 Testing
+Other backend env vars:
+- JWT_SECRET
+- MAIL_USERNAME
+- MAIL_PASSWORD
+- CORS_ALLOWED_ORIGINS (optional, has localhost defaults)
 
-### Backend Tests
-Run unit and integration tests using Maven:
+## Run Locally
+
+### 1. Backend
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+On Windows PowerShell:
+
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
+```
+
+Backend runs on:
+- http://localhost:8080
+
+### 2. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs on:
+- http://localhost:3000
+
+Set API base URL for frontend if needed:
+- NEXT_PUBLIC_API_URL=http://localhost:8080
+
+## Build and Test
+
+Backend tests:
+
 ```bash
 cd backend
 ./mvnw test
 ```
 
-### Verified User Flows
-- [x] **Login/Logout** (JWT valid/invalid)
-- [x] **Forgot Password** (Email delivery + OTP Verification)
-- [x] **Fuel Entry** (Validation of cost/mileage)
-- [x] **User Creation** (Admin only)
+Frontend checks:
 
-## 📄 License
-This project is proprietary software developed for the **Vehicle Fleet Management System (VFMS)** academic requirement.
+```bash
+cd frontend
+npm run lint
+npm run build
+```
 
----
-**Developed by:** Kiruthiyan (Student B)
+## Notes
+
+- Security is currently configured with permit-all in backend security config as a temporary setup.
+- Frontend login and signup pages are placeholders and will be replaced by the auth feature branch.
+
+## License
+
+Academic project for VFMS coursework.

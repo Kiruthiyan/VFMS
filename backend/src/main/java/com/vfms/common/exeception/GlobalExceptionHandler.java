@@ -1,4 +1,4 @@
-package com.vfms.common.exception;
+package com.vfms.common.exeception;
 
 import com.vfms.common.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
