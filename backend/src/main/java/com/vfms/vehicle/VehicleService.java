@@ -76,6 +76,17 @@ public class VehicleService {
         return mapToResponse(vehicleRepository.save(vehicle));
     }
 
+        // ── Deactivate Vehicle ──
+    @Transactional
+    public VehicleResponseDto deactivateVehicle(Long id) {
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with ID: " + id));
+        vehicle.setActive(false);
+        vehicle.setStatus(VehicleStatus.RETIRED);
+        return mapToResponse(vehicleRepository.save(vehicle));
+    }
+
+
 
 
 
