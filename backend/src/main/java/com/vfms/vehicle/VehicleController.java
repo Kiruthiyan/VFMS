@@ -50,6 +50,14 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle updated successfully", vehicle));
     }
 
+        // PATCH /api/vehicles/{id}/deactivate
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<ApiResponse<VehicleResponseDto>> deactivateVehicle(@PathVariable Long id) {
+        VehicleResponseDto vehicle = vehicleService.deactivateVehicle(id);
+        return ResponseEntity.ok(ApiResponse.success("Vehicle deactivated", vehicle));
+    }
+
+
 
 
 }
