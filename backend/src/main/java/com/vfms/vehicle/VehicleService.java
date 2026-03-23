@@ -5,6 +5,8 @@ import com.vfms.vehicle.dto.VehicleResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,25 @@ public class VehicleService {
 
         return mapToResponse(vehicleRepository.save(vehicle));
     }
+
+        // ── Get All Vehicles ──
+    public List<VehicleResponseDto> getAllVehicles() {
+        return vehicleRepository.findByActiveTrue()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
+    // ── Get Vehicles by Status ──
+    public List<VehicleResponseDto> getVehiclesByStatus(VehicleStatus status) {
+        return vehicleRepository.findByStatusAndActiveTrue(status)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
 
     // ── Mapper ──
     private VehicleResponseDto mapToResponse(Vehicle v) {
