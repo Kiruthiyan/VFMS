@@ -24,4 +24,15 @@ public class VehicleController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Vehicle added successfully", vehicle));
     }
+
+        // GET /api/vehicles
+    @GetMapping
+    public ResponseEntity<ApiResponse<java.util.List<VehicleResponseDto>>> getAllVehicles(
+            @RequestParam(required = false) VehicleStatus status) {
+        java.util.List<VehicleResponseDto> vehicles = (status != null)
+                ? vehicleService.getVehiclesByStatus(status)
+                : vehicleService.getAllVehicles();
+        return ResponseEntity.ok(ApiResponse.success("Vehicles retrieved", vehicles));
+    }
+
 }
