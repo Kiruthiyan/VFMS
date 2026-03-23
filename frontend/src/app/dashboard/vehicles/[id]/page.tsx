@@ -110,6 +110,25 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               >
                 Edit Vehicle
               </Button>
+              {vehicle.active && (
+                <Button
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  onClick={async () => {
+                    if (confirm("Are you sure you want to deactivate this vehicle?")) {
+                      try {
+                        await vehicleApi.deactivate(vehicle.id);
+                        toast.success("Vehicle deactivated");
+                        router.push("/dashboard/vehicles");
+                      } catch {
+                        toast.error("Failed to deactivate");
+                      }
+                    }
+                  }}
+                >
+                  Deactivate
+                </Button>
+              )}
               <Button variant="outline" onClick={() => router.back()}>
                 Back
               </Button>
