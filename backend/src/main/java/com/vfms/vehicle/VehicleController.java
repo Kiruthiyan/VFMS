@@ -35,4 +35,12 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicles retrieved", vehicles));
     }
 
+        // GET /api/vehicles/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<VehicleResponseDto>> getVehicleById(@PathVariable Long id) {
+        VehicleResponseDto vehicle = vehicleService.getVehicleById(id);
+        return ResponseEntity.ok(ApiResponse.success("Vehicle retrieved", vehicle));
+    }
+
+
 }

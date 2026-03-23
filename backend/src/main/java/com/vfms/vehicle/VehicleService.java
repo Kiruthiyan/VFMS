@@ -52,6 +52,14 @@ public class VehicleService {
                 .toList();
     }
 
+        // ── Get Vehicle by ID ──
+    public VehicleResponseDto getVehicleById(Long id) {
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with ID: " + id));
+        return mapToResponse(vehicle);
+    }
+
+
 
 
     // ── Mapper ──
