@@ -59,6 +59,24 @@ public class VehicleService {
         return mapToResponse(vehicle);
     }
 
+        // ── Update Vehicle ──
+    @Transactional
+    public VehicleResponseDto updateVehicle(Long id, VehicleRequestDto request) {
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with ID: " + id));
+
+        vehicle.setPlateNumber(request.getPlateNumber());
+        vehicle.setBrand(request.getBrand());
+        vehicle.setModel(request.getModel());
+        vehicle.setYear(request.getYear());
+        vehicle.setVehicleType(request.getVehicleType());
+        vehicle.setFuelType(request.getFuelType());
+        vehicle.setDepartment(request.getDepartment());
+
+        return mapToResponse(vehicleRepository.save(vehicle));
+    }
+
+
 
 
 

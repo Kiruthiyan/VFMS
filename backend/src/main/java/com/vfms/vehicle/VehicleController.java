@@ -42,5 +42,14 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle retrieved", vehicle));
     }
 
+        // PUT /api/vehicles/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<VehicleResponseDto>> updateVehicle(
+            @PathVariable Long id, @Valid @RequestBody VehicleRequestDto request) {
+        VehicleResponseDto vehicle = vehicleService.updateVehicle(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Vehicle updated successfully", vehicle));
+    }
+
+
 
 }
