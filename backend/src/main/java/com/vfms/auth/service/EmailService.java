@@ -45,6 +45,15 @@ public class EmailService {
         sendHtmlEmail(toEmail, subject, rejectionEmailHtml(fullName, reason));
     }
 
+    @Async
+    public void sendPasswordResetEmail(String toEmail, String fullName,
+                                    String token) {
+        String resetUrl = frontendUrl + "/auth/reset-password?token=" + token;
+        String subject = "Reset Your VFMS Password";
+        sendHtmlEmail(toEmail, subject,
+                passwordResetEmailHtml(fullName, resetUrl));
+    }
+
     // ── PRIVATE SEND ──────────────────────────────────────────────────────
 
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
@@ -138,6 +147,39 @@ public class EmailService {
                 + "or contact your administrator directly.</p>"
                 + "<p style='color:#475569;font-size:13px;margin-top:24px'>"
                 + "Thank you for your interest in VFMS.</p>"
+                + "</div></body></html>";
+    }
+
+    private String passwordResetEmailHtml(String name, String resetUrl) {
+        return "<!DOCTYPE html><html><body style='font-family:sans-serif;"
+                + "background:#0f172a;padding:40px;margin:0'>"
+                + "<div style='max-width:520px;margin:0 auto;background:#1e293b;"
+                + "border-radius:16px;padding:40px;border:1px solid #334155'>"
+                + "<div style='display:flex;align-items:center;gap:12px;"
+                + "margin-bottom:32px'>"
+                + "<div style='width:40px;height:40px;background:#f59e0b;"
+                + "border-radius:10px;display:flex;align-items:center;"
+                + "justify-content:center;font-size:18px;font-weight:900;"
+                + "color:#0f172a'>V</div>"
+                + "<span style='color:#f1f5f9;font-size:18px;font-weight:800;"
+                + "letter-spacing:-0.5px'>FLEET"
+                + "<span style='color:#f59e0b'>PRO</span></span></div>"
+                + "<h2 style='color:#f1f5f9;margin:0 0 8px'>Reset Your Password</h2>"
+                + "<p style='color:#94a3b8;margin:0 0 24px'>Hi " + name + ",</p>"
+                + "<p style='color:#94a3b8;line-height:1.6;margin:0 0 28px'>"
+                + "We received a request to reset your password. "
+                + "Click the button below to set a new password. "
+                + "This link expires in <strong style='color:#f1f5f9'>"
+                + "1 hour</strong>.</p>"
+                + "<a href='" + resetUrl
+                + "' style='display:inline-block;padding:14px 32px;"
+                + "background:#f59e0b;color:#0f172a;border-radius:10px;"
+                + "text-decoration:none;font-weight:700;font-size:15px'>"
+                + "Reset Password</a>"
+                + "<p style='color:#475569;font-size:13px;margin-top:28px'>"
+                + "If you did not request a password reset, "
+                + "you can safely ignore this email. "
+                + "Your password will not change.</p>"
                 + "</div></body></html>";
     }
 }
