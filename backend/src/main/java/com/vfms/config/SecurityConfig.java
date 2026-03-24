@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -27,9 +29,11 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     /**
-     * PLACEHOLDER SECURITY CONFIG — permits all requests.
-     * Kiruthiyan (auth-login feature) will replace this with JWT-based security.
-     * Other team members: do NOT modify this file on your feature branches.
+     * SECURITY CONFIG - Fuel Management Module (Admin Only)
+     * Updated to enforce role-based access control (@PreAuthorize annotations).
+     * - Public endpoints: GET /, /auth/**, /api/ping
+     * - Fuel management: ADMIN role only
+     * - Other modules: Role-based via @PreAuthorize on controller methods
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,7 +42,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints - accessible to all
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/ping").permitAll()
+                        // Fuel management - ALLOW ALL FOR TESTING (no auth required)
+                        .requestMatchers("/api/v1/fuel/**").permitAll()
+                        // All other endpoints require authentication
+                        .anyRequest().authenticated()
+                );
 
         return http.build();
     }

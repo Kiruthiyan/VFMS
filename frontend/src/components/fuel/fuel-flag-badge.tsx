@@ -20,7 +20,7 @@ export function FuelFlagBadge({
       className={cn(
         "inline-flex items-center gap-1 px-2 py-0.5 rounded-full",
         "text-xs font-semibold border",
-        "bg-red-950/50 text-red-400 border-red-800/50",
+        "bg-red-100 text-red-900 border-red-200",
         className
       )}
     >

@@ -21,9 +21,10 @@ interface FuelFilterBarProps {
 }
 
 const selectClass =
-  "rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 " +
-  "text-sm text-slate-300 focus:outline-none focus:ring-2 " +
-  "focus:ring-amber-500/60 appearance-none cursor-pointer transition-colors";
+  "rounded-xl border border-slate-200 bg-white px-4 py-3 " +
+  "text-sm text-slate-900 focus:outline-none focus:ring-2 " +
+  "focus:ring-blue-950/40 appearance-none cursor-pointer transition-all duration-200 " +
+  "placeholder:text-slate-400 shadow-sm hover:shadow-md";
 
 export function FuelFilterBar({
   vehicles,
@@ -48,7 +49,7 @@ export function FuelFilterBar({
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div className="space-y-1">
-        <label className="block text-xs text-slate-500">From</label>
+        <label className="block text-xs text-slate-700 font-medium">From</label>
         <input
           type="date"
           value={from}
@@ -58,7 +59,7 @@ export function FuelFilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs text-slate-500">To</label>
+        <label className="block text-xs text-slate-700 font-medium">To</label>
         <input
           type="date"
           value={to}
@@ -68,7 +69,7 @@ export function FuelFilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs text-slate-500">Vehicle</label>
+        <label className="block text-xs text-slate-700 font-medium">Vehicle</label>
         <select
           value={vehicleId}
           onChange={(e) => setVehicleId(e.target.value)}
@@ -82,7 +83,7 @@ export function FuelFilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs text-slate-500">Driver</label>
+        <label className="block text-xs text-slate-700 font-medium">Driver</label>
         <select
           value={driverId}
           onChange={(e) => setDriverId(e.target.value)}

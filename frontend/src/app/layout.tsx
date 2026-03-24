@@ -7,8 +7,8 @@ import { ToastProvider } from "@/components/providers/ToastProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Admin Portal",
-  description: "VFMS Admin Panel",
+  title: "Fuel Manager",
+  description: "VFMS - Fuel Management System",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${inter.className} antialiased bg-white`}>
         {children}
         <Toaster />
         <ToastProvider />
