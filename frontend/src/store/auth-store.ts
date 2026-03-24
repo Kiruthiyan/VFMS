@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AuthResponse, UserRole, UserStatus } from "@/lib/api/auth";
+import { setAuthCookies, clearAuthCookies } from "@/lib/rbac";
 
 interface AuthUser {
   userId: string;
@@ -38,10 +39,13 @@ export const useAuthStore = create<AuthState>()(
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
         });
+        // Sync to cookies so middleware can read them
+        setAuthCookies(data.accessToken, data.role);
       },
 
       clearAuth: () => {
         set({ user: null, accessToken: null, refreshToken: null });
+        clearAuthCookies();
       },
 
       isAuthenticated: () => {
