@@ -1,23 +1,16 @@
 package com.vfms.user.entity;
 
 import com.vfms.common.enums.Role;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.vfms.common.enums.UserStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -27,14 +20,16 @@ import java.util.UUID;
 @Table(name = "users")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    // ── COMMON FIELDS ─────────────────────────────────────────────────────
 
     @Column(nullable = false)
     private String fullName;
@@ -45,17 +40,72 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private String phone;
+
+    @Column(nullable = false)
+    private String nic;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private boolean enabled = true;
+    private UserStatus status = UserStatus.EMAIL_UNVERIFIED;
 
-    @Column(updatable = false)
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false, name = "email_verified")
+    private boolean emailVerified = false;
+
+    // ── ADMIN REVIEW FIELDS ───────────────────────────────────────────────
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    // ── DRIVER-SPECIFIC FIELDS ────────────────────────────────────────────
+
+    @Column(name = "license_number")
+    private String licenseNumber;
+
+    @Column(name = "license_expiry_date")
+    private LocalDate licenseExpiryDate;
+
+    private String certifications;
+
+    @Column(name = "experience_years")
+    private Integer experienceYears;
+
+    // ── STAFF / APPROVER-SPECIFIC FIELDS ─────────────────────────────────
+
+    @Column(name = "employee_id")
+    private String employeeId;
+
+    private String department;
+
+    @Column(name = "office_location")
+    private String officeLocation;
+
+    private String designation;
+
+    @Column(name = "approval_level")
+    private String approvalLevel;
+
+    // ── TIMESTAMPS ────────────────────────────────────────────────────────
+
+    @CreationTimestamp
+    @Column(updatable = false, name = "created_at")
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // ── SPRING SECURITY ───────────────────────────────────────────────────
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -74,7 +124,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return status != UserStatus.DEACTIVATED && status != UserStatus.REJECTED;
     }
 
     @Override
@@ -84,6 +134,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return status == UserStatus.APPROVED;
     }
 }

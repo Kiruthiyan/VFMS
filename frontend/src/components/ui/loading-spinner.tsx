@@ -10,7 +10,7 @@ export function LoadingSpinner({ className, size = 16 }: LoadingSpinnerProps) {
   return (
     <Loader2
       className={cn("animate-spin", className)}
-      size={size}
+      style={{ width: size, height: size }}
     />
   );
 }
