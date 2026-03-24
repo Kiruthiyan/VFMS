@@ -1,31 +1,30 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Fuel, Plus, RefreshCw } from "lucide-react";
+import { BarChart3, AlertCircle, FileText, TrendingUp, Fuel, Users, Plus } from "lucide-react";
 import Link from "next/link";
 import {
   getAllFuelRecordsApi,
-  getFilteredFuelRecordsApi,
   getErrorMessage,
+  extractUniqVehicles,
+  extractUniqueDrivers,
   type FuelRecord,
 } from "@/lib/api/fuel";
 import { AdminShell } from "@/components/layout/admin-shell";
-import { FuelRecordsTable } from "@/components/fuel/fuel-records-table";
-import { FuelSummaryCards } from "@/components/fuel/fuel-summary-cards";
-import { FuelFilterBar } from "@/components/fuel/fuel-filter-bar";
-import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function FuelManagementPage() {
+export default function FuelDashboardPage() {
   const [records, setRecords] = useState<FuelRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtering, setFiltering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // In a real app these would come from vehicle/driver APIs
-  const vehicles: { id: string; label: string }[] = [];
-  const drivers: { id: string; label: string }[] = [];
+  const vehicles = extractUniqVehicles(records);
+  const drivers = extractUniqueDrivers(records);
+  const totalSpend = records.reduce((sum, r) => sum + (r.totalCost || 0), 0);
+  const totalVolume = records.reduce((sum, r) => sum + (r.quantity || 0), 0);
+  const avgCostPerLiter = totalVolume > 0 ? (totalSpend / totalVolume).toFixed(2) : "0.00";
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -42,77 +41,217 @@ export default function FuelManagementPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const handleFilter = async (params: {
-    from: string;
-    to: string;
-    vehicleId?: string;
-    driverId?: string;
-  }) => {
-    setFiltering(true);
-    setError(null);
-    try {
-      const data = await getFilteredFuelRecordsApi(params);
-      setRecords(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setFiltering(false);
-    }
-  };
-
   return (
     <AdminShell>
-      <div className="space-y-6">
-        <PageHeader
-          title="Fuel Management"
-          description={`${records.length} records`}
-          icon={Fuel}
-          actions={
-            <div className="flex items-center gap-3">
-              <button
-                onClick={fetchAll}
-                disabled={loading}
-                className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-40"
-              >
-                <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                Refresh
-              </button>
-              <Link
-                href="/admin/fuel/add"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                           bg-amber-500 text-slate-900 font-bold text-sm
-                           hover:bg-amber-400 transition-colors"
-              >
-                <Plus size={14} />
-                Add Entry
-              </Link>
+      <div className="min-h-screen bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Page Header */}
+          <div className="mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">
+              Fuel Management Dashboard
+            </h1>
+            <p className="text-slate-600 text-sm font-medium">
+              Monitor fuel consumption, costs, and fleet efficiency at a glance
+            </p>
+          </div>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center py-24">
+              <div className="text-center">
+                <LoadingSpinner size={32} className="text-blue-600 mx-auto mb-4" />
+                <p className="text-slate-600 font-500">Loading dashboard data...</p>
+              </div>
             </div>
-          }
-        />
+          )}
 
-        {/* Summary Cards */}
-        <FuelSummaryCards records={records} />
+          {/* Error State */}
+          {error && !loading && (
+            <FormMessage type="error" message={error} />
+          )}
 
-        {/* Filter Bar */}
-        <FuelFilterBar
-          vehicles={vehicles}
-          drivers={drivers}
-          onFilter={handleFilter}
-          loading={filtering}
-        />
+          {/* Dashboard Content */}
+          {!loading && !error && (
+            <>
+              {/* Key Performance Indicators */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+                {/* Total Records KPI */}
+                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
+                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
+                        Total Records
+                      </CardTitle>
+                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
+                        <Fuel size={18} className="text-blue-950" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6 pb-5">
+                    <p className="text-4xl font-bold text-slate-900">{records.length}</p>
+                    <p className="text-sm text-slate-600 mt-2 font-medium">Fuel entries tracked</p>
+                  </CardContent>
+                </Card>
 
-        {/* Table */}
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <LoadingSpinner size={28} className="text-amber-400" />
-          </div>
-        ) : error ? (
-          <FormMessage type="error" message={error} />
-        ) : (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-            <FuelRecordsTable records={records} />
-          </div>
-        )}
+                {/* Total Spend KPI */}
+                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
+                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
+                        Total Spend
+                      </CardTitle>
+                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
+                        <TrendingUp size={18} className="text-blue-950" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6 pb-5">
+                    <p className="text-4xl font-bold text-slate-900">₹{(totalSpend / 1000).toFixed(1)}k</p>
+                    <p className="text-sm text-slate-600 mt-2 font-medium">Total fuel cost</p>
+                  </CardContent>
+                </Card>
+
+                {/* Total Volume KPI */}
+                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
+                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
+                        Total Volume
+                      </CardTitle>
+                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
+                        <Fuel size={18} className="text-blue-950" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6 pb-5">
+                    <p className="text-4xl font-bold text-slate-900">{totalVolume.toFixed(0)}L</p>
+                    <p className="text-sm text-slate-600 mt-2 font-medium">Liters dispensed</p>
+                  </CardContent>
+                </Card>
+
+                {/* Avg Cost per Liter KPI */}
+                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
+                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
+                        Avg Cost/L
+                      </CardTitle>
+                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
+                        <TrendingUp size={18} className="text-blue-950" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6 pb-5">
+                    <p className="text-4xl font-bold text-slate-900">₹{avgCostPerLiter}</p>
+                    <p className="text-sm text-slate-600 mt-2 font-medium">Cost per liter</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Quick Access Links */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+                {/* Fuel Entry Logs */}
+                <Link href="/admin/fuel/logs" className="group">
+                  <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-950 transition-all h-full cursor-pointer">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="h-11 w-11 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                          <FileText size={22} className="text-blue-950" strokeWidth={1.5} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded">VIEW</span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 mb-1 text-sm">Fuel Entry Logs</h3>
+                      <p className="text-xs text-slate-600">View and filter all fuel entry records with details</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                {/* Create New Entry */}
+                <Link href="/admin/fuel/create" className="group">
+                  <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-950 transition-all h-full cursor-pointer">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="h-11 w-11 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                          <Plus size={22} className="text-blue-950" strokeWidth={2.5} />
+                        </div>
+                        <span className="text-xs font-bold text-blue-950 bg-blue-100 px-2.5 py-1 rounded">NEW</span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 mb-1 text-sm">Create Fuel Entry</h3>
+                      <p className="text-xs text-slate-600">Log a new fuel purchase for your vehicles</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                {/* Fuel Alerts */}
+                <Link href="/admin/fuel/alerts" className="group">
+                  <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-950 transition-all h-full cursor-pointer">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="h-11 w-11 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                          <AlertCircle size={22} className="text-blue-950" strokeWidth={1.5} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded">MONITOR</span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 mb-1 text-sm">Fuel Alerts</h3>
+                      <p className="text-xs text-slate-600">Monitor flagged records and suspicious patterns</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
+
+              {/* Fleet Summary Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Active Vehicles */}
+                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
+                  <CardHeader className="bg-blue-950 py-5 border-b border-slate-200">
+                    <CardTitle className="text-white font-bold text-base flex items-center gap-2">
+                      <Fuel size={18} />
+                      Fleet Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+                        <span className="text-slate-700 text-sm font-medium">Active Vehicles</span>
+                        <span className="text-2xl font-bold text-blue-950">{vehicles.length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700 text-sm font-medium">Active Drivers</span>
+                        <span className="text-2xl font-bold text-blue-950">{drivers.length}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Stats */}
+                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
+                  <CardHeader className="bg-blue-950 py-5 border-b border-slate-200">
+                    <CardTitle className="text-white font-bold text-base flex items-center gap-2">
+                      <BarChart3 size={18} />
+                      Quick Stats
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+                        <span className="text-slate-700 text-sm font-medium">Records per Vehicle</span>
+                        <span className="text-2xl font-bold text-blue-950">
+                          {vehicles.length > 0 ? (records.length / vehicles.length).toFixed(1) : "0"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700 text-sm font-medium">Avg Spend per Vehicle</span>
+                        <span className="text-lg font-bold text-blue-950">
+                          ₹{vehicles.length > 0 ? (totalSpend / vehicles.length).toFixed(0) : "0"}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </AdminShell>
   );

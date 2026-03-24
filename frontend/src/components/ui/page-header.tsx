@@ -13,7 +13,7 @@ export function PageHeader({
   title,
   description,
   icon: Icon,
-  iconClassName = "text-slate-300",
+  iconClassName = "text-blue-950",
   actions,
 }: PageHeaderProps) {
   return (
@@ -21,9 +21,9 @@ export function PageHeader({
       <div className="flex gap-4">
         {Icon && <Icon size={24} className={iconClassName} />}
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">{title}</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
           {description && (
-            <p className="text-sm text-slate-400 mt-1">{description}</p>
+            <p className="text-sm text-slate-600 mt-1">{description}</p>
           )}
         </div>
       </div>

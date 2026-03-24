@@ -47,7 +47,7 @@ public interface FuelRecordRepository extends JpaRepository<FuelRecord, UUID> {
             @Param("vehicleId") UUID vehicleId,
             @Param("date") LocalDate date);
 
-    List<FuelRecord> findByFlaggedForMisueTrue();
+    List<FuelRecord> findByFlaggedForMisuseTrue();
 
     @Query("SELECT f FROM FuelRecord f WHERE f.flaggedForMisuse = true " +
            "ORDER BY f.fuelDate DESC")
