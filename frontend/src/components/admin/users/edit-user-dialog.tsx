@@ -25,10 +25,10 @@ interface EditFormValues {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2.5 " +
-  "text-sm text-slate-100 placeholder:text-slate-500 " +
-  "focus:outline-none focus:ring-2 focus:ring-amber-500/60 " +
-  "focus:border-amber-500/60 disabled:opacity-50 transition-colors";
+  "w-full rounded-lg border border-[#E4E7EC] bg-white px-3 py-2.5 " +
+  "text-sm text-[#101828] placeholder:text-[#667085] " +
+  "focus:outline-none focus:ring-2 focus:ring-[#0B1736]/30 " +
+  "focus:border-[#0B1736] disabled:opacity-50 transition-colors";
 
 export function EditUserDialog({
   user,
@@ -66,34 +66,34 @@ export function EditUserDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl shadow-black/50 p-6">
+      <div className="relative z-10 w-full max-w-md bg-white border border-[#E4E7EC] rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between mb-5">
+        <div className="bg-[#0B1736] px-6 py-4 flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-bold text-slate-100">Edit User</h3>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <h3 className="text-lg font-bold text-white">Edit User</h3>
+            <p className="text-sm text-white mt-0.5 opacity-90">
               {user.fullName}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-300 transition-colors ml-4"
+            className="text-white hover:text-white transition-colors ml-4 opacity-90"
           >
             <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           {serverError && (
             <FormMessage type="error" message={serverError} />
           )}
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-300">
+            <label className="block text-sm font-medium text-[#101828]">
               Phone
             </label>
             <input
@@ -105,7 +105,7 @@ export function EditUserDialog({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-300">
+            <label className="block text-sm font-medium text-[#101828]">
               Department
             </label>
             <input
@@ -117,7 +117,7 @@ export function EditUserDialog({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-300">
+            <label className="block text-sm font-medium text-[#101828]">
               Office Location
             </label>
             <input
@@ -129,7 +129,7 @@ export function EditUserDialog({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-300">
+            <label className="block text-sm font-medium text-[#101828]">
               Designation
             </label>
             <input
@@ -142,7 +142,7 @@ export function EditUserDialog({
 
           {user.role === "APPROVER" && (
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium text-[#101828]">
                 Approval Level
               </label>
               <input
@@ -156,27 +156,27 @@ export function EditUserDialog({
           )}
 
           <div className="flex gap-3 pt-2">
-            <Button
+            <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-xl border border-slate-700
-                         bg-transparent text-slate-400 hover:bg-slate-800
-                         font-medium text-sm transition-colors"
+              className="flex-1 h-11 rounded-lg border border-[#E4E7EC]
+                         bg-[#F9FAFC] text-[#475467] hover:bg-[#F5F7FB]
+                         font-medium text-sm transition-colors disabled:opacity-50"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-xl bg-amber-500 text-slate-900
-                         hover:bg-amber-400 font-bold text-sm flex items-center
+              className="flex-1 h-11 rounded-lg bg-[#0B1736] text-white
+                         hover:bg-[#122347] font-bold text-sm flex items-center
                          justify-center gap-2 disabled:opacity-60
-                         disabled:cursor-not-allowed transition-colors"
+                         disabled:cursor-not-allowed transition-colors shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)]"
             >
               {isSubmitting && <LoadingSpinner size={14} />}
               {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

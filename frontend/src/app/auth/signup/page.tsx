@@ -2,13 +2,23 @@
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center max-w-sm w-full">
-        <div className="w-12 h-12 rounded-xl bg-blue-600 text-white text-xl font-bold flex items-center justify-center mx-auto mb-6">
-          V
+    <div className="min-h-screen bg-[#F5F7FB] flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-xl border border-[#E4E7EC] shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="bg-[#0B1736] px-6 py-8 text-center">
+            <div className="h-12 w-12 bg-[#F4B400] rounded-lg flex items-center justify-center mx-auto mb-4">
+              <span className="text-[#0B1736] text-xl font-bold">V</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-1">Create Account</h1>
+            <p className="text-sm text-[#FFFFFF] opacity-90">Join VFMS today</p>
+          </div>
+          
+          {/* Content */}
+          <div className="p-6 text-center">
+            <p className="text-[#475467]">Signup feature coming soon...</p>
+          </div>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Create Account</h1>
-        <p className="text-sm text-gray-400">Signup feature coming soon...</p>
       </div>
     </div>
   );

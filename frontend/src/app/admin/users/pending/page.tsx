@@ -31,49 +31,52 @@ export default function PendingUsersPage() {
   }, [fetchPending]);
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-8">
+    <div className="min-h-screen bg-[#F5F7FB] px-4 py-8">
       <div className="max-w-6xl mx-auto space-y-6">
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-950/40 border border-amber-800/40 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-400" />
+        {/* Header Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
+          <div className="bg-[#0B1736] px-6 py-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 bg-[#F4B400] rounded-lg flex items-center justify-center">
+                <Clock className="w-6 h-6 text-[#0B1736]" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Pending Registrations
+                </h1>
+                <p className="text-sm text-[#FFFFFF] mt-1 opacity-90">
+                  {users.length} user{users.length !== 1 ? "s" : ""} awaiting approval
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-100">
-                Pending Registrations
-              </h1>
-              <p className="text-sm text-slate-500">
-                {users.length} user{users.length !== 1 ? "s" : ""} awaiting
-                approval
-              </p>
-            </div>
-          </div>
 
-          <button
-            onClick={fetchPending}
-            disabled={loading}
-            className="flex items-center gap-2 text-sm text-slate-400
-                       hover:text-slate-200 transition-colors disabled:opacity-40"
-          >
-            <RefreshCw
-              size={14}
-              className={loading ? "animate-spin" : ""}
-            />
-            Refresh
-          </button>
+            <button
+              onClick={fetchPending}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium
+                         bg-[#F4B400] text-[#0B1736] rounded-lg
+                         hover:bg-[#FFC107] transition-colors disabled:opacity-50
+                         shadow-lg shadow-[0_0_20px_rgba(244,180,0,0.15)]"
+            >
+              <RefreshCw
+                size={16}
+                className={loading ? "animate-spin" : ""}
+              />
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <LoadingSpinner size={28} className="text-amber-400" />
+            <LoadingSpinner size={28} className="text-blue-950" />
           </div>
         ) : error ? (
           <FormMessage type="error" message={error} />
         ) : (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
             <UserTable
               users={users}
               showReviewActions={true}

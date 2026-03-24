@@ -35,10 +35,10 @@ const itemVariants: Variants = {
 const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
   <Link
     href={href}
-    className="relative text-sm font-semibold text-slate-600 hover:text-black transition-colors group"
+    className="relative text-sm font-semibold text-slate-700 hover:text-blue-950 transition-colors group"
   >
     {children}
-    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-500 transition-all group-hover:w-full" />
+    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-400 transition-all group-hover:w-full" />
   </Link>
 );
 
@@ -70,7 +70,7 @@ const CountUp = ({ value, label, suffix = "" }: { value: number, label: string, 
       <span className="text-4xl font-black text-slate-900 tracking-tighter">
         {count.toLocaleString()}{suffix}
       </span>
-      <span className="text-xs font-bold text-amber-600 uppercase tracking-widest mt-1">{label}</span>
+      <span className="text-xs font-bold text-blue-950 uppercase tracking-widest mt-1">{label}</span>
     </div>
   );
 };
@@ -93,7 +93,7 @@ export default function LandingPage() {
     <div className="relative min-h-screen bg-white text-slate-900 selection:bg-amber-200 scroll-smooth">
 
       {/* Scroll Progress Bar */}
-      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-amber-500 origin-left z-[60]" style={{ scaleX }} />
+      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-blue-950 origin-left z-[60]" style={{ scaleX }} />
 
       {/* --- NAVIGATION --- */}
       <nav className={cn(
@@ -102,10 +102,10 @@ export default function LandingPage() {
       )}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center transition-transform group-hover:rotate-12">
+            <div className="w-10 h-10 bg-blue-950 rounded-xl flex items-center justify-center transition-transform group-hover:rotate-12">
               <Truck className="text-amber-400 w-6 h-6" />
             </div>
-            <span className="text-xl font-black tracking-tighter">FLEETPRO<span className="text-amber-500">.</span></span>
+            <span className="text-xl font-black tracking-tighter">FLEETPRO<span className="text-amber-400">.</span></span>
           </Link>
 
           <div className="hidden md:flex items-center gap-10">
@@ -116,10 +116,10 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-4">
             <Link href="/auth/login">
-              <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-50">Log In</Button>
+              <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-100 text-slate-700">Log In</Button>
             </Link>
             <Link href="/auth/signup">
-              <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-6 font-bold shadow-lg shadow-slate-200">
+              <Button className="bg-blue-950 text-white hover:bg-blue-900 rounded-lg px-6 font-bold shadow-lg shadow-blue-200">
                 Get Started
               </Button>
             </Link>
