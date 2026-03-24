@@ -1,29 +1,41 @@
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info } from "lucide-react";
+
+type MessageType = "error" | "success" | "info";
 
 interface FormMessageProps {
-  type: "error" | "success";
+  type: MessageType;
   message: string;
   className?: string;
 }
 
+const styles: Record<MessageType, { wrapper: string; icon: React.ComponentType<{ className?: string }> }> = {
+  error: {
+    wrapper: "bg-red-950/50 text-red-300 border border-red-800/60",
+    icon: AlertCircle,
+  },
+  success: {
+    wrapper: "bg-green-950/50 text-green-300 border border-green-800/60",
+    icon: CheckCircle2,
+  },
+  info: {
+    wrapper: "bg-blue-950/50 text-blue-300 border border-blue-800/60",
+    icon: Info,
+  },
+};
+
 export function FormMessage({ type, message, className }: FormMessageProps) {
+  const { wrapper, icon: Icon } = styles[type];
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-        type === "error"
-          ? "bg-red-50 text-red-700 border border-red-200"
-          : "bg-green-50 text-green-700 border border-green-200",
+        "flex items-start gap-3 rounded-xl px-4 py-3 text-sm",
+        wrapper,
         className
       )}
     >
-      {type === "error" ? (
-        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-      ) : (
-        <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-      )}
-      <span>{message}</span>
+      <Icon className="h-4 w-4 flex-shrink-0 mt-0.5" />
+      <span className="leading-relaxed">{message}</span>
     </div>
   );
 }

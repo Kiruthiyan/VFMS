@@ -1,14 +1,13 @@
 package com.vfms.auth.controller;
 
-import com.vfms.auth.dto.AuthResponse;
-import com.vfms.auth.dto.LoginRequest;
-import com.vfms.auth.dto.RefreshTokenRequest;
+import com.vfms.auth.dto.RegisterRequest;
+import com.vfms.auth.dto.ResendVerificationRequest;
 import com.vfms.auth.service.AuthService;
-import com.vfms.user.entity.User;
+import com.vfms.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,28 +17,36 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<Void>> register(
+            @Valid @RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.success(
+                        "Registration successful. Please check your email to verify your account.",
+                        null)
+        );
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refresh(request));
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(
+            @RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Email verified. Your account is pending admin approval.",
+                        null)
+        );
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal User user) {
-        authService.logout(user);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(AuthResponse.builder()
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .role(user.getRole())
-                .build());
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerification(request);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Verification email sent. Please check your inbox.",
+                        null)
+        );
     }
 }
