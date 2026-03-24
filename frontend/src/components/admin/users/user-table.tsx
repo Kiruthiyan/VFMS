@@ -62,7 +62,7 @@ export function UserTable({
   if (users.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-slate-500 text-sm">No users found.</p>
+        <p className="text-[#667085] text-sm">No users found.</p>
       </div>
     );
   }
@@ -72,58 +72,58 @@ export function UserTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-800">
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <tr className="border-b border-[#E4E7EC] bg-[#F9FAFC]">
+              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
                 User
               </th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
                 Role
               </th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
                 Status
               </th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
                 Registered
               </th>
-              <th className="text-right py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="text-right py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#E4E7EC]">
             {users.map((user) => (
               <>
                 <tr
                   key={user.id}
-                  className="hover:bg-slate-800/30 transition-colors"
+                  className="hover:bg-[#F9FAFC] transition-colors"
                 >
                   {/* User */}
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-6">
                     <div>
-                      <p className="font-medium text-slate-200">
+                      <p className="font-medium text-[#101828]">
                         {user.fullName}
                       </p>
-                      <p className="text-xs text-slate-500">{user.email}</p>
+                      <p className="text-xs text-[#667085]">{user.email}</p>
                     </div>
                   </td>
 
                   {/* Role */}
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-6">
                     <UserRoleBadge role={user.role} />
                   </td>
 
                   {/* Status */}
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-6">
                     <UserStatusBadge status={user.status} />
                   </td>
 
                   {/* Date */}
-                  <td className="py-4 px-4 text-slate-500">
+                  <td className="py-4 px-6 text-[#475467]">
                     {formatDate(user.createdAt)}
                   </td>
 
                   {/* Actions */}
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-2">
                       {/* Expand row */}
                       <button
@@ -132,7 +132,7 @@ export function UserTable({
                             expandedRow === user.id ? null : user.id
                           )
                         }
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+                        className="p-1.5 rounded-lg text-[#667085] hover:text-[#0B1736] hover:bg-[#F5F7FB] transition-colors"
                         title="View details"
                       >
                         {expandedRow === user.id ? (
@@ -147,7 +147,7 @@ export function UserTable({
                         user.status === "PENDING_APPROVAL" && (
                           <button
                             onClick={() => setReviewingUser(user)}
-                            className="p-1.5 rounded-lg text-amber-500 hover:text-amber-400 hover:bg-amber-950/30 transition-colors"
+                            className="p-1.5 rounded-lg text-[#F79009] hover:text-[#F79009] hover:bg-[#FFFBEB] transition-colors"
                             title="Review"
                           >
                             <MoreVertical size={14} />
@@ -158,7 +158,7 @@ export function UserTable({
                       {user.status === "APPROVED" && (
                         <button
                           onClick={() => setEditingUser(user)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+                          className="p-1.5 rounded-lg text-[#667085] hover:text-[#0B1736] hover:bg-[#F5F7FB] transition-colors"
                           title="Edit"
                         >
                           <Pencil size={14} />
@@ -174,8 +174,8 @@ export function UserTable({
                           className={`p-1.5 rounded-lg transition-colors
                             ${
                               user.status === "APPROVED"
-                                ? "text-slate-500 hover:text-red-400 hover:bg-red-950/30"
-                                : "text-slate-500 hover:text-green-400 hover:bg-green-950/30"
+                                ? "text-[#F04438] hover:text-[#F04438] hover:bg-[#FEF2F2]"
+                                : "text-[#475467] hover:text-[#12B76A] hover:bg-[#ECFDF5]"
                             }
                             disabled:opacity-40`}
                           title={
@@ -197,52 +197,52 @@ export function UserTable({
 
                 {/* Expanded row details */}
                 {expandedRow === user.id && (
-                  <tr key={`${user.id}-expanded`} className="bg-slate-900/50">
-                    <td colSpan={5} className="px-4 py-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <tr key={`${user.id}-expanded`} className="bg-[#F9FAFC] border-b border-[#E4E7EC]">
+                    <td colSpan={5} className="px-6 py-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs">
                         <div>
-                          <p className="text-slate-500 mb-1">Phone</p>
-                          <p className="text-slate-300">
+                          <p className="text-[#475467] font-medium mb-1">Phone</p>
+                          <p className="text-[#101828]">
                             {user.phone || "—"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-slate-500 mb-1">NIC</p>
-                          <p className="text-slate-300">{user.nic || "—"}</p>
+                          <p className="text-[#475467] font-medium mb-1">NIC</p>
+                          <p className="text-[#101828]">{user.nic || "—"}</p>
                         </div>
 
                         {/* Driver fields */}
                         {user.role === "DRIVER" && (
                           <>
                             <div>
-                              <p className="text-slate-500 mb-1">
+                              <p className="text-[#475467] font-medium mb-1">
                                 License No.
                               </p>
-                              <p className="text-slate-300">
+                              <p className="text-[#101828]">
                                 {user.licenseNumber || "—"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-slate-500 mb-1">
+                              <p className="text-[#475467] font-medium mb-1">
                                 License Expiry
                               </p>
-                              <p className="text-slate-300">
+                              <p className="text-[#101828]">
                                 {user.licenseExpiryDate || "—"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-slate-500 mb-1">Experience</p>
-                              <p className="text-slate-300">
+                              <p className="text-[#475467] font-medium mb-1">Experience</p>
+                              <p className="text-[#101828]">
                                 {user.experienceYears != null
                                   ? `${user.experienceYears} yrs`
                                   : "—"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-slate-500 mb-1">
+                              <p className="text-[#475467] font-medium mb-1">
                                 Certifications
                               </p>
-                              <p className="text-slate-300">
+                              <p className="text-[#101828]">
                                 {user.certifications || "—"}
                               </p>
                             </div>
@@ -254,30 +254,30 @@ export function UserTable({
                           user.role === "APPROVER") && (
                           <>
                             <div>
-                              <p className="text-slate-500 mb-1">
+                              <p className="text-[#475467] font-medium mb-1">
                                 Employee ID
                               </p>
-                              <p className="text-slate-300">
+                              <p className="text-[#101828]">
                                 {user.employeeId || "—"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-slate-500 mb-1">Department</p>
-                              <p className="text-slate-300">
+                              <p className="text-[#475467] font-medium mb-1">Department</p>
+                              <p className="text-[#101828]">
                                 {user.department || "—"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-slate-500 mb-1">Location</p>
-                              <p className="text-slate-300">
+                              <p className="text-[#475467] font-medium mb-1">License No.</p>
+                              <p className="text-[#101828]">
                                 {user.officeLocation || "—"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-slate-500 mb-1">
+                              <p className="text-[#475467] font-medium mb-1">
                                 Designation
                               </p>
-                              <p className="text-slate-300">
+                              <p className="text-[#101828]">
                                 {user.designation || "—"}
                               </p>
                             </div>
@@ -287,10 +287,10 @@ export function UserTable({
                         {/* Rejection reason */}
                         {user.rejectionReason && (
                           <div className="col-span-2 md:col-span-4">
-                            <p className="text-slate-500 mb-1">
+                            <p className="text-[#475467] font-medium mb-1">
                               Rejection Reason
                             </p>
-                            <p className="text-red-400">
+                            <p className="text-[#F04438]">
                               {user.rejectionReason}
                             </p>
                           </div>

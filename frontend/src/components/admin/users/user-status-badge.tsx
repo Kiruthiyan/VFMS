@@ -3,15 +3,15 @@ import type { UserStatus } from "@/lib/auth";
 
 const STATUS_STYLES: Record<UserStatus, string> = {
   EMAIL_UNVERIFIED:
-    "bg-slate-800 text-slate-400 border-slate-700",
+    "bg-[#F9FAFC] text-[#667085] border-[#E4E7EC]",
   PENDING_APPROVAL:
-    "bg-amber-950/50 text-amber-400 border-amber-800/50",
+    "bg-[#FFF3CD] text-[#8D6000] border-[#FFE9A3]",
   APPROVED:
-    "bg-green-950/50 text-green-400 border-green-800/50",
+    "bg-[#ECFDF5] text-[#065F46] border-[#A6F4C5]",
   REJECTED:
-    "bg-red-950/50 text-red-400 border-red-800/50",
+    "bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]",
   DEACTIVATED:
-    "bg-slate-800 text-slate-500 border-slate-700",
+    "bg-[#F9FAFC] text-[#667085] border-[#E4E7EC]",
 };
 
 const STATUS_LABELS: Record<UserStatus, string> = {
@@ -32,7 +32,7 @@ export function UserStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2.5 py-0.5 rounded-full",
+        "inline-flex items-center px-3 py-1 rounded-lg",
         "text-xs font-semibold border",
         STATUS_STYLES[status],
         className

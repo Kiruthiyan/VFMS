@@ -2,98 +2,82 @@
 
 @layer base {
   :root {
-    /* UOM Primary: #FFB401 (Amber) */
-    --primary: 42 100% 50%;
-    --primary-foreground: 0 0% 0%;
+    /* FleetPro Color System */
+    
+    /* Primary Navy Brand */
+    --navy-900: #081228;
+    --navy-800: #0B1736;
+    --navy-700: #122347;
 
-    /* UOM Secondary: #953002 (Rust) */
-    --secondary: 19 97% 30%;
-    --secondary-foreground: 0 0% 100%;
+    /* Accent Gold/Yellow */
+    --yellow-500: #F4B400;
+    --yellow-400: #FFC107;
+    --yellow-100: #FFF3CD;
 
-    /* UOM State Colors */
-    --info: 214 84% 56%;
-    /* #2F80ED */
-    --success: 145 63% 42%;
-    /* #27AE60 */
-    --warning: 42 74% 56%;
-    /* #E2B93B */
-    --destructive: 360 79% 63%;
-    /* #EB5757 */
-    --destructive-foreground: 0 0% 100%;
+    /* Backgrounds */
+    --bg-main: #F5F7FB;
+    --bg-card: #FFFFFF;
+    --bg-secondary: #F9FAFC;
 
-    /* UOM Black/Gray Scale */
-    --background: 0 0% 100%;
-    /* White */
-    --foreground: 0 0% 20%;
-    /* Gray 1 #333333 = 0 0% 20% */
+    /* Text Colors */
+    --text-main: #101828;
+    --text-body: #475467;
+    --text-muted: #667085;
+    --text-white: #FFFFFF;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    /* Borders and Dividers */
+    --border-primary: #D0D5DD;
+    --border-soft: #E4E7EC;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
-
-    --muted: 0 0% 96%;
-    /* Gray 6 equivalent */
-    --muted-foreground: 0 0% 45%;
-
-    --border: 0 0% 88%;
-    /* Gray 5 #E0E0E0 */
-    --input: 0 0% 88%;
-    --ring: 42 100% 50%;
-    /* Ring matches Primary */
-
-    --radius: 0.5rem;
+    /* Status Colors */
+    --status-success: #12B76A;
+    --status-warning: #F79009;
+    --status-error: #F04438;
+    --status-info: #2E90FA;
   }
 
-  .dark {
-    /* Adapting UOM colors for Dark Mode (Not strictly defined, inferring) */
-    --background: 0 0% 11%;
-    /* Black 2 #1D1D1D */
-    --foreground: 0 0% 100%;
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-body);
+  }
 
-    --card: 0 0% 16%;
-    /* Black 3 #282828 */
-    --card-foreground: 0 0% 100%;
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--text-main);
+  }
+}
 
-    --popover: 0 0% 16%;
-    --popover-foreground: 0 0% 100%;
+@layer components {
+  .btn-primary {
+    @apply bg-[#0B1736] text-white hover:bg-[#122347] transition-colors;
+  }
 
-    --primary: 42 100% 50%;
-    --primary-foreground: 0 0% 0%;
+  .btn-accent {
+    @apply bg-[#F4B400] text-[#0B1736] hover:bg-[#FFC107] transition-colors font-semibold;
+  }
 
-    --secondary: 19 97% 30%;
-    --secondary-foreground: 0 0% 100%;
+  .card {
+    @apply bg-white border border-[#E4E7EC] rounded-xl shadow-sm;
+  }
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 60%;
-
-    --accent: 42 100% 50%;
-    --accent-foreground: 0 0% 0%;
-
-    --destructive: 360 81% 63%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 42 100% 50%;
+  .header-primary {
+    @apply bg-[#0B1736] text-white;
   }
 }
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    border-color: var(--border-soft);
   }
 
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: var(--bg-main);
+    color: var(--text-body);
   }
 }
 
 body {
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background: var(--bg-main);
+  color: var(--text-body);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 

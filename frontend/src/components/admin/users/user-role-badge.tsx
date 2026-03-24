@@ -3,10 +3,10 @@ import type { UserRole } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/auth";
 
 const ROLE_STYLES: Record<UserRole, string> = {
-  ADMIN: "bg-red-950/40 text-red-400 border-red-800/40",
-  APPROVER: "bg-purple-950/40 text-purple-400 border-purple-800/40",
-  SYSTEM_USER: "bg-blue-950/40 text-blue-400 border-blue-800/40",
-  DRIVER: "bg-green-950/40 text-green-400 border-green-800/40",
+  ADMIN: "bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]",
+  APPROVER: "bg-[#F3F0FF] text-[#6B21A8] border-[#E9D5FF]",
+  SYSTEM_USER: "bg-[#EFF6FF] text-[#1E40AF] border-[#BFDBFE]",
+  DRIVER: "bg-[#ECFDF5] text-[#065F46] border-[#A6F4C5]",
 };
 
 export function UserRoleBadge({
@@ -19,7 +19,7 @@ export function UserRoleBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2.5 py-0.5 rounded-full",
+        "inline-flex items-center px-3 py-1 rounded-lg",
         "text-xs font-semibold border",
         ROLE_STYLES[role],
         className
