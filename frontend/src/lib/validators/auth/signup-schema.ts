@@ -5,8 +5,9 @@ import * as z from 'zod';
 export const signupStep1Schema = z.object({
   email: z
     .string()
-    .email('Please enter a valid email address')
-    .min(1, 'Email is required'),
+    .email('Please enter a valid email address (example: name@company.com)')
+    .min(1, 'Email is required')
+    .max(255, 'Email must be less than 255 characters'),
 });
 
 export type SignupStep1Values = z.infer<typeof signupStep1Schema>;
@@ -16,26 +17,50 @@ export type SignupStep1Values = z.infer<typeof signupStep1Schema>;
 export const signupStep2Schema = z.object({
   otp: z
     .string()
-    .length(6, 'Verification code must be 6 digits')
-    .regex(/^\d+$/, 'Verification code must contain only numbers'),
+    .length(6, 'Verification code must be exactly 6 digits')
+    .regex(/^\d+$/, 'Verification code must contain only numbers')
+    .min(1, 'Verification code is required'),
 });
 
 export type SignupStep2Values = z.infer<typeof signupStep2Schema>;
 
 // ─── STEP 3: USER DETAILS ──────────────────────────────────────────────
 
+// Sri Lankan NIC validation: 10 or 12 digits (old or new format)
+const validateNIC = (nic: string) => {
+  const cleaned = nic.replace(/\s/g, ''); // Remove whitespace
+  // Old format: 10 digits, New format: 12 digits starting with 9
+  return /^\d{10}$/.test(cleaned) || /^9\d{11}$/.test(cleaned);
+};
+
+// Sri Lankan phone validation: 077xxxxxxx, 071xxxxxxx, etc.
+const validateSriLankanPhone = (phone: string) => {
+  const cleaned = phone.replace(/\s+/g, '').replace(/^\+94/, '0');
+  // Valid formats: 077xxxxxxx, 071xxxxxxx, 078xxxxxxx, 076xxxxxxx, 070xxxxxxx, 074xxxxxxx, 075xxxxxxx, 072xxxxxxx
+  return /^(077|071|078|076|070|074|075|072)[0-9]{7}$/.test(cleaned);
+};
+
 export const signupStep3Schema = z.object({
   fullName: z
     .string()
     .min(2, 'Full name must be at least 2 characters')
+    .max(100, 'Full name must be less than 100 characters')
+    .regex(/^[a-zA-Z\s'-]+$/, 'Full name can only contain letters, spaces, hyphens, and apostrophes')
     .min(1, 'Full name is required'),
   phone: z
     .string()
     .min(1, 'Phone number is required')
-    .regex(/^[0-9\s\-\+\(\)]+$/, 'Invalid phone format'),
+    .refine(
+      (phone) => validateSriLankanPhone(phone),
+      'Please enter a valid Sri Lankan phone number (e.g., 077XXXXXXX or +94771234567)'
+    ),
   nic: z
     .string()
-    .min(1, 'NIC number is required'),
+    .min(1, 'NIC number is required')
+    .refine(
+      (nic) => validateNIC(nic),
+      'Please enter a valid Sri Lankan NIC number (10 or 12 digits)'
+    ),
 });
 
 export type SignupStep3Values = z.infer<typeof signupStep3Schema>;
@@ -44,13 +69,15 @@ export type SignupStep3Values = z.infer<typeof signupStep3Schema>;
 
 export const signupStep4Schema = z
   .object({
-    role: z
-      .enum(['DRIVER', 'SYSTEM_USER'], {
-        errorMap: () => ({ message: 'Please select a valid role' }),
-      }),
+    role: z.enum(['DRIVER', 'SYSTEM_USER']),
     // Driver-specific fields
-    licenseNumber: z.string().optional(),
-    licenseExpiryDate: z.string().optional(),
+    licenseNumber: z.string().optional().default(''),
+    licenseExpiryDate: z.string().optional().default(''),
+    // SYSTEM_USER (Staff) specific fields
+    employeeId: z.string().optional().default(''),
+    department: z.string().optional().default(''),
+    designation: z.string().optional().default(''),
+    officeLocation: z.string().optional().default(''),
   })
   .refine(
     (data) => {
@@ -75,6 +102,57 @@ export const signupStep4Schema = z
       message: 'License expiry date is required for drivers',
       path: ['licenseExpiryDate'],
     }
+  )
+  .refine(
+    (data) => {
+      if (data.role === 'DRIVER' && data.licenseExpiryDate) {
+        const expiryDate = new Date(data.licenseExpiryDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return expiryDate >= today; // Must be today or in the future
+      }
+      return true;
+    },
+    {
+      message: 'License expiry date must be in the future',
+      path: ['licenseExpiryDate'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === 'SYSTEM_USER') {
+        return data.employeeId && data.employeeId.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: 'Employee ID is required for staff members',
+      path: ['employeeId'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === 'SYSTEM_USER') {
+        return data.department && data.department.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: 'Department is required for staff members',
+      path: ['department'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === 'SYSTEM_USER') {
+        return data.designation && data.designation.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: 'Designation is required for staff members',
+      path: ['designation'],
+    }
   );
 
 export type SignupStep4Values = z.infer<typeof signupStep4Schema>;
@@ -86,13 +164,16 @@ export const signupStep5Schema = z
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Password must contain uppercase letter')
-      .regex(/[0-9]/, 'Password must contain number')
+      .max(128, 'Password must be less than 128 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter (A-Z)')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter (a-z)')
+      .regex(/[0-9]/, 'Password must contain at least one number (0-9)')
+      .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least one special character')
       .min(1, 'Password is required'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: 'Passwords do not match. Please check and try again.',
     path: ['confirmPassword'],
   });
 

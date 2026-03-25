@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import {
   Eye,
   EyeOff,
@@ -31,6 +32,8 @@ import {
   type SignupStep4Values,
   type SignupStep5Values,
 } from '@/lib/validators/auth/signup-schema';
+import { sendOTPApi, verifyOTPApi, signupApi } from '@/lib/api/auth';
+import { useAuthStore } from '@/store/auth-store';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 type SignupStep = 1 | 2 | 3 | 4 | 5;
@@ -41,6 +44,29 @@ interface SignupFormData {
   step3: SignupStep3Values;
   step4: SignupStep4Values;
   step5: SignupStep5Values;
+}
+
+// Password Requirement Item Component
+function RequirementItem({ met, label }: { met: boolean; label: string }) {
+  return (
+    <motion.div
+      className="flex items-center gap-2"
+      animate={{ opacity: 1 }}
+      initial={{ opacity: 0 }}
+    >
+      <motion.div
+        className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+          met ? 'bg-emerald-500' : 'bg-slate-300'
+        }`}
+        animate={{ scale: met ? 1.1 : 1 }}
+      >
+        {met ? '✓' : '○'}
+      </motion.div>
+      <span className={`text-xs font-medium ${met ? 'text-emerald-700' : 'text-slate-600'}`}>
+        {label}
+      </span>
+    </motion.div>
+  );
 }
 
 const TOTAL_STEPS = 5;
@@ -63,11 +89,13 @@ const STEP_DESCRIPTIONS = {
 
 export function SignupForm() {
   const router = useRouter();
+  const setAuth = useAuthStore((s) => s.setAuth);
   const [currentStep, setCurrentStep] = useState<SignupStep>(1);
   const [formData, setFormData] = useState<Partial<SignupFormData>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [otpResendCountdown, setOtpResendCountdown] = useState(0);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [showPasswordStep5, setShowPasswordStep5] = useState(false);
   const [showConfirmPasswordStep5, setShowConfirmPasswordStep5] = useState(false);
 
@@ -121,23 +149,33 @@ export function SignupForm() {
 
   const passwordStrength = {
     hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
     hasNumber: /[0-9]/.test(password),
+    hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
     hasMinLength: password.length >= 8,
   };
 
   const isPasswordStrong =
     passwordStrength.hasUppercase &&
+    passwordStrength.hasLowercase &&
     passwordStrength.hasNumber &&
+    passwordStrength.hasSpecialChar &&
     passwordStrength.hasMinLength;
 
   // Step Handlers
   const handleStep1Submit = async (data: SignupStep1Values) => {
     setServerError(null);
     try {
-      console.log('Sending OTP to:', data.email);
+      step1Form.control._formValues = data; // Preserve in form state
+      
+      // Call API to send OTP
+      const response = await sendOTPApi(data.email);
+      
+      // Save to form state and advance
       setFormData((prev) => ({ ...prev, step1: data }));
       setCurrentStep(2);
 
+      // Start countdown timer
       setOtpResendCountdown(30);
       const timer = setInterval(() => {
         setOtpResendCountdown((prev) => {
@@ -149,36 +187,89 @@ export function SignupForm() {
         });
       }, 1000);
     } catch (err: unknown) {
-      setServerError('Failed to send verification code. Please try again.');
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || 'Failed to send verification code. Please check your email address and try again.'
+        : (err as any)?.message || 'Failed to send verification code. Please try again.';
+      setServerError(message);
     }
   };
 
   const handleStep2Submit = async (data: SignupStep2Values) => {
     setServerError(null);
     try {
-      console.log('Verifying OTP:', data.otp);
+      // Verify OTP with backend
+      const response = await verifyOTPApi(formData.step1?.email || '', data.otp);
+      
+      if (!response.verified) {
+        throw new Error('Verification code is invalid or expired. Please request a new code.');
+      }
+
+      // Mark OTP as verified and save data
+      setOtpVerified(true);
       setFormData((prev) => ({ ...prev, step2: data }));
       setCurrentStep(3);
     } catch (err: unknown) {
-      setServerError('Invalid verification code. Please try again.');
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || 'Invalid or expired verification code. Please request a new code.'
+        : (err as any)?.message || 'Verification failed. Please try again.';
+      setServerError(message);
     }
   };
 
   const handleStep3Submit = async (data: SignupStep3Values) => {
     setServerError(null);
     try {
-      console.log('User details:', data);
-      setFormData((prev) => ({ ...prev, step3: data }));
+      // Trim all string fields
+      const trimmedData: SignupStep3Values = {
+        fullName: data.fullName.trim(),
+        phone: data.phone.trim().replace(/\s+/g, ''),
+        nic: data.nic.trim().replace(/\s+/g, ''),
+      };
+      
+      setFormData((prev) => ({ ...prev, step3: trimmedData }));
       setCurrentStep(4);
     } catch (err: unknown) {
-      setServerError('Failed to save details. Please try again.');
+      setServerError('Failed to save details. Please check all fields and try again.');
     }
   };
 
   const handleStep4Submit = async (data: SignupStep4Values) => {
     setServerError(null);
     try {
-      console.log('Role and qualifications:', data);
+      // Validate role-specific fields
+      if (data.role === 'DRIVER') {
+        if (!data.licenseNumber?.trim()) {
+          setServerError('License number is required for drivers');
+          return;
+        }
+        if (!data.licenseExpiryDate?.trim()) {
+          setServerError('License expiry date is required for drivers');
+          return;
+        }
+        const expiryDate = new Date(data.licenseExpiryDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (expiryDate < today) {
+          setServerError('License has expired. Please provide a valid license.');
+          return;
+        }
+      }
+
+      if (data.role === 'SYSTEM_USER') {
+        if (!data.employeeId?.trim()) {
+          setServerError('Employee ID is required for staff members');
+          return;
+        }
+        if (!data.department?.trim()) {
+          setServerError('Department is required for staff members');
+          return;
+        }
+        if (!data.designation?.trim()) {
+          setServerError('Designation is required for staff members');
+          return;
+        }
+      }
+
       setFormData((prev) => ({ ...prev, step4: data }));
       setCurrentStep(5);
     } catch (err: unknown) {
@@ -189,23 +280,67 @@ export function SignupForm() {
   const handleStep5Submit = async (data: SignupStep5Values) => {
     setServerError(null);
     try {
-      const completeData = {
-        ...formData.step1,
-        ...formData.step2,
-        ...formData.step3,
-        ...formData.step4,
-        ...data,
+      // Check if OTP was verified
+      if (!otpVerified) {
+        setServerError('Please verify your email first');
+        setCurrentStep(2);
+        return;
+      }
+
+      // Combine all form data
+      const completeSignupData = {
+        email: formData.step1?.email || '',
+        password: data.password,
+        fullName: formData.step3?.fullName || '',
+        phone: formData.step3?.phone || '',
+        nic: formData.step3?.nic || '',
+        role: formData.step4?.role as 'DRIVER' | 'SYSTEM_USER',
+        licenseNumber: formData.step4?.licenseNumber,
+        licenseExpiryDate: formData.step4?.licenseExpiryDate,
+        employeeId: formData.step4?.employeeId,
+        department: formData.step4?.department,
+        designation: formData.step4?.designation,
+        officeLocation: formData.step4?.officeLocation,
       };
 
-      console.log('Complete signup data:', completeData);
+      // Validate complete data
+      if (!completeSignupData.email ||!completeSignupData.fullName || !completeSignupData.phone) {
+        setServerError('Please complete all required fields');
+        return;
+      }
 
+      // Call signup API
+      const authResponse = await signupApi(completeSignupData);
+
+      // Store auth data
+      setAuth(authResponse);
       setFormData((prev) => ({ ...prev, step5: data }));
       setIsSuccess(true);
+
+      // Redirect after success
       setTimeout(() => {
-        router.push('/auth/login');
+        router.replace('/dashboards/' + (authResponse.role === 'ADMIN' ? 'admin' : 
+                                        authResponse.role === 'APPROVER' ? 'approver' : 
+                                        authResponse.role === 'DRIVER' ? 'driver' : 'staff'));
       }, 2000);
     } catch (err: unknown) {
-      setServerError('Registration failed. Please try again.');
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (axios.isAxiosError(err)) {
+        errorMessage = err.response?.data?.message || 
+                      'Registration failed. Please check all fields and ensure your email has been verified.';
+        
+        // Handle specific error cases
+        if (err.response?.status === 409) {
+          errorMessage = 'This email is already registered. Please use a different email or sign in.';
+        } else if (err.response?.status === 400) {
+          errorMessage = err.response?.data?.message || 'Invalid registration data. Please check all fields.';
+        }
+      } else if ((err as any)?.message) {
+        errorMessage = (err as any).message;
+      }
+      
+      setServerError(errorMessage);
     }
   };
 
@@ -241,68 +376,18 @@ export function SignupForm() {
   return (
     <div className="w-full space-y-6">
       {/* Progress Bar */}
-      <motion.div className="space-y-4">
-        {/* Enhanced Progress Bar */}
-        <div className="relative">
-          <div className="h-2 bg-slate-200/50 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 rounded-full shadow-lg shadow-amber-500/40"
-              initial={{ width: 0 }}
-              animate={{
-                width: `${(currentStep / TOTAL_STEPS) * 100}%`,
-              }}
-              transition={{ duration: 0.6, ease: 'easeInOut' }}
-            />
-          </div>
-        </div>
-
-        {/* Step Information */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <p className="text-sm font-bold text-slate-900">
-              {STEP_TITLES[currentStep]}
-            </p>
-            <p className="text-xs text-slate-600">
-              Step {currentStep} of {TOTAL_STEPS}
-            </p>
-          </div>
+      <div className="relative">
+        <div className="h-2 bg-slate-200/50 rounded-full overflow-hidden">
           <motion.div
-            key={currentStep}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <span className="text-xs font-semibold text-amber-900">
-              {Math.round((currentStep / TOTAL_STEPS) * 100)}%
-            </span>
-          </motion.div>
+            className="h-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 rounded-full shadow-lg shadow-amber-500/40"
+            initial={{ width: 0 }}
+            animate={{
+              width: `${(currentStep / TOTAL_STEPS) * 100}%`,
+            }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+          />
         </div>
-
-        {/* Step Dots Indicator */}
-        <div className="flex gap-2">
-          {Array.from({ length: TOTAL_STEPS }).map((_, idx) => {
-            const stepNum = (idx + 1) as unknown as SignupStep;
-            const isCompleted = stepNum < currentStep;
-            const isActive = stepNum === currentStep;
-
-            return (
-              <motion.div
-                key={stepNum}
-                initial={{ scale: 0.8 }}
-                animate={{ scale: isActive ? 1.1 : 1 }}
-                className={`h-2 flex-1 rounded-full transition-all duration-300 ${
-                  isCompleted
-                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500 shadow-lg shadow-emerald-500/30'
-                    : isActive
-                    ? 'bg-gradient-to-r from-amber-400 to-amber-600 shadow-lg shadow-amber-500/40'
-                    : 'bg-slate-200'
-                }`}
-              />
-            );
-          })}
-        </div>
-      </motion.div>
+      </div>
 
       {/* Error Alert */}
       <AnimatePresence>
@@ -868,6 +953,114 @@ export function SignupForm() {
               )}
             </AnimatePresence>
 
+            {/* SYSTEM_USER (Staff) Fields */}
+            <AnimatePresence>
+              {selectedRole === 'SYSTEM_USER' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-3.5 p-4 rounded-xl bg-teal-50/60 border border-teal-200/50"
+                >
+                  <p className="text-xs font-bold text-teal-900 uppercase tracking-wide">Staff Information</p>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, type: 'spring', stiffness: 100, damping: 20 }}
+                    className="space-y-2.5"
+                  >
+                    <label htmlFor="employeeId" className="block text-sm font-semibold text-slate-700">
+                      Employee ID
+                    </label>
+                    <input
+                      id="employeeId"
+                      type="text"
+                      placeholder="EMP001234"
+                      {...step4Form.register('employeeId')}
+                      className="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
+                                 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-400 focus:bg-white focus:shadow-lg focus:shadow-teal-500/15
+                                 hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
+                                 disabled:opacity-50 placeholder:text-slate-400"
+                      disabled={step4Form.formState.isSubmitting}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, type: 'spring', stiffness: 100, damping: 20 }}
+                    className="space-y-2.5"
+                  >
+                    <label htmlFor="department" className="block text-sm font-semibold text-slate-700">
+                      Department
+                    </label>
+                    <select
+                      id="department"
+                      {...step4Form.register('department')}
+                      className="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white appearance-none cursor-pointer backdrop-blur-sm transition-all duration-300
+                                 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-400 focus:bg-white focus:shadow-lg focus:shadow-teal-500/15
+                                 hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
+                                 disabled:opacity-50"
+                      disabled={step4Form.formState.isSubmitting}
+                    >
+                      <option value="">Select Department...</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Operations">Operations</option>
+                      <option value="Human Resources">Human Resources</option>
+                      <option value="Administration">Administration</option>
+                      <option value="IT">IT</option>
+                      <option value="Maintenance">Maintenance</option>
+                    </select>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 20 }}
+                    className="space-y-2.5"
+                  >
+                    <label htmlFor="designation" className="block text-sm font-semibold text-slate-700">
+                      Designation
+                    </label>
+                    <input
+                      id="designation"
+                      type="text"
+                      placeholder="Manager, Analyst, etc."
+                      {...step4Form.register('designation')}
+                      className="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
+                                 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-400 focus:bg-white focus:shadow-lg focus:shadow-teal-500/15
+                                 hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
+                                 disabled:opacity-50 placeholder:text-slate-400"
+                      disabled={step4Form.formState.isSubmitting}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25, type: 'spring', stiffness: 100, damping: 20 }}
+                    className="space-y-2.5"
+                  >
+                    <label htmlFor="officeLocation" className="block text-sm font-semibold text-slate-700">
+                      Office Location (Optional)
+                    </label>
+                    <input
+                      id="officeLocation"
+                      type="text"
+                      placeholder="Colombo, Galle, etc."
+                      {...step4Form.register('officeLocation')}
+                      className="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
+                                 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-400 focus:bg-white focus:shadow-lg focus:shadow-teal-500/15
+                                 hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
+                                 disabled:opacity-50 placeholder:text-slate-400"
+                      disabled={step4Form.formState.isSubmitting}
+                    />
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
@@ -970,25 +1163,54 @@ export function SignupForm() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-2"
+                  className="space-y-3"
                 >
-                  <div className="flex gap-1.5">
-                    <motion.div
-                      animate={{ backgroundColor: passwordStrength.hasMinLength ? '#f59e0b' : '#e2e8f0' }}
-                      className="h-1.5 flex-1 rounded-full transition-colors"
+                  {/* Password Requirements Checklist */}
+                  <div className="space-y-2">
+                    <RequirementItem 
+                      met={passwordStrength.hasMinLength} 
+                      label="At least 8 characters" 
                     />
-                    <motion.div
-                      animate={{ backgroundColor: passwordStrength.hasUppercase ? '#f59e0b' : '#e2e8f0' }}
-                      className="h-1.5 flex-1 rounded-full transition-colors"
+                    <RequirementItem 
+                      met={passwordStrength.hasUppercase} 
+                      label="Uppercase letter (A-Z)" 
                     />
-                    <motion.div
-                      animate={{ backgroundColor: passwordStrength.hasNumber ? '#f59e0b' : '#e2e8f0' }}
-                      className="h-1.5 flex-1 rounded-full transition-colors"
+                    <RequirementItem 
+                      met={passwordStrength.hasLowercase} 
+                      label="Lowercase letter (a-z)" 
+                    />
+                    <RequirementItem 
+                      met={passwordStrength.hasNumber} 
+                      label="Number (0-9)" 
+                    />
+                    <RequirementItem 
+                      met={passwordStrength.hasSpecialChar} 
+                      label="Special character (!@#$%^&*)" 
                     />
                   </div>
-                  <p className="text-xs text-slate-600 font-medium">
-                    {isPasswordStrong ? '✓ Strong password' : '8+ chars, uppercase & number required'}
-                  </p>
+
+                  {/* Strength Indicator */}
+                  <div className="flex gap-1.5">
+                    <motion.div
+                      animate={{ backgroundColor: passwordStrength.hasMinLength ? '#06b6d4' : '#e2e8f0' }}
+                      className="h-2 flex-1 rounded-full transition-colors"
+                    />
+                    <motion.div
+                      animate={{ backgroundColor: passwordStrength.hasUppercase && passwordStrength.hasLowercase ? '#06b6d4' : '#e2e8f0' }}
+                      className="h-2 flex-1 rounded-full transition-colors"
+                    />
+                    <motion.div
+                      animate={{ backgroundColor: passwordStrength.hasNumber && passwordStrength.hasSpecialChar ? '#06b6d4' : '#e2e8f0' }}
+                      className="h-2 flex-1 rounded-full transition-colors"
+                    />
+                  </div>
+
+                  <motion.p 
+                    className="text-xs font-semibold"
+                    animate={{ color: isPasswordStrong ? '#10b981' : '#ef4444' }}
+                  >
+                    {isPasswordStrong ? '✓ Password is strong and secure' : '⚠ Password does not meet all requirements'}
+                  </motion.p>
                 </motion.div>
               )}
 
