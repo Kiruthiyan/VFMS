@@ -19,19 +19,112 @@ export interface ApiSuccessResponse {
   data?: unknown;
 }
 
+// Signup registration data
+export interface SignupRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string;
+  nic: string;
+  role: UserRole;
+  // DRIVER specific fields
+  licenseNumber?: string;
+  licenseExpiryDate?: string;
+  // SYSTEM_USER specific fields
+  employeeId?: string;
+  department?: string;
+  designation?: string;
+  officeLocation?: string;
+}
+
+export interface OTPVerificationRequest {
+  email: string;
+  otp: string;
+}
+
+export interface OTPVerificationResponse extends ApiSuccessResponse {
+  verified: boolean;
+  token?: string; // Temporary token for registration
+}
+
+// LOGIN API
 export async function loginApi(data: { email: string; password: string }): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>("/api/auth/login", data);
   return response.data;
 }
 
+// SIGNUP API - Send OTP to email
+export async function sendOTPApi(email: string): Promise<ApiSuccessResponse> {
+  try {
+    const response = await api.post<ApiSuccessResponse>("/api/auth/send-otp", { email: email.trim() });
+    return response.data;
+  } catch (error) {
+    throw {
+      message: "Failed to send verification code. Please check your email address.",
+      code: "SEND_OTP_FAILED",
+      originalError: error,
+    };
+  }
+}
+
+// SIGNUP API - Verify OTP
+export async function verifyOTPApi(email: string, otp: string): Promise<OTPVerificationResponse> {
+  try {
+    const response = await api.post<OTPVerificationResponse>("/api/auth/verify-otp", {
+      email: email.trim(),
+      otp: otp.trim(),
+    });
+    return response.data;
+  } catch (error) {
+    throw {
+      message: "Invalid or expired verification code. Please request a new code.",
+      code: "VERIFY_OTP_FAILED",
+      originalError: error,
+    };
+  }
+}
+
+// SIGNUP API - Complete registration
+export async function signupApi(data: SignupRequest): Promise<AuthResponse> {
+  try {
+    // Sanitize and trim all string fields
+    const sanitizedData: SignupRequest = {
+      email: data.email.trim().toLowerCase(),
+      password: data.password, // Don't trim password (user might want spaces)
+      fullName: data.fullName.trim(),
+      phone: data.phone.trim().replace(/\s/g, ""), // Remove all whitespace from phone
+      nic: data.nic.trim().replace(/\s/g, ""), // Remove whitespace from NIC
+      role: data.role,
+      licenseNumber: data.licenseNumber?.trim().toUpperCase(),
+      licenseExpiryDate: data.licenseExpiryDate?.trim(),
+      employeeId: data.employeeId?.trim().toUpperCase(),
+      department: data.department?.trim(),
+      designation: data.designation?.trim(),
+      officeLocation: data.officeLocation?.trim(),
+    };
+
+    const response = await api.post<AuthResponse>("/api/auth/register", sanitizedData);
+    return response.data;
+  } catch (error) {
+    const errorMessage = apiGetErrorMessage(error);
+    throw {
+      message: errorMessage || "Registration failed. Please check all fields and try again.",
+      code: "SIGNUP_FAILED",
+      originalError: error,
+    };
+  }
+}
+
+// RESEND VERIFICATION
 export async function resendVerificationApi(email: string): Promise<ApiSuccessResponse> {
   const response = await api.post<ApiSuccessResponse>(
     "/api/auth/resend-verification",
-    { email }
+    { email: email.trim() }
   );
   return response.data;
 }
 
+// TOKEN REFRESH
 export async function refreshTokenApi(refreshToken: string): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>("/api/auth/refresh", {
     refreshToken,
@@ -39,11 +132,13 @@ export async function refreshTokenApi(refreshToken: string): Promise<AuthRespons
   return response.data;
 }
 
+// LOGOUT
 export async function logoutApi(): Promise<ApiSuccessResponse> {
   const response = await api.post<ApiSuccessResponse>("/api/auth/logout");
   return response.data;
 }
 
+// GET CURRENT USER
 export async function getMeApi(): Promise<AuthResponse> {
   const response = await api.get<AuthResponse>("/api/user/me");
   return response.data;
