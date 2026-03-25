@@ -1,7 +1,16 @@
 import { Suspense } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
 
-export default function AdminLayout({
+/**
+ * Admin Dashboard Layout
+ * Protects all admin routes with role-based access control
+ */
+export const metadata = {
+  title: "Admin Dashboard | VFMS",
+  description: "Administrator dashboard for VFMS",
+};
+
+export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;

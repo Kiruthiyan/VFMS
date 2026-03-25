@@ -3,13 +3,6 @@ import api, { getErrorMessage as apiGetErrorMessage } from "@/lib/api";
 export type UserRole = "ADMIN" | "APPROVER" | "SYSTEM_USER" | "DRIVER";
 export type UserStatus = "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
 
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  fullName: string;
-  role: UserRole;
-}
-
 export interface AuthResponse {
   userId: string;
   email: string;
@@ -26,9 +19,8 @@ export interface ApiSuccessResponse {
   data?: unknown;
 }
 
-// Auth API functions
-export async function registerApi(data: RegisterRequest): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>("/api/auth/register", data);
+export async function loginApi(data: { email: string; password: string }): Promise<AuthResponse> {
+  const response = await api.post<AuthResponse>("/api/auth/login", data);
   return response.data;
 }
 
@@ -37,14 +29,6 @@ export async function resendVerificationApi(email: string): Promise<ApiSuccessRe
     "/api/auth/resend-verification",
     { email }
   );
-  return response.data;
-}
-
-export async function loginApi(email: string, password: string): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>("/api/auth/login", {
-    email,
-    password,
-  });
   return response.data;
 }
 
@@ -81,8 +65,21 @@ export async function forgotPasswordApi(
   return response.data;
 }
 
+export async function verifyPasswordResetOtpApi(
+  email: string,
+  otp: string
+): Promise<ApiSuccessResponse> {
+  const response = await api.post<ApiSuccessResponse>(
+    "/api/auth/verify-password-reset-otp",
+    { email, otp }
+  );
+  return response.data;
+}
+
 export async function resetPasswordApi(data: {
-  token: string;
+  email?: string;
+  otp?: string;
+  token?: string;
   newPassword: string;
   confirmPassword: string;
 }): Promise<ApiSuccessResponse> {
