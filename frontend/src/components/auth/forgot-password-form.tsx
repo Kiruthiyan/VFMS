@@ -4,22 +4,15 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Mail, ArrowLeft } from "lucide-react";
+import { AlertCircle, CheckCircle2, ArrowLeft, Lock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from "@/lib/validators/auth/forgot-password-schema";
 import { forgotPasswordApi, getErrorMessage } from "@/lib/api/auth";
-import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { FormMessage } from "@/components/ui/form-message";
-
-const inputClass =
-  "w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2.5 " +
-  "text-sm text-slate-100 placeholder:text-slate-500 " +
-  "focus:outline-none focus:ring-2 focus:ring-amber-500/60 " +
-  "focus:border-amber-500/60 disabled:opacity-50 transition-colors";
 
 export function ForgotPasswordForm() {
   const [submitted, setSubmitted] = useState(false);
@@ -45,101 +38,154 @@ export function ForgotPasswordForm() {
     }
   };
 
-  // ── SUCCESS STATE ─────────────────────────────────────────────────────
-
+  // Success State
   if (submitted) {
     return (
-      <div className="text-center space-y-5">
-        <div className="w-16 h-16 rounded-full bg-amber-950/40 border border-amber-800/40 flex items-center justify-center mx-auto">
-          <Mail className="w-7 h-7 text-amber-400" />
-        </div>
-
-        <div>
-          <h3 className="text-lg font-bold text-slate-100 mb-2">
-            Check your email
-          </h3>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            If an account exists for{" "}
-            <span className="text-amber-400 font-medium">
-              {submittedEmail}
-            </span>
-            , we have sent a password reset link. The link expires in{" "}
-            <span className="text-slate-300 font-medium">1 hour</span>.
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-slate-800/60 border border-slate-700 p-4">
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Didn&apos;t receive it? Check your spam folder, or{" "}
-            <button
-              onClick={() => {
-                setSubmitted(false);
-                setSubmittedEmail("");
-              }}
-              className="text-amber-400 hover:text-amber-300 font-medium underline underline-offset-2"
-            >
-              try again
-            </button>
-            .
-          </p>
-        </div>
-
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        className="text-center py-8"
+      >
+        <motion.div
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mx-auto mb-4"
+        >
+          <CheckCircle2 className="w-8 h-8 text-white" strokeWidth={1.5} />
+        </motion.div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Check Your Email</h2>
+        <p className="text-slate-600 text-sm font-medium mb-4">
+          If an account exists for <span className="font-semibold text-slate-900">{submittedEmail}</span>, we've sent a reset link.
+        </p>
+        <button
+          onClick={() => {
+            setSubmitted(false);
+            setSubmittedEmail("");
+          }}
+          className="text-amber-600 hover:text-amber-700 text-sm font-medium transition-colors mb-4"
+        >
+          Didn't receive it? Try again
+        </button>
         <Link
           href="/auth/login"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors"
+          className="inline-flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft size={14} />
           Back to Sign In
         </Link>
-      </div>
+      </motion.div>
     );
   }
 
-  // ── FORM ──────────────────────────────────────────────────────────────
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      {serverError && (
-        <FormMessage type="error" message={serverError} />
-      )}
+    <motion.form
+      onSubmit={handleSubmit(onSubmit)}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-5"
+    >
+      <div className="flex justify-center mb-6">
+        <motion.div
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center"
+        >
+          <Lock className="w-6 h-6 text-white" strokeWidth={1.5} />
+        </motion.div>
+      </div>
 
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-slate-300">
-          Email Address <span className="text-amber-500">*</span>
+      {/* Error Alert */}
+      <AnimatePresence>
+        {serverError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200"
+          >
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" strokeWidth={2} />
+            <p className="font-medium text-red-700 text-sm">{serverError}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Email Field */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, type: 'spring', stiffness: 100, damping: 20 }}
+        className="space-y-2.5"
+      >
+        <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+          Email Address
         </label>
         <input
+          id="email"
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
+          autoFocus
           {...register("email")}
           disabled={isSubmitting}
-          className={inputClass}
+          className="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
+                     focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 focus:bg-white focus:shadow-lg focus:shadow-amber-500/15
+                     hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
+                     disabled:opacity-50 placeholder:text-slate-400"
         />
-        {errors.email && (
-          <p className="text-xs text-red-400">{errors.email.message}</p>
-        )}
-      </div>
+        <AnimatePresence>
+          {errors.email && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -4 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -4 }}
+              className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200"
+            >
+              <AlertCircle size={14} className="text-red-600 mt-0.5 shrink-0" />
+              <p className="text-xs font-medium text-red-700">{errors.email.message}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
-      <Button
+      {/* Submit Button */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 20 }}
         type="submit"
         disabled={isSubmitting}
-        className="w-full h-12 rounded-xl bg-amber-500 text-slate-900
-                   hover:bg-amber-400 font-bold text-sm flex items-center
-                   justify-center gap-2 disabled:opacity-60
-                   disabled:cursor-not-allowed transition-colors"
+        className="relative w-full h-12 mt-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-xl font-semibold overflow-hidden group disabled:opacity-70 flex items-center justify-center gap-2"
       >
-        {isSubmitting && <LoadingSpinner size={14} />}
-        {isSubmitting ? "Sending..." : "Send Reset Link"}
-      </Button>
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 blur-xl"
+          initial={{ x: '-100%' }}
+          whileHover={{ x: '100%' }}
+          transition={{ duration: 0.5 }}
+        />
+        <span className="relative flex items-center justify-center gap-2">
+          {isSubmitting ? (
+            <>
+              <LoadingSpinner size={16} />
+              Sending...
+            </>
+          ) : (
+            "Send Reset Link"
+          )}
+        </span>
+      </motion.button>
 
-      <Link
-        href="/auth/login"
-        className="flex items-center justify-center gap-2 text-sm
-                   text-slate-500 hover:text-slate-300 transition-colors"
-      >
-        <ArrowLeft size={14} />
-        Back to Sign In
-      </Link>
-    </form>
+      {/* Back to Sign In */}
+      <p className="text-center text-xs text-slate-600 pt-1">
+        <Link
+          href="/auth/login"
+          className="font-medium text-slate-900 hover:text-amber-600 transition-colors flex items-center justify-center gap-1"
+        >
+          <ArrowLeft size={14} />
+          Back to Sign In
+        </Link>
+      </p>
+    </motion.form>
   );
 }
