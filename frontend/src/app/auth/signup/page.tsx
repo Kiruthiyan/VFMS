@@ -42,7 +42,7 @@ function SignupContent() {
         <div className="w-full max-w-md">
           {/* Page Header with Better Hierarchy */}
           <div className="text-center mb-10 sm:mb-12">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 mb-3 sm:mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 mb-3 sm:mb-4 leading-tight">
               Create Account
             </h1>
             <p className="text-base sm:text-lg text-slate-600 font-medium max-w-xs mx-auto">

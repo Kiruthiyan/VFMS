@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
         <div className="w-full max-w-md">
           {/* Page Header */}
           <div className="text-center mb-8 sm:mb-10">
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 mb-2 sm:mb-3">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 mb-2 sm:mb-3">
               Reset Password
             </h1>
             <p className="text-base sm:text-lg text-slate-600 font-medium">

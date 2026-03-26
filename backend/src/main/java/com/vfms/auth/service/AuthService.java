@@ -18,6 +18,12 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import com.vfms.auth.dto.AuthResponse;
+import com.vfms.auth.dto.LoginRequest;
+import com.vfms.security.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -26,6 +32,29 @@ public class AuthService {
     private final EmailVerificationTokenRepository verificationTokenRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+
+    // ── LOGIN ─────────────────────────────────────────────────────────────
+
+    public AuthResponse login(LoginRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid email or password."));
+        
+        String jwtToken = jwtService.generateToken(user);
+        return AuthResponse.builder()
+                .accessToken(jwtToken)
+                .refreshToken(jwtToken)
+                .userId(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .build();
+    }
 
     // ── REGISTER ──────────────────────────────────────────────────────────
 

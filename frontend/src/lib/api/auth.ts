@@ -1,4 +1,5 @@
 import api, { getErrorMessage as apiGetErrorMessage } from "@/lib/api";
+import axios from "axios";
 
 export type UserRole = "ADMIN" | "APPROVER" | "SYSTEM_USER" | "DRIVER";
 export type UserStatus = "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
@@ -43,8 +44,10 @@ export interface OTPVerificationRequest {
 }
 
 export interface OTPVerificationResponse extends ApiSuccessResponse {
-  verified: boolean;
-  token?: string; // Temporary token for registration
+  data?: {
+    verified: boolean;
+    token?: string; // Temporary token for registration
+  };
 }
 
 // LOGIN API
@@ -75,12 +78,14 @@ export async function verifyOTPApi(email: string, otp: string): Promise<OTPVerif
       otp: otp.trim(),
     });
     return response.data;
-  } catch (error) {
-    throw {
-      message: "Invalid or expired verification code. Please request a new code.",
-      code: "VERIFY_OTP_FAILED",
-      originalError: error,
-    };
+  } catch (error: unknown) {
+    // Preserve the actual backend error message with error codes like [INVALID_OTP], [OTP_EXPIRED], [NO_OTP]
+    if (axios.isAxiosError(error) && error.response?.data?.message) {
+      // Re-throw with the actual backend error message to preserve error codes
+      throw error; // Let the caller handle the axios error directly
+    }
+    // Fallback for non-axios errors
+    throw error;
   }
 }
 
@@ -103,7 +108,13 @@ export async function signupApi(data: SignupRequest): Promise<AuthResponse> {
       officeLocation: data.officeLocation?.trim(),
     };
 
-    const response = await api.post<AuthResponse>("/api/auth/register", sanitizedData);
+    const backendPayload = {
+      ...sanitizedData,
+      requestedRole: sanitizedData.role,
+      confirmPassword: sanitizedData.password
+    };
+
+    const response = await api.post<AuthResponse>("/api/auth/register", backendPayload);
     return response.data;
   } catch (error) {
     const errorMessage = apiGetErrorMessage(error);

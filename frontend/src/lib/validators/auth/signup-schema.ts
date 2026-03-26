@@ -5,9 +5,12 @@ import * as z from 'zod';
 export const signupStep1Schema = z.object({
   email: z
     .string()
-    .email('Please enter a valid email address (example: name@company.com)')
     .min(1, 'Email is required')
-    .max(255, 'Email must be less than 255 characters'),
+    .max(255, 'Email must be less than 255 characters')
+    .regex(
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      'Please enter a valid email address (example: name@company.com)'
+    ),
 });
 
 export type SignupStep1Values = z.infer<typeof signupStep1Schema>;
@@ -17,20 +20,21 @@ export type SignupStep1Values = z.infer<typeof signupStep1Schema>;
 export const signupStep2Schema = z.object({
   otp: z
     .string()
-    .length(6, 'Verification code must be exactly 6 digits')
-    .regex(/^\d+$/, 'Verification code must contain only numbers')
-    .min(1, 'Verification code is required'),
+    .min(1, 'Please enter the verification code sent to your email.')
+    .max(6, 'Verification code must be 6 digits')
+    .regex(/^\d*$/, 'Verification code must contain only numbers'),
 });
 
 export type SignupStep2Values = z.infer<typeof signupStep2Schema>;
 
 // ─── STEP 3: USER DETAILS ──────────────────────────────────────────────
 
-// Sri Lankan NIC validation: 10 or 12 digits (old or new format)
+// Sri Lankan NIC validation: Old format (9 digits + v/x) or New format (12 digits)
 const validateNIC = (nic: string) => {
-  const cleaned = nic.replace(/\s/g, ''); // Remove whitespace
-  // Old format: 10 digits, New format: 12 digits starting with 9
-  return /^\d{10}$/.test(cleaned) || /^9\d{11}$/.test(cleaned);
+  const cleaned = nic.replace(/\s/g, '').toUpperCase(); // Remove whitespace and convert to upper
+  // Old format: 9 digits + V/X
+  // New format: 12 digits
+  return /^[0-9]{9}[VX]$/.test(cleaned) || /^[0-9]{12}$/.test(cleaned);
 };
 
 // Sri Lankan phone validation: 077xxxxxxx, 071xxxxxxx, etc.
