@@ -38,6 +38,18 @@ public class User implements UserDetails {
     private String email;
 
     @Column(nullable = false)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private String username;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.username == null) {
+            this.username = this.email; // Fallback username to email for DB constraints
+        }
+    }
+
+    @Column(nullable = false)
     private String password;
 
     @Column(nullable = false)
@@ -58,6 +70,11 @@ public class User implements UserDetails {
     @Builder.Default
     @Column(nullable = false, name = "email_verified")
     private boolean emailVerified = false;
+
+    @Builder.Default
+    @Column(nullable = false, name = "enabled")
+    @Getter(AccessLevel.NONE)
+    private boolean enabled = true;
 
     // ── ADMIN REVIEW FIELDS ───────────────────────────────────────────────
 

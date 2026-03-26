@@ -17,6 +17,9 @@ import {
   User,
   Shield,
   Lock,
+  Home,
+  Clock,
+  LogIn,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -110,6 +113,7 @@ export function SignupForm() {
   // Step 2: OTP
   const step2Form = useForm<SignupStep2Values>({
     resolver: zodResolver(signupStep2Schema),
+    mode: 'onSubmit', // Only validate when user clicks Verify button, not while typing
     defaultValues: {
       otp: formData.step2?.otp || '',
     },
@@ -166,8 +170,6 @@ export function SignupForm() {
   const handleStep1Submit = async (data: SignupStep1Values) => {
     setServerError(null);
     try {
-      step1Form.control._formValues = data; // Preserve in form state
-      
       // Call API to send OTP
       const response = await sendOTPApi(data.email);
       
@@ -175,8 +177,8 @@ export function SignupForm() {
       setFormData((prev) => ({ ...prev, step1: data }));
       setCurrentStep(2);
 
-      // Start countdown timer
-      setOtpResendCountdown(30);
+      // Start countdown timer for RESEND button (2 minutes = 120 seconds to match backend OTP validity)
+      setOtpResendCountdown(120);
       const timer = setInterval(() => {
         setOtpResendCountdown((prev) => {
           if (prev <= 1) {
@@ -195,13 +197,19 @@ export function SignupForm() {
   };
 
   const handleStep2Submit = async (data: SignupStep2Values) => {
+    // Validate OTP length before sending to server
+    if (data.otp.length !== 6) {
+      setServerError('Verification code must be exactly 6 digits');
+      return;
+    }
+
     setServerError(null);
     try {
       // Verify OTP with backend
       const response = await verifyOTPApi(formData.step1?.email || '', data.otp);
       
-      if (!response.verified) {
-        throw new Error('Verification code is invalid or expired. Please request a new code.');
+      if (!response.success || (response.data && !(response.data as any).verified)) {
+        throw new Error('[INVALID_OTP] Verification code is incorrect. Please check and try again.');
       }
 
       // Mark OTP as verified and save data
@@ -209,10 +217,35 @@ export function SignupForm() {
       setFormData((prev) => ({ ...prev, step2: data }));
       setCurrentStep(3);
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || 'Invalid or expired verification code. Please request a new code.'
-        : (err as any)?.message || 'Verification failed. Please try again.';
+      let message = 'Verification failed. Please try again.';
+      let errorMsg = '';
+      
+      // Extract error message from different error types
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      } else if ((err as any)?.message) {
+        errorMsg = (err as any).message;
+      }
+
+      // Map specific error codes to professional, user-friendly messages
+      if (errorMsg.includes('[INVALID_OTP]')) {
+        message = 'The verification code you entered is incorrect. Please try again.';
+      } else if (errorMsg.includes('[OTP_EXPIRED]')) {
+        message = 'Your verification code has expired. Please request a new code to continue.';
+      } else if (errorMsg.includes('[NO_OTP]')) {
+        message = 'No verification code found for your email. Please request a new code.';
+      } else if (errorMsg) {
+        message = errorMsg;
+      }
+      
       setServerError(message);
+    }
+  };
+
+  // Clear server error when user starts typing a corrected code
+  const handleOtpChange = (value: string) => {
+    if (serverError) {
+      setServerError(null);
     }
   };
 
@@ -310,19 +343,11 @@ export function SignupForm() {
       }
 
       // Call signup API
-      const authResponse = await signupApi(completeSignupData);
+      await signupApi(completeSignupData);
 
-      // Store auth data
-      setAuth(authResponse);
+      // Do NOT redirect to dashboard — account is pending admin approval
       setFormData((prev) => ({ ...prev, step5: data }));
       setIsSuccess(true);
-
-      // Redirect after success
-      setTimeout(() => {
-        router.replace('/dashboards/' + (authResponse.role === 'ADMIN' ? 'admin' : 
-                                        authResponse.role === 'APPROVER' ? 'approver' : 
-                                        authResponse.role === 'DRIVER' ? 'driver' : 'staff'));
-      }, 2000);
     } catch (err: unknown) {
       let errorMessage = 'Registration failed. Please try again.';
       
@@ -350,25 +375,87 @@ export function SignupForm() {
     }
   };
 
-  // Success State
+  // Success State — Pending Admin Approval
   if (isSuccess) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-        className="text-center py-12"
+        className="text-center py-8 space-y-6"
       >
+        {/* Animated Success Icon */}
         <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mx-auto mb-4"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          className="relative mx-auto w-20 h-20"
         >
-          <CheckCircle2 className="w-8 h-8 text-white" strokeWidth={1.5} />
+          <motion.div
+            className="absolute inset-0 rounded-full bg-emerald-400/20"
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-500/30">
+            <CheckCircle2 className="w-10 h-10 text-white" strokeWidth={1.5} />
+          </div>
         </motion.div>
-        <h2 className="text-2xl font-black text-slate-900 mb-1">Account Created!</h2>
-        <p className="text-slate-600 text-sm font-medium mb-4">Redirecting to sign in...</p>
-        <LoadingSpinner size={20} />
+
+        {/* Title */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="space-y-2"
+        >
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Registration Successful</h2>
+          <p className="text-slate-600 text-sm font-medium leading-relaxed max-w-sm mx-auto">
+            Your account has been created successfully and is currently{' '}
+            <span className="font-semibold text-amber-600">pending admin approval</span>.
+            You will be able to log in once your account has been approved.
+          </p>
+        </motion.div>
+
+        {/* Info Box */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-left"
+        >
+          <Clock className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-800 font-medium leading-relaxed">
+            Once your account is approved by an administrator, you can log in using your
+            registered email and password.
+          </p>
+        </motion.div>
+
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="flex flex-col sm:flex-row gap-3 pt-2"
+        >
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={() => router.push('/auth/login')}
+            className="flex-1 h-12 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-800 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-slate-900/25 transition-all duration-200"
+          >
+            <LogIn size={16} strokeWidth={2} /> Go to Login
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={() => router.push('/')}
+            className="flex-1 h-12 border-2 border-slate-200 text-slate-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+          >
+            <Home size={16} strokeWidth={2} /> Back to Home
+          </motion.button>
+        </motion.div>
       </motion.div>
     );
   }
@@ -548,7 +635,9 @@ export function SignupForm() {
                 maxLength={6}
                 inputMode="numeric"
                 autoFocus
-                {...step2Form.register('otp')}
+                {...step2Form.register('otp', {
+                  onChange: (e) => handleOtpChange(e.target.value),
+                })}
                 className="w-full px-4 py-3.5 text-center text-2xl font-black tracking-widest rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
                            focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 focus:bg-white focus:shadow-lg focus:shadow-blue-500/15
                            hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
@@ -585,7 +674,8 @@ export function SignupForm() {
                   type="button"
                   onClick={() => {
                     setServerError(null);
-                    setOtpResendCountdown(30);
+                    step2Form.setValue('otp', ''); // Clear the field for fresh attempt
+                    setOtpResendCountdown(120); // Match the 2-minute backend OTP validity
                     const timer = setInterval(() => {
                       setOtpResendCountdown((prev) => {
                         if (prev <= 1) clearInterval(timer);

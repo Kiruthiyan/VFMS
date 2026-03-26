@@ -54,6 +54,12 @@ public class EmailService {
                 passwordResetEmailHtml(fullName, resetUrl));
     }
 
+    @Async
+    public void sendOtpEmail(String toEmail, String otp) {
+        String subject = "VFMS Email Verification Code";
+        sendHtmlEmail(toEmail, subject, otpEmailHtml(otp));
+    }
+
     // ── PRIVATE SEND ──────────────────────────────────────────────────────
 
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
@@ -180,6 +186,32 @@ public class EmailService {
                 + "If you did not request a password reset, "
                 + "you can safely ignore this email. "
                 + "Your password will not change.</p>"
+                + "</div></body></html>";
+    }
+
+    private String otpEmailHtml(String otp) {
+        return "<!DOCTYPE html><html><body style='font-family:sans-serif;"
+                + "background:#0f172a;padding:40px;margin:0'>"
+                + "<div style='max-width:520px;margin:0 auto;background:#1e293b;"
+                + "border-radius:16px;padding:40px;border:1px solid #334155'>"
+                + "<div style='display:flex;align-items:center;gap:12px;margin-bottom:32px'>"
+                + "<div style='width:40px;height:40px;background:#f59e0b;border-radius:10px;"
+                + "display:flex;align-items:center;justify-content:center;"
+                + "font-size:18px;font-weight:900;color:#0f172a'>V</div>"
+                + "<span style='color:#f1f5f9;font-size:18px;font-weight:800;"
+                + "letter-spacing:-0.5px'>FLEET<span style='color:#f59e0b'>PRO</span></span></div>"
+                + "<h2 style='color:#f1f5f9;margin:0 0 8px'>Email Verification Code</h2>"
+                + "<p style='color:#94a3b8;margin:0 0 24px'>Hi there,</p>"
+                + "<p style='color:#94a3b8;line-height:1.6;margin:0 0 28px'>"
+                + "Your email verification code is:</p>"
+                + "<div style='background:#0f172a;border:2px solid #f59e0b;border-radius:10px;"
+                + "padding:20px;text-align:center;margin-bottom:28px'>"
+                + "<p style='color:#f59e0b;font-size:32px;font-weight:900;margin:0;letter-spacing:4px'>"
+                + otp + "</p></div>"
+                + "<p style='color:#94a3b8;line-height:1.6;margin:0 0 28px'>"
+                + "This code expires in 5 minutes. Do not share this code with anyone.</p>"
+                + "<p style='color:#475569;font-size:13px;margin-top:28px'>"
+                + "If you did not request this code, you can safely ignore this email.</p>"
                 + "</div></body></html>";
     }
 }
