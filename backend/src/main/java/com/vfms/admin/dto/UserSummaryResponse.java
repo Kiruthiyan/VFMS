@@ -21,8 +21,22 @@ public class UserSummaryResponse {
     private UserStatus status;
     private boolean emailVerified;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private LocalDateTime reviewedAt;
     private String rejectionReason;
+
+    // Admin-created flags
+    private boolean createdByAdmin;
+    private boolean passwordChangeRequired;
+
+    // Soft-delete fields
+    private LocalDateTime deletedAt;
+    private String deletedReason;
+
+    // Audit trail
+    private String createdBy;
+    private String deletedBy;
+    private String restoredBy;
 
     // Driver fields
     private String licenseNumber;
