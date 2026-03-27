@@ -1,17 +1,17 @@
 package com.vfms.admin.controller;
 
-import com.vfms.admin.dto.ReviewUserRequest;
-import com.vfms.admin.dto.UpdateUserRequest;
-import com.vfms.admin.dto.UserSummaryResponse;
+import com.vfms.admin.dto.*;
 import com.vfms.admin.service.AdminUserService;
 import com.vfms.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -22,26 +22,53 @@ public class AdminUserController {
 
     private final AdminUserService adminUserService;
 
-    // GET all users
+    // ── CREATE USER ──────────────────────────────────────────────────────
+
+    @PostMapping
+    public ResponseEntity<UserSummaryResponse> createUser(
+            @Valid @RequestBody CreateUserRequest request) {
+        UserSummaryResponse created = adminUserService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    // ── GET ALL ACTIVE USERS ─────────────────────────────────────────────
+
     @GetMapping
     public ResponseEntity<List<UserSummaryResponse>> getAllUsers() {
         return ResponseEntity.ok(adminUserService.getAllUsers());
     }
 
-    // GET pending users only
+    // ── GET PENDING USERS ────────────────────────────────────────────────
+
     @GetMapping("/pending")
     public ResponseEntity<List<UserSummaryResponse>> getPendingUsers() {
         return ResponseEntity.ok(adminUserService.getPendingUsers());
     }
 
-    // GET single user
+    // ── GET DELETED USERS (History) ──────────────────────────────────────
+
+    @GetMapping("/deleted")
+    public ResponseEntity<List<UserSummaryResponse>> getDeletedUsers() {
+        return ResponseEntity.ok(adminUserService.getDeletedUsers());
+    }
+
+    // ── GET USER COUNTS (Dashboard) ──────────────────────────────────────
+
+    @GetMapping("/counts")
+    public ResponseEntity<Map<String, Long>> getUserCounts() {
+        return ResponseEntity.ok(adminUserService.getUserCounts());
+    }
+
+    // ── GET SINGLE USER ──────────────────────────────────────────────────
+
     @GetMapping("/{userId}")
     public ResponseEntity<UserSummaryResponse> getUser(
             @PathVariable UUID userId) {
         return ResponseEntity.ok(adminUserService.getUserById(userId));
     }
 
-    // POST approve or reject
+    // ── REVIEW (APPROVE / REJECT) ────────────────────────────────────────
+
     @PostMapping("/{userId}/review")
     public ResponseEntity<ApiResponse<Void>> reviewUser(
             @PathVariable UUID userId,
@@ -55,7 +82,29 @@ public class AdminUserController {
         return ResponseEntity.ok(ApiResponse.success(message, null));
     }
 
-    // PATCH deactivate or reactivate
+    // ── SOFT DELETE ──────────────────────────────────────────────────────
+
+    @PatchMapping("/{userId}/soft-delete")
+    public ResponseEntity<ApiResponse<Void>> softDeleteUser(
+            @PathVariable UUID userId,
+            @Valid @RequestBody SoftDeleteRequest request) {
+        adminUserService.softDeleteUser(userId, request);
+        return ResponseEntity.ok(
+                ApiResponse.success("User has been deleted.", null));
+    }
+
+    // ── RESTORE USER ─────────────────────────────────────────────────────
+
+    @PostMapping("/{userId}/restore")
+    public ResponseEntity<ApiResponse<Void>> restoreUser(
+            @PathVariable UUID userId) {
+        adminUserService.restoreUser(userId);
+        return ResponseEntity.ok(
+                ApiResponse.success("User has been restored.", null));
+    }
+
+    // ── DEACTIVATE / REACTIVATE ──────────────────────────────────────────
+
     @PatchMapping("/{userId}/toggle-status")
     public ResponseEntity<ApiResponse<Void>> toggleStatus(
             @PathVariable UUID userId) {
@@ -64,7 +113,8 @@ public class AdminUserController {
                 ApiResponse.success("User status updated.", null));
     }
 
-    // PUT update user details
+    // ── UPDATE USER ──────────────────────────────────────────────────────
+
     @PutMapping("/{userId}")
     public ResponseEntity<UserSummaryResponse> updateUser(
             @PathVariable UUID userId,
