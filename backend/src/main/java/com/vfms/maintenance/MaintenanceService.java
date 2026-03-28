@@ -101,6 +101,27 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
+        // ── Close Request ──
+    @Transactional
+    public MaintenanceResponseDto closeRequest(Long id, java.math.BigDecimal actualCost) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (mr.getStatus() != MaintenanceStatus.APPROVED) {
+            throw new RuntimeException("Can only close APPROVED requests");
+        }
+
+        mr.setStatus(MaintenanceStatus.CLOSED);
+        mr.setClosedDate(java.time.LocalDateTime.now());
+        mr.setActualCost(actualCost);
+
+        // Auto-change vehicle status back to AVAILABLE
+        mr.getVehicle().setStatus(com.vfms.vehicle.VehicleStatus.AVAILABLE);
+
+        return mapToResponse(maintenanceRepository.save(mr));
+    }
+
+
 
 
     // ── Mapper ──
