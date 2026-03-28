@@ -88,20 +88,56 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Request fetched", response));
     }
 
-        // PATCH /api/maintenance/{id}/quotation?url=...
-    @PatchMapping("/{id}/quotation")
+        // POST /api/maintenance/{id}/quotation (file upload)
+    @PostMapping("/{id}/quotation")
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadQuotation(
-            @PathVariable Long id, @RequestParam String url) {
-        MaintenanceResponseDto response = maintenanceService.uploadQuotation(id, url);
-        return ResponseEntity.ok(ApiResponse.success("Quotation uploaded", response));
+            @PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String fileName = "quotation_" + id + "_" + file.getOriginalFilename();
+            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/maintenance");
+            java.nio.file.Files.createDirectories(uploadDir);
+            java.nio.file.Path filePath = uploadDir.resolve(fileName);
+            file.transferTo(filePath.toFile());
+            String fileUrl = "/api/maintenance/files/" + fileName;
+            MaintenanceResponseDto response = maintenanceService.uploadQuotation(id, fileUrl);
+            return ResponseEntity.ok(ApiResponse.success("Quotation uploaded", response));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload quotation: " + e.getMessage());
+        }
     }
 
-    // PATCH /api/maintenance/{id}/invoice?url=...
-    @PatchMapping("/{id}/invoice")
+    // POST /api/maintenance/{id}/invoice (file upload)
+    @PostMapping("/{id}/invoice")
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadInvoice(
-            @PathVariable Long id, @RequestParam String url) {
-        MaintenanceResponseDto response = maintenanceService.uploadInvoice(id, url);
-        return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
+            @PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String fileName = "invoice_" + id + "_" + file.getOriginalFilename();
+            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/maintenance");
+            java.nio.file.Files.createDirectories(uploadDir);
+            java.nio.file.Path filePath = uploadDir.resolve(fileName);
+            file.transferTo(filePath.toFile());
+            String fileUrl = "/api/maintenance/files/" + fileName;
+            MaintenanceResponseDto response = maintenanceService.uploadInvoice(id, fileUrl);
+            return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload invoice: " + e.getMessage());
+        }
+    }
+
+    // GET /api/maintenance/files/{fileName} (serve uploaded file)
+    @GetMapping("/files/{fileName}")
+    public ResponseEntity<org.springframework.core.io.Resource> getFile(@PathVariable String fileName) {
+        try {
+            java.nio.file.Path filePath = java.nio.file.Paths.get("uploads/maintenance").resolve(fileName);
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+            String contentType = fileName.endsWith(".pdf") ? "application/pdf" : "application/octet-stream";
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
+                    .header("Content-Type", contentType)
+                    .body(resource);
+        } catch (Exception e) {
+            throw new RuntimeException("File not found: " + e.getMessage());
+        }
     }
 
         // GET /api/maintenance/reports/downtime?vehicleId=...
