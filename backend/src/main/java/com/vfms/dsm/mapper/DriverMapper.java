@@ -14,6 +14,8 @@ public class DriverMapper {
             .nic(r.getNic())
             .dateOfBirth(r.getDateOfBirth())
             .phone(r.getPhone())
+            .licenseNumber(r.getLicenseNumber())
+            .licenseExpiryDate(r.getLicenseExpiryDate())
             .email(r.getEmail())
             .address(r.getAddress())
             .emergencyContactName(r.getEmergencyContactName())
@@ -33,6 +35,8 @@ public class DriverMapper {
             .nic(d.getNic())
             .dateOfBirth(d.getDateOfBirth())
             .phone(d.getPhone())
+            .licenseNumber(d.getLicenseNumber())
+            .licenseExpiryDate(d.getLicenseExpiryDate())
             .email(d.getEmail())
             .address(d.getAddress())
             .emergencyContactName(d.getEmergencyContactName())
@@ -42,13 +46,18 @@ public class DriverMapper {
             .dateOfJoining(d.getDateOfJoining())
             .photoUrl(d.getPhotoUrl())
             .status(d.getStatus())
+                .createdAt(d.getCreatedAt())
+                .updatedAt(d.getUpdatedAt())
             .build();
     }
 
     public void updateEntity(Driver d, DriverRequest r) {
         d.setFirstName(r.getFirstName());
         d.setLastName(r.getLastName());
+        d.setDateOfBirth(r.getDateOfBirth());
         d.setPhone(r.getPhone());
+        d.setLicenseNumber(r.getLicenseNumber());
+        d.setLicenseExpiryDate(r.getLicenseExpiryDate());
         d.setEmail(r.getEmail());
         d.setAddress(r.getAddress());
         d.setEmergencyContactName(r.getEmergencyContactName());

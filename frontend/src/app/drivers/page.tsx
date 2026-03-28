@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { DriverForm } from '@/components/drivers/DriverForm';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 
@@ -60,9 +60,12 @@ export default function DriversPage() {
                 Add Driver
               </button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>New Driver</DialogTitle>
+                <DialogTitle className="text-black dark:text-white">New Driver</DialogTitle>
+                <DialogDescription className="text-black/80 dark:text-white/80">
+                  Fill in the driver details and submit the form to create a new driver profile.
+                </DialogDescription>
               </DialogHeader>
               <DriverForm
                 onSuccess={() => {

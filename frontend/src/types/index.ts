@@ -1,13 +1,15 @@
 export type DriverStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
 export interface Driver {
-  id: number;
+  id: string;
   employeeId: string;
   firstName: string;
   lastName: string;
   nic: string;
   dateOfBirth?: string;
-  phone?: string;
+  phone: string;
+  licenseNumber: string;
+  licenseExpiryDate: string;
   email?: string;
   address?: string;
   emergencyContactName?: string;

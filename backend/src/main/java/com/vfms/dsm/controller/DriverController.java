@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/drivers")
@@ -21,7 +22,7 @@ public class DriverController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DriverResponse> getDriver(@PathVariable Long id) {
+    public ResponseEntity<DriverResponse> getDriver(@PathVariable UUID id) {
         return ResponseEntity.ok(driverService.getDriver(id));
     }
 
@@ -34,18 +35,18 @@ public class DriverController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DriverResponse> updateDriver(@PathVariable Long id, @Valid @RequestBody DriverRequest request) {
+    public ResponseEntity<DriverResponse> updateDriver(@PathVariable UUID id, @Valid @RequestBody DriverRequest request) {
         return ResponseEntity.ok(driverService.updateDriver(id, request));
     }
 
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivateDriver(@PathVariable Long id) {
+    public ResponseEntity<Void> deactivateDriver(@PathVariable UUID id) {
         driverService.deactivateDriver(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestParam Driver.DriverStatus status) {
+    public ResponseEntity<Void> updateStatus(@PathVariable UUID id, @RequestParam Driver.DriverStatus status) {
         driverService.updateStatus(id, status);
         return ResponseEntity.noContent().build();
     }

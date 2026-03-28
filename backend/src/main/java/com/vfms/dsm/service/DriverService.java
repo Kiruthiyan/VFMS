@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class DriverService {
     }
 
     @Transactional(readOnly = true)
-    public DriverResponse getDriver(Long id) {
+    public DriverResponse getDriver(UUID id) {
         return driverMapper.toResponse(findById(id));
     }
 
@@ -43,7 +44,7 @@ public class DriverService {
         return driverRepository.findAll(pageable).map(driverMapper::toResponse);
     }
 
-    public DriverResponse updateDriver(Long id, DriverRequest request) {
+    public DriverResponse updateDriver(UUID id, DriverRequest request) {
         Driver driver = findById(id);
         driverMapper.updateEntity(driver, request);
         if (driver == null) {
@@ -52,19 +53,19 @@ public class DriverService {
         return driverMapper.toResponse(driverRepository.save(driver));
     }
 
-    public void deactivateDriver(Long id) {
+    public void deactivateDriver(UUID id) {
         Driver driver = findById(id);
         driver.setStatus(Driver.DriverStatus.INACTIVE);
         driverRepository.save(driver);
     }
 
-    public void updateStatus(Long id, Driver.DriverStatus status) {
+    public void updateStatus(UUID id, Driver.DriverStatus status) {
         Driver driver = findById(id);
         driver.setStatus(status);
         driverRepository.save(driver);
     }
 
-    public Driver findById(Long id) {
+    public Driver findById(UUID id) {
         if (id == null) {
             throw new IllegalArgumentException("Driver id cannot be null");
         }
