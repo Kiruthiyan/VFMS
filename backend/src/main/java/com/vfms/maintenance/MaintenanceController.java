@@ -57,5 +57,14 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Request submitted for approval", response));
     }
 
+        // PATCH /api/maintenance/{id}/close?actualCost=...
+    @PatchMapping("/{id}/close")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> closeRequest(
+            @PathVariable Long id, @RequestParam java.math.BigDecimal actualCost) {
+        MaintenanceResponseDto response = maintenanceService.closeRequest(id, actualCost);
+        return ResponseEntity.ok(ApiResponse.success("Request closed", response));
+    }
+
+
 
 }
