@@ -67,6 +67,40 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
+        // ── Approve Request ──
+    @Transactional
+    public MaintenanceResponseDto approveRequest(Long id) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (mr.getStatus() != MaintenanceStatus.SUBMITTED) {
+            throw new RuntimeException("Can only approve SUBMITTED requests");
+        }
+
+        mr.setStatus(MaintenanceStatus.APPROVED);
+        mr.setApprovedDate(java.time.LocalDateTime.now());
+
+        // Auto-change vehicle status to UNDER_MAINTENANCE
+        mr.getVehicle().setStatus(com.vfms.vehicle.VehicleStatus.UNDER_MAINTENANCE);
+
+        return mapToResponse(maintenanceRepository.save(mr));
+    }
+
+    // ── Reject Request ──
+    @Transactional
+    public MaintenanceResponseDto rejectRequest(Long id, String reason) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (mr.getStatus() != MaintenanceStatus.SUBMITTED) {
+            throw new RuntimeException("Can only reject SUBMITTED requests");
+        }
+
+        mr.setStatus(MaintenanceStatus.REJECTED);
+        mr.setRejectionReason(reason);
+        return mapToResponse(maintenanceRepository.save(mr));
+    }
+
 
 
     // ── Mapper ──
