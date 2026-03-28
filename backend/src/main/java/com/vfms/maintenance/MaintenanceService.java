@@ -170,6 +170,22 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
+        // ── Get Downtime Report Per Vehicle ──
+    public java.util.List<MaintenanceResponseDto> getDowntimeByVehicle(Long vehicleId) {
+        return maintenanceRepository.findByVehicleId(vehicleId).stream()
+                .filter(mr -> mr.getApprovedDate() != null && mr.getClosedDate() != null)
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ── Get Pending Approvals ──
+    public java.util.List<MaintenanceResponseDto> getPendingApprovals() {
+        return maintenanceRepository.findByStatus(MaintenanceStatus.SUBMITTED).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
 
 
     // ── Mapper ──
