@@ -32,6 +32,23 @@ public class MaintenanceController {
         MaintenanceResponseDto response = maintenanceService.updateRequest(id, request);
         return ResponseEntity.ok(ApiResponse.success("Request updated", response));
     }
+    
+
+        // PATCH /api/maintenance/{id}/approve
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> approveRequest(@PathVariable Long id) {
+        MaintenanceResponseDto response = maintenanceService.approveRequest(id);
+        return ResponseEntity.ok(ApiResponse.success("Request approved", response));
+    }
+
+    // PATCH /api/maintenance/{id}/reject?reason=...
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> rejectRequest(
+            @PathVariable Long id, @RequestParam String reason) {
+        MaintenanceResponseDto response = maintenanceService.rejectRequest(id, reason);
+        return ResponseEntity.ok(ApiResponse.success("Request rejected", response));
+    }
+
 
         // PATCH /api/maintenance/{id}/submit
     @PatchMapping("/{id}/submit")
