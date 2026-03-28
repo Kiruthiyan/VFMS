@@ -121,6 +121,28 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
+        // ── Get All Requests ──
+    public java.util.List<MaintenanceResponseDto> getAllRequests() {
+        return maintenanceRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ── Get Requests By Status ──
+    public java.util.List<MaintenanceResponseDto> getRequestsByStatus(MaintenanceStatus status) {
+        return maintenanceRepository.findByStatus(status).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ── Get Requests By Vehicle ──
+    public java.util.List<MaintenanceResponseDto> getRequestsByVehicle(Long vehicleId) {
+        return maintenanceRepository.findByVehicleId(vehicleId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
 
 
 

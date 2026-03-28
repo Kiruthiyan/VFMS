@@ -65,6 +65,23 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Request closed", response));
     }
 
+        // GET /api/maintenance
+    @GetMapping
+    public ResponseEntity<ApiResponse<java.util.List<MaintenanceResponseDto>>> getAllRequests(
+            @RequestParam(required = false) MaintenanceStatus status,
+            @RequestParam(required = false) Long vehicleId) {
+        java.util.List<MaintenanceResponseDto> response;
+        if (status != null) {
+            response = maintenanceService.getRequestsByStatus(status);
+        } else if (vehicleId != null) {
+            response = maintenanceService.getRequestsByVehicle(vehicleId);
+        } else {
+            response = maintenanceService.getAllRequests();
+        }
+        return ResponseEntity.ok(ApiResponse.success("Requests fetched", response));
+    }
+
+
 
 
 }
