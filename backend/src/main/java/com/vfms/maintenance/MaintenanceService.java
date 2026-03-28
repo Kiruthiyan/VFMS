@@ -32,6 +32,28 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
+        // ── Edit Request (only when NEW) ──
+    @Transactional
+    public MaintenanceResponseDto updateRequest(Long id, MaintenanceRequestDto request) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (mr.getStatus() != MaintenanceStatus.NEW) {
+            throw new RuntimeException("Can only edit requests in NEW status");
+        }
+
+        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        mr.setVehicle(vehicle);
+        mr.setMaintenanceType(request.getMaintenanceType());
+        mr.setDescription(request.getDescription());
+        mr.setEstimatedCost(request.getEstimatedCost());
+
+        return mapToResponse(maintenanceRepository.save(mr));
+    }
+
+
     // ── Mapper ──
     MaintenanceResponseDto mapToResponse(MaintenanceRequest mr) {
         Long downtimeHours = null;
