@@ -53,6 +53,21 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
+        // ── Submit Request ──
+    @Transactional
+    public MaintenanceResponseDto submitRequest(Long id) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (mr.getStatus() != MaintenanceStatus.NEW) {
+            throw new RuntimeException("Can only submit requests in NEW status");
+        }
+
+        mr.setStatus(MaintenanceStatus.SUBMITTED);
+        return mapToResponse(maintenanceRepository.save(mr));
+    }
+
+
 
     // ── Mapper ──
     MaintenanceResponseDto mapToResponse(MaintenanceRequest mr) {
