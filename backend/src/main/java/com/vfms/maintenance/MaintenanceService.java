@@ -142,8 +142,12 @@ public class MaintenanceService {
                 .toList();
     }
 
-
-
+        // ── Get Request By ID ──
+    public MaintenanceResponseDto getRequestById(Long id) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+        return mapToResponse(mr);
+    }
 
 
     // ── Mapper ──
