@@ -104,6 +104,22 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
     }
 
+        // GET /api/maintenance/reports/downtime?vehicleId=...
+    @GetMapping("/reports/downtime")
+    public ResponseEntity<ApiResponse<java.util.List<MaintenanceResponseDto>>> getDowntimeReport(
+            @RequestParam Long vehicleId) {
+        java.util.List<MaintenanceResponseDto> response = maintenanceService.getDowntimeByVehicle(vehicleId);
+        return ResponseEntity.ok(ApiResponse.success("Downtime report fetched", response));
+    }
+
+    // GET /api/maintenance/reports/pending
+    @GetMapping("/reports/pending")
+    public ResponseEntity<ApiResponse<java.util.List<MaintenanceResponseDto>>> getPendingApprovals() {
+        java.util.List<MaintenanceResponseDto> response = maintenanceService.getPendingApprovals();
+        return ResponseEntity.ok(ApiResponse.success("Pending approvals fetched", response));
+    }
+
+
 
 
 
