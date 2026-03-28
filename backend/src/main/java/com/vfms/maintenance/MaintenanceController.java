@@ -24,4 +24,13 @@ public class MaintenanceController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Maintenance request created", response));
     }
+
+        // PUT /api/maintenance/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> updateRequest(
+            @PathVariable Long id, @Valid @RequestBody MaintenanceRequestDto request) {
+        MaintenanceResponseDto response = maintenanceService.updateRequest(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Request updated", response));
+    }
+
 }
