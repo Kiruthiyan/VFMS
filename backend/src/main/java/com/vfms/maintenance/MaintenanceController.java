@@ -33,4 +33,12 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Request updated", response));
     }
 
+        // PATCH /api/maintenance/{id}/submit
+    @PatchMapping("/{id}/submit")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> submitRequest(@PathVariable Long id) {
+        MaintenanceResponseDto response = maintenanceService.submitRequest(id);
+        return ResponseEntity.ok(ApiResponse.success("Request submitted for approval", response));
+    }
+
+
 }
