@@ -1,146 +1,125 @@
-# FleetPro - Vehicle Fleet Management System (VFMS)
+# VFMS - Vehicle Fleet Management System
 
-![Java](https://img.shields.io/badge/Java-17-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-green)
-![Next.js](https://img.shields.io/badge/Next.js-14-black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-cyan)
+VFMS is a full-stack web application with a Spring Boot backend and a Next.js frontend.
+This branch includes Driver License Management backend APIs, database migrations, and a frontend driver license tab component.
 
-![FleetPro Dashboard](https://github.com/user-attachments/assets/placeholder-dashboard-image)
-*(Note: Replace with actual hosted image URL or local path if supported by your repo host)*
+## Current Tech Stack
 
-> **Module Focus:** Fuel Management System (Student B)
-> **Status:** Active Development
+- Backend: Spring Boot 3.4.0, Java 21, Spring Data JPA, Spring Security, Bean Validation, Flyway
+- Database: PostgreSQL (configured for Supabase)
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS
+- HTTP client: Axios
+- Notifications: Sonner toast
 
-## 📖 Project Overview
+## Project Structure
 
-**FleetPro** is an enterprise-grade Vehicle Fleet Management System designed to streamline logistics, reduce operational costs, and enhance fleet visibility.
+- backend
+    - src/main/java/com/vfms
+        - common
+            - dto
+            - enums
+            - exeception
+        - config
+        - dsm
+            - controller
+            - dto
+            - entity
+            - exception
+            - repository
+            - service
+    - src/main/resources
+        - application.properties
+        - db/migration
+- frontend
+    - src/app
+        - page.tsx
+        - auth/login/page.tsx
+        - auth/signup/page.tsx
+    - src/components
+        - drivers/DriverLicensesTab.tsx
+        - providers
+        - ui
+    - src/lib
 
-This repository hosts the **Fuel Management Module**, a specialized component responsible for:
-- **Tracking Fuel Consumption:** Digitizing fuel logs for entire fleets.
-- **Cost Analytics:** Visualizing standardized fuel costs and identification of inefficiencies.
-- **Mileage Monitoring:** Correlating fuel usage with distance traveled.
-- **Secure Access:** Role-Based Access Control (RBAC) ensuring data integrity.
+## Implemented Driver License Management
 
-## ✨ Key Features
+### Backend
 
-### ⛽ Fuel Management (Core)
-- **Digital Fuel Logging:** Drivers or admins can log fuel entries (Volume, Cost, Station, Mileage).
-- **Smart Analytics:** Real-time dashboards showing Monthly Spend, Fuel Efficiency (Km/L), and Abnormal Consumption.
-- **Vehicle History:** Complete audit trail of every refueling event per vehicle.
+- Driver license entity and DTOs
+- Driver license CRUD service and controller
+- Notification log entity and repository
+- Flyway migrations for:
+    - driver_licenses table
+    - notification_log table
 
-### 🔐 Advanced Security
-- **JWT Authentication:** Stateless, secure session management.
-- **Role-Based Access Control (RBAC):**
-    - **Admin:** Full system control.
-    - **Approver:** Validate records.
-    - **Driver:** View-only access to assigned vehicle data.
-    - **System User:** Staff-level access.
-- **2-Step OTP Password Reset:** Enhanced security flow (Verify OTP -> Reset Password) via Email.
+### REST Endpoints
 
-### 👥 User Management
-- **Onboarding Workflow:** Admin-initiated user creation with temporary passwords.
-- **Profile Management:** Users can update profiles and avatars.
-- **Secure Password Policy:** Enforced complexity and rotation.
+- GET /api/drivers/{driverId}/licenses
+- POST /api/drivers/{driverId}/licenses
+- PUT /api/drivers/licenses/{id}
+- DELETE /api/drivers/licenses/{id}
 
-## 🏗️ Technical Architecture
+Base backend URL: http://localhost:8080
 
-### Backend (Spring Boot)
-- **Framework:** Spring Boot 3.4.0
-- **Database:** PostgreSQL (JPA/Hibernate)
-- **Security:** Spring Security 6 + JWT (Phone/Email verification)
-- **Architecture:** Monolithic REST API (clean separation of concerns)
+### Frontend
 
-### Frontend (Next.js)
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS + Shadcn/UI (Radix Primitives)
-- **State Management:** React Query + Zustand
-- **Forms:** React Hook Form + Zod Validation
+- DriverLicensesTab component added at frontend/src/components/drivers/DriverLicensesTab.tsx
+- Current public pages:
+    - /
+    - /auth/login
+    - /auth/signup
 
-## 📂 Project Structure
+Note: DriverLicensesTab is currently a reusable component and is not yet mounted to a route page.
 
-```text
-e:\SoftWare Project\VFMS\
-├── backend/                  # Java Spring Boot Backend
-│   ├── src/main/java/com/vfms/
-│   │   ├── auth/             # Authentication & User Management
-│   │   ├── fuel/             # Fuel Module (Controllers, Services, Repos)
-│   │   ├── vehicle/          # Vehicle Core Entities
-│   │   └── config/           # Global Configurations (CORS, Security)
-│   └── src/main/resources/   # App Properties & Email Templates
-│
-└── frontend/                 # Next.js Frontend
-    ├── src/app/
-    │   ├── admin/            # Protected Admin Routes (Users, Fuel)
-    │   ├── auth/             # Login, Forgot Password, OTP Flows
-    │   └── dashboard/        # Role-specific Dashboards
-    ├── src/components/       # Reusable UI Components
-    └── src/lib/              # API Clients & Utility Functions
-```
+## Database Configuration
 
-## 🚀 Getting Started
+The backend is configured in backend/src/main/resources/application.properties to use Supabase PostgreSQL.
 
-### Prerequisites
-- **Java JDK 21+**
-- **Node.js 18+**
-- **PostgreSQL** running locally on default port `5432`.
-- **Maven** (optional, wrapper included).
+Datasource values currently set:
 
-### 1️⃣ Backend Setup
+- spring.datasource.url=jdbc:postgresql://db.bbfnkmzqftuvwesnmjkj.supabase.co:5432/postgres?sslmode=require
+- spring.datasource.driver-class-name=org.postgresql.Driver
+- spring.datasource.username=postgres
+- spring.datasource.password=kiruthiyan1234
 
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
-2.  Configure Database:
-    Open `src/main/resources/application.properties` and update your PostgreSQL credentials:
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/vfms_db
-    spring.datasource.username=your_username
-    spring.datasource.password=your_password
-    ```
-3.  Run the application:
-    ```bash
-    ./mvnw spring-boot:run
-    ```
-    *The server will start on `http://localhost:8080`.*
+Important: Move credentials and secrets to environment variables before production use.
 
-### 2️⃣ Frontend Setup
+## How to Run
 
-1.  Navigate to the frontend directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
-3.  Run the development server:
-    ```bash
-    npm run dev
-    ```
-4.  Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Backend
 
-## 🧪 Testing
+1. Open terminal in backend folder.
+2. Run:
+     - Windows: mvnw.cmd spring-boot:run
+3. Backend starts at http://localhost:8080
 
-### Backend Tests
-Run unit and integration tests using Maven:
-```bash
-cd backend
-./mvnw test
-```
+### Frontend
 
-### Verified User Flows
-- [x] **Login/Logout** (JWT valid/invalid)
-- [x] **Forgot Password** (Email delivery + OTP Verification)
-- [x] **Fuel Entry** (Validation of cost/mileage)
-- [x] **User Creation** (Admin only)
+1. Open terminal in frontend folder.
+2. Install dependencies:
+     - npm install
+3. Run dev server:
+     - npm run dev
+4. Open http://localhost:3000
 
-## 📄 License
-This project is proprietary software developed for the **Vehicle Fleet Management System (VFMS)** academic requirement.
+## Useful Commands
 
----
-**Developed by:** Kiruthiyan (Student B)
+### Backend
+
+- Build: mvnw.cmd -DskipTests compile
+- Test: mvnw.cmd test
+
+### Frontend
+
+- Type check: npx tsc --noEmit
+- Lint: npm run lint
+- Build: npm run build
+
+## Notes
+
+- Backend compile currently succeeds with the DSM classes included.
+- Frontend type check currently succeeds after dependency and component alignment changes.
+
+## Author
+
+Developed by Kavishanth.
