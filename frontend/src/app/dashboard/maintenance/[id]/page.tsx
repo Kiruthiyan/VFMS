@@ -1,0 +1,294 @@
+"use client";
+
+import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { MaintenanceRequest, maintenanceApi } from "@/lib/api/maintenance";
+import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wrench, ArrowLeft, Car, Calendar, DollarSign, Clock, FileText, Loader2, Upload, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
+
+export default function MaintenanceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const router = useRouter();
+  const [request, setRequest] = useState<MaintenanceRequest | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRequest = async () => {
+    try {
+      const res = await maintenanceApi.getById(Number(id));
+      setRequest(res.data);
+    } catch {
+      toast.error("Failed to load request");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchRequest(); }, [id]);
+
+  const handleSubmit = async () => {
+    if (confirm("Submit this request for approval?")) {
+      try {
+        await maintenanceApi.submit(Number(id));
+        toast.success("Request submitted");
+        fetchRequest();
+      } catch { toast.error("Failed to submit"); }
+    }
+  };
+
+  const handleApprove = async () => {
+    if (confirm("Approve this request?")) {
+      try {
+        await maintenanceApi.approve(Number(id));
+        toast.success("Request approved");
+        fetchRequest();
+      } catch { toast.error("Failed to approve"); }
+    }
+  };
+
+  const handleReject = async () => {
+    const reason = prompt("Enter rejection reason:");
+    if (reason) {
+      try {
+        await maintenanceApi.reject(Number(id), reason);
+        toast.success("Request rejected");
+        fetchRequest();
+      } catch { toast.error("Failed to reject"); }
+    }
+  };
+
+  const handleClose = async () => {
+    const cost = prompt("Enter actual cost:");
+    if (cost) {
+      try {
+        await maintenanceApi.close(Number(id), Number(cost));
+        toast.success("Request closed");
+        fetchRequest();
+      } catch { toast.error("Failed to close"); }
+    }
+  };
+
+  const handleUploadQuotation = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        await maintenanceApi.uploadQuotation(Number(id), file);
+        toast.success("Quotation uploaded");
+        fetchRequest();
+      } catch { toast.error("Failed to upload quotation"); }
+    }
+    e.target.value = "";
+  };
+
+  const handleUploadInvoice = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        await maintenanceApi.uploadInvoice(Number(id), file);
+        toast.success("Invoice uploaded");
+        fetchRequest();
+      } catch { toast.error("Failed to upload invoice"); }
+    }
+    e.target.value = "";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!request) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-slate-500">Request not found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-slate-600 hover:text-slate-900">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Requests
+        </Button>
+
+        <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
+            <CardTitle className="flex items-center gap-3 text-white text-lg">
+              <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
+                <Wrench className="h-5 w-5" />
+              </div>
+              Maintenance Request #{request.id}
+              <div className="ml-auto">
+                <MaintenanceStatusBadge status={request.status} />
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                <Car className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Vehicle</p>
+                  <p className="font-semibold text-slate-900">{request.vehicleBrandModel}</p>
+                  <p className="text-xs text-slate-500">{request.vehiclePlateNumber}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                <Wrench className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Type</p>
+                  <p className="font-semibold text-slate-900">{request.maintenanceType.replace("_", " ")}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg col-span-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Description</p>
+                  <p className="font-semibold text-slate-900">{request.description}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Estimated Cost</p>
+                  <p className="font-semibold text-slate-900">
+                    {request.estimatedCost ? `Rs. ${request.estimatedCost.toLocaleString()}` : "—"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Actual Cost</p>
+                  <p className="font-semibold text-slate-900">
+                    {request.actualCost ? `Rs. ${request.actualCost.toLocaleString()}` : "—"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Requested Date</p>
+                  <p className="font-semibold text-slate-900">
+                    {new Date(request.requestedDate).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                <Clock className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-xs text-slate-500">Downtime</p>
+                  <p className="font-semibold text-slate-900">
+                    {request.downtimeHours ? `${request.downtimeHours} hours` : "—"}
+                  </p>
+                </div>
+              </div>
+              {request.rejectionReason && (
+                <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg col-span-2">
+                  <FileText className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="text-xs text-red-500">Rejection Reason</p>
+                    <p className="font-semibold text-red-900">{request.rejectionReason}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Documents Section */}
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Documents</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-slate-500 mb-2">Quotation</p>
+                  {request.quotationUrl ? (
+                    <a href={`http://localhost:8080${request.quotationUrl}`} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                      <ExternalLink className="h-4 w-4" /> View Quotation
+                    </a>
+                  ) : (
+                    <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <Upload className="h-3 w-3" /> Upload Quotation
+                      <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={handleUploadQuotation} />
+                    </label>
+                  )}
+                </div>
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-slate-500 mb-2">Invoice</p>
+                  {request.invoiceUrl ? (
+                    <a href={`http://localhost:8080${request.invoiceUrl}`} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                      <ExternalLink className="h-4 w-4" /> View Invoice
+                    </a>
+                  ) : (
+                    (request.status === "APPROVED" || request.status === "CLOSED") ? (
+                      <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Upload className="h-3 w-3" /> Upload Invoice
+                        <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={handleUploadInvoice} />
+                      </label>
+                    ) : (
+                      <span className="text-xs text-slate-400">Available after approval</span>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
+              {request.status === "NEW" && (
+                <>
+                  <Button
+                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                    onClick={handleSubmit}
+                  >
+                    Submit for Approval
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push(`/dashboard/maintenance/${request.id}/edit`)}
+                  >
+                    Edit
+                  </Button>
+                </>
+              )}
+              {request.status === "SUBMITTED" && (
+                <>
+                  <Button
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={handleApprove}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                    onClick={handleReject}
+                  >
+                    Reject
+                  </Button>
+                </>
+              )}
+              {request.status === "APPROVED" && (
+                <Button
+                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                  onClick={handleClose}
+                >
+                  Close Request
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => router.back()}>
+                Back
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
