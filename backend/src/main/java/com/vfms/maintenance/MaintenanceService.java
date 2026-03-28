@@ -149,6 +149,28 @@ public class MaintenanceService {
         return mapToResponse(mr);
     }
 
+        // ── Upload Quotation ──
+    @Transactional
+    public MaintenanceResponseDto uploadQuotation(Long id, String quotationUrl) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+        mr.setQuotationUrl(quotationUrl);
+        return mapToResponse(maintenanceRepository.save(mr));
+    }
+
+    // ── Upload Invoice ──
+    @Transactional
+    public MaintenanceResponseDto uploadInvoice(Long id, String invoiceUrl) {
+        MaintenanceRequest mr = maintenanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+        if (mr.getStatus() != MaintenanceStatus.APPROVED && mr.getStatus() != MaintenanceStatus.CLOSED) {
+            throw new RuntimeException("Invoice can only be uploaded for approved/closed requests");
+        }
+        mr.setInvoiceUrl(invoiceUrl);
+        return mapToResponse(maintenanceRepository.save(mr));
+    }
+
+
 
     // ── Mapper ──
     MaintenanceResponseDto mapToResponse(MaintenanceRequest mr) {
