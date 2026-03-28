@@ -54,6 +54,7 @@ public class StaffService {
         staff.setPhone(request.getPhone());
         staff.setDepartment(request.getDepartment());
         staff.setDesignation(request.getDesignation());
+        staff.setDateOfJoining(request.getDateOfJoining());
         if (request.getRole() != null) staff.setRole(request.getRole());
         return toResponse(staffRepository.save(staff));
     }
