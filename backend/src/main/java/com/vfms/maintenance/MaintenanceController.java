@@ -81,6 +81,14 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Requests fetched", response));
     }
 
+        // GET /api/maintenance/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> getRequestById(@PathVariable Long id) {
+        MaintenanceResponseDto response = maintenanceService.getRequestById(id);
+        return ResponseEntity.ok(ApiResponse.success("Request fetched", response));
+    }
+
+
 
 
 
