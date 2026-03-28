@@ -88,6 +88,23 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Request fetched", response));
     }
 
+        // PATCH /api/maintenance/{id}/quotation?url=...
+    @PatchMapping("/{id}/quotation")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadQuotation(
+            @PathVariable Long id, @RequestParam String url) {
+        MaintenanceResponseDto response = maintenanceService.uploadQuotation(id, url);
+        return ResponseEntity.ok(ApiResponse.success("Quotation uploaded", response));
+    }
+
+    // PATCH /api/maintenance/{id}/invoice?url=...
+    @PatchMapping("/{id}/invoice")
+    public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadInvoice(
+            @PathVariable Long id, @RequestParam String url) {
+        MaintenanceResponseDto response = maintenanceService.uploadInvoice(id, url);
+        return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
+    }
+
+
 
 
 
