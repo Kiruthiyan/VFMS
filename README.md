@@ -1,146 +1,136 @@
-# FleetPro - Vehicle Fleet Management System (VFMS)
+# VFMS - Feature: License Expiry Monitoring
 
-![Java](https://img.shields.io/badge/Java-17-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-green)
-![Next.js](https://img.shields.io/badge/Next.js-14-black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-cyan)
+Vehicle Fleet Management System (VFMS) monorepo with a Spring Boot backend and Next.js frontend.
+This branch/version focuses on implementing license expiry monitoring in the backend while keeping the frontend scaffolded for future auth and dashboard integration.
 
-![FleetPro Dashboard](https://github.com/user-attachments/assets/placeholder-dashboard-image)
-*(Note: Replace with actual hosted image URL or local path if supported by your repo host)*
+## Tech Stack
 
-> **Module Focus:** Fuel Management System (Student B)
-> **Status:** Active Development
+- Backend: Java 21, Spring Boot 3.4, Spring Data JPA, Spring Security, Spring Mail, Lombok
+- Database: PostgreSQL (Supabase)
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS, Radix UI, Sonner, Axios
+- Build Tools: Maven Wrapper, npm
 
-## 📖 Project Overview
+## Current Implementation
 
-**FleetPro** is an enterprise-grade Vehicle Fleet Management System designed to streamline logistics, reduce operational costs, and enhance fleet visibility.
+### Backend
 
-This repository hosts the **Fuel Management Module**, a specialized component responsible for:
-- **Tracking Fuel Consumption:** Digitizing fuel logs for entire fleets.
-- **Cost Analytics:** Visualizing standardized fuel costs and identification of inefficiencies.
-- **Mileage Monitoring:** Correlating fuel usage with distance traveled.
-- **Secure Access:** Role-Based Access Control (RBAC) ensuring data integrity.
+- Scheduled license expiry monitoring is enabled using Spring scheduling.
+- Daily scheduler runs at 06:00 and:
+  - Marks licenses as EXPIRED if expiry date is before today.
+  - Marks licenses as EXPIRING_SOON if expiry date is within the next 30 days.
+  - Stores notification entries for expiry and expiring-soon events.
+- DSM module includes:
+  - Entities: Driver, DriverLicense, NotificationLog
+  - Repositories: DriverLicenseRepository, NotificationLogRepository
+- Global exception handling is available with a standard error DTO.
+- Security configuration is currently a placeholder that permits all requests.
 
-## ✨ Key Features
+### Frontend
 
-### ⛽ Fuel Management (Core)
-- **Digital Fuel Logging:** Drivers or admins can log fuel entries (Volume, Cost, Station, Mileage).
-- **Smart Analytics:** Real-time dashboards showing Monthly Spend, Fuel Efficiency (Km/L), and Abnormal Consumption.
-- **Vehicle History:** Complete audit trail of every refueling event per vehicle.
+- Landing page is implemented with a full marketing-style UI.
+- Auth routes for login and signup are currently placeholders.
+- API client (Axios) and basic auth role/type utilities are scaffolded.
+- Middleware is currently pass-through (no route protection yet).
 
-### 🔐 Advanced Security
-- **JWT Authentication:** Stateless, secure session management.
-- **Role-Based Access Control (RBAC):**
-    - **Admin:** Full system control.
-    - **Approver:** Validate records.
-    - **Driver:** View-only access to assigned vehicle data.
-    - **System User:** Staff-level access.
-- **2-Step OTP Password Reset:** Enhanced security flow (Verify OTP -> Reset Password) via Email.
-
-### 👥 User Management
-- **Onboarding Workflow:** Admin-initiated user creation with temporary passwords.
-- **Profile Management:** Users can update profiles and avatars.
-- **Secure Password Policy:** Enforced complexity and rotation.
-
-## 🏗️ Technical Architecture
-
-### Backend (Spring Boot)
-- **Framework:** Spring Boot 3.4.0
-- **Database:** PostgreSQL (JPA/Hibernate)
-- **Security:** Spring Security 6 + JWT (Phone/Email verification)
-- **Architecture:** Monolithic REST API (clean separation of concerns)
-
-### Frontend (Next.js)
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS + Shadcn/UI (Radix Primitives)
-- **State Management:** React Query + Zustand
-- **Forms:** React Hook Form + Zod Validation
-
-## 📂 Project Structure
+## Project Structure
 
 ```text
-e:\SoftWare Project\VFMS\
-├── backend/                  # Java Spring Boot Backend
+VFMS/
+├── backend/
 │   ├── src/main/java/com/vfms/
-│   │   ├── auth/             # Authentication & User Management
-│   │   ├── fuel/             # Fuel Module (Controllers, Services, Repos)
-│   │   ├── vehicle/          # Vehicle Core Entities
-│   │   └── config/           # Global Configurations (CORS, Security)
-│   └── src/main/resources/   # App Properties & Email Templates
-│
-└── frontend/                 # Next.js Frontend
-    ├── src/app/
-    │   ├── admin/            # Protected Admin Routes (Users, Fuel)
-    │   ├── auth/             # Login, Forgot Password, OTP Flows
-    │   └── dashboard/        # Role-specific Dashboards
-    ├── src/components/       # Reusable UI Components
-    └── src/lib/              # API Clients & Utility Functions
+│   │   ├── common/                 # shared DTOs, enums, exception handler
+│   │   ├── config/                 # security + CORS configuration
+│   │   ├── dsm/
+│   │   │   ├── entity/             # Driver, DriverLicense, NotificationLog
+│   │   │   ├── repository/         # DSM repositories
+│   │   │   └── scheduler/          # LicenseExpiryScheduler
+│   │   └── VfmsApplication.java    # @EnableScheduling enabled
+│   └── src/main/resources/
+│       └── application.properties  # Supabase, JPA, JWT, mail, logging
+└── frontend/
+    └── src/
+        ├── app/                    # landing, layout, auth pages
+        ├── components/             # shared UI and providers
+        ├── lib/                    # api/auth/util helpers
+        └── middleware.ts           # route middleware (placeholder)
 ```
 
-## 🚀 Getting Started
+## Configuration
+
+Backend configuration is currently set for Supabase PostgreSQL in application.properties, including mail and JWT values.
+
+Important recommendation:
+- Move secrets (DB password, JWT secret, mail password) into environment variables before production deployment.
+
+## Local Setup
 
 ### Prerequisites
-- **Java JDK 21+**
-- **Node.js 18+**
-- **PostgreSQL** running locally on default port `5432`.
-- **Maven** (optional, wrapper included).
 
-### 1️⃣ Backend Setup
+- Java 21+
+- Node.js 18+
+- npm
 
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
-2.  Configure Database:
-    Open `src/main/resources/application.properties` and update your PostgreSQL credentials:
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/vfms_db
-    spring.datasource.username=your_username
-    spring.datasource.password=your_password
-    ```
-3.  Run the application:
-    ```bash
-    ./mvnw spring-boot:run
-    ```
-    *The server will start on `http://localhost:8080`.*
+### Run Backend
 
-### 2️⃣ Frontend Setup
+```bash
+cd backend
+./mvnw spring-boot:run
+```
 
-1.  Navigate to the frontend directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
-3.  Run the development server:
-    ```bash
-    npm run dev
-    ```
-4.  Open [http://localhost:3000](http://localhost:3000) in your browser.
+For Windows PowerShell:
 
-## 🧪 Testing
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
+```
 
-### Backend Tests
-Run unit and integration tests using Maven:
+Default backend URL:
+- http://localhost:8080
+
+### Run Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Default frontend URL:
+- http://localhost:3000
+
+Optional frontend environment variable:
+- NEXT_PUBLIC_API_URL (defaults to http://localhost:8080)
+
+## Build and Test
+
+### Backend
+
+Compile:
+
+```bash
+cd backend
+./mvnw compile
+```
+
+Run tests:
+
 ```bash
 cd backend
 ./mvnw test
 ```
 
-### Verified User Flows
-- [x] **Login/Logout** (JWT valid/invalid)
-- [x] **Forgot Password** (Email delivery + OTP Verification)
-- [x] **Fuel Entry** (Validation of cost/mileage)
-- [x] **User Creation** (Admin only)
+### Frontend
 
-## 📄 License
-This project is proprietary software developed for the **Vehicle Fleet Management System (VFMS)** academic requirement.
+```bash
+cd frontend
+npm run build
+npm run lint
+```
+
+## Notes
+
+- Flyway baseline properties are configured, but no migration scripts are currently included.
+- Security, auth login/signup, and route RBAC are marked in code as pending feature work.
 
 ---
-**Developed by:** Kiruthiyan (Student B)
+Developed by - Kavishanth
