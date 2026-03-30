@@ -3,11 +3,12 @@ package com.vfms.dsm.dto;
 import com.vfms.dsm.entity.DriverLicense;
 import lombok.*;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class DriverLicenseResponse {
     private Long id;
-    private Long driverId;
+    private UUID driverId;
     private String driverName;
     private String licenseNumber;
     private DriverLicense.LicenseCategory category;
