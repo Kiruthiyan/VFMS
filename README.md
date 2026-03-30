@@ -37,6 +37,13 @@ This branch/project currently implements the Staff Management and Driver Certifi
 - Certification status tracking (VALID, EXPIRING_SOON, EXPIRED)
 - Certification types (DEFENSIVE_DRIVING, FIRST_AID, HAZMAT, HEAVY_VEHICLE, PASSENGER_TRANSPORT, OTHER)
 
+### Certification Expiry Monitoring (Implemented)
+- Daily scheduled job updates certification status automatically
+- Scheduler: backend/src/main/java/com/vfms/dsm/scheduler/CertificationExpiryScheduler.java
+- Runs every day at 06:00 using cron: 0 0 6 * * *
+- Expired certifications are marked as EXPIRED and logged as CERT_EXPIRED notifications
+- Certifications expiring within 30 days are marked as EXPIRING_SOON and logged as CERT_EXPIRING_SOON notifications
+
 ### In progress / placeholders
 - Authentication login/signup pages are placeholders in frontend
 - Security config currently permits all requests and is marked for JWT integration later
@@ -70,7 +77,11 @@ VFMS/
 │       │       │   ├── DriverRepository.java
 │       │       │   ├── DriverCertificationRepository.java
 │       │       │   ├── DriverLicenseRepository.java
+│       │       │   ├── NotificationLogRepository.java
 │       │       │   └── StaffRepository.java
+│       │       ├── scheduler/
+│       │       │   ├── LicenseExpiryScheduler.java
+│       │       │   └── CertificationExpiryScheduler.java
 │       │       └── service/
 │       │           ├── DriverService.java
 │       │           ├── DriverCertificationService.java
@@ -241,6 +252,7 @@ npm run build
 
 - Security is currently configured with permit-all in backend security config as a temporary setup.
 - Frontend login and signup pages are placeholders and will be replaced by the auth feature branch.
+- Automated certification expiry monitoring is handled by CertificationExpiryScheduler and writes to notification_log.
 
 ## License
 
