@@ -1,6 +1,6 @@
 CREATE TABLE driver_licenses (
     id                BIGSERIAL PRIMARY KEY,
-    driver_id         BIGINT NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+    driver_id         UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
     license_number    VARCHAR(50) UNIQUE NOT NULL,
     category          VARCHAR(10) NOT NULL
                           CHECK (category IN ('A','B','C','CE','D','BE')),
