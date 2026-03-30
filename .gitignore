@@ -1,0 +1,90 @@
+# ===============================
+# GENERAL
+# ===============================
+.DS_Store
+Thumbs.db
+*.log
+
+# ===============================
+# ENV FILES (IMPORTANT)
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# BACKEND (SPRING BOOT / MAVEN)
+# ===============================
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Ignore build folders inside modules (keep structure clean)
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ===============================
+# DATABASE FILES (LOCAL ONLY)
+# ===============================
+*.db
+*.mv.db
+*.lock.db
+backend/data/
+backend/uploads/
+
+# ===============================
+# IDE FILES
+# ===============================
+
+## STS / Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+## IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+## NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+## VS Code
+.vscode/
+
+# ===============================
+# FRONTEND (NEXT.JS / NODE)
+# ===============================
+node_modules/
+.next/
+out/
+dist/
+
+# ===============================
+# TEST / TEMP FILES
+# ===============================
+test_output.txt
+test_results_*.txt
+
+# ===============================
+# OS GENERATED FILES
+# ===============================
+*.swp
+*.swo
