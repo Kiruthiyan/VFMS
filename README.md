@@ -1,12 +1,16 @@
-# VFMS - Staff Profile Management
+# VFMS - Staff Profile & Driver Certification Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles and driver certifications.
 
-This branch/project currently implements the Staff Management domain with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements the Staff Management and Driver Certification domains with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
 - Kavishanth (Student C)
+
+## Developed by
+
+- Kavishanth
 
 ## Tech Stack
 
@@ -16,7 +20,7 @@ This branch/project currently implements the Staff Management domain with a Spri
 
 ## Current Scope
 
-Implemented:
+### Staff Management (Implemented)
 - Create staff profile
 - Get staff by id
 - List staff with pagination
@@ -24,7 +28,16 @@ Implemented:
 - Deactivate staff profile
 - Basic frontend staff page with search and add-staff dialog
 
-In progress / placeholders:
+### Driver Certification Management (Implemented)
+- Add driver certification record
+- Get certifications by driver
+- Update certification record
+- Delete certification record
+- Frontend certifications tab with form dialog and list display
+- Certification status tracking (VALID, EXPIRING_SOON, EXPIRED)
+- Certification types (DEFENSIVE_DRIVING, FIRST_AID, HAZMAT, HEAVY_VEHICLE, PASSENGER_TRANSPORT, OTHER)
+
+### In progress / placeholders
 - Authentication login/signup pages are placeholders in frontend
 - Security config currently permits all requests and is marked for JWT integration later
 
@@ -39,26 +52,60 @@ VFMS/
 │       │   ├── config/
 │       │   └── dsm/
 │       │       ├── controller/
+│       │       │   ├── DriverController.java
+│       │       │   ├── DriverCertificationController.java
+│       │       │   ├── DriverLicenseController.java
+│       │       │   └── StaffController.java
 │       │       ├── dto/
+│       │       │   ├── CertificationRequest.java
+│       │       │   └── ...
 │       │       ├── entity/
+│       │       │   ├── Driver.java
+│       │       │   ├── DriverCertification.java
+│       │       │   ├── DriverLicense.java
+│       │       │   ├── Staff.java
+│       │       │   └── BaseEntity.java
 │       │       ├── exception/
 │       │       ├── repository/
+│       │       │   ├── DriverRepository.java
+│       │       │   ├── DriverCertificationRepository.java
+│       │       │   ├── DriverLicenseRepository.java
+│       │       │   └── StaffRepository.java
 │       │       └── service/
+│       │           ├── DriverService.java
+│       │           ├── DriverCertificationService.java
+│       │           ├── DriverLicenseService.java
+│       │           └── StaffService.java
 │       └── resources/
 │           ├── application.properties
 │           └── db/migration/
+│               ├── V1__create_drivers.sql
+│               ├── V2__create_staff.sql
+│               ├── V3__create_driver_licenses.sql
+│               ├── V4__create_notification_log.sql
+│               ├── V7__create_driver_certifications.sql
+│               └── V8__normalize_notification_log_entity_id_to_uuid.sql
 └── frontend/
     ├── package.json
     └── src/
     ├── app/
     │   ├── auth/
-    │   └── staff/
+    │   ├── drivers/
+    │   ├── staff/
+    │   └── page.tsx
     ├── components/
+    │   ├── drivers/
+    │   │   ├── DriverForm.tsx
+    │   │   ├── DriverLicensesTab.tsx
+    │   │   └── DriverCertificationsTab.tsx
+    │   └── ...
     ├── lib/
     └── types/
 ```
 
-## Backend API (Staff)
+## Backend API
+
+### Staff Endpoints
 
 Base path: /api/staff
 
@@ -73,10 +120,61 @@ Base path: /api/staff
 - PATCH /api/staff/{id}/deactivate
     - Mark staff as inactive
 
+### Driver Endpoints
+
+Base path: /api/drivers
+
+- POST /api/drivers
+    - Create a driver profile
+- GET /api/drivers/{id}
+    - Fetch one driver profile
+- GET /api/drivers?page=0&size=10
+    - Fetch paginated driver profiles
+- PUT /api/drivers/{id}
+    - Update a driver profile
+- PATCH /api/drivers/{id}/deactivate
+    - Deactivate a driver
+- PATCH /api/drivers/{id}/status?status={status}
+    - Update driver status (ACTIVE, INACTIVE, SUSPENDED)
+
+### Driver License Endpoints
+
+Base path: /api/drivers
+
+- POST /api/drivers/{driverId}/licenses
+    - Add a license to a driver
+- GET /api/drivers/{driverId}/licenses
+    - Get all licenses for a driver
+- PUT /api/drivers/licenses/{id}
+    - Update a driver license
+- DELETE /api/drivers/licenses/{id}
+    - Delete a driver license
+
+### Driver Certification Endpoints (NEW)
+
+Base path: /api/drivers
+
+- POST /api/drivers/{driverId}/certifications
+    - Add a certification to a driver
+- GET /api/drivers/{driverId}/certifications
+    - Get all certifications for a driver
+- PUT /api/drivers/certifications/{id}
+    - Update a driver certification
+- DELETE /api/drivers/certifications/{id}
+    - Delete a driver certification
+
 ## Database
 
-Staff table migration is available in:
-- backend/src/main/resources/db/migration/V2__create_staff.sql
+Database migrations are available in:
+- backend/src/main/resources/db/migration/
+
+Current migrations:
+- V1__create_drivers.sql - Driver profiles table
+- V2__create_staff.sql - Staff profiles table
+- V3__create_driver_licenses.sql - Driver licenses table
+- V4__create_notification_log.sql - Notification logs table
+- V7__create_driver_certifications.sql - Driver certifications table (NEW)
+- V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
 
 Required database environment variables in backend:
 - DB_URL
