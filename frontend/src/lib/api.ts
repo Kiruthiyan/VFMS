@@ -36,19 +36,34 @@ api.interceptors.response.use(
 
 export default api;
 
-export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const method = options?.method ?? "GET";
-  const rawBody = options?.body;
-  const body = typeof rawBody === "string" && rawBody.length > 0 ? JSON.parse(rawBody) : rawBody;
+export async function apiFetch<T = unknown>(
+  path: string,
+  options?: RequestInit
+): Promise<T> {
+  try {
+    const method = options?.method ?? "GET";
+    const headers = options?.headers as Record<string, string> | undefined;
 
-  const response = await api.request<T>({
-    url: path,
-    method,
-    data: body,
-    headers: options?.headers as AxiosRequestConfig["headers"],
-  });
+    let data: unknown = undefined;
+    if (options?.body) {
+      try {
+        data = JSON.parse(options.body as string);
+      } catch {
+        data = options.body;
+      }
+    }
 
-  return response.data;
+    const response = await api.request<T>({
+      url: path,
+      method,
+      headers,
+      data,
+    } as AxiosRequestConfig);
+
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
 }
 
 // Helper to extract error message from API response

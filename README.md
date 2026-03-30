@@ -1,114 +1,114 @@
-# FleetPro - Vehicle Fleet Management System (VFMS)
+# VFMS - Staff Profile Management
 
-![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-green)
-![Next.js](https://img.shields.io/badge/Next.js-14-black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-cyan)
+Vehicle Fleet Management System (VFMS) module for managing staff profiles.
 
-> Module Focus: Driver Profile Management (Student C)
-> Status: In Development
+This branch/project currently implements the Staff Management domain with a Spring Boot backend and a Next.js frontend.
 
-## Project Overview
+## Module Owner
 
-This repository contains the Driver Profile Management feature for FleetPro (VFMS).
+- Kavishanth (Student C)
 
-The feature provides a complete flow to manage driver records in the system, including:
-- Driver registration and profile creation
-- Driver information updates
-- Driver listing and profile viewing
-- Basic validation and error handling for data consistency
+## Tech Stack
 
-## Key Features
+- Backend: Java 21, Spring Boot 3.4, Spring Data JPA, Spring Security, Validation, PostgreSQL
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui, Axios, React Hook Form, Zod
+- Build Tools: Maven Wrapper and npm
 
-### Driver Profile Management
-- Create new driver profiles with required details
-- View all driver records in a table/list view
-- Edit driver profile data from the UI
-- Remove driver records when needed
+## Current Scope
 
-### Backend API Layer
-- REST endpoints for CRUD operations in the driver module
-- DTO-based request/response contracts for clean API boundaries
-- Mapper layer to transform entity and DTO models
-- Centralized exception handling for consistent API responses
+Implemented:
+- Create staff profile
+- Get staff by id
+- List staff with pagination
+- Update staff profile
+- Deactivate staff profile
+- Basic frontend staff page with search and add-staff dialog
 
-### Frontend Integration
-- Next.js page for driver management
-- Reusable form component for create/update flows
-- API client utilities for backend communication
-- Toast/feedback components for user actions
+In progress / placeholders:
+- Authentication login/signup pages are placeholders in frontend
+- Security config currently permits all requests and is marked for JWT integration later
 
-## Technology Stack
-
-### Backend
-- Java 21
-- Spring Boot 3.4.0
-- Spring Data JPA
-- Spring Security
-- PostgreSQL
-- Flyway migrations
-
-### Frontend
-- Next.js 14
-- React 18
-- TypeScript
-- Tailwind CSS
-- Radix UI / shadcn components
-
-## Relevant Project Structure
+## Project Structure
 
 ```text
 VFMS/
 ├── backend/
-│   ├── src/main/java/com/vfms/
-│   │   ├── dsm/
-│   │   │   ├── controller/      # Driver API controllers
-│   │   │   ├── dto/             # Driver request/response models
-│   │   │   ├── entity/          # Driver entities
-│   │   │   ├── exception/       # Driver-specific exceptions
-│   │   │   ├── mapper/          # Entity <-> DTO mapping
-│   │   │   ├── repository/      # Data access layer
-│   │   │   └── service/         # Business logic
-│   │   └── common/              # Shared API response and enums
-│   └── src/main/resources/db/migration/
-│       ├── V1__create_drivers.sql
-│       └── V2__create_staff.sql
-│
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/vfms/
+│       │   ├── config/
+│       │   └── dsm/
+│       │       ├── controller/
+│       │       ├── dto/
+│       │       ├── entity/
+│       │       ├── exception/
+│       │       ├── repository/
+│       │       └── service/
+│       └── resources/
+│           ├── application.properties
+│           └── db/migration/
 └── frontend/
+    ├── package.json
     └── src/
-        ├── app/drivers/page.tsx
-        ├── components/drivers/DriverForm.tsx
-        ├── components/StatusBadge.tsx
-        ├── lib/api.ts
-        └── types/index.ts
+    ├── app/
+    │   ├── auth/
+    │   └── staff/
+    ├── components/
+    ├── lib/
+    └── types/
 ```
 
-## Getting Started
+## Backend API (Staff)
 
-### Prerequisites
-- Java JDK 21+
-- Node.js 18+
-- PostgreSQL running on port 5432
+Base path: /api/staff
 
-### 1. Backend Setup
+- POST /api/staff
+    - Create a staff profile
+- GET /api/staff/{id}
+    - Fetch one staff profile
+- GET /api/staff?page=0&size=10
+    - Fetch paginated staff profiles
+- PUT /api/staff/{id}
+    - Update a staff profile
+- PATCH /api/staff/{id}/deactivate
+    - Mark staff as inactive
+
+## Database
+
+Staff table migration is available in:
+- backend/src/main/resources/db/migration/V2__create_staff.sql
+
+Required database environment variables in backend:
+- DB_URL
+- DB_USER
+- DB_PASSWORD
+
+Other backend env vars:
+- JWT_SECRET
+- MAIL_USERNAME
+- MAIL_PASSWORD
+- CORS_ALLOWED_ORIGINS (optional, has localhost defaults)
+
+## Run Locally
+
+### 1. Backend
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
-The backend starts at http://localhost:8080.
+On Windows PowerShell:
 
-Update database settings in src/main/resources/application.properties if needed:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/vfms_db
-spring.datasource.username=your_username
-spring.datasource.password=your_password
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
 ```
 
-### 2. Frontend Setup
+Backend runs on:
+- http://localhost:8080
+
+### 2. Frontend
 
 ```bash
 cd frontend
@@ -116,20 +116,34 @@ npm install
 npm run dev
 ```
 
-The frontend starts at http://localhost:3000.
+Frontend runs on:
+- http://localhost:3000
 
-## Testing
+Set API base URL for frontend if needed:
+- NEXT_PUBLIC_API_URL=http://localhost:8080
 
-Run backend tests:
+## Build and Test
+
+Backend tests:
 
 ```bash
 cd backend
 ./mvnw test
 ```
 
+Frontend checks:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+## Notes
+
+- Security is currently configured with permit-all in backend security config as a temporary setup.
+- Frontend login and signup pages are placeholders and will be replaced by the auth feature branch.
+
 ## License
 
-This project is proprietary software developed for the Vehicle Fleet Management System (VFMS) academic requirement.
-
----
-Developed by: Kavishanth (Student C)
+Academic project for VFMS coursework.
