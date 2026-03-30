@@ -7,19 +7,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
 
 @RestController @RequestMapping("/api/drivers") @RequiredArgsConstructor
 public class DriverLicenseController {
     private final DriverLicenseService licenseService;
 
     @PostMapping("/{driverId}/licenses")
-    public ResponseEntity<DriverLicenseResponse> addLicense(@PathVariable Long driverId, @Valid @RequestBody DriverLicenseRequest request) {
+    public ResponseEntity<DriverLicenseResponse> addLicense(@PathVariable UUID driverId, @Valid @RequestBody DriverLicenseRequest request) {
         request.setDriverId(driverId);
         return ResponseEntity.status(HttpStatus.CREATED).body(licenseService.addLicense(request));
     }
 
     @GetMapping("/{driverId}/licenses")
-    public ResponseEntity<List<DriverLicenseResponse>> getLicenses(@PathVariable Long driverId) {
+    public ResponseEntity<List<DriverLicenseResponse>> getLicenses(@PathVariable UUID driverId) {
         return ResponseEntity.ok(licenseService.getLicensesByDriver(driverId));
     }
 

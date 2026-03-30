@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service @RequiredArgsConstructor @Transactional
@@ -30,8 +31,8 @@ public class DriverLicenseService {
     }
 
     @Transactional(readOnly = true)
-    public List<DriverLicenseResponse> getLicensesByDriver(Long driverId) {
-        return licenseRepository.findByDriverId(driverId).stream().map(this::toResponse).collect(Collectors.toList());
+    public List<DriverLicenseResponse> getLicensesByDriver(UUID driverId) {
+        return licenseRepository.findByDriver_Id(driverId).stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     public DriverLicenseResponse updateLicense(Long id, DriverLicenseRequest request) {
