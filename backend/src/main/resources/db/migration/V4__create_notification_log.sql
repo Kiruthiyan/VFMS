@@ -1,7 +1,7 @@
 CREATE TABLE notification_log (
     id                BIGSERIAL PRIMARY KEY,
     entity_type       VARCHAR(50),
-    entity_id         BIGINT,
+    entity_id         UUID,
     notification_type VARCHAR(50),
     message           TEXT,
     sent_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()

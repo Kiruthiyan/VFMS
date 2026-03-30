@@ -3,6 +3,7 @@ package com.vfms.dsm.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity @Table(name = "notification_log")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -14,7 +15,7 @@ public class NotificationLog {
     private String entityType;
 
     @Column(name = "entity_id")
-    private Long entityId;
+    private UUID entityId;
 
     @Column(name = "notification_type")
     private String notificationType;
