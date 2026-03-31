@@ -63,3 +63,17 @@ export interface PageResponse<T> {
   number: number;
   size: number;
 }
+
+export type AvailabilityStatus =
+  | 'AVAILABLE'
+  | 'ON_TRIP'
+  | 'ON_LEAVE'
+  | 'INACTIVE';
+
+export interface DriverAvailability {
+  driverId: string;
+  status: AvailabilityStatus;
+  updatedAt: string;
+  updatedBy?: string;
+  reason?: string;
+}
