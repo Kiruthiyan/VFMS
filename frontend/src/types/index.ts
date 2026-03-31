@@ -21,6 +21,21 @@ export interface Driver {
   status: DriverStatus;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export type DocumentEntityType = 'LICENSE' | 'CERTIFICATION' | 'PROFILE' | 'OTHER';
+
+export interface DriverDocument {
+  id: number;
+  entityType: DocumentEntityType;
+  entityId?: number;
+  fileName: string;
+  fileUrl: string;
+  mimeType?: string;
+  fileSize: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export type StaffRole = 'SYSTEM_USER' | 'APPROVER';
 export type StaffStatus = 'ACTIVE' | 'INACTIVE';

@@ -1,8 +1,8 @@
-# VFMS - Staff Profile & Driver Certification Management
+# VFMS - Staff, Driver, Certification, and Document Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles and driver certifications.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, and driver document uploads.
 
-This branch/project currently implements the Staff Management and Driver Certification domains with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, and Driver Document Upload with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -37,6 +37,14 @@ This branch/project currently implements the Staff Management and Driver Certifi
 - Certification status tracking (VALID, EXPIRING_SOON, EXPIRED)
 - Certification types (DEFENSIVE_DRIVING, FIRST_AID, HAZMAT, HEAVY_VEHICLE, PASSENGER_TRANSPORT, OTHER)
 
+### Driver Document Upload (Implemented - Latest)
+- Upload one or multiple documents for a driver
+- List uploaded documents per driver
+- Delete uploaded documents
+- Supported file types: PDF, JPG, PNG
+- Document entity types: LICENSE, CERTIFICATION, PROFILE, OTHER
+- Frontend documents tab with drag-and-drop and quick download/delete actions
+
 ### In progress / placeholders
 - Authentication login/signup pages are placeholders in frontend
 - Security config currently permits all requests and is marked for JWT integration later
@@ -54,6 +62,7 @@ VFMS/
 │       │       ├── controller/
 │       │       │   ├── DriverController.java
 │       │       │   ├── DriverCertificationController.java
+│       │       │   ├── DriverDocumentController.java
 │       │       │   ├── DriverLicenseController.java
 │       │       │   └── StaffController.java
 │       │       ├── dto/
@@ -62,6 +71,7 @@ VFMS/
 │       │       ├── entity/
 │       │       │   ├── Driver.java
 │       │       │   ├── DriverCertification.java
+│       │       │   ├── DriverDocument.java
 │       │       │   ├── DriverLicense.java
 │       │       │   ├── Staff.java
 │       │       │   └── BaseEntity.java
@@ -69,11 +79,13 @@ VFMS/
 │       │       ├── repository/
 │       │       │   ├── DriverRepository.java
 │       │       │   ├── DriverCertificationRepository.java
+│       │       │   ├── DriverDocumentRepository.java
 │       │       │   ├── DriverLicenseRepository.java
 │       │       │   └── StaffRepository.java
 │       │       └── service/
 │       │           ├── DriverService.java
 │       │           ├── DriverCertificationService.java
+│       │           ├── DriverDocumentService.java
 │       │           ├── DriverLicenseService.java
 │       │           └── StaffService.java
 │       └── resources/
@@ -84,7 +96,8 @@ VFMS/
 │               ├── V3__create_driver_licenses.sql
 │               ├── V4__create_notification_log.sql
 │               ├── V7__create_driver_certifications.sql
-│               └── V8__normalize_notification_log_entity_id_to_uuid.sql
+│               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
+│               └── V12__create_driver_documents.sql
 └── frontend/
     ├── package.json
     └── src/
@@ -97,7 +110,8 @@ VFMS/
     │   ├── drivers/
     │   │   ├── DriverForm.tsx
     │   │   ├── DriverLicensesTab.tsx
-    │   │   └── DriverCertificationsTab.tsx
+    │   │   ├── DriverCertificationsTab.tsx
+    │   │   └── DriverDocumentsTab.tsx
     │   └── ...
     ├── lib/
     └── types/
@@ -163,6 +177,18 @@ Base path: /api/drivers
 - DELETE /api/drivers/certifications/{id}
     - Delete a driver certification
 
+### Driver Document Endpoints (NEW)
+
+Base path: /api/drivers
+
+- POST /api/drivers/{driverId}/documents
+    - Upload a document for a driver (multipart form-data)
+    - Request params: file, entityType, entityId (optional)
+- GET /api/drivers/{driverId}/documents
+    - Get all documents for a driver
+- DELETE /api/drivers/documents/{id}
+    - Delete a document by id
+
 ## Database
 
 Database migrations are available in:
@@ -175,6 +201,10 @@ Current migrations:
 - V4__create_notification_log.sql - Notification logs table
 - V7__create_driver_certifications.sql - Driver certifications table (NEW)
 - V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
+- V12__create_driver_documents.sql - Driver documents table and indexes (NEW)
+
+Document upload configuration:
+- app.upload.dir (optional) - upload storage directory (default: uploads/documents)
 
 Required database environment variables in backend:
 - DB_URL
@@ -241,6 +271,7 @@ npm run build
 
 - Security is currently configured with permit-all in backend security config as a temporary setup.
 - Frontend login and signup pages are placeholders and will be replaced by the auth feature branch.
+- Driver document upload stores files on local disk (upload directory) and persists metadata in driver_documents.
 
 ## License
 
