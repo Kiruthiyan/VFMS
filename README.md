@@ -120,7 +120,7 @@ VFMS/
 │               ├── V2__create_staff.sql
 │               ├── V3__create_driver_licenses.sql
 │               ├── V4__create_notification_log.sql
-│               ├── V5__create_driver_availability.sql
+│               ├── V13__create_driver_availability.sql
 │               ├── V7__create_driver_certifications.sql
 │               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
 │               └── V12__create_driver_documents.sql
@@ -241,7 +241,7 @@ Current migrations:
 - V2__create_staff.sql - Staff profiles table
 - V3__create_driver_licenses.sql - Driver licenses table
 - V4__create_notification_log.sql - Notification logs table
-- V5__create_driver_availability.sql - Driver availability and availability log tables (NEW)
+- V13__create_driver_availability.sql - Driver availability and availability log tables (NEW)
 - V7__create_driver_certifications.sql - Driver certifications table (NEW)
 - V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
 - V12__create_driver_documents.sql - Driver documents table and indexes (NEW)
