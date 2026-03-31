@@ -1,8 +1,8 @@
-# VFMS - Staff, Driver, Certification, and Document Management
+# VFMS - Staff, Driver, Certification, Document, and Availability Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, and driver document uploads.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, and driver availability tracking.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, and Driver Document Upload with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, and Driver Availability Tracking with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -52,6 +52,13 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Document entity types: LICENSE, CERTIFICATION, PROFILE, OTHER
 - Frontend documents tab with drag-and-drop and quick download/delete actions
 
+### Driver Availability Tracking (Implemented - Latest)
+- Track a driver's current availability state
+- Update availability with reason and actor metadata
+- View availability status history by driver
+- Filter drivers by availability status
+- Frontend availability tab for current status and status update actions
+
 ### In progress / placeholders
 - Authentication login/signup pages are placeholders in frontend
 - Security config currently permits all requests and is marked for JWT integration later
@@ -68,15 +75,19 @@ VFMS/
 │       │   └── dsm/
 │       │       ├── controller/
 │       │       │   ├── DriverController.java
+│       │       │   ├── DriverAvailabilityController.java
 │       │       │   ├── DriverCertificationController.java
 │       │       │   ├── DriverDocumentController.java
 │       │       │   ├── DriverLicenseController.java
 │       │       │   └── StaffController.java
 │       │       ├── dto/
 │       │       │   ├── CertificationRequest.java
+│       │       │   ├── AvailabilityUpdateRequest.java
 │       │       │   └── ...
 │       │       ├── entity/
 │       │       │   ├── Driver.java
+│       │       │   ├── DriverAvailability.java
+│       │       │   ├── DriverAvailabilityLog.java
 │       │       │   ├── DriverCertification.java
 │       │       │   ├── DriverDocument.java
 │       │       │   ├── DriverLicense.java
@@ -85,6 +96,8 @@ VFMS/
 │       │       ├── exception/
 │       │       ├── repository/
 │       │       │   ├── DriverRepository.java
+│       │       │   ├── DriverAvailabilityRepository.java
+│       │       │   ├── DriverAvailabilityLogRepository.java
 │       │       │   ├── DriverCertificationRepository.java
 │       │       │   ├── DriverDocumentRepository.java
 │       │       │   ├── DriverLicenseRepository.java
@@ -95,6 +108,7 @@ VFMS/
 │       │       │   └── CertificationExpiryScheduler.java
 │       │       └── service/
 │       │           ├── DriverService.java
+│       │           ├── DriverAvailabilityService.java
 │       │           ├── DriverCertificationService.java
 │       │           ├── DriverDocumentService.java
 │       │           ├── DriverLicenseService.java
@@ -106,6 +120,7 @@ VFMS/
 │               ├── V2__create_staff.sql
 │               ├── V3__create_driver_licenses.sql
 │               ├── V4__create_notification_log.sql
+│               ├── V5__create_driver_availability.sql
 │               ├── V7__create_driver_certifications.sql
 │               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
 │               └── V12__create_driver_documents.sql
@@ -122,6 +137,7 @@ VFMS/
     │   │   ├── DriverForm.tsx
     │   │   ├── DriverLicensesTab.tsx
     │   │   ├── DriverCertificationsTab.tsx
+    │   │   ├── DriverAvailabilityTab.tsx
     │   │   └── DriverDocumentsTab.tsx
     │   └── ...
     ├── lib/
@@ -200,6 +216,21 @@ Base path: /api/drivers
 - DELETE /api/drivers/documents/{id}
     - Delete a document by id
 
+### Driver Availability Endpoints (NEW)
+
+Base path: /api/drivers
+
+- GET /api/drivers/{driverId}/availability
+    - Get current availability for a driver
+- PATCH /api/drivers/{driverId}/availability
+    - Update driver availability (status, reason)
+    - Requires header: X-User-Id
+- GET /api/drivers/{driverId}/availability/history
+    - Get availability change history for a driver
+- GET /api/drivers/availability?status={status}
+    - Get all drivers by availability status
+    - Status values: AVAILABLE, ON_TRIP, ON_LEAVE, INACTIVE
+
 ## Database
 
 Database migrations are available in:
@@ -210,6 +241,7 @@ Current migrations:
 - V2__create_staff.sql - Staff profiles table
 - V3__create_driver_licenses.sql - Driver licenses table
 - V4__create_notification_log.sql - Notification logs table
+- V5__create_driver_availability.sql - Driver availability and availability log tables (NEW)
 - V7__create_driver_certifications.sql - Driver certifications table (NEW)
 - V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
 - V12__create_driver_documents.sql - Driver documents table and indexes (NEW)
@@ -284,6 +316,7 @@ npm run build
 - Frontend login and signup pages are placeholders and will be replaced by the auth feature branch.
 - Automated certification expiry monitoring is handled by CertificationExpiryScheduler and writes to notification_log.
 - Driver document upload stores files on local disk (upload directory) and persists metadata in driver_documents.
+- Driver availability updates are audited in driver_availability_log with actor and reason.
 
 ## License
 
