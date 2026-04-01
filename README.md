@@ -1,8 +1,8 @@
-# VFMS - Staff, Driver, Certification, Document, and Availability Management
+# VFMS - Staff, Driver, Certification, Document, Availability, and Leave Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, and driver availability tracking.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, and driver leave requests.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, and Driver Availability Tracking with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, and Driver Leave Management with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -59,6 +59,14 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Filter drivers by availability status
 - Frontend availability tab for current status and status update actions
 
+### Driver Leave Management (Implemented - Latest)
+- Submit leave requests for a driver
+- Review pending leave requests
+- Approve or reject leave requests with notes and approver metadata
+- Automatically set driver availability to ON_LEAVE when leave is approved
+- Scheduled job restores availability to AVAILABLE when approved leave ends
+- Frontend leave approval page for processing pending requests
+
 ### In progress / placeholders
 - Authentication login/signup pages are placeholders in frontend
 - Security config currently permits all requests and is marked for JWT integration later
@@ -77,18 +85,22 @@ VFMS/
 │       │       │   ├── DriverController.java
 │       │       │   ├── DriverAvailabilityController.java
 │       │       │   ├── DriverCertificationController.java
+│       │       │   ├── DriverLeaveController.java
 │       │       │   ├── DriverDocumentController.java
 │       │       │   ├── DriverLicenseController.java
 │       │       │   └── StaffController.java
 │       │       ├── dto/
 │       │       │   ├── CertificationRequest.java
 │       │       │   ├── AvailabilityUpdateRequest.java
+│       │       │   ├── LeaveRequest.java
+│       │       │   ├── LeaveApprovalRequest.java
 │       │       │   └── ...
 │       │       ├── entity/
 │       │       │   ├── Driver.java
 │       │       │   ├── DriverAvailability.java
 │       │       │   ├── DriverAvailabilityLog.java
 │       │       │   ├── DriverCertification.java
+│       │       │   ├── DriverLeave.java
 │       │       │   ├── DriverDocument.java
 │       │       │   ├── DriverLicense.java
 │       │       │   ├── Staff.java
@@ -99,6 +111,7 @@ VFMS/
 │       │       │   ├── DriverAvailabilityRepository.java
 │       │       │   ├── DriverAvailabilityLogRepository.java
 │       │       │   ├── DriverCertificationRepository.java
+│       │       │   ├── DriverLeaveRepository.java
 │       │       │   ├── DriverDocumentRepository.java
 │       │       │   ├── DriverLicenseRepository.java
 │       │       │   ├── NotificationLogRepository.java
@@ -110,6 +123,7 @@ VFMS/
 │       │           ├── DriverService.java
 │       │           ├── DriverAvailabilityService.java
 │       │           ├── DriverCertificationService.java
+│       │           ├── DriverLeaveService.java
 │       │           ├── DriverDocumentService.java
 │       │           ├── DriverLicenseService.java
 │       │           └── StaffService.java
@@ -120,6 +134,7 @@ VFMS/
 │               ├── V2__create_staff.sql
 │               ├── V3__create_driver_licenses.sql
 │               ├── V4__create_notification_log.sql
+│               ├── V6__create_driver_leaves.sql
 │               ├── V13__create_driver_availability.sql
 │               ├── V7__create_driver_certifications.sql
 │               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
@@ -130,6 +145,7 @@ VFMS/
     ├── app/
     │   ├── auth/
     │   ├── drivers/
+    │   ├── leaves/
     │   ├── staff/
     │   └── page.tsx
     ├── components/
@@ -231,6 +247,22 @@ Base path: /api/drivers
     - Get all drivers by availability status
     - Status values: AVAILABLE, ON_TRIP, ON_LEAVE, INACTIVE
 
+### Driver Leave Endpoints (NEW)
+
+Base path: /api/drivers
+
+- POST /api/drivers/leaves
+    - Submit a leave request
+    - Request body: driverId (UUID), leaveType, startDate, endDate, reason
+- PATCH /api/drivers/leaves/{leaveId}/process
+    - Approve or reject a leave request
+    - Request body: status (APPROVED or REJECTED), approvalNotes
+    - Requires header: X-User-Id
+- GET /api/drivers/{driverId}/leaves
+    - Get all leave requests for a driver
+- GET /api/drivers/leaves/pending
+    - Get all pending leave requests
+
 ## Database
 
 Database migrations are available in:
@@ -241,6 +273,7 @@ Current migrations:
 - V2__create_staff.sql - Staff profiles table
 - V3__create_driver_licenses.sql - Driver licenses table
 - V4__create_notification_log.sql - Notification logs table
+- V6__create_driver_leaves.sql - Driver leaves table and indexes (NEW)
 - V13__create_driver_availability.sql - Driver availability and availability log tables (NEW)
 - V7__create_driver_certifications.sql - Driver certifications table (NEW)
 - V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
@@ -317,6 +350,8 @@ npm run build
 - Automated certification expiry monitoring is handled by CertificationExpiryScheduler and writes to notification_log.
 - Driver document upload stores files on local disk (upload directory) and persists metadata in driver_documents.
 - Driver availability updates are audited in driver_availability_log with actor and reason.
+- Leave approvals update driver availability to ON_LEAVE; a scheduled backend task restores availability to AVAILABLE when leave end date is reached.
+- Frontend leave approval UI is available at /leaves (file: frontend/src/app/leaves/page.tsx).
 
 ## License
 
