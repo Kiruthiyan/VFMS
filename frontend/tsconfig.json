@@ -11,7 +11,7 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -27,8 +27,13 @@
         "./src/*"
       ]
     },
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
     "types": [
-      "node"
+      "node",
+      "react",
+      "react-dom"
     ],
     "target": "ES2017"
   },
