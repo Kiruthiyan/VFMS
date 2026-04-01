@@ -1,8 +1,8 @@
-# VFMS - Staff, Driver, Certification, Document, and Availability Management
+# VFMS - Staff, Driver, Certification, Document, Availability, and Service Request Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, and driver availability tracking.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, and staff vehicle service requests.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, and Driver Availability Tracking with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -59,6 +59,15 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Filter drivers by availability status
 - Frontend availability tab for current status and status update actions
 
+### Staff Vehicle Service Requests (Implemented - Latest)
+- Staff can submit vehicle fault and maintenance related requests
+- Request types: FAULT_REPORT, SERVICE_REQUEST, INSPECTION_REQUEST
+- Urgency levels: LOW, MEDIUM, HIGH
+- Request lifecycle status: OPEN, ACKNOWLEDGED, IN_PROGRESS, RESOLVED
+- View currently open requests
+- Update request status from operations flow
+- Frontend page for request submission and open-request status actions
+
 ### In progress / placeholders
 - Authentication login/signup pages are placeholders in frontend
 - Security config currently permits all requests and is marked for JWT integration later
@@ -79,10 +88,12 @@ VFMS/
 │       │       │   ├── DriverCertificationController.java
 │       │       │   ├── DriverDocumentController.java
 │       │       │   ├── DriverLicenseController.java
+│       │       │   ├── StaffServiceRequestController.java
 │       │       │   └── StaffController.java
 │       │       ├── dto/
 │       │       │   ├── CertificationRequest.java
 │       │       │   ├── AvailabilityUpdateRequest.java
+│       │       │   ├── ServiceRequestDto.java
 │       │       │   └── ...
 │       │       ├── entity/
 │       │       │   ├── Driver.java
@@ -92,6 +103,7 @@ VFMS/
 │       │       │   ├── DriverDocument.java
 │       │       │   ├── DriverLicense.java
 │       │       │   ├── Staff.java
+│       │       │   ├── StaffServiceRequest.java
 │       │       │   └── BaseEntity.java
 │       │       ├── exception/
 │       │       ├── repository/
@@ -102,6 +114,7 @@ VFMS/
 │       │       │   ├── DriverDocumentRepository.java
 │       │       │   ├── DriverLicenseRepository.java
 │       │       │   ├── NotificationLogRepository.java
+│       │       │   ├── StaffServiceRequestRepository.java
 │       │       │   └── StaffRepository.java
 │       │       ├── scheduler/
 │       │       │   ├── LicenseExpiryScheduler.java
@@ -112,11 +125,13 @@ VFMS/
 │       │           ├── DriverCertificationService.java
 │       │           ├── DriverDocumentService.java
 │       │           ├── DriverLicenseService.java
+│       │           ├── StaffServiceRequestService.java
 │       │           └── StaffService.java
 │       └── resources/
 │           ├── application.properties
 │           └── db/migration/
 │               ├── V1__create_drivers.sql
+│               ├── V11__create_staff_service_requests.sql
 │               ├── V2__create_staff.sql
 │               ├── V3__create_driver_licenses.sql
 │               ├── V4__create_notification_log.sql
@@ -130,6 +145,7 @@ VFMS/
     ├── app/
     │   ├── auth/
     │   ├── drivers/
+    │   ├── service-requests/
     │   ├── staff/
     │   └── page.tsx
     ├── components/
@@ -160,6 +176,20 @@ Base path: /api/staff
     - Update a staff profile
 - PATCH /api/staff/{id}/deactivate
     - Mark staff as inactive
+
+### Staff Service Request Endpoints (NEW)
+
+Base path: /api/staff
+
+- POST /api/staff/service-requests
+    - Create a new staff service request
+- GET /api/staff/{staffId}/service-requests
+    - Get all requests created by a specific staff member
+- GET /api/staff/service-requests/open
+    - Get all currently open service requests
+- PATCH /api/staff/service-requests/{id}/status?status={status}
+    - Update request status
+    - Status values: OPEN, ACKNOWLEDGED, IN_PROGRESS, RESOLVED
 
 ### Driver Endpoints
 
@@ -238,6 +268,7 @@ Database migrations are available in:
 
 Current migrations:
 - V1__create_drivers.sql - Driver profiles table
+- V11__create_staff_service_requests.sql - Staff service requests table and indexes (NEW)
 - V2__create_staff.sql - Staff profiles table
 - V3__create_driver_licenses.sql - Driver licenses table
 - V4__create_notification_log.sql - Notification logs table
@@ -317,6 +348,7 @@ npm run build
 - Automated certification expiry monitoring is handled by CertificationExpiryScheduler and writes to notification_log.
 - Driver document upload stores files on local disk (upload directory) and persists metadata in driver_documents.
 - Driver availability updates are audited in driver_availability_log with actor and reason.
+- Staff vehicle service requests are persisted in staff_service_requests and can be tracked through OPEN to RESOLVED lifecycle states.
 
 ## License
 
