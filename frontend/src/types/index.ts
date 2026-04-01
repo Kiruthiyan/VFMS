@@ -77,3 +77,20 @@ export interface DriverAvailability {
   updatedBy?: string;
   reason?: string;
 }
+
+export type LeaveType = 'ANNUAL' | 'MEDICAL' | 'EMERGENCY' | 'UNPAID';
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+
+export interface DriverLeave {
+  id: number;
+  driver: Pick<Driver, 'id' | 'firstName' | 'lastName'>;
+  leaveType: LeaveType;
+  startDate: string;
+  endDate: string;
+  reason?: string;
+  status: LeaveStatus;
+  approvedBy?: string;
+  approvalNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
