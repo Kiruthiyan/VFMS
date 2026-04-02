@@ -1,8 +1,8 @@
-# VFMS - Staff, Driver, Certification, Document, Availability, Infraction, and Service Request Management
+# VFMS - Staff, Driver, Certification, Document, Availability, Infraction, Performance, and Service Request Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver infraction records, and staff vehicle service requests.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver infraction records, driver performance monitoring, and staff vehicle service requests.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Infraction Tracking, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -67,6 +67,13 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Resolution statuses: OPEN, UNDER_REVIEW, RESOLVED
 - Frontend infractions tab with form dialog and incident list
 
+### Driver Performance Monitoring (Implemented - Latest)
+- Monthly driver performance scores are calculated and stored per year/month period
+- Composite scoring includes trip completion, fuel efficiency, feedback score, and infraction deductions
+- Non-resolved HIGH and CRITICAL infractions contribute weighted deductions
+- Automated scheduler runs monthly: `0 0 1 1 * *` (first day of each month at 01:00)
+- Frontend performance tab shows latest score KPIs and historical monthly trend
+
 ### Latest Developed Files (driver-infraction-tracking)
 - backend/src/main/java/com/vfms/dsm/entity/DriverInfraction.java
 - backend/src/main/java/com/vfms/dsm/repository/DriverInfractionRepository.java
@@ -75,6 +82,14 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - backend/src/main/java/com/vfms/dsm/dto/InfractionRequest.java
 - backend/src/main/resources/db/migration/V14__create_driver_infractions.sql
 - frontend/src/components/drivers/DriverInfractionsTab.tsx
+
+### Latest Developed Files (driver-performance-monitoring)
+- backend/src/main/java/com/vfms/dsm/entity/DriverPerformanceScore.java
+- backend/src/main/java/com/vfms/dsm/repository/DriverPerformanceScoreRepository.java
+- backend/src/main/java/com/vfms/dsm/service/DriverPerformanceService.java
+- backend/src/main/java/com/vfms/dsm/controller/DriverPerformanceController.java
+- backend/src/main/resources/db/migration/V15__create_driver_performance_scores.sql
+- frontend/src/components/drivers/DriverPerformanceTab.tsx
 
 ### Staff Vehicle Service Requests (Implemented - Latest)
 - Staff can submit vehicle fault and maintenance related requests
@@ -105,6 +120,7 @@ VFMS/
 │       │       │   ├── DriverCertificationController.java
 │       │       │   ├── DriverDocumentController.java
 │       │       │   ├── DriverInfractionController.java
+│       │       │   ├── DriverPerformanceController.java
 │       │       │   ├── DriverLicenseController.java
 │       │       │   ├── StaffServiceRequestController.java
 │       │       │   └── StaffController.java
@@ -121,6 +137,7 @@ VFMS/
 │       │       │   ├── DriverCertification.java
 │       │       │   ├── DriverDocument.java
 │       │       │   ├── DriverInfraction.java
+│       │       │   ├── DriverPerformanceScore.java
 │       │       │   ├── DriverLicense.java
 │       │       │   ├── Staff.java
 │       │       │   ├── StaffServiceRequest.java
@@ -133,6 +150,7 @@ VFMS/
 │       │       │   ├── DriverCertificationRepository.java
 │       │       │   ├── DriverDocumentRepository.java
 │       │       │   ├── DriverInfractionRepository.java
+│       │       │   ├── DriverPerformanceScoreRepository.java
 │       │       │   ├── DriverLicenseRepository.java
 │       │       │   ├── NotificationLogRepository.java
 │       │       │   ├── StaffServiceRequestRepository.java
@@ -146,6 +164,7 @@ VFMS/
 │       │           ├── DriverCertificationService.java
 │       │           ├── DriverDocumentService.java
 │       │           ├── DriverInfractionService.java
+│       │           ├── DriverPerformanceService.java
 │       │           ├── DriverLicenseService.java
 │       │           ├── StaffServiceRequestService.java
 │       │           └── StaffService.java
@@ -159,6 +178,7 @@ VFMS/
 │               ├── V4__create_notification_log.sql
 │               ├── V13__create_driver_availability.sql
 │               ├── V14__create_driver_infractions.sql
+│               ├── V15__create_driver_performance_scores.sql
 │               ├── V7__create_driver_certifications.sql
 │               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
 │               └── V12__create_driver_documents.sql
@@ -178,7 +198,8 @@ VFMS/
     │   │   ├── DriverCertificationsTab.tsx
     │   │   ├── DriverAvailabilityTab.tsx
     │   │   ├── DriverDocumentsTab.tsx
-    │   │   └── DriverInfractionsTab.tsx
+    │   │   ├── DriverInfractionsTab.tsx
+    │   │   └── DriverPerformanceTab.tsx
     │   └── ...
     ├── lib/
     └── types/
@@ -296,6 +317,14 @@ Base path: /api/drivers
 - PATCH /api/drivers/infractions/{id}/resolve
     - Mark an infraction as RESOLVED and set resolved date
 
+### Driver Performance Endpoints (NEW)
+
+Base path: /api/drivers
+
+- GET /api/drivers/{driverId}/performance-scores
+    - Get all performance score records for a driver
+    - Ordered by period year/month descending (latest first)
+
 ## Database
 
 Database migrations are available in:
@@ -309,6 +338,7 @@ Current migrations:
 - V4__create_notification_log.sql - Notification logs table
 - V13__create_driver_availability.sql - Driver availability and availability log tables (NEW)
 - V14__create_driver_infractions.sql - Driver infractions table and indexes (NEW)
+- V15__create_driver_performance_scores.sql - Driver performance score table and indexes (NEW)
 - V7__create_driver_certifications.sql - Driver certifications table (NEW)
 - V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
 - V12__create_driver_documents.sql - Driver documents table and indexes (NEW)
