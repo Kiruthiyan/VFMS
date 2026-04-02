@@ -132,3 +132,10 @@ export interface DriverPerformanceScore {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface EligibilityCheckResponse {
+  driverId: string;
+  vehicleCategory: string;
+  eligible: boolean;
+  reasons: string[];
+}
