@@ -1,8 +1,8 @@
-# VFMS - Staff, Driver, Certification, Document, Availability, Infraction, Performance, and Service Request Management
+# VFMS - Staff, Driver, Certification, Document, Availability, Qualification, Infraction, Performance, and Service Request Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver infraction records, driver performance monitoring, and staff vehicle service requests.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver qualification validation, driver infraction records, driver performance monitoring, and staff vehicle service requests.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Qualification Validation, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -74,6 +74,13 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Automated scheduler runs monthly: `0 0 1 1 * *` (first day of each month at 01:00)
 - Frontend performance tab shows latest score KPIs and historical monthly trend
 
+### Driver Qualification Validation (Implemented - Latest)
+- Validate whether a driver is qualified for a requested vehicle category
+- Qualification checks include required license class and required certification types
+- Returns a decision with reasons when requirements are not met
+- Supports categories: LIGHT, MEDIUM, HEAVY, PASSENGER, TANKER
+- Exposed as a read-only API endpoint for operational pre-dispatch checks
+
 ### Latest Developed Files (driver-infraction-tracking)
 - backend/src/main/java/com/vfms/dsm/entity/DriverInfraction.java
 - backend/src/main/java/com/vfms/dsm/repository/DriverInfractionRepository.java
@@ -90,6 +97,13 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - backend/src/main/java/com/vfms/dsm/controller/DriverPerformanceController.java
 - backend/src/main/resources/db/migration/V15__create_driver_performance_scores.sql
 - frontend/src/components/drivers/DriverPerformanceTab.tsx
+
+### Latest Developed Files (driver-qualification-validation)
+- backend/src/main/java/com/vfms/dsm/service/DriverQualificationService.java
+- backend/src/main/java/com/vfms/dsm/controller/DriverQualificationController.java
+- backend/src/main/java/com/vfms/dsm/dto/QualificationCheckRequest.java
+- backend/src/main/java/com/vfms/dsm/dto/QualificationCheckResponse.java
+- backend/src/main/resources/db/migration/V10__create_vehicle_license_requirements.sql
 
 ### Staff Vehicle Service Requests (Implemented - Latest)
 - Staff can submit vehicle fault and maintenance related requests
@@ -121,6 +135,7 @@ VFMS/
 │       │       │   ├── DriverDocumentController.java
 │       │       │   ├── DriverInfractionController.java
 │       │       │   ├── DriverPerformanceController.java
+│       │       │   ├── DriverQualificationController.java
 │       │       │   ├── DriverLicenseController.java
 │       │       │   ├── StaffServiceRequestController.java
 │       │       │   └── StaffController.java
@@ -128,6 +143,8 @@ VFMS/
 │       │       │   ├── CertificationRequest.java
 │       │       │   ├── AvailabilityUpdateRequest.java
 │       │       │   ├── InfractionRequest.java
+│       │       │   ├── QualificationCheckRequest.java
+│       │       │   ├── QualificationCheckResponse.java
 │       │       │   ├── ServiceRequestDto.java
 │       │       │   └── ...
 │       │       ├── entity/
@@ -165,6 +182,7 @@ VFMS/
 │       │           ├── DriverDocumentService.java
 │       │           ├── DriverInfractionService.java
 │       │           ├── DriverPerformanceService.java
+│       │           ├── DriverQualificationService.java
 │       │           ├── DriverLicenseService.java
 │       │           ├── StaffServiceRequestService.java
 │       │           └── StaffService.java
@@ -172,6 +190,7 @@ VFMS/
 │           ├── application.properties
 │           └── db/migration/
 │               ├── V1__create_drivers.sql
+│               ├── V10__create_vehicle_license_requirements.sql
 │               ├── V11__create_staff_service_requests.sql
 │               ├── V2__create_staff.sql
 │               ├── V3__create_driver_licenses.sql
@@ -325,6 +344,15 @@ Base path: /api/drivers
     - Get all performance score records for a driver
     - Ordered by period year/month descending (latest first)
 
+### Driver Qualification Endpoints (NEW)
+
+Base path: /api/drivers
+
+- GET /api/drivers/{driverId}/qualification?vehicleCategory={category}
+    - Validate if the driver is qualified for the given vehicle category
+    - Response includes qualified=true/false and unmet requirement reasons
+    - Supported categories: LIGHT, MEDIUM, HEAVY, PASSENGER, TANKER
+
 ## Database
 
 Database migrations are available in:
@@ -332,6 +360,7 @@ Database migrations are available in:
 
 Current migrations:
 - V1__create_drivers.sql - Driver profiles table
+- V10__create_vehicle_license_requirements.sql - Vehicle category to required license/certification mapping table (NEW)
 - V11__create_staff_service_requests.sql - Staff service requests table and indexes (NEW)
 - V2__create_staff.sql - Staff profiles table
 - V3__create_driver_licenses.sql - Driver licenses table
@@ -416,6 +445,7 @@ npm run build
 - Driver availability updates are audited in driver_availability_log with actor and reason.
 - Driver infractions are persisted in driver_infractions and can be resolved through OPEN/UNDER_REVIEW/RESOLVED lifecycle.
 - Staff vehicle service requests are persisted in staff_service_requests and can be tracked through OPEN to RESOLVED lifecycle states.
+- Driver qualification validation checks license and certification eligibility per requested vehicle category.
 
 ## License
 
