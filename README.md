@@ -1,8 +1,8 @@
-# VFMS - Staff, Driver, Certification, Document, Availability, and Service Request Management
+# VFMS - Staff, Driver, Certification, Document, Availability, Infraction, and Service Request Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, and staff vehicle service requests.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver infraction records, and staff vehicle service requests.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Infraction Tracking, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -59,6 +59,23 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Filter drivers by availability status
 - Frontend availability tab for current status and status update actions
 
+### Driver Infraction Tracking (Implemented - Latest)
+- Log driver infractions/incidents with type, severity, date, description, and penalty notes
+- View infractions by driver (latest first)
+- Resolve open infractions
+- Severity levels: LOW, MEDIUM, HIGH, CRITICAL
+- Resolution statuses: OPEN, UNDER_REVIEW, RESOLVED
+- Frontend infractions tab with form dialog and incident list
+
+### Latest Developed Files (driver-infraction-tracking)
+- backend/src/main/java/com/vfms/dsm/entity/DriverInfraction.java
+- backend/src/main/java/com/vfms/dsm/repository/DriverInfractionRepository.java
+- backend/src/main/java/com/vfms/dsm/service/DriverInfractionService.java
+- backend/src/main/java/com/vfms/dsm/controller/DriverInfractionController.java
+- backend/src/main/java/com/vfms/dsm/dto/InfractionRequest.java
+- backend/src/main/resources/db/migration/V14__create_driver_infractions.sql
+- frontend/src/components/drivers/DriverInfractionsTab.tsx
+
 ### Staff Vehicle Service Requests (Implemented - Latest)
 - Staff can submit vehicle fault and maintenance related requests
 - Request types: FAULT_REPORT, SERVICE_REQUEST, INSPECTION_REQUEST
@@ -87,12 +104,14 @@ VFMS/
 │       │       │   ├── DriverAvailabilityController.java
 │       │       │   ├── DriverCertificationController.java
 │       │       │   ├── DriverDocumentController.java
+│       │       │   ├── DriverInfractionController.java
 │       │       │   ├── DriverLicenseController.java
 │       │       │   ├── StaffServiceRequestController.java
 │       │       │   └── StaffController.java
 │       │       ├── dto/
 │       │       │   ├── CertificationRequest.java
 │       │       │   ├── AvailabilityUpdateRequest.java
+│       │       │   ├── InfractionRequest.java
 │       │       │   ├── ServiceRequestDto.java
 │       │       │   └── ...
 │       │       ├── entity/
@@ -101,6 +120,7 @@ VFMS/
 │       │       │   ├── DriverAvailabilityLog.java
 │       │       │   ├── DriverCertification.java
 │       │       │   ├── DriverDocument.java
+│       │       │   ├── DriverInfraction.java
 │       │       │   ├── DriverLicense.java
 │       │       │   ├── Staff.java
 │       │       │   ├── StaffServiceRequest.java
@@ -112,6 +132,7 @@ VFMS/
 │       │       │   ├── DriverAvailabilityLogRepository.java
 │       │       │   ├── DriverCertificationRepository.java
 │       │       │   ├── DriverDocumentRepository.java
+│       │       │   ├── DriverInfractionRepository.java
 │       │       │   ├── DriverLicenseRepository.java
 │       │       │   ├── NotificationLogRepository.java
 │       │       │   ├── StaffServiceRequestRepository.java
@@ -124,6 +145,7 @@ VFMS/
 │       │           ├── DriverAvailabilityService.java
 │       │           ├── DriverCertificationService.java
 │       │           ├── DriverDocumentService.java
+│       │           ├── DriverInfractionService.java
 │       │           ├── DriverLicenseService.java
 │       │           ├── StaffServiceRequestService.java
 │       │           └── StaffService.java
@@ -136,6 +158,7 @@ VFMS/
 │               ├── V3__create_driver_licenses.sql
 │               ├── V4__create_notification_log.sql
 │               ├── V13__create_driver_availability.sql
+│               ├── V14__create_driver_infractions.sql
 │               ├── V7__create_driver_certifications.sql
 │               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
 │               └── V12__create_driver_documents.sql
@@ -154,7 +177,8 @@ VFMS/
     │   │   ├── DriverLicensesTab.tsx
     │   │   ├── DriverCertificationsTab.tsx
     │   │   ├── DriverAvailabilityTab.tsx
-    │   │   └── DriverDocumentsTab.tsx
+    │   │   ├── DriverDocumentsTab.tsx
+    │   │   └── DriverInfractionsTab.tsx
     │   └── ...
     ├── lib/
     └── types/
@@ -261,6 +285,17 @@ Base path: /api/drivers
     - Get all drivers by availability status
     - Status values: AVAILABLE, ON_TRIP, ON_LEAVE, INACTIVE
 
+### Driver Infraction Endpoints (NEW)
+
+Base path: /api/drivers
+
+- POST /api/drivers/infractions
+    - Log a new infraction for a driver
+- GET /api/drivers/{driverId}/infractions
+    - Get all infractions for a driver (ordered by incident date desc)
+- PATCH /api/drivers/infractions/{id}/resolve
+    - Mark an infraction as RESOLVED and set resolved date
+
 ## Database
 
 Database migrations are available in:
@@ -273,6 +308,7 @@ Current migrations:
 - V3__create_driver_licenses.sql - Driver licenses table
 - V4__create_notification_log.sql - Notification logs table
 - V13__create_driver_availability.sql - Driver availability and availability log tables (NEW)
+- V14__create_driver_infractions.sql - Driver infractions table and indexes (NEW)
 - V7__create_driver_certifications.sql - Driver certifications table (NEW)
 - V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
 - V12__create_driver_documents.sql - Driver documents table and indexes (NEW)
@@ -348,6 +384,7 @@ npm run build
 - Automated certification expiry monitoring is handled by CertificationExpiryScheduler and writes to notification_log.
 - Driver document upload stores files on local disk (upload directory) and persists metadata in driver_documents.
 - Driver availability updates are audited in driver_availability_log with actor and reason.
+- Driver infractions are persisted in driver_infractions and can be resolved through OPEN/UNDER_REVIEW/RESOLVED lifecycle.
 - Staff vehicle service requests are persisted in staff_service_requests and can be tracked through OPEN to RESOLVED lifecycle states.
 
 ## License
