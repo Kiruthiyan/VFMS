@@ -94,3 +94,28 @@ export interface DriverLeave {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export type InfractionType =
+  | 'TRAFFIC_VIOLATION'
+  | 'MINOR_ACCIDENT'
+  | 'MAJOR_ACCIDENT'
+  | 'NEAR_MISS'
+  | 'RECKLESS_DRIVING'
+  | 'OTHER';
+
+export type InfractionSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type InfractionResolutionStatus = 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED';
+
+export interface DriverInfraction {
+  id: number;
+  driver: Pick<Driver, 'id' | 'firstName' | 'lastName'>;
+  infractionType: InfractionType;
+  severity: InfractionSeverity;
+  incidentDate: string;
+  description?: string;
+  resolutionStatus: InfractionResolutionStatus;
+  resolvedAt?: string;
+  penaltyNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

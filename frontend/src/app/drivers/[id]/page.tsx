@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DriverForm } from '@/components/drivers/DriverForm';
+import { DriverInfractionsTab } from '@/components/drivers/DriverInfractionsTab';
 import { toast } from 'sonner';
 
 export default function DriverDetailsPage() {
@@ -163,6 +164,8 @@ export default function DriverDetailsPage() {
           )}
         </CardContent>
       </Card>
+
+      {!loading && !error && driver && id && <DriverInfractionsTab driverId={id} />}
     </div>
   );
 }
