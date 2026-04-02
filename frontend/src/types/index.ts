@@ -78,6 +78,14 @@ export interface DriverAvailability {
   reason?: string;
 }
 
+export interface DriverReadinessCache {
+  driverId: string;
+  licenseValid: boolean;
+  allCertsValid: boolean;
+  availabilityStatus: AvailabilityStatus;
+  lastRefreshed: string;
+}
+
 export type LeaveType = 'ANNUAL' | 'MEDICAL' | 'EMERGENCY' | 'UNPAID';
 export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 

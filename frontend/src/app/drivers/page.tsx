@@ -51,6 +51,16 @@ export default function DriversPage() {
         subtitle="Manage driver profiles"
         action={
           <div className="flex items-center gap-2">
+            <Link href="/drivers/readiness">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs"
+              >
+                Assignment Readiness
+              </Button>
+            </Link>
+
             <Link href="/drivers/eligibility">
               <Button
                 variant="outline"
