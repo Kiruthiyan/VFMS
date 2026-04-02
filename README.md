@@ -2,7 +2,7 @@
 
 Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver qualification validation, driver infraction records, driver performance monitoring, and staff vehicle service requests.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Qualification Validation, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Qualification Validation, Driver Eligibility Checking, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -81,6 +81,13 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Supports categories: LIGHT, MEDIUM, HEAVY, PASSENGER, TANKER
 - Exposed as a read-only API endpoint for operational pre-dispatch checks
 
+### Driver Eligibility Check (Implemented - Latest)
+- Check whether a driver is eligible for trip assignment using employee ID, vehicle category, and trip date
+- Combines driver status, availability, license validity, qualification validation, and unresolved critical infractions
+- Returns an eligibility decision with reasons when requirements are not met
+- Frontend eligibility page available at `/drivers/eligibility`
+- Input uses Driver Employee ID instead of driver UUID
+
 ### Latest Developed Files (driver-infraction-tracking)
 - backend/src/main/java/com/vfms/dsm/entity/DriverInfraction.java
 - backend/src/main/java/com/vfms/dsm/repository/DriverInfractionRepository.java
@@ -104,6 +111,13 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - backend/src/main/java/com/vfms/dsm/dto/QualificationCheckRequest.java
 - backend/src/main/java/com/vfms/dsm/dto/QualificationCheckResponse.java
 - backend/src/main/resources/db/migration/V10__create_vehicle_license_requirements.sql
+
+### Latest Developed Files (driver-eligibility-check)
+- backend/src/main/java/com/vfms/dsm/dto/EligibilityCheckRequest.java
+- backend/src/main/java/com/vfms/dsm/dto/EligibilityCheckResponse.java
+- backend/src/main/java/com/vfms/dsm/service/DriverEligibilityService.java
+- backend/src/main/java/com/vfms/dsm/controller/DriverEligibilityController.java
+- frontend/src/app/drivers/eligibility/page.tsx
 
 ### Staff Vehicle Service Requests (Implemented - Latest)
 - Staff can submit vehicle fault and maintenance related requests
@@ -352,6 +366,18 @@ Base path: /api/drivers
     - Validate if the driver is qualified for the given vehicle category
     - Response includes qualified=true/false and unmet requirement reasons
     - Supported categories: LIGHT, MEDIUM, HEAVY, PASSENGER, TANKER
+
+### Driver Eligibility Endpoints (NEW)
+
+Base path: /api/internal/drivers
+
+- POST /api/internal/drivers/eligibility
+    - Check whether a driver is eligible for assignment
+    - Request body fields: employeeId, vehicleCategory, tripDate
+- GET /api/internal/drivers/eligibility?employeeId={employeeId}&vehicleCategory={category}&tripDate={yyyy-MM-dd}
+    - Read-only eligibility check using query parameters
+    - Input uses Driver Employee ID instead of UUID
+    - Response includes eligible=true/false and unmet requirement reasons
 
 ## Database
 

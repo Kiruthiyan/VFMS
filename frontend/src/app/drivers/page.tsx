@@ -50,31 +50,43 @@ export default function DriversPage() {
         title="Drivers"
         subtitle="Manage driver profiles"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <button
-                className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium transition-colors"
-                style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
+          <div className="flex items-center gap-2">
+            <Link href="/drivers/eligibility">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs"
               >
-                <Plus className="w-4 h-4" />
-                Add Driver
-              </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-black dark:text-white">New Driver</DialogTitle>
-                <DialogDescription className="text-black/80 dark:text-white/80">
-                  Fill in the driver details and submit the form to create a new driver profile.
-                </DialogDescription>
-              </DialogHeader>
-              <DriverForm
-                onSuccess={() => {
-                  setOpen(false);
-                  fetchDrivers();
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+                Eligibility Check
+              </Button>
+            </Link>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <button
+                  className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium transition-colors"
+                  style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Driver
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-black dark:text-white">New Driver</DialogTitle>
+                  <DialogDescription className="text-black/80 dark:text-white/80">
+                    Fill in the driver details and submit the form to create a new driver profile.
+                  </DialogDescription>
+                </DialogHeader>
+                <DriverForm
+                  onSuccess={() => {
+                    setOpen(false);
+                    fetchDrivers();
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
 
