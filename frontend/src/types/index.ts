@@ -119,3 +119,16 @@ export interface DriverInfraction {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface DriverPerformanceScore {
+  id: number;
+  periodYear: number;
+  periodMonth: number;
+  tripCompletionRate: number;
+  fuelEfficiencyRatio: number;
+  infractionDeduction: number;
+  feedbackScore: number;
+  compositeScore: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
