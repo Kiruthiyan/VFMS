@@ -1,8 +1,8 @@
-# VFMS - Staff, Driver, Certification, Document, Availability, Qualification, Infraction, Performance, and Service Request Management
+# VFMS - Staff, Driver, Certification, Document, Availability, Qualification, Readiness, Infraction, Performance, and Service Request Management
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver qualification validation, driver infraction records, driver performance monitoring, and staff vehicle service requests.
+Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver assignment readiness, driver qualification validation, driver infraction records, driver performance monitoring, and staff vehicle service requests.
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Qualification Validation, Driver Eligibility Checking, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
+This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Assignment Readiness, Driver Qualification Validation, Driver Eligibility Checking, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
 
 ## Module Owner
 
@@ -88,6 +88,22 @@ This branch/project currently implements Staff Management, Driver Management, Dr
 - Frontend eligibility page available at `/drivers/eligibility`
 - Input uses Driver Employee ID instead of driver UUID
 
+### Driver Assignment Readiness (Implemented - Latest)
+- Maintains a cache of assignment readiness per driver in `driver_readiness_cache`
+- Readiness is computed from license validity, certification validity, and current availability status
+- Supports per-driver readiness fetch and explicit per-driver refresh
+- Includes scheduled refresh every 30 minutes for all drivers
+- Frontend readiness dashboard available at `/drivers/readiness`
+- Dashboard includes ready/busy/issues stats, search by driver ID, and manual refresh actions
+
+### Latest Developed Files (driver-assignment-readiness)
+- backend/src/main/java/com/vfms/dsm/entity/DriverReadinessCache.java
+- backend/src/main/java/com/vfms/dsm/repository/DriverReadinessCacheRepository.java
+- backend/src/main/java/com/vfms/dsm/service/DriverReadinessService.java
+- backend/src/main/java/com/vfms/dsm/controller/DriverReadinessController.java
+- backend/src/main/resources/db/migration/V16__create_driver_readiness_cache.sql
+- frontend/src/app/drivers/readiness/page.tsx
+
 ### Latest Developed Files (driver-infraction-tracking)
 - backend/src/main/java/com/vfms/dsm/entity/DriverInfraction.java
 - backend/src/main/java/com/vfms/dsm/repository/DriverInfractionRepository.java
@@ -149,6 +165,7 @@ VFMS/
 │       │       │   ├── DriverDocumentController.java
 │       │       │   ├── DriverInfractionController.java
 │       │       │   ├── DriverPerformanceController.java
+│       │       │   ├── DriverReadinessController.java
 │       │       │   ├── DriverQualificationController.java
 │       │       │   ├── DriverLicenseController.java
 │       │       │   ├── StaffServiceRequestController.java
@@ -169,6 +186,7 @@ VFMS/
 │       │       │   ├── DriverDocument.java
 │       │       │   ├── DriverInfraction.java
 │       │       │   ├── DriverPerformanceScore.java
+│       │       │   ├── DriverReadinessCache.java
 │       │       │   ├── DriverLicense.java
 │       │       │   ├── Staff.java
 │       │       │   ├── StaffServiceRequest.java
@@ -182,6 +200,7 @@ VFMS/
 │       │       │   ├── DriverDocumentRepository.java
 │       │       │   ├── DriverInfractionRepository.java
 │       │       │   ├── DriverPerformanceScoreRepository.java
+│       │       │   ├── DriverReadinessCacheRepository.java
 │       │       │   ├── DriverLicenseRepository.java
 │       │       │   ├── NotificationLogRepository.java
 │       │       │   ├── StaffServiceRequestRepository.java
@@ -196,6 +215,7 @@ VFMS/
 │       │           ├── DriverDocumentService.java
 │       │           ├── DriverInfractionService.java
 │       │           ├── DriverPerformanceService.java
+│       │           ├── DriverReadinessService.java
 │       │           ├── DriverQualificationService.java
 │       │           ├── DriverLicenseService.java
 │       │           ├── StaffServiceRequestService.java
@@ -212,6 +232,7 @@ VFMS/
 │               ├── V13__create_driver_availability.sql
 │               ├── V14__create_driver_infractions.sql
 │               ├── V15__create_driver_performance_scores.sql
+│               ├── V16__create_driver_readiness_cache.sql
 │               ├── V7__create_driver_certifications.sql
 │               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
 │               └── V12__create_driver_documents.sql
@@ -221,6 +242,8 @@ VFMS/
     ├── app/
     │   ├── auth/
     │   ├── drivers/
+    │   │   ├── readiness/
+    │   │   │   └── page.tsx
     │   ├── service-requests/
     │   ├── staff/
     │   └── page.tsx
@@ -339,6 +362,17 @@ Base path: /api/drivers
     - Get all drivers by availability status
     - Status values: AVAILABLE, ON_TRIP, ON_LEAVE, INACTIVE
 
+### Driver Readiness Endpoints (NEW)
+
+Base path: /api/drivers
+
+- GET /api/drivers/{driverId}/readiness
+    - Get cached readiness data for one driver
+- GET /api/drivers/readiness/available
+    - Get drivers that are ready for assignment (license valid + certs valid + AVAILABLE)
+- POST /api/drivers/{driverId}/readiness/refresh
+    - Recompute and refresh readiness cache for one driver
+
 ### Driver Infraction Endpoints (NEW)
 
 Base path: /api/drivers
@@ -394,6 +428,7 @@ Current migrations:
 - V13__create_driver_availability.sql - Driver availability and availability log tables (NEW)
 - V14__create_driver_infractions.sql - Driver infractions table and indexes (NEW)
 - V15__create_driver_performance_scores.sql - Driver performance score table and indexes (NEW)
+- V16__create_driver_readiness_cache.sql - Driver assignment readiness cache table and indexes (NEW)
 - V7__create_driver_certifications.sql - Driver certifications table (NEW)
 - V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
 - V12__create_driver_documents.sql - Driver documents table and indexes (NEW)
