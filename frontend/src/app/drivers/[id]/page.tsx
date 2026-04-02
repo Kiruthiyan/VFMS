@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DriverForm } from '@/components/drivers/DriverForm';
 import { DriverInfractionsTab } from '@/components/drivers/DriverInfractionsTab';
+import { DriverPerformanceTab } from '@/components/drivers/DriverPerformanceTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 export default function DriverDetailsPage() {
@@ -128,7 +130,7 @@ export default function DriverDetailsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Details</CardTitle>
+          <CardTitle className="text-base">Driver Monitoring</CardTitle>
         </CardHeader>
         <CardContent>
           {loading && <p className="text-sm text-muted-foreground">Loading driver...</p>}
@@ -139,33 +141,49 @@ export default function DriverDetailsPage() {
             </p>
           )}
 
-          {!loading && !error && driver && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <Detail label="Employee ID" value={driver.employeeId} />
-              <Detail label="NIC" value={driver.nic} />
-              <Detail label="First Name" value={driver.firstName} />
-              <Detail label="Last Name" value={driver.lastName} />
-              <Detail label="Phone" value={driver.phone} />
-              <Detail label="License Number" value={driver.licenseNumber} />
-              <Detail label="License Expiry Date" value={driver.licenseExpiryDate} />
-              <Detail label="Date of Birth" value={driver.dateOfBirth} />
-              <Detail label="Date of Joining" value={driver.dateOfJoining} />
-              <Detail label="Department" value={driver.department} />
-              <Detail label="Designation" value={driver.designation} />
-              <Detail label="Email" value={driver.email} />
-              <Detail label="Address" value={driver.address} className="md:col-span-2" />
-              <Detail label="Emergency Contact Name" value={driver.emergencyContactName} />
-              <Detail label="Emergency Contact Phone" value={driver.emergencyContactPhone} />
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Status</p>
-                <StatusBadge status={driver.status} />
-              </div>
-            </div>
+          {!loading && !error && driver && id && (
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-grid">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="infractions">Infractions</TabsTrigger>
+                <TabsTrigger value="performance">Performance</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview">
+                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                  <Detail label="Employee ID" value={driver.employeeId} />
+                  <Detail label="NIC" value={driver.nic} />
+                  <Detail label="First Name" value={driver.firstName} />
+                  <Detail label="Last Name" value={driver.lastName} />
+                  <Detail label="Phone" value={driver.phone} />
+                  <Detail label="License Number" value={driver.licenseNumber} />
+                  <Detail label="License Expiry Date" value={driver.licenseExpiryDate} />
+                  <Detail label="Date of Birth" value={driver.dateOfBirth} />
+                  <Detail label="Date of Joining" value={driver.dateOfJoining} />
+                  <Detail label="Department" value={driver.department} />
+                  <Detail label="Designation" value={driver.designation} />
+                  <Detail label="Email" value={driver.email} />
+                  <Detail label="Address" value={driver.address} className="md:col-span-2" />
+                  <Detail label="Emergency Contact Name" value={driver.emergencyContactName} />
+                  <Detail label="Emergency Contact Phone" value={driver.emergencyContactPhone} />
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">Status</p>
+                    <StatusBadge status={driver.status} />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="infractions">
+                <DriverInfractionsTab driverId={id} />
+              </TabsContent>
+
+              <TabsContent value="performance">
+                <DriverPerformanceTab driverId={id} />
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
-
-      {!loading && !error && driver && id && <DriverInfractionsTab driverId={id} />}
     </div>
   );
 }
