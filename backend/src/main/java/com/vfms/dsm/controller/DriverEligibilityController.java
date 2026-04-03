@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
-@RestController @RequestMapping("/api/internal/drivers") @RequiredArgsConstructor
+@RestController
+@RequestMapping({"/api/internal/drivers", "/api/drivers"})
+@RequiredArgsConstructor
 public class DriverEligibilityController {
     private final DriverEligibilityService eligibilityService;
 

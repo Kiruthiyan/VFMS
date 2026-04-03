@@ -9,18 +9,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DriverReadinessCache } from '@/types';
+import { Driver, DriverReadinessCache, PageResponse } from '@/types';
 
 export default function DriverReadinessPage() {
   const [drivers, setDrivers] = useState<DriverReadinessCache[]>([]);
+  const [driverIdMap, setDriverIdMap] = useState<Record<string, string>>({});
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchDrivers = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<DriverReadinessCache[]>('/api/drivers/readiness/available');
-      setDrivers(data);
+      const [readinessData, driversPage] = await Promise.all([
+        apiFetch<DriverReadinessCache[]>('/api/drivers/readiness'),
+        apiFetch<PageResponse<Driver>>('/api/drivers?page=0&size=500'),
+      ]);
+
+      const map = Object.fromEntries(driversPage.content.map((driver) => [driver.id, driver.employeeId]));
+
+      setDrivers(readinessData);
+      setDriverIdMap(map);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -45,7 +53,14 @@ export default function DriverReadinessPage() {
   const ready = drivers.filter((d) => d.licenseValid && d.allCertsValid && d.availabilityStatus === 'AVAILABLE');
   const busy = drivers.filter((d) => ['ON_TRIP', 'ON_LEAVE'].includes(d.availabilityStatus));
   const hasIssues = drivers.filter((d) => !d.licenseValid || !d.allCertsValid);
-  const filtered = drivers.filter((d) => d.driverId.toLowerCase().includes(search.toLowerCase()));
+  const getDisplayDriverId = (driverUuid: string) => driverIdMap[driverUuid] ?? driverUuid;
+  const filtered = drivers.filter((d) => {
+    const query = search.toLowerCase();
+    return (
+      getDisplayDriverId(d.driverId).toLowerCase().includes(query) ||
+      d.driverId.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="p-6 animate-fade-in">
@@ -143,7 +158,7 @@ export default function DriverReadinessPage() {
                   const isReady = d.licenseValid && d.allCertsValid && d.availabilityStatus === 'AVAILABLE';
                   return (
                     <TableRow key={d.driverId} className="hover:bg-muted/20">
-                      <TableCell className="font-mono text-xs text-muted-foreground">#{d.driverId}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{getDisplayDriverId(d.driverId)}</TableCell>
                       <TableCell>
                         <StatusBadge status={d.availabilityStatus} />
                       </TableCell>

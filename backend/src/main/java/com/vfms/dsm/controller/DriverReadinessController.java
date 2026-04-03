@@ -30,6 +30,11 @@ public class DriverReadinessController {
         return ResponseEntity.ok(readinessService.getAvailableReadyDrivers());
     }
 
+    @GetMapping("/readiness")
+    public ResponseEntity<List<DriverReadinessCache>> getAllReadiness() {
+        return ResponseEntity.ok(readinessService.getAllReadiness());
+    }
+
     @PostMapping("/{driverId}/readiness/refresh")
     public ResponseEntity<DriverReadinessCache> refresh(@PathVariable UUID driverId) {
         return ResponseEntity.ok(readinessService.refreshForDriver(driverId));

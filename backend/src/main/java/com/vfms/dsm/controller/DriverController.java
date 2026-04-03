@@ -21,7 +21,7 @@ public class DriverController {
         return ResponseEntity.status(HttpStatus.CREATED).body(driverService.createDriver(request));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}")
     public ResponseEntity<DriverResponse> getDriver(@PathVariable UUID id) {
         return ResponseEntity.ok(driverService.getDriver(id));
     }
@@ -34,18 +34,18 @@ public class DriverController {
         return ResponseEntity.ok(driverService.getAllDrivers(PageRequest.of(page, size, Sort.by(sort).descending())));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:[0-9a-fA-F\\-]{36}}")
     public ResponseEntity<DriverResponse> updateDriver(@PathVariable UUID id, @Valid @RequestBody DriverRequest request) {
         return ResponseEntity.ok(driverService.updateDriver(id, request));
     }
 
-    @PatchMapping("/{id}/deactivate")
+    @PatchMapping("/{id:[0-9a-fA-F\\-]{36}}/deactivate")
     public ResponseEntity<Void> deactivateDriver(@PathVariable UUID id) {
         driverService.deactivateDriver(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/{id:[0-9a-fA-F\\-]{36}}/status")
     public ResponseEntity<Void> updateStatus(@PathVariable UUID id, @RequestParam Driver.DriverStatus status) {
         driverService.updateStatus(id, status);
         return ResponseEntity.noContent().build();

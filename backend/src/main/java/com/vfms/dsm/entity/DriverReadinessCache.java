@@ -1,5 +1,7 @@
 package com.vfms.dsm.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,6 +23,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "driver_readiness_cache")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,6 +38,7 @@ public class DriverReadinessCache {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "driver_id")
+    @JsonIgnore
     private Driver driver;
 
     @Builder.Default

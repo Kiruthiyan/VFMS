@@ -32,8 +32,7 @@ public class DriverAvailabilityService {
 
             DriverAvailability avail = new DriverAvailability();
             avail.setDriver(driver);
-            avail.setDriverId(driverId);
-            return availabilityRepository.save(avail);
+            return availabilityRepository.saveAndFlush(avail);
         });
     }
 
@@ -55,7 +54,7 @@ public class DriverAvailabilityService {
         avail.setUpdatedAt(LocalDateTime.now());
         avail.setUpdatedBy(changedBy);
         avail.setReason(request.getReason());
-        return availabilityRepository.save(avail);
+        return avail;
     }
 
     public List<DriverAvailability> getByStatus(DriverAvailability.AvailabilityStatus status) {

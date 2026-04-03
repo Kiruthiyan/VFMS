@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Plus, Wrench, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageResponse, Staff } from '@/types';
 
 const requestSchema = z.object({
   staffId: z.coerce.number().min(1),
@@ -44,6 +45,7 @@ const urgencyLeftBorder: Record<string, string> = {
 
 export default function ServiceRequestsPage() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
   const [open, setOpen] = useState(false);
 
   const {
@@ -62,8 +64,14 @@ export default function ServiceRequestsPage() {
       .then(setRequests)
       .catch((e: Error) => toast.error(e.message));
 
+  const fetchStaff = () =>
+    apiFetch<PageResponse<Staff>>('/api/staff?page=0&size=200')
+      .then((data) => setStaffList(data.content.filter((staff) => staff.status === 'ACTIVE')))
+      .catch((e: Error) => toast.error(e.message));
+
   useEffect(() => {
     fetchRequests();
+    fetchStaff();
   }, []);
 
   const onSubmit = async (data: RequestFormData) => {
@@ -117,8 +125,28 @@ export default function ServiceRequestsPage() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Staff ID *</Label>
-                    <Input type="number" {...register('staffId')} className="mt-1 h-9 text-sm" />
+                    <Label className="text-xs text-muted-foreground">Employee ID *</Label>
+                    <Controller
+                      name="staffId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value ? String(field.value) : undefined}
+                        >
+                          <SelectTrigger className="mt-1 h-9 text-sm">
+                            <SelectValue placeholder="Select employee ID" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {staffList.map((staff) => (
+                              <SelectItem key={staff.id} value={String(staff.id)}>
+                                {staff.employeeId} - {staff.firstName} {staff.lastName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Vehicle ID</Label>
