@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, type ChangeEvent, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -117,39 +118,47 @@ export default function StaffPage() {
     <div className="p-6 animate-fade-in">
       <PageHeader icon={<Users2 className="w-5 h-5" />} title="Staff" subtitle="Manage staff members"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <button className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
-                <Plus className="w-4 h-4" />Add Staff
-              </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg bg-white">
-              <DialogHeader><DialogTitle>New Staff Member</DialogTitle></DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="text-xs text-muted-foreground">Employee ID *</Label><Input {...register('employeeId')} className="mt-1 h-9 text-sm" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Role *</Label>
-                    <Controller name="role" control={control} render={({ field }) => (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent><SelectItem value="SYSTEM_USER">System User</SelectItem><SelectItem value="APPROVER">Approver</SelectItem></SelectContent>
-                      </Select>
-                    )} />
-                  </div>
-                  <div><Label className="text-xs text-muted-foreground">First Name *</Label><Input {...register('firstName')} className="mt-1 h-9 text-sm" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Last Name *</Label><Input {...register('lastName')} className="mt-1 h-9 text-sm" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Email</Label><Input type="email" {...register('email')} className="mt-1 h-9 text-sm" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Phone</Label><Input {...register('phone')} className="mt-1 h-9 text-sm" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Department</Label><Input {...register('department')} className="mt-1 h-9 text-sm" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Designation</Label><Input {...register('designation')} className="mt-1 h-9 text-sm" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Date of Joining</Label><Input type="date" {...register('dateOfJoining')} className="mt-1 h-9 text-sm" /></div>
-                </div>
-                <button type="submit" disabled={isSubmitting} className="w-full h-9 rounded-md text-sm font-medium disabled:opacity-50" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
-                  {isSubmitting ? 'Saving…' : 'Add Staff Member'}
+          <div className="flex items-center gap-2">
+            <Link href="/service-requests">
+              <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
+                Service Requests
+              </Button>
+            </Link>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <button className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
+                  <Plus className="w-4 h-4" />Add Staff
                 </button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg bg-white">
+                <DialogHeader><DialogTitle>New Staff Member</DialogTitle></DialogHeader>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label className="text-xs text-muted-foreground">Employee ID *</Label><Input {...register('employeeId')} className="mt-1 h-9 text-sm" /></div>
+                    <div><Label className="text-xs text-muted-foreground">Role *</Label>
+                      <Controller name="role" control={control} render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="SYSTEM_USER">System User</SelectItem><SelectItem value="APPROVER">Approver</SelectItem></SelectContent>
+                        </Select>
+                      )} />
+                    </div>
+                    <div><Label className="text-xs text-muted-foreground">First Name *</Label><Input {...register('firstName')} className="mt-1 h-9 text-sm" /></div>
+                    <div><Label className="text-xs text-muted-foreground">Last Name *</Label><Input {...register('lastName')} className="mt-1 h-9 text-sm" /></div>
+                    <div><Label className="text-xs text-muted-foreground">Email</Label><Input type="email" {...register('email')} className="mt-1 h-9 text-sm" /></div>
+                    <div><Label className="text-xs text-muted-foreground">Phone</Label><Input {...register('phone')} className="mt-1 h-9 text-sm" /></div>
+                    <div><Label className="text-xs text-muted-foreground">Department</Label><Input {...register('department')} className="mt-1 h-9 text-sm" /></div>
+                    <div><Label className="text-xs text-muted-foreground">Designation</Label><Input {...register('designation')} className="mt-1 h-9 text-sm" /></div>
+                    <div><Label className="text-xs text-muted-foreground">Date of Joining</Label><Input type="date" {...register('dateOfJoining')} className="mt-1 h-9 text-sm" /></div>
+                  </div>
+                  <button type="submit" disabled={isSubmitting} className="w-full h-9 rounded-md text-sm font-medium disabled:opacity-50" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
+                    {isSubmitting ? 'Saving…' : 'Add Staff Member'}
+                  </button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
       <Card>

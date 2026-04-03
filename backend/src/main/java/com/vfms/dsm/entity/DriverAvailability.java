@@ -1,5 +1,7 @@
 package com.vfms.dsm.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "driver_availability")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,6 +25,7 @@ public class DriverAvailability {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "driver_id")
+    @JsonIgnore
     private Driver driver;
 
     @Enumerated(EnumType.STRING)

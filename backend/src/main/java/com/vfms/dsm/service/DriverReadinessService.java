@@ -41,6 +41,12 @@ public class DriverReadinessService {
                 .toList();
     }
 
+        public List<DriverReadinessCache> getAllReadiness() {
+                return driverRepository.findAll().stream()
+                                .map(driver -> cacheRepository.findById(driver.getId()).orElseGet(() -> refreshForDriver(driver.getId())))
+                                .toList();
+        }
+
     @Scheduled(cron = "0 */30 * * * *")
     public void refreshAllReadiness() {
         driverRepository.findAll().forEach(d -> refreshForDriver(d.getId()));
@@ -60,16 +66,21 @@ public class DriverReadinessService {
                 .map(DriverAvailability::getStatus)
                 .orElse(DriverAvailability.AvailabilityStatus.AVAILABLE);
 
-        DriverReadinessCache cache = cacheRepository.findById(driverId)
-                .orElse(new DriverReadinessCache());
+                DriverReadinessCache cache = cacheRepository.findById(driverId).orElseGet(() -> {
+                        DriverReadinessCache newCache = new DriverReadinessCache();
+                        newCache.setDriver(driver);
+                        return newCache;
+                });
 
-        cache.setDriverId(driverId);
-        cache.setDriver(driver);
-        cache.setLicenseValid(licenseValid);
-        cache.setAllCertsValid(certsValid);
-        cache.setAvailabilityStatus(status);
-        cache.setLastRefreshed(LocalDateTime.now());
+                cache.setLicenseValid(licenseValid);
+                cache.setAllCertsValid(certsValid);
+                cache.setAvailabilityStatus(status);
+                cache.setLastRefreshed(LocalDateTime.now());
 
-        return cacheRepository.save(cache);
+                if (cache.getDriverId() == null) {
+                        return cacheRepository.saveAndFlush(cache);
+                }
+
+                return cache;
     }
 }

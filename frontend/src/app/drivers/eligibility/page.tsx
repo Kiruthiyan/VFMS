@@ -25,7 +25,7 @@ export default function EligibilityPage() {
 
     setLoading(true);
     try {
-      setResult(await apiFetch<EligibilityCheckResponse>(`/api/internal/drivers/eligibility?employeeId=${encodeURIComponent(employeeId)}&vehicleCategory=${vehicleCategory}&tripDate=${tripDate}`));
+      setResult(await apiFetch<EligibilityCheckResponse>(`/api/drivers/eligibility?employeeId=${encodeURIComponent(employeeId)}&vehicleCategory=${vehicleCategory}&tripDate=${tripDate}`));
     } catch (e: any) {
       toast.error(e.message);
     } finally {

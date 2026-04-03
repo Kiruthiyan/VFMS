@@ -1,11 +1,13 @@
 package com.vfms.dsm.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity @Table(name = "drivers")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Driver extends BaseEntity {
     @Id

@@ -1,10 +1,12 @@
 package com.vfms.dsm.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 
 @Entity @Table(name = "staff")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Staff extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

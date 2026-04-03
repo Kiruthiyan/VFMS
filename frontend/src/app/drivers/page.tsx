@@ -71,6 +71,26 @@ export default function DriversPage() {
               </Button>
             </Link>
 
+            <Link href="/leaves">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs"
+              >
+                Leave Requests
+              </Button>
+            </Link>
+
+            <Link href="/service-requests">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs"
+              >
+                Service Requests
+              </Button>
+            </Link>
+
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <button

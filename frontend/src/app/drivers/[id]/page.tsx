@@ -12,8 +12,13 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DriverForm } from '@/components/drivers/DriverForm';
+import { DriverLicensesTab } from '@/components/drivers/DriverLicensesTab';
+import { DriverCertificationsTab } from '@/components/drivers/DriverCertificationsTab';
+import { DriverDocumentsTab } from '@/components/drivers/DriverDocumentsTab';
+import { DriverAvailabilityTab } from '@/components/drivers/DriverAvailabilityTab';
 import { DriverInfractionsTab } from '@/components/drivers/DriverInfractionsTab';
 import { DriverPerformanceTab } from '@/components/drivers/DriverPerformanceTab';
+import { DriverQualificationTab } from '@/components/drivers/DriverQualificationTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
@@ -143,10 +148,15 @@ export default function DriverDetailsPage() {
 
           {!loading && !error && driver && id && (
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-grid">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="licenses">Licenses</TabsTrigger>
+                <TabsTrigger value="certifications">Certs</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
+                <TabsTrigger value="availability">Availability</TabsTrigger>
                 <TabsTrigger value="infractions">Infractions</TabsTrigger>
                 <TabsTrigger value="performance">Performance</TabsTrigger>
+                <TabsTrigger value="qualification">Qualification</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview">
@@ -173,12 +183,32 @@ export default function DriverDetailsPage() {
                 </div>
               </TabsContent>
 
+              <TabsContent value="licenses">
+                <DriverLicensesTab driverId={id} />
+              </TabsContent>
+
+              <TabsContent value="certifications">
+                <DriverCertificationsTab driverId={id} />
+              </TabsContent>
+
+              <TabsContent value="documents">
+                <DriverDocumentsTab driverId={id} />
+              </TabsContent>
+
+              <TabsContent value="availability">
+                <DriverAvailabilityTab driverId={id} />
+              </TabsContent>
+
               <TabsContent value="infractions">
                 <DriverInfractionsTab driverId={id} />
               </TabsContent>
 
               <TabsContent value="performance">
                 <DriverPerformanceTab driverId={id} />
+              </TabsContent>
+
+              <TabsContent value="qualification">
+                <DriverQualificationTab driverId={id} />
               </TabsContent>
             </Tabs>
           )}

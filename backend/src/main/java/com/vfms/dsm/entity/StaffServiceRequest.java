@@ -1,9 +1,12 @@
 package com.vfms.dsm.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity @Table(name = "staff_service_requests")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class StaffServiceRequest extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -11,6 +14,7 @@ public class StaffServiceRequest extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id", nullable = false)
+    @JsonIgnore
     private Staff staff;
 
     @Column(name = "vehicle_id")

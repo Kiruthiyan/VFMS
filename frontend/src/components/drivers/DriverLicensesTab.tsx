@@ -10,7 +10,7 @@ type LicenseStatus = 'VALID' | 'EXPIRING_SOON' | 'EXPIRED';
 
 type DriverLicense = {
   id: number;
-  driverId: number;
+  driverId: string;
   driverName: string;
   licenseNumber: string;
   category: LicenseCategory;
@@ -54,7 +54,7 @@ function StatusBadge({ status }: { status: LicenseStatus }) {
   );
 }
 
-export function DriverLicensesTab({ driverId }: { driverId: number }) {
+export function DriverLicensesTab({ driverId }: { driverId: string }) {
   const [licenses, setLicenses] = useState<DriverLicense[]>([]);
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
