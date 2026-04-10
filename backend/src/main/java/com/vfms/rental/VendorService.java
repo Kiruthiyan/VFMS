@@ -40,6 +40,18 @@ public class VendorService {
         return vendorRepository.findByActiveTrue();
     }
 
+    public List<Vendor> getAllVendorsIncludingInactive() {
+        return vendorRepository.findAll();
+    }
+
+    @Transactional
+    public Vendor toggleActive(Long id) {
+        Vendor vendor = vendorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        vendor.setActive(!vendor.isActive());
+        return vendorRepository.save(vendor);
+    }
+
     public Vendor getVendorById(Long id) {
         return vendorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vendor not found"));

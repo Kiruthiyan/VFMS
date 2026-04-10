@@ -86,6 +86,16 @@ public class VehicleService {
         return mapToResponse(vehicleRepository.save(vehicle));
     }
 
+        // ── Retire Vehicle ──
+    @Transactional
+    public VehicleResponseDto retireVehicle(Long id) {
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with ID: " + id));
+        vehicle.setActive(false);
+        vehicle.setStatus(VehicleStatus.RETIRED);
+        return mapToResponse(vehicleRepository.save(vehicle));
+    }
+
         // ── Update Vehicle Status ──
     @Transactional
     public VehicleResponseDto updateVehicleStatus(Long id, VehicleStatus newStatus) {
@@ -94,12 +104,6 @@ public class VehicleService {
         vehicle.setStatus(newStatus);
         return mapToResponse(vehicleRepository.save(vehicle));
     }
-
-
-
-
-
-
 
     // ── Mapper ──
     private VehicleResponseDto mapToResponse(Vehicle v) {

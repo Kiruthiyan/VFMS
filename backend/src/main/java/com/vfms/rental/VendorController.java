@@ -38,4 +38,16 @@ public class VendorController {
     public ResponseEntity<ApiResponse<Vendor>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Vendor fetched", vendorService.getVendorById(id)));
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<Vendor>>> getAllIncludingInactive() {
+        return ResponseEntity.ok(ApiResponse.success("All vendors fetched", vendorService.getAllVendorsIncludingInactive()));
+    }
+
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<ApiResponse<Vendor>> toggleStatus(@PathVariable Long id) {
+        Vendor vendor = vendorService.toggleActive(id);
+        String msg = vendor.isActive() ? "Vendor activated" : "Vendor deactivated";
+        return ResponseEntity.ok(ApiResponse.success(msg, vendor));
+    }
 }

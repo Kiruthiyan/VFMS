@@ -12,6 +12,8 @@ import {
 import { ArrowLeft, Car } from "lucide-react";
 import { toast } from "sonner";
 
+type FieldErrors = { [key: string]: string };
+
 interface Props {
   title: string;
   initialData?: VehicleFormData;
@@ -32,13 +34,27 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<VehicleFormData>(initialData || DEFAULT_FORM);
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   const handleChange = (field: keyof VehicleFormData, value: string | number) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors({ ...errors, [field]: "" });
+  };
+
+  const validate = (): boolean => {
+    const errs: FieldErrors = {};
+    if (!form.plateNumber.trim()) errs.plateNumber = "Plate number is required";
+    if (!form.brand.trim()) errs.brand = "Brand is required";
+    if (!form.model.trim()) errs.model = "Model is required";
+    if (form.year < 1980 || form.year > new Date().getFullYear() + 1)
+      errs.year = "Year must be between 1980 and " + (new Date().getFullYear() + 1);
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     try {
       setSaving(true);
       await onSubmit(form);
@@ -48,6 +64,9 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
       setSaving(false);
     }
   };
+
+  const fieldClass = (field: string) =>
+    `bg-white text-slate-900 ${errors[field] ? "border-red-400 focus:ring-red-400" : ""}`;
 
   return (
     <div className="p-8 max-w-2xl mx-auto animate-in fade-in duration-500">
@@ -69,44 +88,44 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Plate Number *</label>
                 <Input
-                  required
                   value={form.plateNumber}
                   onChange={(e) => handleChange("plateNumber", e.target.value)}
                   placeholder="e.g. WP-CAB-1234"
-                  className="bg-white text-slate-900"
+                  className={fieldClass("plateNumber")}
                 />
+                {errors.plateNumber && <p className="text-red-500 text-xs">{errors.plateNumber}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Brand *</label>
                 <Input
-                  required
                   value={form.brand}
                   onChange={(e) => handleChange("brand", e.target.value)}
                   placeholder="e.g. Toyota"
-                  className="bg-white text-slate-900"
+                  className={fieldClass("brand")}
                 />
+                {errors.brand && <p className="text-red-500 text-xs">{errors.brand}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Model *</label>
                 <Input
-                  required
                   value={form.model}
                   onChange={(e) => handleChange("model", e.target.value)}
                   placeholder="e.g. Aqua"
-                  className="bg-white text-slate-900"
+                  className={fieldClass("model")}
                 />
+                {errors.model && <p className="text-red-500 text-xs">{errors.model}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Year *</label>
                 <Input
-                  required
                   type="number"
                   value={form.year}
                   onChange={(e) => handleChange("year", parseInt(e.target.value))}
                   min={1980}
                   max={2100}
-                  className="bg-white text-slate-900"
+                  className={fieldClass("year")}
                 />
+                {errors.year && <p className="text-red-500 text-xs">{errors.year}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Vehicle Type *</label>
