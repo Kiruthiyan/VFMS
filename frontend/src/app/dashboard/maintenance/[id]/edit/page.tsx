@@ -13,48 +13,54 @@ import {
 import { Wrench, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+type FieldErrors = { [key: string]: string };
+
 export default function EditMaintenancePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState<MaintenanceFormData>({
-    vehicleId: 0,
-    maintenanceType: "ROUTINE_SERVICE",
-    description: "",
-    estimatedCost: undefined,
+    vehicleId: 0, maintenanceType: "ROUTINE_SERVICE", description: "", estimatedCost: undefined,
   });
 
   useEffect(() => {
-    Promise.all([
-      vehicleApi.getAll(),
-      maintenanceApi.getById(Number(id)),
-    ]).then(([vehiclesRes, requestRes]) => {
-      setVehicles(vehiclesRes.data);
-      const r = requestRes.data;
-      setForm({
-        vehicleId: r.vehicleId,
-        maintenanceType: r.maintenanceType,
-        description: r.description,
-        estimatedCost: r.estimatedCost || undefined,
-      });
-    }).catch(() => toast.error("Failed to load data")).finally(() => setLoading(false));
+    Promise.all([vehicleApi.getAll(), maintenanceApi.getById(Number(id))])
+      .then(([vehiclesRes, requestRes]) => {
+        setVehicles(vehiclesRes.data);
+        const r = requestRes.data;
+        setForm({ vehicleId: r.vehicleId, maintenanceType: r.maintenanceType, description: r.description, estimatedCost: r.estimatedCost || undefined });
+      }).catch(() => toast.error("Failed to load data")).finally(() => setLoading(false));
   }, [id]);
+
+  const validate = (): boolean => {
+    const errs: FieldErrors = {};
+    if (!form.description.trim()) errs.description = "Description is required";
+    if (form.estimatedCost !== undefined && form.estimatedCost <= 0) errs.estimatedCost = "Cost must be greater than 0";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const clearError = (field: string) => {
+    if (errors[field]) setErrors({ ...errors, [field]: "" });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setSaving(true);
     try {
       await maintenanceApi.update(Number(id), form);
       toast.success("Request updated");
       router.push(`/dashboard/maintenance/${id}`);
-    } catch {
-      toast.error("Failed to update request");
-    } finally {
-      setSaving(false);
-    }
+    } catch { toast.error("Failed to update request"); }
+    finally { setSaving(false); }
   };
+
+  const fieldClass = (field: string) =>
+    `text-slate-900 ${errors[field] ? "border-red-400 focus:ring-red-400" : ""}`;
 
   if (loading) {
     return (
@@ -85,14 +91,10 @@ export default function EditMaintenancePage({ params }: { params: Promise<{ id: 
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-1.5 block">Vehicle *</label>
                 <Select value={String(form.vehicleId)} onValueChange={(v) => setForm({ ...form, vehicleId: Number(v) })}>
-                  <SelectTrigger className="bg-white text-slate-900">
-                    <SelectValue placeholder="Select a vehicle" />
-                  </SelectTrigger>
+                  <SelectTrigger className="bg-white text-slate-900"><SelectValue placeholder="Select a vehicle" /></SelectTrigger>
                   <SelectContent className="bg-white text-slate-900">
                     {vehicles.map((v) => (
-                      <SelectItem key={v.id} value={String(v.id)}>
-                        {v.brand} {v.model} — {v.plateNumber}
-                      </SelectItem>
+                      <SelectItem key={v.id} value={String(v.id)}>{v.brand} {v.model} — {v.plateNumber}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -100,13 +102,8 @@ export default function EditMaintenancePage({ params }: { params: Promise<{ id: 
 
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-1.5 block">Maintenance Type *</label>
-                <Select
-                  value={form.maintenanceType}
-                  onValueChange={(v) => setForm({ ...form, maintenanceType: v as MaintenanceType })}
-                >
-                  <SelectTrigger className="bg-white text-slate-900">
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={form.maintenanceType} onValueChange={(v) => setForm({ ...form, maintenanceType: v as MaintenanceType })}>
+                  <SelectTrigger className="bg-white text-slate-900"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-white text-slate-900">
                     <SelectItem value="BREAKDOWN">Breakdown</SelectItem>
                     <SelectItem value="ROUTINE_SERVICE">Routine Service</SelectItem>
@@ -118,35 +115,26 @@ export default function EditMaintenancePage({ params }: { params: Promise<{ id: 
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-1.5 block">Description *</label>
                 <textarea
-                  className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  required
-                />
+                  className={`w-full border rounded-lg p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? "border-red-400" : "border-slate-200"}`}
+                  rows={4} value={form.description}
+                  onChange={(e) => { setForm({ ...form, description: e.target.value }); clearError("description"); }}
+                  required />
+                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
               </div>
 
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-1.5 block">Estimated Cost (Rs.)</label>
-                <Input
-                  type="number"
-                  value={form.estimatedCost || ""}
-                  onChange={(e) => setForm({ ...form, estimatedCost: e.target.value ? Number(e.target.value) : undefined })}
-                  className="text-slate-900"
-                />
+                <Input type="number" value={form.estimatedCost || ""}
+                  onChange={(e) => { setForm({ ...form, estimatedCost: e.target.value ? Number(e.target.value) : undefined }); clearError("estimatedCost"); }}
+                  className={fieldClass("estimatedCost")} />
+                {errors.estimatedCost && <p className="text-red-500 text-xs mt-1">{errors.estimatedCost}</p>}
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-slate-200">
-                <Button
-                  type="submit"
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
-                  disabled={saving}
-                >
+                <Button type="submit" className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200" disabled={saving}>
                   {saving ? "Saving..." : "Save Changes"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => router.back()}>
-                  Cancel
-                </Button>
+                <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
               </div>
             </form>
           </CardContent>

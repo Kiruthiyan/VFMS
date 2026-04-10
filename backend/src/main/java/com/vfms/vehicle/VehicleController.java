@@ -65,7 +65,12 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle status updated", vehicle));
     }
 
-
+        // PATCH /api/vehicles/{id}/retire
+    @PatchMapping("/{id}/retire")
+    public ResponseEntity<ApiResponse<VehicleResponseDto>> retireVehicle(@PathVariable Long id) {
+        VehicleResponseDto vehicle = vehicleService.retireVehicle(id);
+        return ResponseEntity.ok(ApiResponse.success("Vehicle retired", vehicle));
+    }
 
 
 
