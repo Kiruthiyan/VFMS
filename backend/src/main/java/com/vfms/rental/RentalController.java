@@ -110,8 +110,11 @@ public class RentalController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle return confirmed", response));
     }
 
-
-
-
+        // PATCH /api/rentals/{id}/close
+    @PatchMapping("/{id}/close")
+    public ResponseEntity<ApiResponse<RentalResponseDto>> closeRental(@PathVariable Long id) {
+        RentalResponseDto response = rentalService.closeRental(id);
+        return ResponseEntity.ok(ApiResponse.success("Rental closed", response));
+    }
 
 }
