@@ -46,6 +46,13 @@ public class RentalController {
         }
         return ResponseEntity.ok(ApiResponse.success("Rentals fetched", response));
     }
+        // GET /api/rentals/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<RentalResponseDto>> getRentalById(@PathVariable Long id) {
+        RentalResponseDto response = rentalService.getRentalById(id);
+        return ResponseEntity.ok(ApiResponse.success("Rental fetched", response));
+    }
+
 
 
 }
