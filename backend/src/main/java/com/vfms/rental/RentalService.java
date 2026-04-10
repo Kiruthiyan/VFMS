@@ -89,9 +89,26 @@ public class RentalService {
                 .orElseThrow(() -> new RuntimeException("Rental not found"));
         return mapToResponse(rental);
     }
+        // ── Upload Agreement ──
+    @Transactional
+    public RentalResponseDto uploadAgreement(Long id, String agreementUrl) {
+        RentalRecord rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+        rental.setAgreementUrl(agreementUrl);
+        return mapToResponse(rentalRepository.save(rental));
+    }
 
-
-
+    // ── Upload Invoice ──
+    @Transactional
+    public RentalResponseDto uploadInvoice(Long id, String invoiceUrl) {
+        RentalRecord rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+        if (rental.getStatus() != RentalStatus.RETURNED && rental.getStatus() != RentalStatus.CLOSED) {
+            throw new RuntimeException("Invoice can only be uploaded for returned/closed rentals");
+        }
+        rental.setInvoiceUrl(invoiceUrl);
+        return mapToResponse(rentalRepository.save(rental));
+    }
 
     // ── Mapper ──
     RentalResponseDto mapToResponse(RentalRecord r) {

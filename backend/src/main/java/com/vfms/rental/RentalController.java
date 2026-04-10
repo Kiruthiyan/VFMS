@@ -52,6 +52,56 @@ public class RentalController {
         RentalResponseDto response = rentalService.getRentalById(id);
         return ResponseEntity.ok(ApiResponse.success("Rental fetched", response));
     }
+        // POST /api/rentals/{id}/agreement (file upload)
+    @PostMapping("/{id}/agreement")
+    public ResponseEntity<ApiResponse<RentalResponseDto>> uploadAgreement(
+            @PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String fileName = "agreement_" + id + "_" + file.getOriginalFilename();
+            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/rental");
+            java.nio.file.Files.createDirectories(uploadDir);
+            file.transferTo(uploadDir.resolve(fileName).toFile());
+            String fileUrl = "/api/rentals/files/" + fileName;
+            RentalResponseDto response = rentalService.uploadAgreement(id, fileUrl);
+            return ResponseEntity.ok(ApiResponse.success("Agreement uploaded", response));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload agreement: " + e.getMessage());
+        }
+    }
+
+    // POST /api/rentals/{id}/invoice (file upload)
+    @PostMapping("/{id}/invoice")
+    public ResponseEntity<ApiResponse<RentalResponseDto>> uploadInvoice(
+            @PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String fileName = "invoice_" + id + "_" + file.getOriginalFilename();
+            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/rental");
+            java.nio.file.Files.createDirectories(uploadDir);
+            file.transferTo(uploadDir.resolve(fileName).toFile());
+            String fileUrl = "/api/rentals/files/" + fileName;
+            RentalResponseDto response = rentalService.uploadInvoice(id, fileUrl);
+            return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload invoice: " + e.getMessage());
+        }
+    }
+
+    // GET /api/rentals/files/{fileName}
+    @GetMapping("/files/{fileName}")
+    public ResponseEntity<org.springframework.core.io.Resource> getFile(@PathVariable String fileName) {
+        try {
+            java.nio.file.Path filePath = java.nio.file.Paths.get("uploads/rental").resolve(fileName);
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+            String contentType = fileName.endsWith(".pdf") ? "application/pdf" : "application/octet-stream";
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
+                    .header("Content-Type", contentType)
+                    .body(resource);
+        } catch (Exception e) {
+            throw new RuntimeException("File not found: " + e.getMessage());
+        }
+    }
+
 
 
 
