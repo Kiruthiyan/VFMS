@@ -31,5 +31,21 @@ public class RentalController {
         RentalResponseDto response = rentalService.updateRental(id, request);
         return ResponseEntity.ok(ApiResponse.success("Rental updated", response));
     }
+        // GET /api/rentals
+    @GetMapping
+    public ResponseEntity<ApiResponse<java.util.List<RentalResponseDto>>> getAllRentals(
+            @RequestParam(required = false) RentalStatus status,
+            @RequestParam(required = false) Long vendorId) {
+        java.util.List<RentalResponseDto> response;
+        if (status != null) {
+            response = rentalService.getRentalsByStatus(status);
+        } else if (vendorId != null) {
+            response = rentalService.getRentalsByVendor(vendorId);
+        } else {
+            response = rentalService.getAllRentals();
+        }
+        return ResponseEntity.ok(ApiResponse.success("Rentals fetched", response));
+    }
+
 
 }
