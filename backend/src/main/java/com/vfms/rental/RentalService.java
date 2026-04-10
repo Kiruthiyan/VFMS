@@ -109,6 +109,23 @@ public class RentalService {
         rental.setInvoiceUrl(invoiceUrl);
         return mapToResponse(rentalRepository.save(rental));
     }
+        // ── Confirm Return ──
+    @Transactional
+    public RentalResponseDto confirmReturn(Long id, java.time.LocalDate returnDate) {
+        RentalRecord rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+
+        if (rental.getStatus() != RentalStatus.ACTIVE) {
+            throw new RuntimeException("Can only confirm return for ACTIVE rentals");
+        }
+
+        rental.setStatus(RentalStatus.RETURNED);
+        rental.setEndDate(returnDate);
+        rental.calculateTotalCost();
+
+        return mapToResponse(rentalRepository.save(rental));
+    }
+
 
     // ── Mapper ──
     RentalResponseDto mapToResponse(RentalRecord r) {
