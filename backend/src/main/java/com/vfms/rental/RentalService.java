@@ -63,6 +63,28 @@ public class RentalService {
         return mapToResponse(rentalRepository.save(rental));
     }
 
+        // ── Get All Rentals ──
+    public java.util.List<RentalResponseDto> getAllRentals() {
+        return rentalRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ── Get Rentals By Status ──
+    public java.util.List<RentalResponseDto> getRentalsByStatus(RentalStatus status) {
+        return rentalRepository.findByStatus(status).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ── Get Rentals By Vendor ──
+    public java.util.List<RentalResponseDto> getRentalsByVendor(Long vendorId) {
+        return rentalRepository.findByVendorId(vendorId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
 
     // ── Mapper ──
     RentalResponseDto mapToResponse(RentalRecord r) {
