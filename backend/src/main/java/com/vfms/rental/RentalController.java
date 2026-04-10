@@ -23,4 +23,13 @@ public class RentalController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Rental record created", response));
     }
+
+        // PUT /api/rentals/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<RentalResponseDto>> updateRental(
+            @PathVariable Long id, @Valid @RequestBody RentalRequestDto request) {
+        RentalResponseDto response = rentalService.updateRental(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Rental updated", response));
+    }
+
 }

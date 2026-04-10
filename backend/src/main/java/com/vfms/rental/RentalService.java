@@ -35,6 +35,35 @@ public class RentalService {
         return mapToResponse(rentalRepository.save(rental));
     }
 
+        // ── Edit Rental (only when ACTIVE) ──
+    @Transactional
+    public RentalResponseDto updateRental(Long id, RentalRequestDto request) {
+        RentalRecord rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+
+        if (rental.getStatus() != RentalStatus.ACTIVE) {
+            throw new RuntimeException("Can only edit ACTIVE rentals");
+        }
+
+        Vendor vendor = vendorRepository.findById(request.getVendorId())
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+
+        rental.setVendor(vendor);
+        rental.setVehicleType(request.getVehicleType());
+        rental.setPlateNumber(request.getPlateNumber());
+        rental.setStartDate(request.getStartDate());
+        rental.setEndDate(request.getEndDate());
+        rental.setCostPerDay(request.getCostPerDay());
+        rental.setPurpose(request.getPurpose());
+
+        if (request.getEndDate() != null) {
+            rental.calculateTotalCost();
+        }
+
+        return mapToResponse(rentalRepository.save(rental));
+    }
+
+
     // ── Mapper ──
     RentalResponseDto mapToResponse(RentalRecord r) {
         return RentalResponseDto.builder()
