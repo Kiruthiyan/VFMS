@@ -125,6 +125,20 @@ public class RentalService {
 
         return mapToResponse(rentalRepository.save(rental));
     }
+        // ── Close Rental ──
+    @Transactional
+    public RentalResponseDto closeRental(Long id) {
+        RentalRecord rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+
+        if (rental.getStatus() != RentalStatus.RETURNED) {
+            throw new RuntimeException("Can only close RETURNED rentals");
+        }
+
+        rental.setStatus(RentalStatus.CLOSED);
+        return mapToResponse(rentalRepository.save(rental));
+    }
+
 
 
     // ── Mapper ──
