@@ -102,6 +102,15 @@ public class RentalController {
         }
     }
 
+        // PATCH /api/rentals/{id}/return?returnDate=2026-04-20
+    @PatchMapping("/{id}/return")
+    public ResponseEntity<ApiResponse<RentalResponseDto>> confirmReturn(
+            @PathVariable Long id, @RequestParam java.time.LocalDate returnDate) {
+        RentalResponseDto response = rentalService.confirmReturn(id, returnDate);
+        return ResponseEntity.ok(ApiResponse.success("Vehicle return confirmed", response));
+    }
+
+
 
 
 
