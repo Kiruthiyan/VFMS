@@ -83,6 +83,13 @@ public class RentalService {
                 .map(this::mapToResponse)
                 .toList();
     }
+        // ── Get Rental By ID ──
+    public RentalResponseDto getRentalById(Long id) {
+        RentalRecord rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+        return mapToResponse(rental);
+    }
+
 
 
 
