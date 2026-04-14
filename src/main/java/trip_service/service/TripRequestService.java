@@ -6,6 +6,7 @@ import trip_service.dto.CreateTripRequestDTO;
 import trip_service.entity.TripRequest;
 import trip_service.enums.TripStatus;
 import trip_service.repository.TripRequestRepository;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,4 +30,13 @@ public class TripRequestService {
                 .build();
         return repository.save(trip);
     }
+
+    public List<TripRequest> getAllTrips() {
+        return repository.findAll();
+    }
+
+    public List<TripRequest> getTripsByStatus(TripStatus status) {
+        return repository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
 }
