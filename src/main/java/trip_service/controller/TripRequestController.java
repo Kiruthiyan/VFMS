@@ -10,6 +10,7 @@ import trip_service.entity.TripRequest;
 import trip_service.service.TripRequestService;
 import trip_service.enums.TripStatus;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -34,4 +35,13 @@ public class TripRequestController {
         return ResponseEntity.ok(service.getTripsByStatus(status));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<TripRequest> getTripById(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.getTripById(id));
+    }
+
+    @GetMapping("/requester/{requesterId}")
+    public ResponseEntity<List<TripRequest>> getTripsByRequester(@PathVariable UUID requesterId) {
+        return ResponseEntity.ok(service.getTripsByRequester(requesterId));
+    }
 }
