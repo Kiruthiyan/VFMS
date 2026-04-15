@@ -11,6 +11,7 @@ import trip_service.service.TripRequestService;
 import trip_service.enums.TripStatus;
 import java.util.List;
 import java.util.UUID;
+import trip_service.dto.ApprovalDTO;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -53,5 +54,10 @@ public class TripRequestController {
     @PatchMapping("/{id}/submit")
     public ResponseEntity<TripRequest> submitTrip(@PathVariable UUID id) {
         return ResponseEntity.ok(service.submitTrip(id));
+    }
+
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<TripRequest> approveTrip(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
+        return ResponseEntity.ok(service.approveTrip(id, dto));
     }
 }
