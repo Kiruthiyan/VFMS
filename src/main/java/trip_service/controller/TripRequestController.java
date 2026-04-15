@@ -44,4 +44,9 @@ public class TripRequestController {
     public ResponseEntity<List<TripRequest>> getTripsByRequester(@PathVariable UUID requesterId) {
         return ResponseEntity.ok(service.getTripsByRequester(requesterId));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TripRequest> editTrip(@PathVariable UUID id, @Valid @RequestBody CreateTripRequestDTO dto) {
+        return ResponseEntity.ok(service.editTrip(id, dto));
+    }
 }
