@@ -60,4 +60,9 @@ public class TripRequestController {
     public ResponseEntity<TripRequest> approveTrip(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
         return ResponseEntity.ok(service.approveTrip(id, dto));
     }
+
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<TripRequest> rejectTrip(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
+        return ResponseEntity.ok(service.rejectTrip(id, dto));
+    }
 }

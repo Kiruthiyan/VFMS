@@ -89,4 +89,15 @@ public class TripRequestService {
         trip.setAssignedDriverId(dto.getAssignedDriverId());
         return repository.save(trip);
     }
+
+    public TripRequest rejectTrip(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.SUBMITTED) {
+            throw new RuntimeException("Only SUBMITTED trips can be rejected");
+        }
+        trip.setStatus(TripStatus.REJECTED);
+        trip.setApproverId(dto.getApproverId());
+        trip.setApprovalNotes(dto.getNotes());
+        return repository.save(trip);
+    }
 }
