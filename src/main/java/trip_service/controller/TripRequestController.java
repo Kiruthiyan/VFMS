@@ -49,4 +49,9 @@ public class TripRequestController {
     public ResponseEntity<TripRequest> editTrip(@PathVariable UUID id, @Valid @RequestBody CreateTripRequestDTO dto) {
         return ResponseEntity.ok(service.editTrip(id, dto));
     }
+
+    @PatchMapping("/{id}/submit")
+    public ResponseEntity<TripRequest> submitTrip(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.submitTrip(id));
+    }
 }
