@@ -52,4 +52,18 @@ public class TripRequestService {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
     }
+
+    public TripRequest editTrip(UUID tripId, CreateTripRequestDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.NEW) {
+            throw new RuntimeException("Only NEW trips can be edited");
+        }
+        trip.setPurpose(dto.getPurpose());
+        trip.setDestination(dto.getDestination());
+        trip.setDepartureTime(dto.getDepartureTime());
+        trip.setReturnTime(dto.getReturnTime());
+        trip.setPassengerCount(dto.getPassengerCount());
+        trip.setDistanceKm(dto.getDistanceKm());
+        return repository.save(trip);
+    }
 }
