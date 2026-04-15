@@ -7,6 +7,7 @@ import trip_service.entity.TripRequest;
 import trip_service.enums.TripStatus;
 import trip_service.repository.TripRequestRepository;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -39,4 +40,16 @@ public class TripRequestService {
         return repository.findByStatusOrderByCreatedAtDesc(status);
     }
 
+    public TripRequest getTripById(UUID tripId) {
+        return findById(tripId);
+    }
+
+    public List<TripRequest> getTripsByRequester(UUID requesterId) {
+        return repository.findByRequesterIdOrderByCreatedAtDesc(requesterId);
+    }
+
+    private TripRequest findById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
+    }
 }
