@@ -8,6 +8,7 @@ import trip_service.enums.TripStatus;
 import trip_service.repository.TripRequestRepository;
 import java.util.List;
 import java.util.UUID;
+import trip_service.dto.ApprovalDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +74,19 @@ public class TripRequestService {
             throw new RuntimeException("Only NEW trips can be submitted");
         }
         trip.setStatus(TripStatus.SUBMITTED);
+        return repository.save(trip);
+    }
+
+    public TripRequest approveTrip(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.SUBMITTED) {
+            throw new RuntimeException("Only SUBMITTED trips can be approved");
+        }
+        trip.setStatus(TripStatus.APPROVED);
+        trip.setApproverId(dto.getApproverId());
+        trip.setApprovalNotes(dto.getNotes());
+        trip.setAssignedVehicleId(dto.getAssignedVehicleId());
+        trip.setAssignedDriverId(dto.getAssignedDriverId());
         return repository.save(trip);
     }
 }
