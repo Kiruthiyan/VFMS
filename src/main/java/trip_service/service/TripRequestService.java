@@ -100,4 +100,20 @@ public class TripRequestService {
         trip.setApprovalNotes(dto.getNotes());
         return repository.save(trip);
     }
+
+    public TripRequest assignDriver(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.APPROVED) {
+            throw new RuntimeException("Only APPROVED trips can have a driver assigned");
+        }
+        List<TripRequest> conflicts = repository.findConflictingDriverBookings(
+                dto.getAssignedDriverId(),
+                trip.getDepartureTime(),
+                trip.getReturnTime());
+        if (!conflicts.isEmpty()) {
+            throw new RuntimeException("Driver is already assigned for this time slot");
+        }
+        trip.setAssignedDriverId(dto.getAssignedDriverId());
+        return repository.save(trip);
+    }
 }
