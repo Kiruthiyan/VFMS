@@ -65,4 +65,9 @@ public class TripRequestController {
     public ResponseEntity<TripRequest> rejectTrip(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
         return ResponseEntity.ok(service.rejectTrip(id, dto));
     }
+
+    @PatchMapping("/{id}/assign-driver")
+    public ResponseEntity<TripRequest> assignDriver(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
+        return ResponseEntity.ok(service.assignDriver(id, dto));
+    }
 }
