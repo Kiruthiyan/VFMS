@@ -66,4 +66,13 @@ public class TripRequestService {
         trip.setDistanceKm(dto.getDistanceKm());
         return repository.save(trip);
     }
+
+    public TripRequest submitTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.NEW) {
+            throw new RuntimeException("Only NEW trips can be submitted");
+        }
+        trip.setStatus(TripStatus.SUBMITTED);
+        return repository.save(trip);
+    }
 }
