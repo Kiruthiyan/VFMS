@@ -132,4 +132,13 @@ public class TripRequestService {
         trip.setAssignedVehicleId(dto.getAssignedVehicleId());
         return repository.save(trip);
     }
+
+    public TripRequest startTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.APPROVED) {
+            throw new RuntimeException("Only APPROVED trips can be started");
+        }
+        trip.setStatus(TripStatus.ONGOING);
+        return repository.save(trip);
+    }
 }
