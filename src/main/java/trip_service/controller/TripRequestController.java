@@ -87,7 +87,9 @@ public class TripRequestController {
     }
 
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<TripRequest> cancelTrip(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.cancelTrip(id));
+    public ResponseEntity<TripRequest> cancelTrip(
+            @PathVariable UUID id,
+            @RequestBody ApprovalDTO dto) {
+        return ResponseEntity.ok(service.cancelTrip(id, dto.getApproverId(), dto.getNotes()));
     }
 }
