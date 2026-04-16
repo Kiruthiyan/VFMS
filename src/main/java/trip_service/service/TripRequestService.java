@@ -160,4 +160,13 @@ public class TripRequestService {
         trip.setStatus(TripStatus.CANCELLED);
         return repository.save(trip);
     }
+
+    public List<TripRequest> getTripsByDriver(UUID driverId) {
+        return repository.findByAssignedDriverIdOrderByDepartureTimeAsc(driverId);
+    }
+
+    public List<TripRequest> getUpcomingTripsByDriver(UUID driverId) {
+        return repository.findByAssignedDriverIdAndStatusOrderByDepartureTimeAsc(
+                driverId, TripStatus.APPROVED);
+    }
 }

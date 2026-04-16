@@ -23,6 +23,9 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
     // Get all trips assigned to a driver
     List<TripRequest> findByAssignedDriverIdOrderByDepartureTimeAsc(UUID driverId);
 
+    List<TripRequest> findByAssignedDriverIdAndStatusOrderByDepartureTimeAsc(
+            UUID driverId, TripStatus status);
+
     // Check for vehicle double booking
     @Query("SELECT t FROM TripRequest t WHERE t.assignedVehicleId = :vehicleId " +
             "AND t.status IN ('APPROVED', 'ONGOING') " +
