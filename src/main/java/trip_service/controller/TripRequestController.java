@@ -85,4 +85,9 @@ public class TripRequestController {
     public ResponseEntity<TripRequest> completeTrip(@PathVariable UUID id) {
         return ResponseEntity.ok(service.completeTrip(id));
     }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<TripRequest> cancelTrip(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.cancelTrip(id));
+    }
 }
