@@ -90,4 +90,14 @@ public class TripRequestController {
     public ResponseEntity<TripRequest> cancelTrip(@PathVariable UUID id) {
         return ResponseEntity.ok(service.cancelTrip(id));
     }
+
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<List<TripRequest>> getTripsByDriver(@PathVariable UUID driverId) {
+        return ResponseEntity.ok(service.getTripsByDriver(driverId));
+    }
+
+    @GetMapping("/driver/{driverId}/upcoming")
+    public ResponseEntity<List<TripRequest>> getUpcomingTripsByDriver(@PathVariable UUID driverId) {
+        return ResponseEntity.ok(service.getUpcomingTripsByDriver(driverId));
+    }
 }
