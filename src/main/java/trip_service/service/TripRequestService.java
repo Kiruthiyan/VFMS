@@ -169,4 +169,13 @@ public class TripRequestService {
         return repository.findByAssignedDriverIdAndStatusOrderByDepartureTimeAsc(
                 driverId, TripStatus.APPROVED);
     }
+
+    public List<TripRequest> getRequesterTripHistory(UUID requesterId) {
+        return repository.findByRequesterIdOrderByCreatedAtDesc(requesterId);
+    }
+
+    public List<TripRequest> getRequesterActiveTrips(UUID requesterId) {
+        return repository.findByRequesterIdAndStatusInOrderByDepartureTimeAsc(
+                requesterId, List.of(TripStatus.NEW, TripStatus.SUBMITTED, TripStatus.APPROVED, TripStatus.ONGOING));
+    }
 }
