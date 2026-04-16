@@ -75,4 +75,9 @@ public class TripRequestController {
     public ResponseEntity<TripRequest> assignVehicle(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
         return ResponseEntity.ok(service.assignVehicle(id, dto));
     }
+
+    @PatchMapping("/{id}/start")
+    public ResponseEntity<TripRequest> startTrip(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.startTrip(id));
+    }
 }
