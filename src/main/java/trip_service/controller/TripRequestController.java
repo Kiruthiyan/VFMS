@@ -80,4 +80,9 @@ public class TripRequestController {
     public ResponseEntity<TripRequest> startTrip(@PathVariable UUID id) {
         return ResponseEntity.ok(service.startTrip(id));
     }
+
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<TripRequest> completeTrip(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.completeTrip(id));
+    }
 }

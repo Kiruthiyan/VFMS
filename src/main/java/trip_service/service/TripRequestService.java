@@ -141,4 +141,13 @@ public class TripRequestService {
         trip.setStatus(TripStatus.ONGOING);
         return repository.save(trip);
     }
+
+    public TripRequest completeTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.ONGOING) {
+            throw new RuntimeException("Only ONGOING trips can be completed");
+        }
+        trip.setStatus(TripStatus.COMPLETED);
+        return repository.save(trip);
+    }
 }
