@@ -117,4 +117,12 @@ public class TripRequestController {
             @RequestParam int month) {
         return ResponseEntity.ok(service.getTripsForCalendar(year, month));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<TripRequest>> searchTrips(
+            @RequestParam(required = false) String destination,
+            @RequestParam(required = false) TripStatus status,
+            @RequestParam(required = false) UUID requesterId) {
+        return ResponseEntity.ok(service.searchTrips(destination, status, requesterId));
+    }
 }

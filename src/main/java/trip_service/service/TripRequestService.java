@@ -185,4 +185,14 @@ public class TripRequestService {
         LocalDateTime end = start.plusMonths(1).minusSeconds(1);
         return repository.findByDepartureTimeBetweenOrderByDepartureTimeAsc(start, end);
     }
+
+    public List<TripRequest> searchTrips(String destination, TripStatus status, UUID requesterId) {
+        List<TripRequest> all = repository.findAll();
+        return all.stream()
+                .filter(t -> destination == null || t.getDestination().toLowerCase().contains(destination.toLowerCase()))
+                .filter(t -> status == null || t.getStatus() == status)
+                .filter(t -> requesterId == null || t.getRequesterId().equals(requesterId))
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .toList();
+    }
 }
