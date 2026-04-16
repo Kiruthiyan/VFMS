@@ -23,12 +23,15 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
     // Get all trips assigned to a driver
     List<TripRequest> findByAssignedDriverIdOrderByDepartureTimeAsc(UUID driverId);
 
+    // Get trips by driver and status (upcoming trips)
     List<TripRequest> findByAssignedDriverIdAndStatusOrderByDepartureTimeAsc(
             UUID driverId, TripStatus status);
 
+    // Get trips by requester and multiple statuses (active trips)
     List<TripRequest> findByRequesterIdAndStatusInOrderByDepartureTimeAsc(
             UUID requesterId, List<TripStatus> statuses);
 
+    // Get trips between two dates (calendar view)
     List<TripRequest> findByDepartureTimeBetweenOrderByDepartureTimeAsc(
             LocalDateTime start, LocalDateTime end);
 
