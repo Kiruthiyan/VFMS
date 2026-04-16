@@ -110,4 +110,11 @@ public class TripRequestController {
     public ResponseEntity<List<TripRequest>> getRequesterActiveTrips(@PathVariable UUID requesterId) {
         return ResponseEntity.ok(service.getRequesterActiveTrips(requesterId));
     }
+
+    @GetMapping("/calendar")
+    public ResponseEntity<List<TripRequest>> getTripsForCalendar(
+            @RequestParam int year,
+            @RequestParam int month) {
+        return ResponseEntity.ok(service.getTripsForCalendar(year, month));
+    }
 }
