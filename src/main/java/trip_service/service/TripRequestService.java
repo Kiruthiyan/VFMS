@@ -9,6 +9,7 @@ import trip_service.repository.TripRequestRepository;
 import java.util.List;
 import java.util.UUID;
 import trip_service.dto.ApprovalDTO;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -177,5 +178,11 @@ public class TripRequestService {
     public List<TripRequest> getRequesterActiveTrips(UUID requesterId) {
         return repository.findByRequesterIdAndStatusInOrderByDepartureTimeAsc(
                 requesterId, List.of(TripStatus.NEW, TripStatus.SUBMITTED, TripStatus.APPROVED, TripStatus.ONGOING));
+    }
+
+    public List<TripRequest> getTripsForCalendar(int year, int month) {
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.plusMonths(1).minusSeconds(1);
+        return repository.findByDepartureTimeBetweenOrderByDepartureTimeAsc(start, end);
     }
 }
