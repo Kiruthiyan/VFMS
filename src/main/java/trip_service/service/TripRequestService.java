@@ -150,4 +150,14 @@ public class TripRequestService {
         trip.setStatus(TripStatus.COMPLETED);
         return repository.save(trip);
     }
+
+    public TripRequest cancelTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() == TripStatus.COMPLETED ||
+                trip.getStatus() == TripStatus.CANCELLED) {
+            throw new RuntimeException("Cannot cancel a completed or already cancelled trip");
+        }
+        trip.setStatus(TripStatus.CANCELLED);
+        return repository.save(trip);
+    }
 }
