@@ -100,4 +100,14 @@ public class TripRequestController {
     public ResponseEntity<List<TripRequest>> getUpcomingTripsByDriver(@PathVariable UUID driverId) {
         return ResponseEntity.ok(service.getUpcomingTripsByDriver(driverId));
     }
+
+    @GetMapping("/requester/{requesterId}/history")
+    public ResponseEntity<List<TripRequest>> getRequesterTripHistory(@PathVariable UUID requesterId) {
+        return ResponseEntity.ok(service.getRequesterTripHistory(requesterId));
+    }
+
+    @GetMapping("/requester/{requesterId}/active")
+    public ResponseEntity<List<TripRequest>> getRequesterActiveTrips(@PathVariable UUID requesterId) {
+        return ResponseEntity.ok(service.getRequesterActiveTrips(requesterId));
+    }
 }
