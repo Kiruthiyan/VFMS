@@ -95,6 +95,9 @@ public class TripRequestService {
         if (trip.getStatus() != TripStatus.SUBMITTED) {
             throw new RuntimeException("Only SUBMITTED trips can be rejected");
         }
+        if (dto.getNotes() == null || dto.getNotes().isBlank()) {
+            throw new RuntimeException("Rejection reason is required");
+        }
         trip.setStatus(TripStatus.REJECTED);
         trip.setApproverId(dto.getApproverId());
         trip.setApprovalNotes(dto.getNotes());
