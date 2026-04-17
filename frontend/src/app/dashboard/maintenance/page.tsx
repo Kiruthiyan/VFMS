@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, Wrench, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useRole } from "@/lib/role-context";
 
 export default function MaintenanceListPage() {
   const router = useRouter();
+  const { canCreate } = useRole();
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -59,12 +61,14 @@ export default function MaintenanceListPage() {
             <Button variant="outline" size="icon" onClick={fetchRequests} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
-            <Button
-              className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
-              onClick={() => router.push("/dashboard/maintenance/create")}
-            >
-              <Plus className="mr-2 h-4 w-4" /> New Request
-            </Button>
+            {canCreate && (
+              <Button
+                className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                onClick={() => router.push("/dashboard/maintenance/create")}
+              >
+                <Plus className="mr-2 h-4 w-4" /> New Request
+              </Button>
+            )}
           </div>
         </div>
 
@@ -105,14 +109,14 @@ export default function MaintenanceListPage() {
             <div className="p-8 text-center text-slate-500">No maintenance requests found.</div>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Vehicle</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Type</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Description</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Status</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Est. Cost</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 text-right">Actions</th>
+                  <th className="px-6 py-4 font-semibold text-white">Vehicle</th>
+                  <th className="px-6 py-4 font-semibold text-white">Type</th>
+                  <th className="px-6 py-4 font-semibold text-white">Description</th>
+                  <th className="px-6 py-4 font-semibold text-white">Status</th>
+                  <th className="px-6 py-4 font-semibold text-white">Est. Cost</th>
+                  <th className="px-6 py-4 font-semibold text-white text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -120,7 +124,7 @@ export default function MaintenanceListPage() {
                   <tr key={req.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
+                        <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                           <Wrench className="h-5 w-5" />
                         </div>
                         <div>

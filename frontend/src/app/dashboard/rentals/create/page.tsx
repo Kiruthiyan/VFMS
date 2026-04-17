@@ -89,16 +89,16 @@ export default function CreateRentalPage() {
               <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                 <Car className="h-5 w-5" />
               </div>
-              New Rental Record
+              Rent Vehicle from External Vendor
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Vendor *</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Rental Vendor (Vehicle Supplier) *</label>
                 <Select onValueChange={(v) => { setForm({ ...form, vendorId: Number(v) }); clearError("vendorId"); }}>
                   <SelectTrigger className={`bg-white text-slate-900 ${errors.vendorId ? "border-red-400 ring-red-400" : ""}`}>
-                    <SelectValue placeholder="Select a vendor" />
+                    <SelectValue placeholder="Select vendor supplying the vehicle" />
                   </SelectTrigger>
                   <SelectContent className="bg-white text-slate-900">
                     {vendors.map((v) => (
@@ -139,7 +139,8 @@ export default function CreateRentalPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Cost Per Day (Rs.) *</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Vendor's Daily Rate (Rs.) *</label>
+                <p className="text-xs text-slate-400 mb-1.5">Enter the rate quoted by the vendor in their agreement</p>
                 <Input type="number" placeholder="e.g. 3000" value={form.costPerDay || ""}
                   onChange={(e) => { setForm({ ...form, costPerDay: Number(e.target.value) }); clearError("costPerDay"); }}
                   className={fieldClass("costPerDay")} />

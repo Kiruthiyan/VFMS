@@ -155,10 +155,22 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Pending approvals fetched", response));
     }
 
+    // GET /api/maintenance/reports/cost-summary
+    @GetMapping("/reports/cost-summary")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getCostSummary() {
+        return ResponseEntity.ok(ApiResponse.success("Cost summary fetched", maintenanceService.getMaintenanceCostSummary()));
+    }
 
+    // GET /api/maintenance/reports/cost-by-type
+    @GetMapping("/reports/cost-by-type")
+    public ResponseEntity<ApiResponse<java.util.Map<String, java.math.BigDecimal>>> getCostByType() {
+        return ResponseEntity.ok(ApiResponse.success("Cost by type fetched", maintenanceService.getCostByMaintenanceType()));
+    }
 
-
-
-
+    // GET /api/maintenance/reports/cost-per-vehicle
+    @GetMapping("/reports/cost-per-vehicle")
+    public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> getCostPerVehicle() {
+        return ResponseEntity.ok(ApiResponse.success("Cost per vehicle fetched", maintenanceService.getCostPerVehicle()));
+    }
 
 }

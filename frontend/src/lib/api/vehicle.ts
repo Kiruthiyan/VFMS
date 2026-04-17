@@ -3,7 +3,7 @@ import api from "../api";
 // ── Types ──
 export type VehicleType = "CAR" | "VAN" | "SUV" | "BUS" | "MOTORCYCLE";
 export type FuelType = "PETROL" | "DIESEL" | "HYBRID" | "ELECTRIC";
-export type VehicleStatus = "AVAILABLE" | "UNDER_MAINTENANCE" | "RENTED" | "RETIRED";
+export type VehicleStatus = "AVAILABLE" | "UNDER_MAINTENANCE" | "RETIRED";
 
 export interface Vehicle {
   id: number;
@@ -52,6 +52,9 @@ export const vehicleApi = {
 
   deactivate: (id: number) =>
     api.patch<ApiResponse<Vehicle>>(`/api/vehicles/${id}/deactivate`).then((r) => r.data),
+
+  retire: (id: number) =>
+    api.patch<ApiResponse<Vehicle>>(`/api/vehicles/${id}/retire`).then((r) => r.data),
 
   filterByStatus: (status: VehicleStatus) =>
     api.get<ApiResponse<Vehicle[]>>(`/api/vehicles?status=${status}`).then((r) => r.data),

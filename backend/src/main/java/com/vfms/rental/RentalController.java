@@ -117,4 +117,22 @@ public class RentalController {
         return ResponseEntity.ok(ApiResponse.success("Rental closed", response));
     }
 
+    // GET /api/rentals/reports/cost-summary
+    @GetMapping("/reports/cost-summary")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getRentalCostSummary() {
+        return ResponseEntity.ok(ApiResponse.success("Rental cost summary fetched", rentalService.getRentalCostSummary()));
+    }
+
+    // GET /api/rentals/reports/active
+    @GetMapping("/reports/active")
+    public ResponseEntity<ApiResponse<java.util.List<RentalResponseDto>>> getActiveRentals() {
+        return ResponseEntity.ok(ApiResponse.success("Active rentals fetched", rentalService.getRentalsByStatus(RentalStatus.ACTIVE)));
+    }
+
+    // GET /api/rentals/reports/cost-per-vendor
+    @GetMapping("/reports/cost-per-vendor")
+    public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> getCostPerVendor() {
+        return ResponseEntity.ok(ApiResponse.success("Cost per vendor fetched", rentalService.getCostPerVendor()));
+    }
+
 }

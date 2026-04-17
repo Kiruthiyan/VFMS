@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft, Edit, CheckCircle, XCircle, Upload, ExternalLink, Car } from "lucide-react";
 import { toast } from "sonner";
+import { useRole } from "@/lib/role-context";
 
 export default function RentalDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { canCreate } = useRole();
   const [rental, setRental] = useState<RentalRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +97,7 @@ export default function RentalDetailPage() {
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
         <Button variant="ghost" onClick={() => router.push("/dashboard/rentals")} className="mb-4 text-slate-600 hover:text-slate-900">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Rentals
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to External Rentals
         </Button>
 
         <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -105,7 +107,7 @@ export default function RentalDetailPage() {
                 <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                   <Car className="h-5 w-5" />
                 </div>
-                Rental #{rental.id} — {rental.plateNumber}
+                Rental #{rental.id} — {rental.plateNumber} (from {rental.vendorName})
               </div>
               <RentalStatusBadge status={rental.status} />
             </CardTitle>
@@ -135,8 +137,8 @@ export default function RentalDetailPage() {
                 <p className="text-sm font-semibold text-slate-900">{rental.endDate || "Ongoing"}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Cost / Day</p>
-                <p className="text-sm font-semibold text-slate-900">Rs.{rental.costPerDay.toLocaleString()}</p>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Vendor's Daily Rate</p>
+                <p className="text-sm font-semibold text-slate-900">Rs.{rental.costPerDay.toLocaleString()}<span className="text-xs text-slate-400 font-normal"> /day (as quoted)</span></p>
               </div>
             </div>
 
@@ -195,7 +197,7 @@ export default function RentalDetailPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 pt-6 border-t border-slate-200">
-              {rental.status === "ACTIVE" && (
+              {canCreate && rental.status === "ACTIVE" && (
                 <>
                   <Button onClick={() => router.push(`/dashboard/rentals/${id}/edit`)}
                     variant="outline" className="text-slate-700">
@@ -207,7 +209,7 @@ export default function RentalDetailPage() {
                   </Button>
                 </>
               )}
-              {rental.status === "RETURNED" && (
+              {canCreate && rental.status === "RETURNED" && (
                 <Button onClick={handleClose}
                   className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200">
                   <XCircle className="h-4 w-4 mr-2" /> Close Rental

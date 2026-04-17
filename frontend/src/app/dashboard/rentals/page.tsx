@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, Car, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useRole } from "@/lib/role-context";
 
 export default function RentalsPage() {
   const router = useRouter();
+  const { canCreate } = useRole();
   const [rentals, setRentals] = useState<RentalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -53,19 +55,21 @@ export default function RentalsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Vehicle Rentals</h1>
-            <p className="text-slate-500 mt-1">Manage external vehicle rental records</p>
+            <h1 className="text-3xl font-bold text-slate-900">External Vehicle Rentals</h1>
+            <p className="text-slate-500 mt-1">Rent vehicles from vendors to supplement the company fleet</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="icon" onClick={fetchRentals} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
-            <Button
-              className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
-              onClick={() => router.push("/dashboard/rentals/create")}
-            >
-              <Plus className="mr-2 h-4 w-4" /> New Rental
-            </Button>
+            {canCreate && (
+              <Button
+                className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                onClick={() => router.push("/dashboard/rentals/create")}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Rent a Vehicle
+              </Button>
+            )}
           </div>
         </div>
 
@@ -104,14 +108,14 @@ export default function RentalsPage() {
             <div className="p-8 text-center text-slate-500">No rentals found.</div>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Vehicle</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Vendor</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Period</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Cost</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Status</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 text-right">Actions</th>
+                  <th className="px-6 py-4 font-semibold text-white">Vehicle</th>
+                  <th className="px-6 py-4 font-semibold text-white">Vendor</th>
+                  <th className="px-6 py-4 font-semibold text-white">Period</th>
+                  <th className="px-6 py-4 font-semibold text-white">Cost</th>
+                  <th className="px-6 py-4 font-semibold text-white">Status</th>
+                  <th className="px-6 py-4 font-semibold text-white text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -119,7 +123,7 @@ export default function RentalsPage() {
                   <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
+                        <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                           <Car className="h-5 w-5" />
                         </div>
                         <div>
@@ -134,7 +138,7 @@ export default function RentalsPage() {
                       <div className="text-slate-400 text-xs">{r.endDate ? `to ${r.endDate}` : "Ongoing"}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-slate-600">Rs.{r.costPerDay.toLocaleString()}/day</div>
+                      <div className="text-slate-600">Rs.{r.costPerDay.toLocaleString()}<span className="text-xs text-slate-400">/day (vendor rate)</span></div>
                       {r.totalCost && (
                         <div className="text-emerald-600 text-xs font-medium">Total: Rs.{r.totalCost.toLocaleString()}</div>
                       )}
