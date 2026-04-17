@@ -107,16 +107,21 @@ public class MaintenanceService {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        if (mr.getStatus() != MaintenanceStatus.APPROVED) {
-            throw new RuntimeException("Can only close APPROVED requests");
+        MaintenanceStatus originalStatus = mr.getStatus();
+
+        if (originalStatus != MaintenanceStatus.APPROVED && originalStatus != MaintenanceStatus.REJECTED) {
+            throw new RuntimeException("Can only close APPROVED or REJECTED requests");
         }
 
-        mr.setStatus(MaintenanceStatus.CLOSED);
         mr.setClosedDate(java.time.LocalDateTime.now());
         mr.setActualCost(actualCost);
+        mr.setStatus(MaintenanceStatus.CLOSED);
 
-        // Auto-change vehicle status back to AVAILABLE
-        mr.getVehicle().setStatus(com.vfms.vehicle.VehicleStatus.AVAILABLE);
+        // Restore vehicle to AVAILABLE only if approved (maintenance actually happened and is now done)
+        // If REJECTED, maintenance never started so vehicle status is unchanged
+        if (originalStatus == MaintenanceStatus.APPROVED) {
+            mr.getVehicle().setStatus(com.vfms.vehicle.VehicleStatus.AVAILABLE);
+        }
 
         return mapToResponse(maintenanceRepository.save(mr));
     }
@@ -187,6 +192,68 @@ public class MaintenanceService {
 
 
 
+
+    // ── Report: Total Maintenance Cost Summary ──
+    public java.util.Map<String, Object> getMaintenanceCostSummary() {
+        java.util.List<MaintenanceRequest> closed = maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED);
+        java.math.BigDecimal totalActual = closed.stream()
+                .filter(mr -> mr.getActualCost() != null)
+                .map(MaintenanceRequest::getActualCost)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        java.math.BigDecimal totalEstimated = closed.stream()
+                .filter(mr -> mr.getEstimatedCost() != null)
+                .map(MaintenanceRequest::getEstimatedCost)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        long totalDowntimeHours = closed.stream()
+                .filter(mr -> mr.getApprovedDate() != null && mr.getClosedDate() != null)
+                .mapToLong(mr -> Duration.between(mr.getApprovedDate(), mr.getClosedDate()).toHours())
+                .sum();
+        return java.util.Map.of(
+                "totalClosedRequests", closed.size(),
+                "totalActualCost", totalActual,
+                "totalEstimatedCost", totalEstimated,
+                "totalDowntimeHours", totalDowntimeHours
+        );
+    }
+
+    // ── Report: Cost Breakdown by Maintenance Type ──
+    public java.util.Map<String, java.math.BigDecimal> getCostByMaintenanceType() {
+        return maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED).stream()
+                .filter(mr -> mr.getActualCost() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        mr -> mr.getMaintenanceType().name(),
+                        java.util.stream.Collectors.reducing(
+                                java.math.BigDecimal.ZERO,
+                                MaintenanceRequest::getActualCost,
+                                java.math.BigDecimal::add
+                        )
+                ));
+    }
+
+    // ── Report: Cost per Vehicle ──
+    public java.util.List<java.util.Map<String, Object>> getCostPerVehicle() {
+        return maintenanceRepository.findAll().stream()
+                .filter(mr -> mr.getActualCost() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        mr -> mr.getVehicle().getId()
+                ))
+                .entrySet().stream()
+                .map(entry -> {
+                    var records = entry.getValue();
+                    var first = records.get(0);
+                    java.math.BigDecimal total = records.stream()
+                            .map(MaintenanceRequest::getActualCost)
+                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                    return (java.util.Map<String, Object>) java.util.Map.<String, Object>of(
+                            "vehicleId", first.getVehicle().getId(),
+                            "plateNumber", first.getVehicle().getPlateNumber(),
+                            "brandModel", first.getVehicle().getBrand() + " " + first.getVehicle().getModel(),
+                            "totalMaintenanceCost", total,
+                            "requestCount", records.size()
+                    );
+                })
+                .toList();
+    }
 
     // ── Mapper ──
     MaintenanceResponseDto mapToResponse(MaintenanceRequest mr) {

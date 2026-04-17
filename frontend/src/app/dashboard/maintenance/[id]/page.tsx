@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wrench, ArrowLeft, Car, Calendar, DollarSign, Clock, FileText, Loader2, Upload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { useRole } from "@/lib/role-context";
 
 export default function MaintenanceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { canCreate, canApprove } = useRole();
   const [request, setRequest] = useState<MaintenanceRequest | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,13 +62,26 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleClose = async () => {
-    const cost = prompt("Enter actual cost:");
-    if (cost) {
+    if (!request) return;
+
+    if (request.status === "REJECTED") {
+      // Rejected = no work done, no cost needed
+      if (!confirm("Acknowledge and close this rejected request?")) return;
       try {
-        await maintenanceApi.close(Number(id), Number(cost));
+        await maintenanceApi.close(Number(id), 0);
         toast.success("Request closed");
         fetchRequest();
       } catch { toast.error("Failed to close"); }
+    } else {
+      // Approved = maintenance was done, ask for actual cost (optional)
+      const costInput = prompt("Enter actual maintenance cost (Rs.):\n\nLeave blank or enter 0 if cost is not yet known.");
+      const cost = costInput ? Number(costInput) : 0;
+      if (!confirm(`Close this request with actual cost: Rs.${cost.toLocaleString()}?`)) return;
+      try {
+        await maintenanceApi.close(Number(id), cost);
+        toast.success("Request closed successfully");
+        fetchRequest();
+      } catch { toast.error("Failed to close request"); }
     }
   };
 
@@ -185,7 +200,15 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                 <div>
                   <p className="text-xs text-slate-500">Downtime</p>
                   <p className="font-semibold text-slate-900">
-                    {request.downtimeHours ? `${request.downtimeHours} hours` : "—"}
+                    {request.downtimeHours != null
+                      ? request.downtimeHours === 0
+                        ? "Less than 1 hour"
+                        : request.downtimeHours >= 24
+                          ? `${Math.floor(request.downtimeHours / 24)}d ${request.downtimeHours % 24}h`
+                          : `${request.downtimeHours} hours`
+                      : request.status === "CLOSED"
+                        ? "Not recorded"
+                        : "In progress"}
                   </p>
                 </div>
               </div>
@@ -241,7 +264,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
-              {request.status === "NEW" && (
+              {canCreate && request.status === "NEW" && (
                 <>
                   <Button
                     className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
@@ -257,7 +280,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   </Button>
                 </>
               )}
-              {request.status === "SUBMITTED" && (
+              {canApprove && request.status === "SUBMITTED" && (
                 <>
                   <Button
                     className="bg-green-600 hover:bg-green-700 text-white"
@@ -274,12 +297,21 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   </Button>
                 </>
               )}
-              {request.status === "APPROVED" && (
+              {canCreate && request.status === "APPROVED" && (
                 <Button
                   className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                   onClick={handleClose}
                 >
                   Close Request
+                </Button>
+              )}
+              {canCreate && request.status === "REJECTED" && (
+                <Button
+                  variant="outline"
+                  className="border-slate-300 text-slate-600 hover:bg-slate-50"
+                  onClick={handleClose}
+                >
+                  Acknowledge &amp; Close
                 </Button>
               )}
               <Button variant="outline" onClick={() => router.back()}>

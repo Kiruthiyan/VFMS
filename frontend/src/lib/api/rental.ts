@@ -63,6 +63,9 @@ export const vendorApi = {
   getAllIncludingInactive: () =>
     api.get<ApiResponse<Vendor[]>>("/api/vendors/all").then((r) => r.data),
 
+  getById: (id: number) =>
+    api.get<ApiResponse<Vendor>>(`/api/vendors/${id}`).then((r) => r.data),
+
   create: (data: VendorFormData) =>
     api.post<ApiResponse<Vendor>>("/api/vendors", data).then((r) => r.data),
 

@@ -139,7 +139,8 @@ export default function EditRentalPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Cost Per Day (Rs.) *</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Vendor's Daily Rate (Rs.) *</label>
+                <p className="text-xs text-slate-400 mb-1.5">Enter the rate quoted by the vendor in their agreement</p>
                 <Input type="number" placeholder="e.g. 3000" value={form.costPerDay || ""}
                   onChange={(e) => { setForm({ ...form, costPerDay: Number(e.target.value) }); clearError("costPerDay"); }}
                   className={fieldClass("costPerDay")} />

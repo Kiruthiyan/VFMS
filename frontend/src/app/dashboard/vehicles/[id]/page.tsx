@@ -8,12 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Car, Calendar, Fuel, Building, Hash, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRole } from "@/lib/role-context";
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
+    const { canAdmin } = useRole();
     const [vehicle, setVehicle] = useState<Vehicle | null>(null);
     const [loading, setLoading] = useState(true);
+    const [retiring, setRetiring] = useState(false);
 
     useEffect(() => {
         const fetchVehicle = async () => {
@@ -28,6 +31,20 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
         };
         fetchVehicle();
     }, [id]);
+
+    const handleRetire = async () => {
+        if (!confirm(`Are you sure you want to retire ${vehicle?.brand} ${vehicle?.model}? This cannot be undone.`)) return;
+        setRetiring(true);
+        try {
+            await vehicleApi.retire(Number(id));
+            toast.success("Vehicle retired from fleet");
+            router.push("/dashboard/vehicles");
+        } catch {
+            toast.error("Failed to retire vehicle");
+        } finally {
+            setRetiring(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -103,13 +120,25 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200">
-                            <Button
-                                className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
-                                onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}/edit`)}
-                            >
-                                Edit Vehicle
-                            </Button>
+                        <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
+                            {canAdmin && (
+                                <Button
+                                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                                    onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}/edit`)}
+                                >
+                                    Edit Vehicle
+                                </Button>
+                            )}
+                            {canAdmin && vehicle.status !== "RETIRED" && (
+                                <Button
+                                    variant="outline"
+                                    className="border-red-300 text-red-600 hover:bg-red-50"
+                                    onClick={handleRetire}
+                                    disabled={retiring}
+                                >
+                                    {retiring ? "Retiring..." : "Retire Vehicle"}
+                                </Button>
+                            )}
                             <Button variant="outline" onClick={() => router.back()}>
                                 Back
                             </Button>

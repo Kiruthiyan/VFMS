@@ -18,6 +18,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.http.HttpMethod;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -26,11 +28,6 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
-    /**
-     * PLACEHOLDER SECURITY CONFIG — permits all requests.
-     * Kiruthiyan (auth-login feature) will replace this with JWT-based security.
-     * Other team members: do NOT modify this file on your feature branches.
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -38,9 +35,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                .authorizeHttpRequests(auth -> auth
+                        // ⚠️ TESTING MODE: All API requests permitted without auth
+                        // TODO: Remove this and uncomment the rules below before production
+                        .anyRequest().permitAll());
 
-        return http.build();
+    return http.build();
     }
 
     @Bean

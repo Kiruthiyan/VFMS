@@ -5,14 +5,12 @@ interface Props {
 const STATUS_STYLES: Record<string, string> = {
   AVAILABLE: "bg-green-100 text-green-700",
   UNDER_MAINTENANCE: "bg-red-100 text-red-700",
-  RENTED: "bg-blue-100 text-blue-700",
   RETIRED: "bg-gray-100 text-gray-700",
 };
 
 const STATUS_DOTS: Record<string, string> = {
   AVAILABLE: "bg-green-600",
   UNDER_MAINTENANCE: "bg-red-600",
-  RENTED: "bg-blue-600",
   RETIRED: "bg-gray-600",
 };
 

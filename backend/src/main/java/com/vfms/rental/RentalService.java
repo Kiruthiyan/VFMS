@@ -140,6 +140,44 @@ public class RentalService {
     }
 
 
+    // ── Report: Total Rental Cost Summary ──
+    public java.util.Map<String, Object> getRentalCostSummary() {
+        java.util.List<RentalRecord> all = rentalRepository.findAll();
+        java.math.BigDecimal totalCost = all.stream()
+                .filter(r -> r.getTotalCost() != null)
+                .map(RentalRecord::getTotalCost)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        long activeCount = all.stream().filter(r -> r.getStatus() == RentalStatus.ACTIVE).count();
+        long closedCount = all.stream().filter(r -> r.getStatus() == RentalStatus.CLOSED).count();
+        return java.util.Map.of(
+                "totalRentals", all.size(),
+                "activeRentals", activeCount,
+                "closedRentals", closedCount,
+                "totalRentalCost", totalCost
+        );
+    }
+
+    // ── Report: Cost per Vendor ──
+    public java.util.List<java.util.Map<String, Object>> getCostPerVendor() {
+        return rentalRepository.findAll().stream()
+                .filter(r -> r.getTotalCost() != null)
+                .collect(java.util.stream.Collectors.groupingBy(r -> r.getVendor().getId()))
+                .entrySet().stream()
+                .map(entry -> {
+                    var records = entry.getValue();
+                    var first = records.get(0);
+                    java.math.BigDecimal total = records.stream()
+                            .map(RentalRecord::getTotalCost)
+                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                    return (java.util.Map<String, Object>) java.util.Map.<String, Object>of(
+                            "vendorId", first.getVendor().getId(),
+                            "vendorName", first.getVendor().getName(),
+                            "totalRentalCost", total,
+                            "rentalCount", records.size()
+                    );
+                })
+                .toList();
+    }
 
     // ── Mapper ──
     RentalResponseDto mapToResponse(RentalRecord r) {

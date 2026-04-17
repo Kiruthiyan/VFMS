@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, Car, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useRole } from "@/lib/role-context";
 
 export default function VehiclesPage() {
   const router = useRouter();
+  const { canAdmin } = useRole();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -59,12 +61,14 @@ export default function VehiclesPage() {
             <Button variant="outline" size="icon" onClick={fetchVehicles} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
-            <Button
-              className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
-              onClick={() => router.push("/dashboard/vehicles/add")}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Vehicle
-            </Button>
+            {canAdmin && (
+              <Button
+                className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                onClick={() => router.push("/dashboard/vehicles/add")}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Vehicle
+              </Button>
+            )}
           </div>
         </div>
 
@@ -88,7 +92,6 @@ export default function VehiclesPage() {
               <SelectItem value="ALL">All Statuses</SelectItem>
               <SelectItem value="AVAILABLE">Available</SelectItem>
               <SelectItem value="UNDER_MAINTENANCE">Under Maintenance</SelectItem>
-              <SelectItem value="RENTED">Rented</SelectItem>
               <SelectItem value="RETIRED">Retired</SelectItem>
             </SelectContent>
           </Select>
@@ -104,14 +107,14 @@ export default function VehiclesPage() {
             <div className="p-8 text-center text-slate-500">No vehicles found.</div>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Vehicle Info</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Type</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Fuel</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Status</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700">Department</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 text-right">Actions</th>
+                  <th className="px-6 py-4 font-semibold text-white">Vehicle Info</th>
+                  <th className="px-6 py-4 font-semibold text-white">Type</th>
+                  <th className="px-6 py-4 font-semibold text-white">Fuel</th>
+                  <th className="px-6 py-4 font-semibold text-white">Status</th>
+                  <th className="px-6 py-4 font-semibold text-white">Department</th>
+                  <th className="px-6 py-4 font-semibold text-white text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -119,7 +122,7 @@ export default function VehiclesPage() {
                   <tr key={vehicle.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                        <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                           <Car className="h-5 w-5" />
                         </div>
                         <div>
