@@ -34,3 +34,6 @@ build/
 
 # Environment / secrets - NEVER commit
 .env
+
+# Local config with secrets
+src/main/resources/application.properties
