@@ -28,6 +28,10 @@ const DEFAULT_FORM: VehicleFormData = {
   vehicleType: "CAR",
   fuelType: "PETROL",
   department: "",
+  color: "",
+  seatingCapacity: undefined,
+  insuranceExpiryDate: "",
+  revenueLicenseExpiryDate: "",
 };
 
 export function VehicleForm({ title, initialData, onSubmit }: Props) {
@@ -154,13 +158,68 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Department</label>
+              <label className="text-sm font-medium text-slate-700">Department <span className="text-slate-400 font-normal">(Optional)</span></label>
               <Input
                 value={form.department || ""}
                 onChange={(e) => handleChange("department", e.target.value)}
-                placeholder="e.g. IT Department (optional)"
+                placeholder="e.g. IT Department"
                 className="bg-white text-slate-900"
               />
+            </div>
+
+            {/* ── Additional Details ── */}
+            <div className="pt-2 pb-1">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Additional Details</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Color <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <Input
+                  value={form.color || ""}
+                  onChange={(e) => handleChange("color", e.target.value)}
+                  placeholder="e.g. White, Silver"
+                  className="bg-white text-slate-900"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Seating Capacity <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={form.seatingCapacity || ""}
+                  onChange={(e) => handleChange("seatingCapacity", e.target.value ? parseInt(e.target.value) : "")}
+                  placeholder="e.g. 5"
+                  className="bg-white text-slate-900"
+                />
+              </div>
+            </div>
+
+            {/* ── Compliance Dates ── */}
+            <div className="pt-2 pb-1">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Compliance & Expiry Dates</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Insurance Expiry <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <Input
+                  type="date"
+                  value={form.insuranceExpiryDate || ""}
+                  onChange={(e) => handleChange("insuranceExpiryDate", e.target.value)}
+                  className="bg-white text-slate-900"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Revenue License Expiry <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <Input
+                  type="date"
+                  value={form.revenueLicenseExpiryDate || ""}
+                  onChange={(e) => handleChange("revenueLicenseExpiryDate", e.target.value)}
+                  className="bg-white text-slate-900"
+                />
+              </div>
             </div>
             <div className="flex gap-3 pt-4">
               <Button

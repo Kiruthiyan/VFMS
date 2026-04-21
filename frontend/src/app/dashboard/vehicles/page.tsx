@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Car, Loader2, RefreshCw } from "lucide-react";
+import { Plus, Search, Car, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
@@ -47,6 +47,25 @@ export default function VehiclesPage() {
       v.model.toLowerCase().includes(q)
     );
   });
+
+  // ── Compliance warning helper ──
+  const getComplianceWarning = (vehicle: Vehicle): { level: "expired" | "warning" | null; labels: string[] } => {
+    const today = new Date();
+    const labels: string[] = [];
+    let level: "expired" | "warning" | null = null;
+
+    const check = (dateStr: string | undefined, label: string) => {
+      if (!dateStr) return;
+      const expiry = new Date(dateStr);
+      const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysLeft < 0) { labels.push(`${label} expired`); level = "expired"; }
+      else if (daysLeft <= 30) { labels.push(`${label} in ${daysLeft}d`); if (level !== "expired") level = "warning"; }
+    };
+
+    check(vehicle.insuranceExpiryDate, "Insurance");
+    check(vehicle.revenueLicenseExpiryDate, "Rev. License");
+    return { level, labels };
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -126,7 +145,26 @@ export default function VehiclesPage() {
                           <Car className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="font-medium text-slate-900">{vehicle.brand} {vehicle.model}</div>
+                          <div className="font-medium text-slate-900 flex items-center gap-1.5">
+                            {vehicle.brand} {vehicle.model}
+                            {(() => {
+                              const { level, labels } = getComplianceWarning(vehicle);
+                              if (!level) return null;
+                              return (
+                                <span
+                                  title={labels.join(" · ")}
+                                  className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded ${
+                                    level === "expired"
+                                      ? "bg-red-100 text-red-600"
+                                      : "bg-amber-100 text-amber-600"
+                                  }`}
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {level === "expired" ? "Expired" : "Expiring"}
+                                </span>
+                              );
+                            })()}
+                          </div>
                           <div className="text-slate-500 text-xs">{vehicle.plateNumber}</div>
                         </div>
                       </div>

@@ -2,6 +2,7 @@ package com.vfms.vehicle;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -43,6 +44,15 @@ public class Vehicle {
 
     @Column(length = 100)
     private String department;
+
+    @Column(length = 30)
+    private String color;
+
+    private Integer seatingCapacity;
+
+    private LocalDate insuranceExpiryDate;
+
+    private LocalDate revenueLicenseExpiryDate;
 
     @Column(nullable = false)
     @Builder.Default

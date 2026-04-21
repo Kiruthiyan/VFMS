@@ -141,10 +141,10 @@ export default function VendorDetailPage() {
               )}
               {canAdmin && (
                 <Button
-                  variant="outline"
                   className={vendor.active
-                    ? "border-red-300 text-red-600 hover:bg-red-50"
+                    ? "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200"
                     : "border-emerald-300 text-emerald-600 hover:bg-emerald-50"}
+                  variant={vendor.active ? "default" : "outline"}
                   onClick={handleToggleStatus}
                   disabled={toggling}
                 >

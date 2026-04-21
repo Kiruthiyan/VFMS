@@ -37,8 +37,8 @@ export default function EditVendorPage() {
     if (!form.name.trim()) errs.name = "Vendor name is required";
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email))
       errs.email = "Enter a valid email";
-    if (form.phone && !/^\d{10,15}$/.test(form.phone.replace(/[\s-]/g, "")))
-      errs.phone = "Phone must be 10–15 digits";
+    if (form.phone && !/^07\d{8}$/.test(form.phone.replace(/[\s-]/g, "")))
+      errs.phone = "Enter a valid Sri Lankan number (e.g. 0771234567)";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -94,7 +94,7 @@ export default function EditVendorPage() {
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Contact Person</label>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Contact Person <span className="text-slate-400 font-normal">(Optional)</span></label>
                   <Input value={form.contactPerson || ""}
                     onChange={(e) => setForm({ ...form, contactPerson: e.target.value })}
                     placeholder="John Doe" className="text-slate-900" />
@@ -102,14 +102,14 @@ export default function EditVendorPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Phone</label>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Phone <span className="text-slate-400 font-normal">(Optional)</span></label>
                   <Input value={form.phone || ""}
                     onChange={(e) => { setForm({ ...form, phone: e.target.value }); setErrors({ ...errors, phone: "" }); }}
-                    placeholder="0771234567" className={fieldClass("phone")} />
+                    placeholder="e.g. 0771234567" className={fieldClass("phone")} />
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email</label>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email <span className="text-slate-400 font-normal">(Optional)</span></label>
                   <Input value={form.email || ""}
                     onChange={(e) => { setForm({ ...form, email: e.target.value }); setErrors({ ...errors, email: "" }); }}
                     placeholder="vendor@email.com" className={fieldClass("email")} />
@@ -117,7 +117,7 @@ export default function EditVendorPage() {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Address</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Address <span className="text-slate-400 font-normal">(Optional)</span></label>
                 <Input value={form.address || ""}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   placeholder="123 Main St, Colombo" className="text-slate-900" />

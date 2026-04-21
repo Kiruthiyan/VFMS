@@ -30,6 +30,10 @@ public class VehicleService {
                 .vehicleType(request.getVehicleType())
                 .fuelType(request.getFuelType())
                 .department(request.getDepartment())
+                .color(request.getColor())
+                .seatingCapacity(request.getSeatingCapacity())
+                .insuranceExpiryDate(request.getInsuranceExpiryDate())
+                .revenueLicenseExpiryDate(request.getRevenueLicenseExpiryDate())
                 .build();
 
         return mapToResponse(vehicleRepository.save(vehicle));
@@ -72,6 +76,10 @@ public class VehicleService {
         vehicle.setVehicleType(request.getVehicleType());
         vehicle.setFuelType(request.getFuelType());
         vehicle.setDepartment(request.getDepartment());
+        vehicle.setColor(request.getColor());
+        vehicle.setSeatingCapacity(request.getSeatingCapacity());
+        vehicle.setInsuranceExpiryDate(request.getInsuranceExpiryDate());
+        vehicle.setRevenueLicenseExpiryDate(request.getRevenueLicenseExpiryDate());
 
         return mapToResponse(vehicleRepository.save(vehicle));
     }
@@ -117,6 +125,10 @@ public class VehicleService {
                 .fuelType(v.getFuelType())
                 .status(v.getStatus())
                 .department(v.getDepartment())
+                .color(v.getColor())
+                .seatingCapacity(v.getSeatingCapacity())
+                .insuranceExpiryDate(v.getInsuranceExpiryDate())
+                .revenueLicenseExpiryDate(v.getRevenueLicenseExpiryDate())
                 .active(v.getActive())
                 .createdAt(v.getCreatedAt())
                 .updatedAt(v.getUpdatedAt())
