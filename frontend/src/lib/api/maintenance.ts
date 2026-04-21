@@ -83,6 +83,9 @@ export const maintenanceApi = {
     }).then((r) => r.data);
   },
 
+  getByVehicle: (vehicleId: number) =>
+    api.get<ApiResponse<MaintenanceRequest[]>>(`/api/maintenance?vehicleId=${vehicleId}`).then((r) => r.data),
+
   getDowntimeReport: (vehicleId: number) =>
     api.get<ApiResponse<MaintenanceRequest[]>>(`/api/maintenance/reports/downtime?vehicleId=${vehicleId}`).then((r) => r.data),
 

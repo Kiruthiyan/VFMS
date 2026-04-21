@@ -4,6 +4,7 @@ import com.vfms.vehicle.FuelType;
 import com.vfms.vehicle.VehicleType;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import java.time.LocalDate;
 
 @Data
 public class VehicleRequestDto {
@@ -33,4 +34,15 @@ public class VehicleRequestDto {
 
     @Size(max = 100)
     private String department;
+
+    @Size(max = 30)
+    private String color;
+
+    @Min(value = 1)
+    @Max(value = 100)
+    private Integer seatingCapacity;
+
+    private LocalDate insuranceExpiryDate;
+
+    private LocalDate revenueLicenseExpiryDate;
 }

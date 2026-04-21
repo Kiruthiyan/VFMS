@@ -15,6 +15,10 @@ export interface Vehicle {
   fuelType: FuelType;
   status: VehicleStatus;
   department?: string;
+  color?: string;
+  seatingCapacity?: number;
+  insuranceExpiryDate?: string;
+  revenueLicenseExpiryDate?: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -28,6 +32,10 @@ export interface VehicleFormData {
   vehicleType: VehicleType;
   fuelType: FuelType;
   department?: string;
+  color?: string;
+  seatingCapacity?: number;
+  insuranceExpiryDate?: string;
+  revenueLicenseExpiryDate?: string;
 }
 
 interface ApiResponse<T> {

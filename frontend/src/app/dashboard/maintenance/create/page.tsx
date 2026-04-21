@@ -129,7 +129,7 @@ export default function CreateMaintenancePage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Estimated Cost (Rs.)</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Estimated Cost (Rs.) <span className="text-slate-400 font-normal">(Optional)</span></label>
                 <Input type="number" placeholder="e.g. 5000" value={form.estimatedCost || ""}
                   onChange={(e) => { setForm({ ...form, estimatedCost: e.target.value ? Number(e.target.value) : undefined }); clearError("estimatedCost"); }}
                   className={fieldClass("estimatedCost")} />
@@ -138,7 +138,7 @@ export default function CreateMaintenancePage() {
 
               {/* Quotation Upload */}
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Quotation Document (PDF)</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Quotation Document <span className="text-slate-400 font-normal">(Optional)</span></label>
                 <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.png" className="hidden"
                   onChange={(e) => setQuotationFile(e.target.files?.[0] || null)} />
                 {quotationFile ? (

@@ -3,6 +3,7 @@ package com.vfms.vehicle.dto;
 import com.vfms.vehicle.*;
 import lombok.Builder;
 import lombok.Data;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,6 +18,10 @@ public class VehicleResponseDto {
     private FuelType fuelType;
     private VehicleStatus status;
     private String department;
+    private String color;
+    private Integer seatingCapacity;
+    private LocalDate insuranceExpiryDate;
+    private LocalDate revenueLicenseExpiryDate;
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

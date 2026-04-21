@@ -131,7 +131,7 @@ export default function CreateRentalPage() {
                     required className="text-slate-900" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">End Date</label>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">End Date <span className="text-slate-400 font-normal">(Optional)</span></label>
                   <Input type="date" value={form.endDate || ""} onChange={(e) => { setForm({ ...form, endDate: e.target.value || undefined }); clearError("endDate"); }}
                     className={fieldClass("endDate")} />
                   {errors.endDate && <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>}
@@ -148,7 +148,7 @@ export default function CreateRentalPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Purpose</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Purpose <span className="text-slate-400 font-normal">(Optional)</span></label>
                 <textarea className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3} placeholder="Staff transport, client visit..." value={form.purpose || ""}
                   onChange={(e) => setForm({ ...form, purpose: e.target.value })} />
@@ -156,7 +156,7 @@ export default function CreateRentalPage() {
 
               {/* Rental Agreement Upload */}
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Rental Agreement (PDF)</label>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Rental Agreement <span className="text-slate-400 font-normal">(Optional)</span></label>
                 <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.png" className="hidden"
                   onChange={(e) => setAgreementFile(e.target.files?.[0] || null)} />
                 {agreementFile ? (
