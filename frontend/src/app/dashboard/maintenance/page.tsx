@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MaintenanceRequest, maintenanceApi, MaintenanceStatus } from "@/lib/api/maintenance";
 import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,29 @@ import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
 export default function MaintenanceListPage() {
+  return (
+    <Suspense fallback={null}>
+      <MaintenanceList />
+    </Suspense>
+  );
+}
+
+function MaintenanceList() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { canCreate } = useRole();
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>(
+    searchParams.get("status") ?? "ALL"
+  );
+
+  // Sync filter if URL param changes (e.g. sidebar nav)
+  useEffect(() => {
+    const param = searchParams.get("status") ?? "ALL";
+    setStatusFilter(param);
+  }, [searchParams]);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -48,14 +65,21 @@ export default function MaintenanceListPage() {
     );
   });
 
+  const pageTitle = statusFilter === "SUBMITTED"
+    ? "Pending Approvals"
+    : "Maintenance Requests";
+  const pageSubtitle = statusFilter === "SUBMITTED"
+    ? "Review and action submitted requests"
+    : "Track and manage vehicle maintenance";
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Maintenance Requests</h1>
-            <p className="text-slate-500 mt-1">Track and manage vehicle maintenance</p>
+            <h1 className="text-3xl font-bold text-slate-900">{pageTitle}</h1>
+            <p className="text-slate-500 mt-1">{pageSubtitle}</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="icon" onClick={fetchRequests} disabled={loading}>

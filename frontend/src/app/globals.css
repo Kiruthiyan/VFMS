@@ -209,3 +209,26 @@ body {
     opacity: .5;
   }
 }
+
+/* ── Sidebar custom scrollbar ── */
+.sidebar-nav {
+  scrollbar-width: thin;                        /* Firefox */
+  scrollbar-color: #334155 transparent;         /* Firefox: thumb track */
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: #334155;                    /* slate-700 — visible but subtle */
+  border-radius: 999px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;                    /* slate-600 — slightly lighter on hover */
+}

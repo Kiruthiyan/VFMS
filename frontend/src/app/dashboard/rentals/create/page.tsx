@@ -78,7 +78,7 @@ export default function CreateRentalPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-2xl mx-auto animate-in fade-in duration-500">
+      <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
         <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-slate-600 hover:text-slate-900">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
