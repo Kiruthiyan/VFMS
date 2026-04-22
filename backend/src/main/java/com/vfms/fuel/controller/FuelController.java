@@ -68,14 +68,30 @@ public class FuelController {
     }
 
     /**
-     * Get a specific fuel record by ID
+     * Get a specific fuel record with real-time vehicle data
+     * Fetches latest vehicle status from vehicle endpoint
      * 
      * @param id Fuel record UUID
-     * @return Fuel record details
+     * @return Fuel record with real-time vehicle details
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<FuelRecordResponse> getFuelRecordById(@PathVariable UUID id) {
-        return ResponseEntity.ok(fuelService.getById(id));
+    @GetMapping("/{id}/with-vehicle-data")
+    public ResponseEntity<FuelRecordResponse> getFuelRecordWithVehicleData(
+            @PathVariable UUID id) {
+        FuelRecordResponse response = fuelService.getFuelRecordWithRealTimeData(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get all fuel records with real-time vehicle data
+     * Fetches latest vehicle status for each record
+     * Note: Use with caution in production (high API calls)
+     * 
+     * @return List of fuel records with real-time vehicle data
+     */
+    @GetMapping("/realtime/all")
+    public ResponseEntity<List<FuelRecordResponse>> getAllRecordsWithRealTimeData() {
+        List<FuelRecordResponse> records = fuelService.getAllRecordsWithRealTimeData();
+        return ResponseEntity.ok(records);
     }
 
     /**
@@ -108,6 +124,20 @@ public class FuelController {
     public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicle(
             @PathVariable UUID vehicleId) {
         return ResponseEntity.ok(fuelService.getByVehicle(vehicleId));
+    }
+
+    /**
+     * Get fuel records by vehicle with real-time vehicle data
+     * Includes latest vehicle status and details
+     * 
+     * @param vehicleId Vehicle UUID
+     * @return Fuel records with real-time vehicle data
+     */
+    @GetMapping("/vehicle/{vehicleId}/realtime")
+    public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicleRealTime(
+            @PathVariable UUID vehicleId) {
+        return ResponseEntity.ok(
+                fuelService.getByVehicleWithRealTimeData(vehicleId));
     }
 
     /**
