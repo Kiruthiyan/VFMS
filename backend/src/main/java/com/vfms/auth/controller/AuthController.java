@@ -311,38 +311,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<VerifyOtpResponse>> verifyOtp(
             @RequestBody VerifyOtpRequest request) {
         try {
-            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(
-                        ApiResponse.error("Email is required")
-                );
-            }
-            if (request.getOtp() == null || request.getOtp().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(
-                        ApiResponse.error("Please enter the verification code sent to your email.")
-                );
-            }
-            
-            otpService.verifyOtp(request.getEmail().trim().toLowerCase(), request.getOtp().trim());
-            return ResponseEntity.ok(
-                    ApiResponse.success(
-                            "OTP verified successfully. You can now proceed with registration.",
-                            new VerifyOtpResponse(true))
-            );
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.error(e.getMessage())
-            );
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ApiResponse.error("Verification failed. Please try again.")
-            );
-        }
-    }
-
-    @PostMapping("/verify-otp")
-    public ResponseEntity<ApiResponse<VerifyOtpResponse>> verifyOtp(
-            @RequestBody VerifyOtpRequest request) {
-        try {
             // Validate email is provided
             if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(
