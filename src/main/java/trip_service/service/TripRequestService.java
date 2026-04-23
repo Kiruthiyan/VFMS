@@ -18,8 +18,9 @@ public class TripRequestService {
     private final TripRequestRepository repository;
 
     public TripRequest createTrip(CreateTripRequestDTO dto) {
-        if (dto.getReturnTime().isBefore(dto.getDepartureTime())) {
-            throw new RuntimeException("Return time cannot be before departure time");
+        if (dto.getReturnTime().isBefore(dto.getDepartureTime()) ||
+                dto.getReturnTime().isEqual(dto.getDepartureTime())) {
+            throw new RuntimeException("Return time must be after departure time");
         }
         TripRequest trip = TripRequest.builder()
                 .requesterId(dto.getRequesterId())
@@ -59,6 +60,10 @@ public class TripRequestService {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.NEW) {
             throw new RuntimeException("Only NEW trips can be edited");
+        }
+        if (dto.getReturnTime().isBefore(dto.getDepartureTime()) ||
+                dto.getReturnTime().isEqual(dto.getDepartureTime())) {
+            throw new RuntimeException("Return time must be after departure time");
         }
         trip.setPurpose(dto.getPurpose());
         trip.setDestination(dto.getDestination());
