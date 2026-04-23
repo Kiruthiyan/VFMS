@@ -21,7 +21,6 @@ public class CreateTripRequestDTO {
     private String destination;
 
     @NotNull(message = "Departure time is required")
-    @Future(message = "Departure time must be in the future")
     private LocalDateTime departureTime;
 
     @NotNull(message = "Return time is required")
