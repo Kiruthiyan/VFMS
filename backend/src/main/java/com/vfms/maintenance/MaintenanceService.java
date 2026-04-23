@@ -4,10 +4,17 @@ import com.vfms.maintenance.dto.MaintenanceRequestDto;
 import com.vfms.maintenance.dto.MaintenanceResponseDto;
 import com.vfms.vehicle.Vehicle;
 import com.vfms.vehicle.VehicleRepository;
+import com.vfms.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +27,7 @@ public class MaintenanceService {
     @Transactional
     public MaintenanceResponseDto createRequest(MaintenanceRequestDto request) {
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
-                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", request.getVehicleId()));
 
         MaintenanceRequest mr = MaintenanceRequest.builder()
                 .vehicle(vehicle)
@@ -32,18 +39,20 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
-        // ── Edit Request (only when NEW) ──
+    // ── Edit Request ──
+    // Requests can only be edited while in NEW status. Once submitted, 
+    // the approval workflow begins and details must remain locked for audit integrity.
     @Transactional
     public MaintenanceResponseDto updateRequest(Long id, MaintenanceRequestDto request) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.NEW) {
-            throw new RuntimeException("Can only edit requests in NEW status");
+            throw new IllegalStateException("Can only edit requests in NEW status");
         }
 
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
-                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", request.getVehicleId()));
 
         mr.setVehicle(vehicle);
         mr.setMaintenanceType(request.getMaintenanceType());
@@ -53,32 +62,36 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
-        // ── Submit Request ──
+    // ── Submit Request ──
+    // Transitions request from NEW to SUBMITTED, locking it from further edits
+    // and placing it in the queue for approvers.
     @Transactional
     public MaintenanceResponseDto submitRequest(Long id) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.NEW) {
-            throw new RuntimeException("Can only submit requests in NEW status");
+            throw new IllegalStateException("Can only submit requests in NEW status");
         }
 
         mr.setStatus(MaintenanceStatus.SUBMITTED);
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
-        // ── Approve Request ──
+    // ── Approve Request ──
+    // Approves the maintenance work and automatically changes the underlying vehicle's 
+    // status to UNDER_MAINTENANCE to prevent it from being scheduled for trips/rentals.
     @Transactional
     public MaintenanceResponseDto approveRequest(Long id) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.SUBMITTED) {
-            throw new RuntimeException("Can only approve SUBMITTED requests");
+            throw new IllegalStateException("Can only approve SUBMITTED requests");
         }
 
         mr.setStatus(MaintenanceStatus.APPROVED);
-        mr.setApprovedDate(java.time.LocalDateTime.now());
+        mr.setApprovedDate(LocalDateTime.now());
 
         // Auto-change vehicle status to UNDER_MAINTENANCE
         mr.getVehicle().setStatus(com.vfms.vehicle.VehicleStatus.UNDER_MAINTENANCE);
@@ -87,13 +100,14 @@ public class MaintenanceService {
     }
 
     // ── Reject Request ──
+    // Rejects the request with a mandatory reason, keeping the record for the audit trail.
     @Transactional
     public MaintenanceResponseDto rejectRequest(Long id, String reason) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.SUBMITTED) {
-            throw new RuntimeException("Can only reject SUBMITTED requests");
+            throw new IllegalStateException("Can only reject SUBMITTED requests");
         }
 
         mr.setStatus(MaintenanceStatus.REJECTED);
@@ -101,19 +115,21 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
-        // ── Close Request ──
+    // ── Close Request ──
+    // Finalizes the request. If it was approved, we record the final actual cost and 
+    // free up the vehicle by changing its status back to AVAILABLE.
     @Transactional
-    public MaintenanceResponseDto closeRequest(Long id, java.math.BigDecimal actualCost) {
+    public MaintenanceResponseDto closeRequest(Long id, BigDecimal actualCost) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         MaintenanceStatus originalStatus = mr.getStatus();
 
         if (originalStatus != MaintenanceStatus.APPROVED && originalStatus != MaintenanceStatus.REJECTED) {
-            throw new RuntimeException("Can only close APPROVED or REJECTED requests");
+            throw new IllegalStateException("Can only close APPROVED or REJECTED requests");
         }
 
-        mr.setClosedDate(java.time.LocalDateTime.now());
+        mr.setClosedDate(LocalDateTime.now());
         mr.setActualCost(actualCost);
         mr.setStatus(MaintenanceStatus.CLOSED);
 
@@ -126,39 +142,39 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
-        // ── Get All Requests ──
-    public java.util.List<MaintenanceResponseDto> getAllRequests() {
+    // ── Get All Requests ──
+    public List<MaintenanceResponseDto> getAllRequests() {
         return maintenanceRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     // ── Get Requests By Status ──
-    public java.util.List<MaintenanceResponseDto> getRequestsByStatus(MaintenanceStatus status) {
+    public List<MaintenanceResponseDto> getRequestsByStatus(MaintenanceStatus status) {
         return maintenanceRepository.findByStatus(status).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     // ── Get Requests By Vehicle ──
-    public java.util.List<MaintenanceResponseDto> getRequestsByVehicle(Long vehicleId) {
+    public List<MaintenanceResponseDto> getRequestsByVehicle(Long vehicleId) {
         return maintenanceRepository.findByVehicleId(vehicleId).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
-        // ── Get Request By ID ──
+    // ── Get Request By ID ──
     public MaintenanceResponseDto getRequestById(Long id) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
         return mapToResponse(mr);
     }
 
-        // ── Upload Quotation ──
+    // ── Upload Quotation ──
     @Transactional
     public MaintenanceResponseDto uploadQuotation(Long id, String quotationUrl) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
         mr.setQuotationUrl(quotationUrl);
         return mapToResponse(maintenanceRepository.save(mr));
     }
@@ -167,16 +183,16 @@ public class MaintenanceService {
     @Transactional
     public MaintenanceResponseDto uploadInvoice(Long id, String invoiceUrl) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
         if (mr.getStatus() != MaintenanceStatus.APPROVED && mr.getStatus() != MaintenanceStatus.CLOSED) {
-            throw new RuntimeException("Invoice can only be uploaded for approved/closed requests");
+            throw new IllegalStateException("Invoice can only be uploaded for approved/closed requests");
         }
         mr.setInvoiceUrl(invoiceUrl);
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
-        // ── Get Downtime Report Per Vehicle ──
-    public java.util.List<MaintenanceResponseDto> getDowntimeByVehicle(Long vehicleId) {
+    // ── Get Downtime Report Per Vehicle ──
+    public List<MaintenanceResponseDto> getDowntimeByVehicle(Long vehicleId) {
         return maintenanceRepository.findByVehicleId(vehicleId).stream()
                 .filter(mr -> mr.getApprovedDate() != null && mr.getClosedDate() != null)
                 .map(this::mapToResponse)
@@ -184,7 +200,7 @@ public class MaintenanceService {
     }
 
     // ── Get Pending Approvals ──
-    public java.util.List<MaintenanceResponseDto> getPendingApprovals() {
+    public List<MaintenanceResponseDto> getPendingApprovals() {
         return maintenanceRepository.findByStatus(MaintenanceStatus.SUBMITTED).stream()
                 .map(this::mapToResponse)
                 .toList();
@@ -194,21 +210,21 @@ public class MaintenanceService {
 
 
     // ── Report: Total Maintenance Cost Summary ──
-    public java.util.Map<String, Object> getMaintenanceCostSummary() {
-        java.util.List<MaintenanceRequest> closed = maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED);
-        java.math.BigDecimal totalActual = closed.stream()
+    public Map<String, Object> getMaintenanceCostSummary() {
+        List<MaintenanceRequest> closed = maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED);
+        BigDecimal totalActual = closed.stream()
                 .filter(mr -> mr.getActualCost() != null)
                 .map(MaintenanceRequest::getActualCost)
-                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-        java.math.BigDecimal totalEstimated = closed.stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalEstimated = closed.stream()
                 .filter(mr -> mr.getEstimatedCost() != null)
                 .map(MaintenanceRequest::getEstimatedCost)
-                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         long totalDowntimeHours = closed.stream()
                 .filter(mr -> mr.getApprovedDate() != null && mr.getClosedDate() != null)
                 .mapToLong(mr -> Duration.between(mr.getApprovedDate(), mr.getClosedDate()).toHours())
                 .sum();
-        return java.util.Map.of(
+        return Map.of(
                 "totalClosedRequests", closed.size(),
                 "totalActualCost", totalActual,
                 "totalEstimatedCost", totalEstimated,
@@ -217,34 +233,34 @@ public class MaintenanceService {
     }
 
     // ── Report: Cost Breakdown by Maintenance Type ──
-    public java.util.Map<String, java.math.BigDecimal> getCostByMaintenanceType() {
+    public Map<String, BigDecimal> getCostByMaintenanceType() {
         return maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED).stream()
                 .filter(mr -> mr.getActualCost() != null)
-                .collect(java.util.stream.Collectors.groupingBy(
+                .collect(Collectors.groupingBy(
                         mr -> mr.getMaintenanceType().name(),
-                        java.util.stream.Collectors.reducing(
-                                java.math.BigDecimal.ZERO,
+                        Collectors.reducing(
+                                BigDecimal.ZERO,
                                 MaintenanceRequest::getActualCost,
-                                java.math.BigDecimal::add
+                                BigDecimal::add
                         )
                 ));
     }
 
     // ── Report: Cost per Vehicle ──
-    public java.util.List<java.util.Map<String, Object>> getCostPerVehicle() {
+    public List<Map<String, Object>> getCostPerVehicle() {
         return maintenanceRepository.findAll().stream()
                 .filter(mr -> mr.getActualCost() != null)
-                .collect(java.util.stream.Collectors.groupingBy(
+                .collect(Collectors.groupingBy(
                         mr -> mr.getVehicle().getId()
                 ))
                 .entrySet().stream()
                 .map(entry -> {
                     var records = entry.getValue();
                     var first = records.get(0);
-                    java.math.BigDecimal total = records.stream()
+                    BigDecimal total = records.stream()
                             .map(MaintenanceRequest::getActualCost)
-                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-                    return (java.util.Map<String, Object>) java.util.Map.<String, Object>of(
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return (Map<String, Object>) Map.<String, Object>of(
                             "vehicleId", first.getVehicle().getId(),
                             "plateNumber", first.getVehicle().getPlateNumber(),
                             "brandModel", first.getVehicle().getBrand() + " " + first.getVehicle().getModel(),

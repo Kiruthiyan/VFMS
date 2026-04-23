@@ -1,9 +1,11 @@
 package com.vfms.rental;
 
 import com.vfms.rental.dto.VendorDto;
+import com.vfms.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -12,6 +14,7 @@ public class VendorService {
 
     private final VendorRepository vendorRepository;
 
+    // ── Create Vendor ──
     @Transactional
     public Vendor createVendor(VendorDto dto) {
         Vendor vendor = Vendor.builder()
@@ -24,10 +27,11 @@ public class VendorService {
         return vendorRepository.save(vendor);
     }
 
+    // ── Edit Vendor ──
     @Transactional
     public Vendor updateVendor(Long id, VendorDto dto) {
         Vendor vendor = vendorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor", id));
         vendor.setName(dto.getName());
         vendor.setContactPerson(dto.getContactPerson());
         vendor.setPhone(dto.getPhone());
@@ -36,25 +40,31 @@ public class VendorService {
         return vendorRepository.save(vendor);
     }
 
+    // ── Get Active Vendors ──
     public List<Vendor> getAllVendors() {
         return vendorRepository.findByActiveTrue();
     }
 
+    // ── Get All Vendors ──
     public List<Vendor> getAllVendorsIncludingInactive() {
         return vendorRepository.findAll();
     }
 
+    // ── Toggle Active Status ──
+    // Uses soft deletion by toggling the active status. This preserves
+    // historical rental records tied to this vendor for audit and reporting.
     @Transactional
     public Vendor toggleActive(Long id) {
         Vendor vendor = vendorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor", id));
         vendor.setActive(!vendor.isActive());
         return vendorRepository.save(vendor);
     }
 
+    // ── Get Vendor By ID ──
     public Vendor getVendorById(Long id) {
         return vendorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor", id));
     }
 }
 

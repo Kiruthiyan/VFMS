@@ -2,9 +2,16 @@ package com.vfms.rental;
 
 import com.vfms.rental.dto.RentalRequestDto;
 import com.vfms.rental.dto.RentalResponseDto;
+import com.vfms.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -13,10 +20,13 @@ public class RentalService {
     private final RentalRepository rentalRepository;
     private final VendorRepository vendorRepository;
 
+    // ── Create Rental ──
+    // Creates a new rental record from a vendor. If an end date is provided immediately,
+    // the system calculates the total cost upfront to simplify accounting.
     @Transactional
     public RentalResponseDto createRental(RentalRequestDto request) {
         Vendor vendor = vendorRepository.findById(request.getVendorId())
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor", request.getVendorId()));
 
         RentalRecord rental = RentalRecord.builder()
                 .vendor(vendor)
@@ -35,18 +45,20 @@ public class RentalService {
         return mapToResponse(rentalRepository.save(rental));
     }
 
-        // ── Edit Rental (only when ACTIVE) ──
+    // ── Edit Rental ──
+    // Allows updating a rental while it is ACTIVE. Once RETURNED or CLOSED,
+    // the rental details are frozen for historical accuracy.
     @Transactional
     public RentalResponseDto updateRental(Long id, RentalRequestDto request) {
         RentalRecord rental = rentalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rental not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
 
         if (rental.getStatus() != RentalStatus.ACTIVE) {
-            throw new RuntimeException("Can only edit ACTIVE rentals");
+            throw new IllegalStateException("Can only edit ACTIVE rentals");
         }
 
         Vendor vendor = vendorRepository.findById(request.getVendorId())
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor", request.getVendorId()));
 
         rental.setVendor(vendor);
         rental.setVehicleType(request.getVehicleType());
@@ -63,37 +75,37 @@ public class RentalService {
         return mapToResponse(rentalRepository.save(rental));
     }
 
-        // ── Get All Rentals ──
-    public java.util.List<RentalResponseDto> getAllRentals() {
+    // ── Get All Rentals ──
+    public List<RentalResponseDto> getAllRentals() {
         return rentalRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     // ── Get Rentals By Status ──
-    public java.util.List<RentalResponseDto> getRentalsByStatus(RentalStatus status) {
+    public List<RentalResponseDto> getRentalsByStatus(RentalStatus status) {
         return rentalRepository.findByStatus(status).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     // ── Get Rentals By Vendor ──
-    public java.util.List<RentalResponseDto> getRentalsByVendor(Long vendorId) {
+    public List<RentalResponseDto> getRentalsByVendor(Long vendorId) {
         return rentalRepository.findByVendorId(vendorId).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
-        // ── Get Rental By ID ──
+    // ── Get Rental By ID ──
     public RentalResponseDto getRentalById(Long id) {
         RentalRecord rental = rentalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rental not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
         return mapToResponse(rental);
     }
-        // ── Upload Agreement ──
+    // ── Upload Agreement ──
     @Transactional
     public RentalResponseDto uploadAgreement(Long id, String agreementUrl) {
         RentalRecord rental = rentalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rental not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
         rental.setAgreementUrl(agreementUrl);
         return mapToResponse(rentalRepository.save(rental));
     }
@@ -102,21 +114,23 @@ public class RentalService {
     @Transactional
     public RentalResponseDto uploadInvoice(Long id, String invoiceUrl) {
         RentalRecord rental = rentalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rental not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
         if (rental.getStatus() != RentalStatus.RETURNED && rental.getStatus() != RentalStatus.CLOSED) {
-            throw new RuntimeException("Invoice can only be uploaded for returned/closed rentals");
+            throw new IllegalStateException("Invoice can only be uploaded for returned/closed rentals");
         }
         rental.setInvoiceUrl(invoiceUrl);
         return mapToResponse(rentalRepository.save(rental));
     }
-        // ── Confirm Return ──
+    // ── Confirm Return ──
+    // Marks the rental as RETURNED and triggers the final cost calculation 
+    // based on the actual duration from start date to return date.
     @Transactional
-    public RentalResponseDto confirmReturn(Long id, java.time.LocalDate returnDate) {
+    public RentalResponseDto confirmReturn(Long id, LocalDate returnDate) {
         RentalRecord rental = rentalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rental not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
 
         if (rental.getStatus() != RentalStatus.ACTIVE) {
-            throw new RuntimeException("Can only confirm return for ACTIVE rentals");
+            throw new IllegalStateException("Can only confirm return for ACTIVE rentals");
         }
 
         rental.setStatus(RentalStatus.RETURNED);
@@ -125,14 +139,16 @@ public class RentalService {
 
         return mapToResponse(rentalRepository.save(rental));
     }
-        // ── Close Rental ──
+    // ── Close Rental ──
+    // Finalizes the rental. Ensures that the rental cannot be closed directly from ACTIVE
+    // without confirming the return first.
     @Transactional
     public RentalResponseDto closeRental(Long id) {
         RentalRecord rental = rentalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rental not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
 
         if (rental.getStatus() != RentalStatus.RETURNED) {
-            throw new RuntimeException("Can only close RETURNED rentals");
+            throw new IllegalStateException("Can only close RETURNED rentals");
         }
 
         rental.setStatus(RentalStatus.CLOSED);
@@ -141,15 +157,15 @@ public class RentalService {
 
 
     // ── Report: Total Rental Cost Summary ──
-    public java.util.Map<String, Object> getRentalCostSummary() {
-        java.util.List<RentalRecord> all = rentalRepository.findAll();
-        java.math.BigDecimal totalCost = all.stream()
+    public Map<String, Object> getRentalCostSummary() {
+        List<RentalRecord> all = rentalRepository.findAll();
+        BigDecimal totalCost = all.stream()
                 .filter(r -> r.getTotalCost() != null)
                 .map(RentalRecord::getTotalCost)
-                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         long activeCount = all.stream().filter(r -> r.getStatus() == RentalStatus.ACTIVE).count();
         long closedCount = all.stream().filter(r -> r.getStatus() == RentalStatus.CLOSED).count();
-        return java.util.Map.of(
+        return Map.of(
                 "totalRentals", all.size(),
                 "activeRentals", activeCount,
                 "closedRentals", closedCount,
@@ -158,18 +174,18 @@ public class RentalService {
     }
 
     // ── Report: Cost per Vendor ──
-    public java.util.List<java.util.Map<String, Object>> getCostPerVendor() {
+    public List<Map<String, Object>> getCostPerVendor() {
         return rentalRepository.findAll().stream()
                 .filter(r -> r.getTotalCost() != null)
-                .collect(java.util.stream.Collectors.groupingBy(r -> r.getVendor().getId()))
+                .collect(Collectors.groupingBy(r -> r.getVendor().getId()))
                 .entrySet().stream()
                 .map(entry -> {
                     var records = entry.getValue();
                     var first = records.get(0);
-                    java.math.BigDecimal total = records.stream()
+                    BigDecimal total = records.stream()
                             .map(RentalRecord::getTotalCost)
-                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-                    return (java.util.Map<String, Object>) java.util.Map.<String, Object>of(
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return (Map<String, Object>) Map.<String, Object>of(
                             "vendorId", first.getVendor().getId(),
                             "vendorName", first.getVendor().getName(),
                             "totalRentalCost", total,

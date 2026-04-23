@@ -22,7 +22,7 @@ const roleBadgeColors: Record<string, string> = {
 // Build readable breadcrumb from pathname
 function getBreadcrumb(pathname: string): string {
   const segments = pathname.replace("/dashboard", "").split("/").filter(Boolean);
-  if (segments.length === 0) return "Dashboard";
+  if (segments.length === 0) return "Dashboard Overview";
   return segments
     .map((s) => {
       if (/^\d+$/.test(s)) return "Details";
@@ -44,9 +44,9 @@ export function Topbar() {
   return (
     <header className="fixed top-0 left-64 right-0 h-14 bg-white border-b border-slate-200 flex items-center px-6 z-30 shadow-sm">
       {/* Breadcrumb */}
-      <div className="flex-1">
-        <p className="text-xs text-slate-400 font-medium">FleetPro</p>
-        <p className="text-sm font-semibold text-slate-800 -mt-0.5">{breadcrumb}</p>
+      <div className="flex-1 flex items-center gap-3">
+        <div className="w-1 h-6 bg-amber-400 rounded-full" />
+        <h1 className="text-lg font-bold text-slate-900">{breadcrumb}</h1>
       </div>
 
       {/* Right section */}

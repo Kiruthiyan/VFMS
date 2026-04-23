@@ -69,7 +69,7 @@ export default function VendorDetailPage() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vendors
         </Button>
 
-        <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <Card className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
           <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3 text-white text-lg">
@@ -91,7 +91,7 @@ export default function VendorDetailPage() {
           <CardContent className="pt-6 space-y-6">
             {/* Info Grid */}
             <div className="grid grid-cols-2 gap-6">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <User className="h-4 w-4" />
                 </div>
@@ -100,7 +100,7 @@ export default function VendorDetailPage() {
                   <p className="font-semibold text-slate-900">{vendor.contactPerson || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <Phone className="h-4 w-4" />
                 </div>
@@ -109,7 +109,7 @@ export default function VendorDetailPage() {
                   <p className="font-semibold text-slate-900">{vendor.phone || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <Mail className="h-4 w-4" />
                 </div>
@@ -118,7 +118,7 @@ export default function VendorDetailPage() {
                   <p className="font-semibold text-slate-900">{vendor.email || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <MapPin className="h-4 w-4" />
                 </div>
@@ -133,7 +133,7 @@ export default function VendorDetailPage() {
             <div className="flex gap-3 pt-6 mt-2 border-t border-slate-200 flex-wrap">
               {canCreate && (
                 <Button
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                   onClick={() => router.push(`/dashboard/vendors/${vendor.id}/edit`)}
                 >
                   Edit Vendor
@@ -142,8 +142,8 @@ export default function VendorDetailPage() {
               {canAdmin && (
                 <Button
                   className={vendor.active
-                    ? "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200"
-                    : "border-emerald-300 text-emerald-600 hover:bg-emerald-50"}
+                    ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                    : "border-emerald-300 text-emerald-600 hover:bg-emerald-50 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98]"}
                   variant={vendor.active ? "default" : "outline"}
                   onClick={handleToggleStatus}
                   disabled={toggling}
