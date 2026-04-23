@@ -100,7 +100,7 @@ export default function RentalDetailPage() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to External Rentals
         </Button>
 
-        <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <Card className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
           <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3 text-white text-lg">
@@ -160,7 +160,7 @@ export default function RentalDetailPage() {
             <div className="pt-6 border-t border-slate-200">
               <h3 className="text-sm font-semibold text-slate-700 mb-3">Documents</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
+                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                   <p className="text-xs text-slate-500 mb-2">Rental Agreement</p>
                   {rental.agreementUrl ? (
                     <a href={`http://localhost:8080${rental.agreementUrl}`} target="_blank" rel="noreferrer"
@@ -174,7 +174,7 @@ export default function RentalDetailPage() {
                     </label>
                   )}
                 </div>
-                <div className="p-4 bg-slate-50 rounded-lg">
+                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                   <p className="text-xs text-slate-500 mb-2">Invoice</p>
                   {rental.invoiceUrl ? (
                     <a href={`http://localhost:8080${rental.invoiceUrl}`} target="_blank" rel="noreferrer"
@@ -204,14 +204,14 @@ export default function RentalDetailPage() {
                     <Edit className="h-4 w-4 mr-2" /> Edit
                   </Button>
                   <Button onClick={handleConfirmReturn}
-                    className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200">
+                    className="bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]">
                     <CheckCircle className="h-4 w-4 mr-2" /> Confirm Return
                   </Button>
                 </>
               )}
               {canCreate && rental.status === "RETURNED" && (
                 <Button onClick={handleClose}
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200">
+                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]">
                   <XCircle className="h-4 w-4 mr-2" /> Close Rental
                 </Button>
               )}

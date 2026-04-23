@@ -132,7 +132,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Requests
         </Button>
 
-        <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <Card className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden mb-6">
           <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
             <CardTitle className="flex items-center gap-3 text-white text-lg">
               <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
@@ -146,7 +146,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
           </CardHeader>
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 gap-6">
-              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <Car className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Vehicle</p>
@@ -154,21 +154,21 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   <p className="text-xs text-slate-500">{request.vehiclePlateNumber}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <Wrench className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Type</p>
                   <p className="font-semibold text-slate-900">{request.maintenanceType.replace("_", " ")}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg col-span-2">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm col-span-2">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Description</p>
                   <p className="font-semibold text-slate-900">{request.description}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <DollarSign className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Estimated Cost</p>
@@ -177,7 +177,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <DollarSign className="h-5 w-5 text-green-600" />
                 <div>
                   <p className="text-xs text-slate-500">Actual Cost</p>
@@ -186,7 +186,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <Calendar className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Requested Date</p>
@@ -195,7 +195,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Downtime</p>
@@ -213,7 +213,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                 </div>
               </div>
               {request.rejectionReason && (
-                <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg col-span-2">
+                <div className="flex items-center gap-3 p-4 bg-red-50/80 rounded-xl ring-1 ring-red-100 shadow-sm col-span-2">
                   <FileText className="h-5 w-5 text-red-600" />
                   <div>
                     <p className="text-xs text-red-500">Rejection Reason</p>
@@ -227,7 +227,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
             <div className="mt-6 pt-6 border-t border-slate-200">
               <h3 className="text-sm font-semibold text-slate-700 mb-3">Documents</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
+                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                   <p className="text-xs text-slate-500 mb-2">Quotation</p>
                   {request.quotationUrl ? (
                     <a href={`http://localhost:8080${request.quotationUrl}`} target="_blank" rel="noreferrer"
@@ -241,7 +241,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                     </label>
                   )}
                 </div>
-                <div className="p-4 bg-slate-50 rounded-lg">
+                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                   <p className="text-xs text-slate-500 mb-2">Invoice</p>
                   {request.invoiceUrl ? (
                     <a href={`http://localhost:8080${request.invoiceUrl}`} target="_blank" rel="noreferrer"
@@ -267,7 +267,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
               {canCreate && request.status === "NEW" && (
                 <>
                   <Button
-                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                     onClick={handleSubmit}
                   >
                     Submit for Approval
@@ -283,13 +283,13 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
               {canApprove && request.status === "SUBMITTED" && (
                 <>
                   <Button
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                     onClick={handleApprove}
                   >
                     Approve
                   </Button>
                   <Button
-                    className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200"
+                    className="bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                     onClick={handleReject}
                   >
                     Reject
@@ -298,7 +298,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
               )}
               {canCreate && request.status === "APPROVED" && (
                 <Button
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                   onClick={handleClose}
                 >
                   Close Request

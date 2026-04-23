@@ -53,7 +53,7 @@ export default function VendorsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Rental Vendor Management</h1>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Rental Vendor Management</h1>
             <p className="text-slate-500 mt-1">Manage vendors who supply vehicles to the company</p>
           </div>
           <div className="flex gap-2">
@@ -62,7 +62,7 @@ export default function VendorsPage() {
             </Button>
             {canCreate && (
               <Button
-                className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 onClick={() => router.push("/dashboard/vendors/add")}
               >
                 <Plus className="mr-2 h-4 w-4" /> Add Vendor
@@ -72,7 +72,7 @@ export default function VendorsPage() {
         </div>
 
         {/* Search + Filter */}
-        <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-xl border border-slate-200/60 shadow-sm focus-within:ring-2 focus-within:ring-blue-950/10 transition-all">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <Input
@@ -96,7 +96,7 @@ export default function VendorsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
           {loading && vendors.length === 0 ? (
             <div className="p-8 text-center text-slate-500 flex items-center justify-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" /> Loading vendors...
@@ -107,20 +107,20 @@ export default function VendorsPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 font-semibold text-white">Vendor</th>
-                  <th className="px-6 py-4 font-semibold text-white">Contact Person</th>
-                  <th className="px-6 py-4 font-semibold text-white">Phone</th>
-                  <th className="px-6 py-4 font-semibold text-white">Email</th>
-                  <th className="px-6 py-4 font-semibold text-white">Status</th>
-                  <th className="px-6 py-4 font-semibold text-white text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Vendor</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Contact Person</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Phone</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Email</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Status</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((v) => (
-                  <tr key={v.id} className={`hover:bg-slate-50 transition-colors ${!v.active ? "opacity-60" : ""}`}>
+                  <tr key={v.id} className={`group hover:bg-slate-50/80 transition-colors ${!v.active ? "opacity-60" : ""}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
+                        <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950 shadow-sm ring-1 ring-black/5">
                           <Building2 className="h-5 w-5" />
                         </div>
                         <div>
@@ -145,7 +145,7 @@ export default function VendorsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 opacity-80 group-hover:opacity-100 transition-opacity"
                         onClick={() => router.push(`/dashboard/vendors/${v.id}`)}
                       >
                         View

@@ -101,7 +101,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
         </Button>
 
         {/* ── Header Card ── */}
-        <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <Card className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden mb-6">
           <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
             <CardTitle className="flex items-center gap-3 text-white text-lg">
               <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
@@ -149,35 +149,35 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             {activeTab === "details" && (
               <>
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                     <Hash className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Plate Number</p>
                       <p className="font-semibold text-slate-900">{vehicle.plateNumber}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                     <Car className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Vehicle Type</p>
                       <p className="font-semibold text-slate-900">{vehicle.vehicleType}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                     <Fuel className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Fuel Type</p>
                       <p className="font-semibold text-slate-900">{vehicle.fuelType}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                     <Calendar className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Year</p>
                       <p className="font-semibold text-slate-900">{vehicle.year}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg col-span-2">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm col-span-2">
                     <Building className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Department</p>
@@ -192,7 +192,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Additional Details</p>
                       </div>
                       {vehicle.color && (
-                        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                        <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                           <Palette className="h-5 w-5 text-blue-600" />
                           <div>
                             <p className="text-xs text-slate-500">Color</p>
@@ -201,7 +201,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                       )}
                       {vehicle.seatingCapacity && (
-                        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                        <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                           <Users className="h-5 w-5 text-blue-600" />
                           <div>
                             <p className="text-xs text-slate-500">Seating Capacity</p>
@@ -265,7 +265,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
                   {canAdmin && (
                     <Button
-                      className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                      className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                       onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}/edit`)}
                     >
                       Edit Vehicle
@@ -273,7 +273,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   )}
                   {canAdmin && vehicle.status !== "RETIRED" && (
                     <Button
-                      className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200"
+                      className="bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                       onClick={handleRetire}
                       disabled={retiring}
                     >
@@ -344,24 +344,24 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-sm font-medium">No maintenance records found for this vehicle.</p>
                     <Button
                       size="sm"
-                      className="bg-blue-950 hover:bg-blue-900 text-white mt-2"
+                      className="bg-blue-950 hover:bg-blue-900 text-white mt-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
                       onClick={() => router.push("/dashboard/maintenance/create")}
                     >
                       <Wrench className="mr-2 h-4 w-4" /> Create First Request
                     </Button>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-slate-200 overflow-hidden">
+                  <div className="rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-blue-950">
                         <tr>
-                          <th className="px-5 py-3 font-semibold text-white">Type</th>
-                          <th className="px-5 py-3 font-semibold text-white">Description</th>
-                          <th className="px-5 py-3 font-semibold text-white">Status</th>
-                          <th className="px-5 py-3 font-semibold text-white">Cost</th>
-                          <th className="px-5 py-3 font-semibold text-white">Downtime</th>
-                          <th className="px-5 py-3 font-semibold text-white">Date</th>
-                          <th className="px-5 py-3 font-semibold text-white text-right">Action</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Type</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Description</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Status</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Cost</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Downtime</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Date</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -369,7 +369,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                           .slice()
                           .sort((a, b) => new Date(b.requestedDate).getTime() - new Date(a.requestedDate).getTime())
                           .map((rec) => (
-                            <tr key={rec.id} className="hover:bg-slate-50 transition-colors">
+                            <tr key={rec.id} className="group hover:bg-slate-50/80 transition-colors">
                               <td className="px-5 py-3">
                                 <span className="inline-flex px-2 py-1 rounded-md bg-slate-100 text-slate-600 font-medium text-xs">
                                   {rec.maintenanceType.replace(/_/g, " ")}
@@ -404,7 +404,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="text-blue-600 hover:text-blue-900 text-xs"
+                                  className="text-blue-600 hover:text-blue-900 text-xs opacity-80 group-hover:opacity-100 transition-opacity"
                                   onClick={() => router.push(`/dashboard/maintenance/${rec.id}`)}
                                 >
                                   View

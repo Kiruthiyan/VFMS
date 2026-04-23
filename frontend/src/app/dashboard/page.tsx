@@ -163,7 +163,7 @@ export default function DashboardPage() {
             <button
               key={card.label}
               onClick={card.action}
-              className={`bg-white rounded-xl p-5 border ${card.border} shadow-sm hover:shadow-md transition-all duration-200 text-left group`}
+              className={`bg-white rounded-xl p-5 border ${card.border} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 text-left group`}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -189,7 +189,7 @@ export default function DashboardPage() {
               <button
                 key={action.href}
                 onClick={() => router.push(action.href)}
-                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-blue-950 hover:text-white hover:border-blue-950 transition-all duration-200 shadow-sm"
+                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-blue-950 hover:text-white hover:border-blue-950 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98]"
               >
                 {action.icon}
                 {action.label}
