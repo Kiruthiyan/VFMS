@@ -119,69 +119,172 @@ public class FuelService {
 
     // ── GET ALL ───────────────────────────────────────────────────────────
 
+    /**
+     * Get all fuel records using CACHED vehicle data.
+     * PERFORMANCE: Fast - no external API calls
+     * FRESHNESS: Data is as fresh as last fuel entry update
+     * 
+     * USE WHEN:
+     *   - Speed is priority
+     *   - Data doesn't need to be absolutely current
+     *   - Displaying historical records
+     *   - High volume queries (API quota concerns)
+     * 
+     * @return List of all fuel records ordered by fuel date (newest first)
+     */
     public List<FuelRecordResponse> getAllRecords() {
+        // Fetch all records from database, newest first
         return fuelRecordRepository.findAllByOrderByFuelDateDesc()
+                // Convert each FuelRecord entity to FuelRecordResponse DTO using cached data
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     /**
-     * Get all fuel records with real-time vehicle data
-     * Fetches latest vehicle information for each record
+     * Get all fuel records with REAL-TIME vehicle data from API.
+     * PERFORMANCE: Slow - makes API call for each record
+     * FRESHNESS: Data is current (from Supabase at request time)
+     * 
+     * ⚠️ PRODUCTION WARNING:
+     *   This endpoint makes one API call per fuel record. If you have 1000 records,
+     *   it makes 1000 API calls. Use with caution and consider pagination.
+     * 
+     * USE WHEN:
+     *   - You need current vehicle status (fuel level, odometer, status)
+     *   - User specifically requested fresh data
+     *   - For small result sets (< 50 records)
+     *   - For detailed views or exports
+     * 
+     * FALLBACK MECHANISM:
+     *   If vehicle API fails, automatically falls back to cached data for that record.
+     *   See toResponseWithRealTimeData() for fallback details.
+     * 
+     * @return List of all fuel records with real-time vehicle data
      */
     public List<FuelRecordResponse> getAllRecordsWithRealTimeData() {
+        // Fetch all records from database, newest first
         return fuelRecordRepository.findAllByOrderByFuelDateDesc()
+                // For EACH record, fetch real-time vehicle data from API
                 .stream()
-                .map(this::toResponseWithRealTimeData)
+                .map(this::toResponseWithRealTimeData)  // Makes API call per record
                 .collect(Collectors.toList());
     }
 
     // ── GET BY ID ─────────────────────────────────────────────────────────
 
+    /**
+     * Get a single fuel record by ID using CACHED vehicle data.
+     * PERFORMANCE: Very fast - single database query
+     * FRESHNESS: Data is as fresh as last fuel entry update
+     * 
+     * USE WHEN:
+     *   - User clicks to view a specific fuel record
+     *   - Quick lookups are needed
+     *   - Browsing historical data
+     * 
+     * @param id Fuel record UUID
+     * @return FuelRecordResponse with cached vehicle data
+     * @throws RuntimeException if record not found
+     */
     public FuelRecordResponse getById(UUID id) {
+        // Fetch single record from database
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fuel record not found: {}", id);
                     return new RuntimeException("Fuel record not found");
                 });
+        // Convert to response using cached vehicle data
         return toResponse(record);
     }
 
     /**
-     * Get fuel record by ID with real-time vehicle data
-     * Fetches latest vehicle information from vehicle endpoint
+     * Get a single fuel record by ID with REAL-TIME vehicle data from API.
+     * PERFORMANCE: Slightly slower - makes one API call plus database query
+     * FRESHNESS: Vehicle data is current (from Supabase at request time)
+     * 
+     * USE WHEN:
+     *   - User views detailed record and needs current vehicle status
+     *   - Checking fuel record with current odometer/fuel level
+     *   - Comparing recorded odometer vs current odometer
+     * 
+     * FALLBACK MECHANISM:
+     *   If vehicle API fails, automatically falls back to cached data.
+     *   User still sees the fuel record with last-known vehicle data.
+     * 
+     * @param id Fuel record UUID
+     * @return FuelRecordResponse with real-time vehicle data
+     * @throws RuntimeException if record not found
      */
     public FuelRecordResponse getFuelRecordWithRealTimeData(UUID id) {
+        // Fetch single record from database
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fuel record not found: {}", id);
                     return new RuntimeException("Fuel record not found");
                 });
+        // Convert to response with API call to fetch real-time vehicle data
         return toResponseWithRealTimeData(record);
     }
 
     // ── GET BY VEHICLE ────────────────────────────────────────────────────
 
+    /**
+     * Get all fuel records for a vehicle using CACHED vehicle data.
+     * PERFORMANCE: Fast - single database query
+     * FRESHNESS: Data is as fresh as last fuel entry update
+     * 
+     * USE WHEN:
+     *   - Viewing vehicle's fuel history
+     *   - Speed is priority
+     *   - Browsing past fuel entries for a vehicle
+     *   - Checking fuel consumption trends
+     * 
+     * @param vehicleId Vehicle UUID
+     * @return Fuel records for this vehicle ordered by fuel date (newest first)
+     */
     public List<FuelRecordResponse> getByVehicle(UUID vehicleId) {
+        // Query database for all records for this vehicle
         return fuelRecordRepository
                 .findByVehicleIdOrderByFuelDateDesc(vehicleId)
+                // Convert each record to response using cached data
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     /**
-     * Get fuel records by vehicle ID with real-time vehicle data
-     * Fetches latest vehicle information from vehicle endpoint
+     * Get all fuel records for a vehicle with REAL-TIME vehicle data from API.
+     * PERFORMANCE: Slower - validates vehicle exists + makes API call per record
+     * FRESHNESS: Vehicle data is current (from Supabase at request time)
+     * 
+     * ⚠️ PRODUCTION WARNING:
+     *   Makes one API call to validate vehicle exists, then one per record.
+     *   Use for small fleets (< 100 vehicles, < 50 records per vehicle).
+     * 
+     * USE WHEN:
+     *   - Displaying vehicle detail page with fuel history
+     *   - Need current vehicle status alongside fuel records
+     *   - Comparing recorded data vs current vehicle state
+     *   - Exporting detailed vehicle fuel report
+     * 
+     * VALIDATION:
+     *   First validates vehicle exists via real-time API call.
+     *   Ensures user doesn't request data for non-existent vehicles.
+     * 
+     * @param vehicleId Vehicle UUID
+     * @return Fuel records with real-time vehicle data
+     * @throws RuntimeException if vehicle not found
      */
     public List<FuelRecordResponse> getByVehicleWithRealTimeData(UUID vehicleId) {
-        // Verify vehicle exists in real-time
+        // ── STEP 1: Verify vehicle exists using real-time API call ──
         if (!vehicleApiClient.vehicleExists(vehicleId)) {
             log.warn("Vehicle not found: {}", vehicleId);
             throw new RuntimeException("Vehicle not found: " + vehicleId);
         }
 
+        // ── STEP 2: Query database for all records for this vehicle ──
         return fuelRecordRepository
                 .findByVehicleIdOrderByFuelDateDesc(vehicleId)
+                // ── STEP 3: For EACH record, fetch real-time vehicle data from API ──
                 .stream()
-                .map(this::toResponseWithRealTimeData)
+                .map(this::toResponseWithRealTimeData)  // Makes API call per record
                 .collect(Collectors.toList());
     }
 
@@ -230,20 +333,36 @@ public class FuelService {
     // ── TO RESPONSE ───────────────────────────────────────────────────────
 
     /**
-     * Convert FuelRecord to response using cached vehicle data
-     * Uses vehicle entity from database (no API call)
+     * Convert FuelRecord to response using CACHED vehicle data.
+     * PERFORMANCE: Very fast - no external API calls
+     * 
+     * DATA SOURCE:
+     *   Vehicle data comes from fuel_records.vehicle (JPA relationship)
+     *   which references vehicles table via foreign key
+     * 
+     * USE WHEN:
+     *   - Speed is critical
+     *   - Vehicle data doesn't need to be absolutely current
+     *   - High volume queries
+     * 
+     * @param r FuelRecord entity from database
+     * @return FuelRecordResponse with cached vehicle data
      */
     FuelRecordResponse toResponse(FuelRecord r) {
+        // Build response from fuel record and related entities
         return FuelRecordResponse.builder()
                 .id(r.getId())
                 .vehicleId(r.getVehicle().getId())
                 .vehiclePlate(r.getVehicle().getPlateNumber())
+                // Concatenate make + model from cached vehicle entity
                 .vehicleMakeModel(r.getVehicle().getMake()
                         + " " + r.getVehicle().getModel())
+                // Optional driver (may be null if record doesn't have driver)
                 .driverId(r.getDriver() != null
                         ? r.getDriver().getId() : null)
                 .driverName(r.getDriver() != null
                         ? r.getDriver().getFullName() : null)
+                // Fuel record details
                 .fuelDate(r.getFuelDate())
                 .quantity(r.getQuantity())
                 .costPerLitre(r.getCostPerLitre())
@@ -253,34 +372,89 @@ public class FuelService {
                 .notes(r.getNotes())
                 .receiptUrl(r.getReceiptUrl())
                 .receiptFileName(r.getReceiptFileName())
+                // Misuse detection flags
                 .flaggedForMisuse(r.isFlaggedForMisuse())
                 .flagReason(r.getFlagReason())
+                // Audit information
                 .createdBy(r.getCreatedBy())
                 .createdAt(r.getCreatedAt())
                 .build();
     }
 
     /**
-     * Convert FuelRecord to response with real-time vehicle data from API
-     * Fetches latest vehicle status/odometer from vehicle endpoint
-     * Use when you need current vehicle state
+     * Convert FuelRecord to response with REAL-TIME vehicle data from API.
+     * PERFORMANCE: Slower - makes one HTTP call to vehicle endpoint per call
+     * FRESHNESS: Vehicle data is current (fetched at request time from Supabase)
+     * 
+     * ═══════════════════════════════════════════════════════════════════════
+     * THE REAL-TIME DATA STRATEGY
+     * ═══════════════════════════════════════════════════════════════════════
+     * 
+     * WHAT IT DOES:
+     *   1. Takes a FuelRecord from database
+     *   2. Makes HTTP call to VehicleApiClient to fetch current vehicle data
+     *   3. Uses real-time vehicle data in response (not cached database data)
+     *   4. Returns enriched response with current vehicle status
+     * 
+     * WHY THIS MATTERS:
+     *   Fuel records are historical - once created, they don't change.
+     *   But vehicles are living entities - their odometer, fuel level, status
+     *   change constantly. This method shows the vehicle's CURRENT state
+     *   alongside the historical fuel record.
+     * 
+     * EXAMPLE USE CASE:
+     *   Fuel record shows: "Created on 2026-04-20, recorded odometer: 50,000 km"
+     *   Real-time vehicle data shows: "Current odometer: 52,500 km"
+     *   This lets admin see: "2,500 km traveled since fuel entry"
+     * 
+     * ═══════════════════════════════════════════════════════════════════════
+     * FALLBACK MECHANISM - GRACEFUL DEGRADATION
+     * ═══════════════════════════════════════════════════════════════════════
+     * 
+     * WHAT IF VEHICLE API FAILS?
+     *   Catch block automatically falls back to cached data using toResponse().
+     *   
+     * WHY THIS IS IMPORTANT:
+     *   - Vehicle endpoint might be temporarily unavailable
+     *   - Network connection might be lost
+     *   - Vehicle might have been deleted (404)
+     *   
+     * USER EXPERIENCE:
+     *   - User still sees the fuel record (not a blank error page)
+     *   - Vehicle data is slightly stale (from database, not API)
+     *   - System logs warning for troubleshooting
+     *   - No exception thrown - graceful degradation
+     * 
+     * WHEN TO USE FALLBACK:
+     *   Real-time data is "nice to have", not essential.
+     *   If we can't get fresh data, use cached data instead of failing.
+     * 
+     * @param r FuelRecord entity from database
+     * @return FuelRecordResponse with real-time vehicle data (or cached if API fails)
      */
     public FuelRecordResponse toResponseWithRealTimeData(FuelRecord r) {
         try {
-            // Fetch real-time vehicle data from vehicle API
+            // ── STEP 1: Fetch real-time vehicle data from vehicle API ──
+            // This is an HTTP call to vehicle endpoint, not a database query
             VehicleDetailDto vehicleDetail = vehicleApiClient
                     .getVehicleById(r.getVehicle().getId());
 
+            // ── STEP 2: Build response using REAL-TIME vehicle data from API ──
             return FuelRecordResponse.builder()
+                    // Record identifiers
                     .id(r.getId())
                     .vehicleId(r.getVehicle().getId())
+                    // Use REAL-TIME vehicle data from API, not cached database data
                     .vehiclePlate(vehicleDetail.getPlateNumber())
+                    // Concatenate make + model from REAL-TIME data
                     .vehicleMakeModel(vehicleDetail.getMake() 
                             + " " + vehicleDetail.getModel())
+                    // Driver information (not real-time, from database)
                     .driverId(r.getDriver() != null
                             ? r.getDriver().getId() : null)
                     .driverName(r.getDriver() != null
                             ? r.getDriver().getFullName() : null)
+                    // Fuel record details (historical, from database)
                     .fuelDate(r.getFuelDate())
                     .quantity(r.getQuantity())
                     .costPerLitre(r.getCostPerLitre())
@@ -290,15 +464,19 @@ public class FuelService {
                     .notes(r.getNotes())
                     .receiptUrl(r.getReceiptUrl())
                     .receiptFileName(r.getReceiptFileName())
+                    // Misuse detection flags
                     .flaggedForMisuse(r.isFlaggedForMisuse())
                     .flagReason(r.getFlagReason())
+                    // Audit information
                     .createdBy(r.getCreatedBy())
                     .createdAt(r.getCreatedAt())
                     .build();
+                    
         } catch (Exception e) {
+            // ── FALLBACK: If API call fails, use cached data ──
             log.warn("Failed to fetch real-time vehicle data, using cached: {}", 
                     e.getMessage());
-            // Fallback to cached data
+            // Return same response but with cached vehicle data instead of fresh
             return toResponse(r);
         }
     }
