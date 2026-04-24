@@ -36,4 +36,5 @@ build/
 .env
 
 # Local config with secrets
-src/main/resources/application.properties
+src/main/resources/application.propertiesvfms-frontend/node_modules/
+vfms-frontend/.next/
