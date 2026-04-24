@@ -47,13 +47,16 @@ This repository hosts the **Vehicle Maintenance & Rentals Module**, responsible 
 - **Soft Deactivation:** Deactivated vendors are hidden from new rentals but preserved in historical records.
 
 ### 🔐 Role-Based Access Control (RBAC)
-| Action | System User | Approver |
-|---|---|---|
-| Create / Edit Requests | ✅ | ❌ |
-| Submit Requests | ✅ | ❌ |
-| Approve / Reject Requests | ❌ | ✅ |
-| Close Requests & Record Costs | ❌ | ✅ |
-| View All Records | ✅ | ✅ |
+| Action | System User | Approver | Admin | Driver |
+|---|---|---|---|---|
+| Create / Edit Requests | ✅ | ❌ | ✅ | ❌ |
+| Submit Requests | ✅ | ❌ | ✅ | ❌ |
+| Approve / Reject Requests | ❌ | ✅ | ✅ | ❌ |
+| Close Requests & Record Costs | ❌ | ✅ | ✅ | ❌ |
+| Upload Documents | ✅ | ✅ | ✅ | ❌ |
+| Manage Vendors | ❌ | ❌ | ✅ | ❌ |
+| View All Records | ✅ | ✅ | ✅ | ✅ |
+| View Vehicle Details | ✅ | ✅ | ✅ | ✅ |
 
 ## 🏗️ Technical Architecture
 
