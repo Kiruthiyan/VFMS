@@ -20,9 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <RoleProvider>
-          {children}
-        </RoleProvider>
+        <RoleProvider>{children}</RoleProvider>
         <Toaster />
         <ToastProvider />
       </body>

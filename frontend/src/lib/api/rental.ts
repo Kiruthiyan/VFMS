@@ -70,10 +70,14 @@ export const vendorApi = {
     api.post<ApiResponse<Vendor>>("/api/vendors", data).then((r) => r.data),
 
   update: (id: number, data: VendorFormData) =>
-    api.put<ApiResponse<Vendor>>(`/api/vendors/${id}`, data).then((r) => r.data),
+    api
+      .put<ApiResponse<Vendor>>(`/api/vendors/${id}`, data)
+      .then((r) => r.data),
 
   toggleStatus: (id: number) =>
-    api.patch<ApiResponse<Vendor>>(`/api/vendors/${id}/toggle-status`).then((r) => r.data),
+    api
+      .patch<ApiResponse<Vendor>>(`/api/vendors/${id}/toggle-status`)
+      .then((r) => r.data),
 };
 
 // ── Rental API ──
@@ -82,36 +86,58 @@ export const rentalApi = {
     api.get<ApiResponse<RentalRecord[]>>("/api/rentals").then((r) => r.data),
 
   getByStatus: (status: RentalStatus) =>
-    api.get<ApiResponse<RentalRecord[]>>(`/api/rentals?status=${status}`).then((r) => r.data),
+    api
+      .get<ApiResponse<RentalRecord[]>>(`/api/rentals?status=${status}`)
+      .then((r) => r.data),
 
   getById: (id: number) =>
-    api.get<ApiResponse<RentalRecord>>(`/api/rentals/${id}`).then((r) => r.data),
+    api
+      .get<ApiResponse<RentalRecord>>(`/api/rentals/${id}`)
+      .then((r) => r.data),
 
   create: (data: RentalFormData) =>
-    api.post<ApiResponse<RentalRecord>>("/api/rentals", data).then((r) => r.data),
+    api
+      .post<ApiResponse<RentalRecord>>("/api/rentals", data)
+      .then((r) => r.data),
 
   update: (id: number, data: RentalFormData) =>
-    api.put<ApiResponse<RentalRecord>>(`/api/rentals/${id}`, data).then((r) => r.data),
+    api
+      .put<ApiResponse<RentalRecord>>(`/api/rentals/${id}`, data)
+      .then((r) => r.data),
 
   confirmReturn: (id: number, returnDate: string) =>
-    api.patch<ApiResponse<RentalRecord>>(`/api/rentals/${id}/return?returnDate=${returnDate}`).then((r) => r.data),
+    api
+      .patch<
+        ApiResponse<RentalRecord>
+      >(`/api/rentals/${id}/return?returnDate=${returnDate}`)
+      .then((r) => r.data),
 
   close: (id: number) =>
-    api.patch<ApiResponse<RentalRecord>>(`/api/rentals/${id}/close`).then((r) => r.data),
+    api
+      .patch<ApiResponse<RentalRecord>>(`/api/rentals/${id}/close`)
+      .then((r) => r.data),
 
   uploadAgreement: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post<ApiResponse<RentalRecord>>(`/api/rentals/${id}/agreement`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }).then((r) => r.data);
+    return api
+      .post<ApiResponse<RentalRecord>>(
+        `/api/rentals/${id}/agreement`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      )
+      .then((r) => r.data);
   },
 
   uploadInvoice: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post<ApiResponse<RentalRecord>>(`/api/rentals/${id}/invoice`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }).then((r) => r.data);
+    return api
+      .post<ApiResponse<RentalRecord>>(`/api/rentals/${id}/invoice`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
   },
 };

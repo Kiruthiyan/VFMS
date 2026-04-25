@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Car } from "lucide-react";
 import { toast } from "sonner";
@@ -37,10 +41,15 @@ const DEFAULT_FORM: VehicleFormData = {
 export function VehicleForm({ title, initialData, onSubmit }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<VehicleFormData>(initialData || DEFAULT_FORM);
+  const [form, setForm] = useState<VehicleFormData>(
+    initialData || DEFAULT_FORM,
+  );
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  const handleChange = (field: keyof VehicleFormData, value: string | number) => {
+  const handleChange = (
+    field: keyof VehicleFormData,
+    value: string | number,
+  ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors({ ...errors, [field]: "" });
   };
@@ -51,7 +60,8 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
     if (!form.brand.trim()) errs.brand = "Brand is required";
     if (!form.model.trim()) errs.model = "Model is required";
     if (form.year < 1980 || form.year > new Date().getFullYear() + 1)
-      errs.year = "Year must be between 1980 and " + (new Date().getFullYear() + 1);
+      errs.year =
+        "Year must be between 1980 and " + (new Date().getFullYear() + 1);
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -74,7 +84,11 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
 
   return (
     <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
-      <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-slate-600 hover:text-slate-900">
+      <Button
+        variant="ghost"
+        onClick={() => router.back()}
+        className="mb-4 text-slate-600 hover:text-slate-900"
+      >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
       <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -90,51 +104,76 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Plate Number *</label>
+                <label className="text-sm font-medium text-slate-700">
+                  Plate Number *
+                </label>
                 <Input
                   value={form.plateNumber}
                   onChange={(e) => handleChange("plateNumber", e.target.value)}
                   placeholder="e.g. WP-CAB-1234"
                   className={fieldClass("plateNumber")}
                 />
-                {errors.plateNumber && <p className="text-red-500 text-xs">{errors.plateNumber}</p>}
+                {errors.plateNumber && (
+                  <p className="text-red-500 text-xs">{errors.plateNumber}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Brand *</label>
+                <label className="text-sm font-medium text-slate-700">
+                  Brand *
+                </label>
                 <Input
                   value={form.brand}
                   onChange={(e) => handleChange("brand", e.target.value)}
                   placeholder="e.g. Toyota"
                   className={fieldClass("brand")}
                 />
-                {errors.brand && <p className="text-red-500 text-xs">{errors.brand}</p>}
+                {errors.brand && (
+                  <p className="text-red-500 text-xs">{errors.brand}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Model *</label>
+                <label className="text-sm font-medium text-slate-700">
+                  Model *
+                </label>
                 <Input
                   value={form.model}
                   onChange={(e) => handleChange("model", e.target.value)}
                   placeholder="e.g. Aqua"
                   className={fieldClass("model")}
                 />
-                {errors.model && <p className="text-red-500 text-xs">{errors.model}</p>}
+                {errors.model && (
+                  <p className="text-red-500 text-xs">{errors.model}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Year *</label>
+                <label className="text-sm font-medium text-slate-700">
+                  Year *
+                </label>
                 <Input
                   type="number"
                   value={form.year}
-                  onChange={(e) => handleChange("year", parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleChange("year", parseInt(e.target.value))
+                  }
                   min={1980}
                   max={2100}
                   className={fieldClass("year")}
                 />
-                {errors.year && <p className="text-red-500 text-xs">{errors.year}</p>}
+                {errors.year && (
+                  <p className="text-red-500 text-xs">{errors.year}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Vehicle Type *</label>
-                <Select value={form.vehicleType} onValueChange={(v) => handleChange("vehicleType", v)}>
-                  <SelectTrigger className="bg-white text-slate-900"><SelectValue /></SelectTrigger>
+                <label className="text-sm font-medium text-slate-700">
+                  Vehicle Type *
+                </label>
+                <Select
+                  value={form.vehicleType}
+                  onValueChange={(v) => handleChange("vehicleType", v)}
+                >
+                  <SelectTrigger className="bg-white text-slate-900">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent className="bg-white text-slate-900">
                     <SelectItem value="CAR">Car</SelectItem>
                     <SelectItem value="VAN">Van</SelectItem>
@@ -145,9 +184,16 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Fuel Type *</label>
-                <Select value={form.fuelType} onValueChange={(v) => handleChange("fuelType", v)}>
-                  <SelectTrigger className="bg-white text-slate-900"><SelectValue /></SelectTrigger>
+                <label className="text-sm font-medium text-slate-700">
+                  Fuel Type *
+                </label>
+                <Select
+                  value={form.fuelType}
+                  onValueChange={(v) => handleChange("fuelType", v)}
+                >
+                  <SelectTrigger className="bg-white text-slate-900">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent className="bg-white text-slate-900">
                     <SelectItem value="PETROL">Petrol</SelectItem>
                     <SelectItem value="DIESEL">Diesel</SelectItem>
@@ -158,7 +204,10 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Department <span className="text-slate-400 font-normal">(Optional)</span></label>
+              <label className="text-sm font-medium text-slate-700">
+                Department{" "}
+                <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
               <Input
                 value={form.department || ""}
                 onChange={(e) => handleChange("department", e.target.value)}
@@ -169,12 +218,17 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
 
             {/* ── Additional Details ── */}
             <div className="pt-2 pb-1">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Additional Details</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Additional Details
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Color <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="text-sm font-medium text-slate-700">
+                  Color{" "}
+                  <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   value={form.color || ""}
                   onChange={(e) => handleChange("color", e.target.value)}
@@ -183,13 +237,21 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Seating Capacity <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="text-sm font-medium text-slate-700">
+                  Seating Capacity{" "}
+                  <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   type="number"
                   min={1}
                   max={100}
                   value={form.seatingCapacity || ""}
-                  onChange={(e) => handleChange("seatingCapacity", e.target.value ? parseInt(e.target.value) : "")}
+                  onChange={(e) =>
+                    handleChange(
+                      "seatingCapacity",
+                      e.target.value ? parseInt(e.target.value) : "",
+                    )
+                  }
                   placeholder="e.g. 5"
                   className="bg-white text-slate-900"
                 />
@@ -198,25 +260,37 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
 
             {/* ── Compliance Dates ── */}
             <div className="pt-2 pb-1">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Compliance & Expiry Dates</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Compliance & Expiry Dates
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Insurance Expiry <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="text-sm font-medium text-slate-700">
+                  Insurance Expiry{" "}
+                  <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   type="date"
                   value={form.insuranceExpiryDate || ""}
-                  onChange={(e) => handleChange("insuranceExpiryDate", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("insuranceExpiryDate", e.target.value)
+                  }
                   className="bg-white text-slate-900"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Revenue License Expiry <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="text-sm font-medium text-slate-700">
+                  Revenue License Expiry{" "}
+                  <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   type="date"
                   value={form.revenueLicenseExpiryDate || ""}
-                  onChange={(e) => handleChange("revenueLicenseExpiryDate", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("revenueLicenseExpiryDate", e.target.value)
+                  }
                   className="bg-white text-slate-900"
                 />
               </div>
@@ -227,9 +301,17 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                 disabled={saving}
                 className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
               >
-                {saving ? "Saving..." : title.includes("Edit") ? "Update Vehicle" : "Register Vehicle"}
+                {saving
+                  ? "Saving..."
+                  : title.includes("Edit")
+                    ? "Update Vehicle"
+                    : "Register Vehicle"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => router.back()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
                 Cancel
               </Button>
             </div>

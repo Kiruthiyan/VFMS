@@ -6,11 +6,26 @@ import { MaintenanceRequest, maintenanceApi } from "@/lib/api/maintenance";
 import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wrench, ArrowLeft, Car, Calendar, DollarSign, Clock, FileText, Loader2, Upload, ExternalLink } from "lucide-react";
+import {
+  Wrench,
+  ArrowLeft,
+  Car,
+  Calendar,
+  DollarSign,
+  Clock,
+  FileText,
+  Loader2,
+  Upload,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
-export default function MaintenanceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function MaintenanceDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const { canCreate, canApprove } = useRole();
@@ -28,7 +43,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
     }
   };
 
-  useEffect(() => { fetchRequest(); }, [id]);
+  useEffect(() => {
+    fetchRequest();
+  }, [id]);
 
   const handleSubmit = async () => {
     if (confirm("Submit this request for approval?")) {
@@ -36,7 +53,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
         await maintenanceApi.submit(Number(id));
         toast.success("Request submitted");
         fetchRequest();
-      } catch { toast.error("Failed to submit"); }
+      } catch {
+        toast.error("Failed to submit");
+      }
     }
   };
 
@@ -46,7 +65,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
         await maintenanceApi.approve(Number(id));
         toast.success("Request approved");
         fetchRequest();
-      } catch { toast.error("Failed to approve"); }
+      } catch {
+        toast.error("Failed to approve");
+      }
     }
   };
 
@@ -57,7 +78,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
         await maintenanceApi.reject(Number(id), reason);
         toast.success("Request rejected");
         fetchRequest();
-      } catch { toast.error("Failed to reject"); }
+      } catch {
+        toast.error("Failed to reject");
+      }
     }
   };
 
@@ -71,40 +94,59 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
         await maintenanceApi.close(Number(id), 0);
         toast.success("Request closed");
         fetchRequest();
-      } catch { toast.error("Failed to close"); }
+      } catch {
+        toast.error("Failed to close");
+      }
     } else {
       // Approved = maintenance was done, ask for actual cost (optional)
-      const costInput = prompt("Enter actual maintenance cost (Rs.):\n\nLeave blank or enter 0 if cost is not yet known.");
+      const costInput = prompt(
+        "Enter actual maintenance cost (Rs.):\n\nLeave blank or enter 0 if cost is not yet known.",
+      );
       const cost = costInput ? Number(costInput) : 0;
-      if (!confirm(`Close this request with actual cost: Rs.${cost.toLocaleString()}?`)) return;
+      if (
+        !confirm(
+          `Close this request with actual cost: Rs.${cost.toLocaleString()}?`,
+        )
+      )
+        return;
       try {
         await maintenanceApi.close(Number(id), cost);
         toast.success("Request closed successfully");
         fetchRequest();
-      } catch { toast.error("Failed to close request"); }
+      } catch {
+        toast.error("Failed to close request");
+      }
     }
   };
 
-  const handleUploadQuotation = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadQuotation = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
         await maintenanceApi.uploadQuotation(Number(id), file);
         toast.success("Quotation uploaded");
         fetchRequest();
-      } catch { toast.error("Failed to upload quotation"); }
+      } catch {
+        toast.error("Failed to upload quotation");
+      }
     }
     e.target.value = "";
   };
 
-  const handleUploadInvoice = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadInvoice = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
         await maintenanceApi.uploadInvoice(Number(id), file);
         toast.success("Invoice uploaded");
         fetchRequest();
-      } catch { toast.error("Failed to upload invoice"); }
+      } catch {
+        toast.error("Failed to upload invoice");
+      }
     }
     e.target.value = "";
   };
@@ -128,7 +170,11 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-slate-600 hover:text-slate-900">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="mb-4 text-slate-600 hover:text-slate-900"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Requests
         </Button>
 
@@ -150,22 +196,30 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                 <Car className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Vehicle</p>
-                  <p className="font-semibold text-slate-900">{request.vehicleBrandModel}</p>
-                  <p className="text-xs text-slate-500">{request.vehiclePlateNumber}</p>
+                  <p className="font-semibold text-slate-900">
+                    {request.vehicleBrandModel}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {request.vehiclePlateNumber}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                 <Wrench className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Type</p>
-                  <p className="font-semibold text-slate-900">{request.maintenanceType.replace("_", " ")}</p>
+                  <p className="font-semibold text-slate-900">
+                    {request.maintenanceType.replace("_", " ")}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm col-span-2">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Description</p>
-                  <p className="font-semibold text-slate-900">{request.description}</p>
+                  <p className="font-semibold text-slate-900">
+                    {request.description}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
@@ -173,7 +227,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                 <div>
                   <p className="text-xs text-slate-500">Estimated Cost</p>
                   <p className="font-semibold text-slate-900">
-                    {request.estimatedCost ? `Rs. ${request.estimatedCost.toLocaleString()}` : "—"}
+                    {request.estimatedCost
+                      ? `Rs. ${request.estimatedCost.toLocaleString()}`
+                      : "—"}
                   </p>
                 </div>
               </div>
@@ -182,7 +238,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                 <div>
                   <p className="text-xs text-slate-500">Actual Cost</p>
                   <p className="font-semibold text-slate-900">
-                    {request.actualCost ? `Rs. ${request.actualCost.toLocaleString()}` : "—"}
+                    {request.actualCost
+                      ? `Rs. ${request.actualCost.toLocaleString()}`
+                      : "—"}
                   </p>
                 </div>
               </div>
@@ -217,7 +275,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   <FileText className="h-5 w-5 text-red-600" />
                   <div>
                     <p className="text-xs text-red-500">Rejection Reason</p>
-                    <p className="font-semibold text-red-900">{request.rejectionReason}</p>
+                    <p className="font-semibold text-red-900">
+                      {request.rejectionReason}
+                    </p>
                   </div>
                 </div>
               )}
@@ -225,38 +285,59 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
 
             {/* Documents Section */}
             <div className="mt-6 pt-6 border-t border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">Documents</h3>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                Documents
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                   <p className="text-xs text-slate-500 mb-2">Quotation</p>
                   {request.quotationUrl ? (
-                    <a href={`http://localhost:8080${request.quotationUrl}`} target="_blank" rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <a
+                      href={`http://localhost:8080${request.quotationUrl}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
                       <ExternalLink className="h-4 w-4" /> View Quotation
                     </a>
                   ) : (
                     <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
                       <Upload className="h-3 w-3" /> Upload Quotation
-                      <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={handleUploadQuotation} />
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.png"
+                        className="hidden"
+                        onChange={handleUploadQuotation}
+                      />
                     </label>
                   )}
                 </div>
                 <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                   <p className="text-xs text-slate-500 mb-2">Invoice</p>
                   {request.invoiceUrl ? (
-                    <a href={`http://localhost:8080${request.invoiceUrl}`} target="_blank" rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <a
+                      href={`http://localhost:8080${request.invoiceUrl}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
                       <ExternalLink className="h-4 w-4" /> View Invoice
                     </a>
+                  ) : request.status === "APPROVED" ||
+                    request.status === "CLOSED" ? (
+                    <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <Upload className="h-3 w-3" /> Upload Invoice
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.png"
+                        className="hidden"
+                        onChange={handleUploadInvoice}
+                      />
+                    </label>
                   ) : (
-                    (request.status === "APPROVED" || request.status === "CLOSED") ? (
-                      <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
-                        <Upload className="h-3 w-3" /> Upload Invoice
-                        <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={handleUploadInvoice} />
-                      </label>
-                    ) : (
-                      <span className="text-xs text-slate-400">Available after approval</span>
-                    )
+                    <span className="text-xs text-slate-400">
+                      Available after approval
+                    </span>
                   )}
                 </div>
               </div>
@@ -274,7 +355,9 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => router.push(`/dashboard/maintenance/${request.id}/edit`)}
+                    onClick={() =>
+                      router.push(`/dashboard/maintenance/${request.id}/edit`)
+                    }
                   >
                     Edit
                   </Button>

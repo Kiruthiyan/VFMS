@@ -5,4 +5,3 @@ public enum MaintenanceType {
     ROUTINE_SERVICE,
     ACCIDENT_DAMAGE
 }
-

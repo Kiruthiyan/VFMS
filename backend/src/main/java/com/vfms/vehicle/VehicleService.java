@@ -1,14 +1,12 @@
 package com.vfms.vehicle;
 
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.vehicle.dto.VehicleRequestDto;
 import com.vfms.vehicle.dto.VehicleResponseDto;
-import com.vfms.common.exception.ResourceNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -17,13 +15,13 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
 
     // ── Add Vehicle ──
-    // Registers a new vehicle. We check for plate number uniqueness to prevent 
+    // Registers a new vehicle. We check for plate number uniqueness to prevent
     // duplicate assets from corrupting the database and reporting metrics.
     @Transactional
     public VehicleResponseDto addVehicle(VehicleRequestDto request) {
         if (vehicleRepository.existsByPlateNumber(request.getPlateNumber())) {
-            throw new IllegalArgumentException("Vehicle with plate number '"
-                    + request.getPlateNumber() + "' already exists");
+            throw new IllegalArgumentException(
+                    "Vehicle with plate number '" + request.getPlateNumber() + "' already exists");
         }
 
         Vehicle vehicle = Vehicle.builder()
@@ -43,19 +41,16 @@ public class VehicleService {
         return mapToResponse(vehicleRepository.save(vehicle));
     }
 
-        // ── Get All Vehicles ──
+    // ── Get All Vehicles ──
     public List<VehicleResponseDto> getAllVehicles() {
-        return vehicleRepository.findByActiveTrue()
-                .stream()
+        return vehicleRepository.findByActiveTrue().stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
-
     // ── Get Vehicles by Status ──
     public List<VehicleResponseDto> getVehiclesByStatus(VehicleStatus status) {
-        return vehicleRepository.findByStatusAndActiveTrue(status)
-                .stream()
+        return vehicleRepository.findByStatusAndActiveTrue(status).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
@@ -64,16 +59,16 @@ public class VehicleService {
     // Retrieves a vehicle by ID. Throws ResourceNotFoundException if it does not exist,
     // ensuring clients receive a proper 404 response instead of a 500 server error.
     public VehicleResponseDto getVehicleById(Long id) {
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+        Vehicle vehicle =
+                vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
         return mapToResponse(vehicle);
     }
 
     // ── Update Vehicle ──
     @Transactional
     public VehicleResponseDto updateVehicle(Long id, VehicleRequestDto request) {
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+        Vehicle vehicle =
+                vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
         vehicle.setPlateNumber(request.getPlateNumber());
         vehicle.setBrand(request.getBrand());
@@ -90,24 +85,12 @@ public class VehicleService {
         return mapToResponse(vehicleRepository.save(vehicle));
     }
 
-    // ── Deactivate Vehicle ──
-    // Soft delete instead of hard delete. This preserves the audit trail
-    // and historical relationships (like maintenance records and rentals).
-    @Transactional
-    public VehicleResponseDto deactivateVehicle(Long id) {
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
-        vehicle.setActive(false);
-        vehicle.setStatus(VehicleStatus.RETIRED);
-        return mapToResponse(vehicleRepository.save(vehicle));
-    }
-
     // ── Retire Vehicle ──
     // Retiring also performs a soft delete and marks the status explicitly.
     @Transactional
     public VehicleResponseDto retireVehicle(Long id) {
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+        Vehicle vehicle =
+                vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
         vehicle.setActive(false);
         vehicle.setStatus(VehicleStatus.RETIRED);
         return mapToResponse(vehicleRepository.save(vehicle));
@@ -116,8 +99,8 @@ public class VehicleService {
     // ── Update Vehicle Status ──
     @Transactional
     public VehicleResponseDto updateVehicleStatus(Long id, VehicleStatus newStatus) {
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+        Vehicle vehicle =
+                vehicleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
         vehicle.setStatus(newStatus);
         return mapToResponse(vehicleRepository.save(vehicle));
     }

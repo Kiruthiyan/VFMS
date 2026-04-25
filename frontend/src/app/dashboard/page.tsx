@@ -7,8 +7,14 @@ import { maintenanceApi } from "@/lib/api/maintenance";
 import { rentalApi } from "@/lib/api/rental";
 import { useRole } from "@/lib/role-context";
 import {
-  Car, Wrench, TruckIcon, Clock, AlertTriangle,
-  CheckCircle2, ArrowRight, ShieldCheck,
+  Car,
+  Wrench,
+  TruckIcon,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 
 interface Stats {
@@ -36,24 +42,34 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [vehiclesRes, maintenanceRes, rentalsRes] = await Promise.allSettled([
-          vehicleApi.getAll(),
-          maintenanceApi.getAll(),
-          rentalApi.getAll(),
-        ]);
+        const [vehiclesRes, maintenanceRes, rentalsRes] =
+          await Promise.allSettled([
+            vehicleApi.getAll(),
+            maintenanceApi.getAll(),
+            rentalApi.getAll(),
+          ]);
 
-        const vehicles = vehiclesRes.status === "fulfilled" ? vehiclesRes.value.data : [];
-        const maintenance = maintenanceRes.status === "fulfilled" ? maintenanceRes.value.data : [];
-        const rentals = rentalsRes.status === "fulfilled" ? rentalsRes.value.data : [];
+        const vehicles =
+          vehiclesRes.status === "fulfilled" ? vehiclesRes.value.data : [];
+        const maintenance =
+          maintenanceRes.status === "fulfilled"
+            ? maintenanceRes.value.data
+            : [];
+        const rentals =
+          rentalsRes.status === "fulfilled" ? rentalsRes.value.data : [];
 
         setStats({
           totalVehicles: vehicles.length,
-          availableVehicles: vehicles.filter((v) => v.status === "AVAILABLE").length,
-          underMaintenance: vehicles.filter((v) => v.status === "UNDER_MAINTENANCE").length,
-          pendingApprovals: maintenance.filter((m) => m.status === "SUBMITTED").length,
+          availableVehicles: vehicles.filter((v) => v.status === "AVAILABLE")
+            .length,
+          underMaintenance: vehicles.filter(
+            (v) => v.status === "UNDER_MAINTENANCE",
+          ).length,
+          pendingApprovals: maintenance.filter((m) => m.status === "SUBMITTED")
+            .length,
           activeRentals: rentals.filter((r) => r.status === "ACTIVE").length,
           openMaintenanceRequests: maintenance.filter((m) =>
-            ["NEW", "SUBMITTED", "APPROVED"].includes(m.status)
+            ["NEW", "SUBMITTED", "APPROVED"].includes(m.status),
           ).length,
         });
       } catch {
@@ -126,13 +142,31 @@ export default function DashboardPage() {
   const quickActions = [
     ...(["ADMIN", "SYSTEM_USER"].includes(role)
       ? [
-          { label: "New Maintenance Request", href: "/dashboard/maintenance/create", icon: <Wrench className="h-4 w-4" /> },
-          { label: "Register Vehicle", href: "/dashboard/vehicles/add", icon: <Car className="h-4 w-4" /> },
-          { label: "New Rental", href: "/dashboard/rentals/create", icon: <TruckIcon className="h-4 w-4" /> },
+          {
+            label: "New Maintenance Request",
+            href: "/dashboard/maintenance/create",
+            icon: <Wrench className="h-4 w-4" />,
+          },
+          {
+            label: "Register Vehicle",
+            href: "/dashboard/vehicles/add",
+            icon: <Car className="h-4 w-4" />,
+          },
+          {
+            label: "New Rental",
+            href: "/dashboard/rentals/create",
+            icon: <TruckIcon className="h-4 w-4" />,
+          },
         ]
       : []),
     ...(canApprove
-      ? [{ label: "Review Pending Approvals", href: "/dashboard/maintenance?status=SUBMITTED", icon: <ShieldCheck className="h-4 w-4" /> }]
+      ? [
+          {
+            label: "Review Pending Approvals",
+            href: "/dashboard/maintenance?status=SUBMITTED",
+            icon: <ShieldCheck className="h-4 w-4" />,
+          },
+        ]
       : []),
   ];
 
@@ -150,14 +184,16 @@ export default function DashboardPage() {
           </div>
         </div>
         <p className="text-slate-300 text-sm mt-3 max-w-lg">
-          Your central hub for managing vehicles, maintenance requests, and rentals.
-          Use the sidebar to navigate between modules.
+          Your central hub for managing vehicles, maintenance requests, and
+          rentals. Use the sidebar to navigate between modules.
         </p>
       </div>
 
       {/* Stats Grid */}
       <div>
-        <h2 className="text-base font-semibold text-slate-700 mb-4">Fleet Overview</h2>
+        <h2 className="text-base font-semibold text-slate-700 mb-4">
+          Fleet Overview
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {statCards.map((card) => (
             <button
@@ -166,7 +202,9 @@ export default function DashboardPage() {
               className={`bg-white rounded-xl p-5 border ${card.border} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 text-left group`}
             >
               <div className="flex items-center justify-between mb-3">
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${card.color}`}>
+                <div
+                  className={`h-9 w-9 rounded-lg flex items-center justify-center ${card.color}`}
+                >
                   {card.icon}
                 </div>
                 <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
@@ -183,7 +221,9 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       {quickActions.length > 0 && (
         <div>
-          <h2 className="text-base font-semibold text-slate-700 mb-4">Quick Actions</h2>
+          <h2 className="text-base font-semibold text-slate-700 mb-4">
+            Quick Actions
+          </h2>
           <div className="flex flex-wrap gap-3">
             {quickActions.map((action) => (
               <button
@@ -201,7 +241,9 @@ export default function DashboardPage() {
 
       {/* Module Status */}
       <div>
-        <h2 className="text-base font-semibold text-slate-700 mb-4">System Modules</h2>
+        <h2 className="text-base font-semibold text-slate-700 mb-4">
+          System Modules
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {[
             { name: "Vehicle Management", status: "active" },
@@ -221,10 +263,14 @@ export default function DashboardPage() {
                   : "bg-slate-50 border-slate-100 opacity-60"
               }`}
             >
-              <div className={`h-2 w-2 rounded-full flex-shrink-0 ${
-                mod.status === "active" ? "bg-emerald-500" : "bg-slate-400"
-              }`} />
-              <span className="text-xs font-medium text-slate-700">{mod.name}</span>
+              <div
+                className={`h-2 w-2 rounded-full flex-shrink-0 ${
+                  mod.status === "active" ? "bg-emerald-500" : "bg-slate-400"
+                }`}
+              />
+              <span className="text-xs font-medium text-slate-700">
+                {mod.name}
+              </span>
               {mod.status === "coming" && (
                 <span className="ml-auto text-[9px] font-semibold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded-full">
                   SOON

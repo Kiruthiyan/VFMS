@@ -1,19 +1,18 @@
 package com.vfms.rental;
 
-import com.vfms.rental.dto.VendorDto;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.vfms.common.exception.ResourceNotFoundException;
+import com.vfms.rental.dto.VendorDto;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VendorServiceTest {
@@ -59,7 +58,7 @@ class VendorServiceTest {
 
         Vendor result = vendorService.toggleActive(1L);
 
-        assertFalse(result.isActive());
+        assertFalse(result.getActive());
         verify(vendorRepository, times(1)).save(testVendor);
     }
 

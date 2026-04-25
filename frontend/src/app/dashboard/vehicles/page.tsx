@@ -7,9 +7,20 @@ import { VehicleStatusBadge } from "@/components/vehicles/VehicleStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Car, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Car,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
@@ -24,9 +35,10 @@ export default function VehiclesPage() {
   const fetchVehicles = async () => {
     setLoading(true);
     try {
-      const res = (statusFilter !== "ALL")
-        ? await vehicleApi.filterByStatus(statusFilter as VehicleStatus)
-        : await vehicleApi.getAll();
+      const res =
+        statusFilter !== "ALL"
+          ? await vehicleApi.filterByStatus(statusFilter as VehicleStatus)
+          : await vehicleApi.getAll();
       setVehicles(res.data);
     } catch {
       toast.error("Failed to load vehicles");
@@ -49,7 +61,9 @@ export default function VehiclesPage() {
   });
 
   // ── Compliance warning helper ──
-  const getComplianceWarning = (vehicle: Vehicle): { level: "expired" | "warning" | null; labels: string[] } => {
+  const getComplianceWarning = (
+    vehicle: Vehicle,
+  ): { level: "expired" | "warning" | null; labels: string[] } => {
     const today = new Date();
     const labels: string[] = [];
     let level: "expired" | "warning" | null = null;
@@ -57,9 +71,16 @@ export default function VehiclesPage() {
     const check = (dateStr: string | undefined, label: string) => {
       if (!dateStr) return;
       const expiry = new Date(dateStr);
-      const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysLeft < 0) { labels.push(`${label} expired`); level = "expired"; }
-      else if (daysLeft <= 30) { labels.push(`${label} in ${daysLeft}d`); if (level !== "expired") level = "warning"; }
+      const daysLeft = Math.ceil(
+        (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      if (daysLeft < 0) {
+        labels.push(`${label} expired`);
+        level = "expired";
+      } else if (daysLeft <= 30) {
+        labels.push(`${label} in ${daysLeft}d`);
+        if (level !== "expired") level = "warning";
+      }
     };
 
     check(vehicle.insuranceExpiryDate, "Insurance");
@@ -73,12 +94,23 @@ export default function VehiclesPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Vehicle Management</h1>
-            <p className="text-slate-500 mt-1">Register and track fleet assets</p>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Vehicle Management
+            </h1>
+            <p className="text-slate-500 mt-1">
+              Register and track fleet assets
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={fetchVehicles} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={fetchVehicles}
+              disabled={loading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
             </Button>
             {canAdmin && (
               <Button
@@ -110,7 +142,9 @@ export default function VehiclesPage() {
             <SelectContent className="bg-white text-slate-900">
               <SelectItem value="ALL">All Statuses</SelectItem>
               <SelectItem value="AVAILABLE">Available</SelectItem>
-              <SelectItem value="UNDER_MAINTENANCE">Under Maintenance</SelectItem>
+              <SelectItem value="UNDER_MAINTENANCE">
+                Under Maintenance
+              </SelectItem>
               <SelectItem value="RETIRED">Retired</SelectItem>
             </SelectContent>
           </Select>
@@ -123,22 +157,39 @@ export default function VehiclesPage() {
               <Loader2 className="h-5 w-5 animate-spin" /> Loading vehicles...
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No vehicles found.</div>
+            <div className="p-8 text-center text-slate-500">
+              No vehicles found.
+            </div>
           ) : (
             <table className="w-full text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Vehicle Info</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Type</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Fuel</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Status</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Department</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Vehicle Info
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Type
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Fuel
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Department
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((vehicle) => (
-                  <tr key={vehicle.id} className="group hover:bg-slate-50/80 transition-colors">
+                  <tr
+                    key={vehicle.id}
+                    className="group hover:bg-slate-50/80 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950 shadow-sm ring-1 ring-black/5">
@@ -148,7 +199,8 @@ export default function VehiclesPage() {
                           <div className="font-medium text-slate-900 flex items-center gap-1.5">
                             {vehicle.brand} {vehicle.model}
                             {(() => {
-                              const { level, labels } = getComplianceWarning(vehicle);
+                              const { level, labels } =
+                                getComplianceWarning(vehicle);
                               if (!level) return null;
                               return (
                                 <span
@@ -165,7 +217,9 @@ export default function VehiclesPage() {
                               );
                             })()}
                           </div>
-                          <div className="text-slate-500 text-xs">{vehicle.plateNumber}</div>
+                          <div className="text-slate-500 text-xs">
+                            {vehicle.plateNumber}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -174,17 +228,23 @@ export default function VehiclesPage() {
                         {vehicle.vehicleType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-600">{vehicle.fuelType}</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {vehicle.fuelType}
+                    </td>
                     <td className="px-6 py-4">
                       <VehicleStatusBadge status={vehicle.status} />
                     </td>
-                    <td className="px-6 py-4 text-slate-600">{vehicle.department || "—"}</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {vehicle.department || "—"}
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-blue-600 hover:text-blue-900 opacity-80 group-hover:opacity-100 transition-opacity"
-                        onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}`)}
+                        onClick={() =>
+                          router.push(`/dashboard/vehicles/${vehicle.id}`)
+                        }
                       >
                         View
                       </Button>

@@ -2,9 +2,9 @@ package com.vfms.maintenance;
 
 import com.vfms.vehicle.Vehicle;
 import jakarta.persistence.*;
-import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "maintenance_requests")

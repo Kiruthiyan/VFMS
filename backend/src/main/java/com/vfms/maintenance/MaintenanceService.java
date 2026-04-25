@@ -1,20 +1,19 @@
 package com.vfms.maintenance;
 
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.maintenance.dto.MaintenanceRequestDto;
 import com.vfms.maintenance.dto.MaintenanceResponseDto;
 import com.vfms.vehicle.Vehicle;
 import com.vfms.vehicle.VehicleRepository;
-import com.vfms.common.exception.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +25,8 @@ public class MaintenanceService {
     // ── Create Request ──
     @Transactional
     public MaintenanceResponseDto createRequest(MaintenanceRequestDto request) {
-        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+        Vehicle vehicle = vehicleRepository
+                .findById(request.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", request.getVehicleId()));
 
         MaintenanceRequest mr = MaintenanceRequest.builder()
@@ -40,18 +40,20 @@ public class MaintenanceService {
     }
 
     // ── Edit Request ──
-    // Requests can only be edited while in NEW status. Once submitted, 
+    // Requests can only be edited while in NEW status. Once submitted,
     // the approval workflow begins and details must remain locked for audit integrity.
     @Transactional
     public MaintenanceResponseDto updateRequest(Long id, MaintenanceRequestDto request) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.NEW) {
             throw new IllegalStateException("Can only edit requests in NEW status");
         }
 
-        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+        Vehicle vehicle = vehicleRepository
+                .findById(request.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", request.getVehicleId()));
 
         mr.setVehicle(vehicle);
@@ -67,7 +69,8 @@ public class MaintenanceService {
     // and placing it in the queue for approvers.
     @Transactional
     public MaintenanceResponseDto submitRequest(Long id) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.NEW) {
@@ -79,11 +82,12 @@ public class MaintenanceService {
     }
 
     // ── Approve Request ──
-    // Approves the maintenance work and automatically changes the underlying vehicle's 
+    // Approves the maintenance work and automatically changes the underlying vehicle's
     // status to UNDER_MAINTENANCE to prevent it from being scheduled for trips/rentals.
     @Transactional
     public MaintenanceResponseDto approveRequest(Long id) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.SUBMITTED) {
@@ -103,7 +107,8 @@ public class MaintenanceService {
     // Rejects the request with a mandatory reason, keeping the record for the audit trail.
     @Transactional
     public MaintenanceResponseDto rejectRequest(Long id, String reason) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         if (mr.getStatus() != MaintenanceStatus.SUBMITTED) {
@@ -116,11 +121,12 @@ public class MaintenanceService {
     }
 
     // ── Close Request ──
-    // Finalizes the request. If it was approved, we record the final actual cost and 
+    // Finalizes the request. If it was approved, we record the final actual cost and
     // free up the vehicle by changing its status back to AVAILABLE.
     @Transactional
     public MaintenanceResponseDto closeRequest(Long id, BigDecimal actualCost) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
         MaintenanceStatus originalStatus = mr.getStatus();
@@ -144,9 +150,7 @@ public class MaintenanceService {
 
     // ── Get All Requests ──
     public List<MaintenanceResponseDto> getAllRequests() {
-        return maintenanceRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .toList();
+        return maintenanceRepository.findAll().stream().map(this::mapToResponse).toList();
     }
 
     // ── Get Requests By Status ──
@@ -165,7 +169,8 @@ public class MaintenanceService {
 
     // ── Get Request By ID ──
     public MaintenanceResponseDto getRequestById(Long id) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
         return mapToResponse(mr);
     }
@@ -173,7 +178,8 @@ public class MaintenanceService {
     // ── Upload Quotation ──
     @Transactional
     public MaintenanceResponseDto uploadQuotation(Long id, String quotationUrl) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
         mr.setQuotationUrl(quotationUrl);
         return mapToResponse(maintenanceRepository.save(mr));
@@ -182,7 +188,8 @@ public class MaintenanceService {
     // ── Upload Invoice ──
     @Transactional
     public MaintenanceResponseDto uploadInvoice(Long id, String invoiceUrl) {
-        MaintenanceRequest mr = maintenanceRepository.findById(id)
+        MaintenanceRequest mr = maintenanceRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
         if (mr.getStatus() != MaintenanceStatus.APPROVED && mr.getStatus() != MaintenanceStatus.CLOSED) {
             throw new IllegalStateException("Invoice can only be uploaded for approved/closed requests");
@@ -206,9 +213,6 @@ public class MaintenanceService {
                 .toList();
     }
 
-
-
-
     // ── Report: Total Maintenance Cost Summary ──
     public Map<String, Object> getMaintenanceCostSummary() {
         List<MaintenanceRequest> closed = maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED);
@@ -222,14 +226,14 @@ public class MaintenanceService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         long totalDowntimeHours = closed.stream()
                 .filter(mr -> mr.getApprovedDate() != null && mr.getClosedDate() != null)
-                .mapToLong(mr -> Duration.between(mr.getApprovedDate(), mr.getClosedDate()).toHours())
+                .mapToLong(mr -> Duration.between(mr.getApprovedDate(), mr.getClosedDate())
+                        .toHours())
                 .sum();
         return Map.of(
                 "totalClosedRequests", closed.size(),
                 "totalActualCost", totalActual,
                 "totalEstimatedCost", totalEstimated,
-                "totalDowntimeHours", totalDowntimeHours
-        );
+                "totalDowntimeHours", totalDowntimeHours);
     }
 
     // ── Report: Cost Breakdown by Maintenance Type ──
@@ -238,22 +242,16 @@ public class MaintenanceService {
                 .filter(mr -> mr.getActualCost() != null)
                 .collect(Collectors.groupingBy(
                         mr -> mr.getMaintenanceType().name(),
-                        Collectors.reducing(
-                                BigDecimal.ZERO,
-                                MaintenanceRequest::getActualCost,
-                                BigDecimal::add
-                        )
-                ));
+                        Collectors.reducing(BigDecimal.ZERO, MaintenanceRequest::getActualCost, BigDecimal::add)));
     }
 
     // ── Report: Cost per Vehicle ──
     public List<Map<String, Object>> getCostPerVehicle() {
         return maintenanceRepository.findAll().stream()
                 .filter(mr -> mr.getActualCost() != null)
-                .collect(Collectors.groupingBy(
-                        mr -> mr.getVehicle().getId()
-                ))
-                .entrySet().stream()
+                .collect(Collectors.groupingBy(mr -> mr.getVehicle().getId()))
+                .entrySet()
+                .stream()
                 .map(entry -> {
                     var records = entry.getValue();
                     var first = records.get(0);
@@ -263,10 +261,11 @@ public class MaintenanceService {
                     return (Map<String, Object>) Map.<String, Object>of(
                             "vehicleId", first.getVehicle().getId(),
                             "plateNumber", first.getVehicle().getPlateNumber(),
-                            "brandModel", first.getVehicle().getBrand() + " " + first.getVehicle().getModel(),
+                            "brandModel",
+                                    first.getVehicle().getBrand() + " "
+                                            + first.getVehicle().getModel(),
                             "totalMaintenanceCost", total,
-                            "requestCount", records.size()
-                    );
+                            "requestCount", records.size());
                 })
                 .toList();
     }
@@ -275,14 +274,16 @@ public class MaintenanceService {
     MaintenanceResponseDto mapToResponse(MaintenanceRequest mr) {
         Long downtimeHours = null;
         if (mr.getApprovedDate() != null && mr.getClosedDate() != null) {
-            downtimeHours = Duration.between(mr.getApprovedDate(), mr.getClosedDate()).toHours();
+            downtimeHours =
+                    Duration.between(mr.getApprovedDate(), mr.getClosedDate()).toHours();
         }
 
         return MaintenanceResponseDto.builder()
                 .id(mr.getId())
                 .vehicleId(mr.getVehicle().getId())
                 .vehiclePlateNumber(mr.getVehicle().getPlateNumber())
-                .vehicleBrandModel(mr.getVehicle().getBrand() + " " + mr.getVehicle().getModel())
+                .vehicleBrandModel(
+                        mr.getVehicle().getBrand() + " " + mr.getVehicle().getModel())
                 .maintenanceType(mr.getMaintenanceType())
                 .description(mr.getDescription())
                 .status(mr.getStatus())

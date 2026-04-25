@@ -2,10 +2,10 @@ package com.vfms.maintenance.dto;
 
 import com.vfms.maintenance.MaintenanceStatus;
 import com.vfms.maintenance.MaintenanceType;
-import lombok.Builder;
-import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @Builder
@@ -29,4 +29,3 @@ public class MaintenanceResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

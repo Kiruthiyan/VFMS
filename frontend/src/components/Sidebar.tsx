@@ -5,9 +5,20 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useRole } from "@/lib/role-context";
 import { Suspense } from "react";
 import {
-  LayoutDashboard, Car, Wrench, TruckIcon, Fuel, Users,
-  CalendarClock, BarChart3, UserCog, Settings, ChevronDown,
-  ChevronRight, Lock, Building2,
+  LayoutDashboard,
+  Car,
+  Wrench,
+  TruckIcon,
+  Fuel,
+  Users,
+  CalendarClock,
+  BarChart3,
+  UserCog,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  Lock,
+  Building2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -37,7 +48,10 @@ function SidebarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { role, canCreate, canApprove, canAdmin } = useRole();
-  const [expanded, setExpanded] = useState<string[]>(["Maintenance", "Rentals"]);
+  const [expanded, setExpanded] = useState<string[]>([
+    "Maintenance",
+    "Rentals",
+  ]);
 
   // Full URL including query string for exact active matching
   const fullUrl = `${pathname}${searchParams.toString() ? "?" + searchParams.toString() : ""}`;
@@ -54,7 +68,7 @@ function SidebarInner() {
 
   const toggle = (label: string) =>
     setExpanded((prev) =>
-      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
+      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label],
     );
 
   const navItems: NavItem[] = [
@@ -68,7 +82,9 @@ function SidebarInner() {
       icon: <Car className="h-4 w-4" />,
       children: [
         { label: "All Vehicles", href: "/dashboard/vehicles" },
-        ...(canAdmin ? [{ label: "Add Vehicle", href: "/dashboard/vehicles/add" }] : []),
+        ...(canAdmin
+          ? [{ label: "Add Vehicle", href: "/dashboard/vehicles/add" }]
+          : []),
       ],
     },
     {
@@ -76,8 +92,17 @@ function SidebarInner() {
       icon: <Wrench className="h-4 w-4" />,
       children: [
         { label: "All Requests", href: "/dashboard/maintenance" },
-        ...(canCreate ? [{ label: "Create Request", href: "/dashboard/maintenance/create" }] : []),
-        ...(canApprove ? [{ label: "Pending Approvals", href: "/dashboard/maintenance?status=SUBMITTED" }] : []),
+        ...(canCreate
+          ? [{ label: "Create Request", href: "/dashboard/maintenance/create" }]
+          : []),
+        ...(canApprove
+          ? [
+              {
+                label: "Pending Approvals",
+                href: "/dashboard/maintenance?status=SUBMITTED",
+              },
+            ]
+          : []),
       ],
     },
     {
@@ -85,15 +110,39 @@ function SidebarInner() {
       icon: <TruckIcon className="h-4 w-4" />,
       children: [
         { label: "All Rentals", href: "/dashboard/rentals" },
-        ...(canCreate ? [{ label: "New Rental", href: "/dashboard/rentals/create" }] : []),
-        ...(canCreate ? [{ label: "Vendors", href: "/dashboard/vendors" }] : []),
+        ...(canCreate
+          ? [{ label: "New Rental", href: "/dashboard/rentals/create" }]
+          : []),
+        ...(canCreate
+          ? [{ label: "Vendors", href: "/dashboard/vendors" }]
+          : []),
       ],
     },
-    { label: "Fuel Management", icon: <Fuel className="h-4 w-4" />, locked: true },
-    { label: "Drivers & Staff", icon: <Users className="h-4 w-4" />, locked: true },
-    { label: "Trip Scheduling", icon: <CalendarClock className="h-4 w-4" />, locked: true },
-    { label: "Reports & Analytics", icon: <BarChart3 className="h-4 w-4" />, locked: true },
-    { label: "User Management", icon: <UserCog className="h-4 w-4" />, locked: true },
+    {
+      label: "Fuel Management",
+      icon: <Fuel className="h-4 w-4" />,
+      locked: true,
+    },
+    {
+      label: "Drivers & Staff",
+      icon: <Users className="h-4 w-4" />,
+      locked: true,
+    },
+    {
+      label: "Trip Scheduling",
+      icon: <CalendarClock className="h-4 w-4" />,
+      locked: true,
+    },
+    {
+      label: "Reports & Analytics",
+      icon: <BarChart3 className="h-4 w-4" />,
+      locked: true,
+    },
+    {
+      label: "User Management",
+      icon: <UserCog className="h-4 w-4" />,
+      locked: true,
+    },
     { label: "Settings", icon: <Settings className="h-4 w-4" />, locked: true },
   ];
 
@@ -119,8 +168,12 @@ function SidebarInner() {
           <TruckIcon className="h-5 w-5 text-blue-950" />
         </div>
         <div>
-          <p className="text-white font-bold text-base leading-tight">FleetPro</p>
-          <p className="text-slate-400 text-[10px] tracking-wide">Fleet Management</p>
+          <p className="text-white font-bold text-base leading-tight">
+            FleetPro
+          </p>
+          <p className="text-slate-400 text-[10px] tracking-wide">
+            Fleet Management
+          </p>
         </div>
       </div>
 
@@ -129,7 +182,9 @@ function SidebarInner() {
         {navItems.map((item) => {
           const isActive = item.href ? pathname === item.href : false;
           const isExpanded = expanded.includes(item.label);
-          const hasActiveChild = item.children?.some((c) => isChildActive(c.href));
+          const hasActiveChild = item.children?.some((c) =>
+            isChildActive(c.href),
+          );
 
           if (item.locked) {
             return (
@@ -138,7 +193,9 @@ function SidebarInner() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-not-allowed opacity-40 select-none"
               >
                 <span className="text-slate-400">{item.icon}</span>
-                <span className="text-slate-400 text-sm flex-1">{item.label}</span>
+                <span className="text-slate-400 text-sm flex-1">
+                  {item.label}
+                </span>
                 <span className="text-[9px] font-semibold bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded-full tracking-wider">
                   SOON
                 </span>
@@ -159,10 +216,14 @@ function SidebarInner() {
                   }`}
                 >
                   <span>{item.icon}</span>
-                  <span className="text-sm font-medium flex-1">{item.label}</span>
-                  {isExpanded
-                    ? <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                    : <ChevronRight className="h-3.5 w-3.5 opacity-60" />}
+                  <span className="text-sm font-medium flex-1">
+                    {item.label}
+                  </span>
+                  {isExpanded ? (
+                    <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+                  )}
                 </button>
                 {isExpanded && (
                   <div className="relative ml-4 mt-1 space-y-0.5">
@@ -215,11 +276,21 @@ function SidebarInner() {
       <div className="border-t border-white/10 px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm shadow-lg">
-            {role === "ADMIN" ? "AD" : role === "SYSTEM_USER" ? "SU" : role === "APPROVER" ? "AP" : "DR"}
+            {role === "ADMIN"
+              ? "AD"
+              : role === "SYSTEM_USER"
+                ? "SU"
+                : role === "APPROVER"
+                  ? "AP"
+                  : "DR"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-semibold truncate">FleetPro User</p>
-            <span className={`inline-flex text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${roleColors[role]}`}>
+            <p className="text-white text-xs font-semibold truncate">
+              FleetPro User
+            </p>
+            <span
+              className={`inline-flex text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${roleColors[role]}`}
+            >
               {roleLabels[role]}
             </span>
           </div>

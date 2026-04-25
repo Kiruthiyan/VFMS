@@ -5,7 +5,16 @@ import { useParams, useRouter } from "next/navigation";
 import { vendorApi, Vendor } from "@/lib/api/rental";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, ArrowLeft, User, Phone, Mail, MapPin, Loader2, Power } from "lucide-react";
+import {
+  Building2,
+  ArrowLeft,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Loader2,
+  Power,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
@@ -17,7 +26,9 @@ export default function VendorDetailPage() {
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
 
-  useEffect(() => { fetchVendor(); }, [id]);
+  useEffect(() => {
+    fetchVendor();
+  }, [id]);
 
   const fetchVendor = async () => {
     try {
@@ -65,7 +76,11 @@ export default function VendorDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
-        <Button variant="ghost" onClick={() => router.push("/dashboard/vendors")} className="mb-4 text-slate-600 hover:text-slate-900">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/dashboard/vendors")}
+          className="mb-4 text-slate-600 hover:text-slate-900"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vendors
         </Button>
 
@@ -78,11 +93,13 @@ export default function VendorDetailPage() {
                 </div>
                 {vendor.name}
               </div>
-              <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide ${
-                vendor.active
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-red-100 text-red-700"
-              }`}>
+              <span
+                className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide ${
+                  vendor.active
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
                 {vendor.active ? "Active" : "Inactive"}
               </span>
             </CardTitle>
@@ -97,7 +114,9 @@ export default function VendorDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Contact Person</p>
-                  <p className="font-semibold text-slate-900">{vendor.contactPerson || "—"}</p>
+                  <p className="font-semibold text-slate-900">
+                    {vendor.contactPerson || "—"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
@@ -106,7 +125,9 @@ export default function VendorDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Phone</p>
-                  <p className="font-semibold text-slate-900">{vendor.phone || "—"}</p>
+                  <p className="font-semibold text-slate-900">
+                    {vendor.phone || "—"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
@@ -115,7 +136,9 @@ export default function VendorDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Email</p>
-                  <p className="font-semibold text-slate-900">{vendor.email || "—"}</p>
+                  <p className="font-semibold text-slate-900">
+                    {vendor.email || "—"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
@@ -124,7 +147,9 @@ export default function VendorDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Address</p>
-                  <p className="font-semibold text-slate-900">{vendor.address || "—"}</p>
+                  <p className="font-semibold text-slate-900">
+                    {vendor.address || "—"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -134,22 +159,30 @@ export default function VendorDetailPage() {
               {canCreate && (
                 <Button
                   className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
-                  onClick={() => router.push(`/dashboard/vendors/${vendor.id}/edit`)}
+                  onClick={() =>
+                    router.push(`/dashboard/vendors/${vendor.id}/edit`)
+                  }
                 >
                   Edit Vendor
                 </Button>
               )}
               {canAdmin && (
                 <Button
-                  className={vendor.active
-                    ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
-                    : "border-emerald-300 text-emerald-600 hover:bg-emerald-50 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98]"}
+                  className={
+                    vendor.active
+                      ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                      : "border-emerald-300 text-emerald-600 hover:bg-emerald-50 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98]"
+                  }
                   variant={vendor.active ? "default" : "outline"}
                   onClick={handleToggleStatus}
                   disabled={toggling}
                 >
                   <Power className="h-4 w-4 mr-2" />
-                  {toggling ? "Updating..." : vendor.active ? "Deactivate Vendor" : "Activate Vendor"}
+                  {toggling
+                    ? "Updating..."
+                    : vendor.active
+                      ? "Deactivate Vendor"
+                      : "Activate Vendor"}
                 </Button>
               )}
               <Button variant="outline" onClick={() => router.back()}>

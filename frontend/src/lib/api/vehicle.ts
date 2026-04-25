@@ -56,14 +56,17 @@ export const vehicleApi = {
     api.post<ApiResponse<Vehicle>>("/api/vehicles", data).then((r) => r.data),
 
   update: (id: number, data: VehicleFormData) =>
-    api.put<ApiResponse<Vehicle>>(`/api/vehicles/${id}`, data).then((r) => r.data),
-
-  deactivate: (id: number) =>
-    api.patch<ApiResponse<Vehicle>>(`/api/vehicles/${id}/deactivate`).then((r) => r.data),
+    api
+      .put<ApiResponse<Vehicle>>(`/api/vehicles/${id}`, data)
+      .then((r) => r.data),
 
   retire: (id: number) =>
-    api.patch<ApiResponse<Vehicle>>(`/api/vehicles/${id}/retire`).then((r) => r.data),
+    api
+      .patch<ApiResponse<Vehicle>>(`/api/vehicles/${id}/retire`)
+      .then((r) => r.data),
 
   filterByStatus: (status: VehicleStatus) =>
-    api.get<ApiResponse<Vehicle[]>>(`/api/vehicles?status=${status}`).then((r) => r.data),
+    api
+      .get<ApiResponse<Vehicle[]>>(`/api/vehicles?status=${status}`)
+      .then((r) => r.data),
 };
