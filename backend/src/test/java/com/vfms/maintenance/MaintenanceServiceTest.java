@@ -1,24 +1,23 @@
 package com.vfms.maintenance;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.maintenance.dto.MaintenanceRequestDto;
 import com.vfms.maintenance.dto.MaintenanceResponseDto;
 import com.vfms.vehicle.Vehicle;
 import com.vfms.vehicle.VehicleRepository;
 import com.vfms.vehicle.VehicleStatus;
-import com.vfms.common.exception.ResourceNotFoundException;
+import java.math.BigDecimal;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MaintenanceServiceTest {

@@ -1,22 +1,21 @@
 package com.vfms.rental;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.rental.dto.RentalRequestDto;
 import com.vfms.rental.dto.RentalResponseDto;
-import com.vfms.common.exception.ResourceNotFoundException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RentalServiceTest {
@@ -36,11 +35,7 @@ class RentalServiceTest {
 
     @BeforeEach
     void setUp() {
-        testVendor = Vendor.builder()
-                .id(1L)
-                .name("Acme Rentals")
-                .active(true)
-                .build();
+        testVendor = Vendor.builder().id(1L).name("Acme Rentals").active(true).build();
 
         testRentalRecord = RentalRecord.builder()
                 .id(10L)

@@ -18,31 +18,29 @@ public class VehicleController {
 
     // POST /api/vehicles
     @PostMapping
-    public ResponseEntity<ApiResponse<VehicleResponseDto>> addVehicle(
-            @Valid @RequestBody VehicleRequestDto request) {
+    public ResponseEntity<ApiResponse<VehicleResponseDto>> addVehicle(@Valid @RequestBody VehicleRequestDto request) {
         VehicleResponseDto vehicle = vehicleService.addVehicle(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Vehicle added successfully", vehicle));
     }
 
-        // GET /api/vehicles
+    // GET /api/vehicles
     @GetMapping
     public ResponseEntity<ApiResponse<java.util.List<VehicleResponseDto>>> getAllVehicles(
             @RequestParam(required = false) VehicleStatus status) {
-        java.util.List<VehicleResponseDto> vehicles = (status != null)
-                ? vehicleService.getVehiclesByStatus(status)
-                : vehicleService.getAllVehicles();
+        java.util.List<VehicleResponseDto> vehicles =
+                (status != null) ? vehicleService.getVehiclesByStatus(status) : vehicleService.getAllVehicles();
         return ResponseEntity.ok(ApiResponse.success("Vehicles retrieved", vehicles));
     }
 
-        // GET /api/vehicles/{id}
+    // GET /api/vehicles/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> getVehicleById(@PathVariable Long id) {
         VehicleResponseDto vehicle = vehicleService.getVehicleById(id);
         return ResponseEntity.ok(ApiResponse.success("Vehicle retrieved", vehicle));
     }
 
-        // PUT /api/vehicles/{id}
+    // PUT /api/vehicles/{id}
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> updateVehicle(
             @PathVariable Long id, @Valid @RequestBody VehicleRequestDto request) {
@@ -50,14 +48,7 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle updated successfully", vehicle));
     }
 
-        // PATCH /api/vehicles/{id}/deactivate
-    @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<ApiResponse<VehicleResponseDto>> deactivateVehicle(@PathVariable Long id) {
-        VehicleResponseDto vehicle = vehicleService.deactivateVehicle(id);
-        return ResponseEntity.ok(ApiResponse.success("Vehicle deactivated", vehicle));
-    }
-
-        // PATCH /api/vehicles/{id}/status?status=AVAILABLE
+    // PATCH /api/vehicles/{id}/status?status=AVAILABLE
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> updateVehicleStatus(
             @PathVariable Long id, @RequestParam VehicleStatus status) {
@@ -65,13 +56,10 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle status updated", vehicle));
     }
 
-        // PATCH /api/vehicles/{id}/retire
+    // PATCH /api/vehicles/{id}/retire
     @PatchMapping("/{id}/retire")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> retireVehicle(@PathVariable Long id) {
         VehicleResponseDto vehicle = vehicleService.retireVehicle(id);
         return ResponseEntity.ok(ApiResponse.success("Vehicle retired", vehicle));
     }
-
-
-
 }

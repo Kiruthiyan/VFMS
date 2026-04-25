@@ -9,18 +9,38 @@ import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStat
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ArrowLeft, Car, Calendar, Fuel, Building, Hash, Loader2,
-  Wrench, Clock, DollarSign, AlertCircle, History, Palette, Users, ShieldCheck, FileCheck,
+  ArrowLeft,
+  Car,
+  Calendar,
+  Fuel,
+  Building,
+  Hash,
+  Loader2,
+  Wrench,
+  Clock,
+  DollarSign,
+  AlertCircle,
+  History,
+  Palette,
+  Users,
+  ShieldCheck,
+  FileCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
-export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function VehicleDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const { canAdmin } = useRole();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [maintenanceHistory, setMaintenanceHistory] = useState<MaintenanceRequest[]>([]);
+  const [maintenanceHistory, setMaintenanceHistory] = useState<
+    MaintenanceRequest[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [retiring, setRetiring] = useState(false);
@@ -55,7 +75,12 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   }, [id]);
 
   const handleRetire = async () => {
-    if (!confirm(`Are you sure you want to retire ${vehicle?.brand} ${vehicle?.model}? This cannot be undone.`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to retire ${vehicle?.brand} ${vehicle?.model}? This cannot be undone.`,
+      )
+    )
+      return;
     setRetiring(true);
     try {
       await vehicleApi.retire(Number(id));
@@ -96,7 +121,11 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 max-w-4xl mx-auto animate-in fade-in duration-500">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4 text-slate-600 hover:text-slate-900">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="mb-4 text-slate-600 hover:text-slate-900"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vehicles
         </Button>
 
@@ -153,35 +182,45 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                     <Hash className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Plate Number</p>
-                      <p className="font-semibold text-slate-900">{vehicle.plateNumber}</p>
+                      <p className="font-semibold text-slate-900">
+                        {vehicle.plateNumber}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                     <Car className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Vehicle Type</p>
-                      <p className="font-semibold text-slate-900">{vehicle.vehicleType}</p>
+                      <p className="font-semibold text-slate-900">
+                        {vehicle.vehicleType}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                     <Fuel className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Fuel Type</p>
-                      <p className="font-semibold text-slate-900">{vehicle.fuelType}</p>
+                      <p className="font-semibold text-slate-900">
+                        {vehicle.fuelType}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                     <Calendar className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Year</p>
-                      <p className="font-semibold text-slate-900">{vehicle.year}</p>
+                      <p className="font-semibold text-slate-900">
+                        {vehicle.year}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm col-span-2">
                     <Building className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-xs text-slate-500">Department</p>
-                      <p className="font-semibold text-slate-900">{vehicle.department || "Not assigned"}</p>
+                      <p className="font-semibold text-slate-900">
+                        {vehicle.department || "Not assigned"}
+                      </p>
                     </div>
                   </div>
 
@@ -189,14 +228,18 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   {(vehicle.color || vehicle.seatingCapacity) && (
                     <>
                       <div className="col-span-2 pt-1">
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Additional Details</p>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Additional Details
+                        </p>
                       </div>
                       {vehicle.color && (
                         <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                           <Palette className="h-5 w-5 text-blue-600" />
                           <div>
                             <p className="text-xs text-slate-500">Color</p>
-                            <p className="font-semibold text-slate-900">{vehicle.color}</p>
+                            <p className="font-semibold text-slate-900">
+                              {vehicle.color}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -204,8 +247,12 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                         <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
                           <Users className="h-5 w-5 text-blue-600" />
                           <div>
-                            <p className="text-xs text-slate-500">Seating Capacity</p>
-                            <p className="font-semibold text-slate-900">{vehicle.seatingCapacity} seats</p>
+                            <p className="text-xs text-slate-500">
+                              Seating Capacity
+                            </p>
+                            <p className="font-semibold text-slate-900">
+                              {vehicle.seatingCapacity} seats
+                            </p>
                           </div>
                         </div>
                       )}
@@ -213,51 +260,104 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   )}
 
                   {/* Compliance Dates */}
-                  {(vehicle.insuranceExpiryDate || vehicle.revenueLicenseExpiryDate) && (
+                  {(vehicle.insuranceExpiryDate ||
+                    vehicle.revenueLicenseExpiryDate) && (
                     <>
                       <div className="col-span-2 pt-1">
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Compliance & Expiry Dates</p>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          Compliance & Expiry Dates
+                        </p>
                       </div>
-                      {vehicle.insuranceExpiryDate && (() => {
-                        const expiry = new Date(vehicle.insuranceExpiryDate);
-                        const today = new Date();
-                        const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                        const isExpired = daysLeft < 0;
-                        const isWarning = daysLeft >= 0 && daysLeft <= 30;
-                        return (
-                          <div className={`flex items-center gap-3 p-4 rounded-lg ${isExpired ? "bg-red-50" : isWarning ? "bg-amber-50" : "bg-slate-50"}`}>
-                            <ShieldCheck className={`h-5 w-5 ${isExpired ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-600"}`} />
-                            <div>
-                              <p className="text-xs text-slate-500">Insurance Expiry</p>
-                              <p className={`font-semibold ${isExpired ? "text-red-700" : isWarning ? "text-amber-700" : "text-slate-900"}`}>
-                                {expiry.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                              </p>
-                              {isExpired && <p className="text-xs text-red-500 font-medium">Expired {Math.abs(daysLeft)} days ago</p>}
-                              {isWarning && <p className="text-xs text-amber-500 font-medium">Expires in {daysLeft} days</p>}
+                      {vehicle.insuranceExpiryDate &&
+                        (() => {
+                          const expiry = new Date(vehicle.insuranceExpiryDate);
+                          const today = new Date();
+                          const daysLeft = Math.ceil(
+                            (expiry.getTime() - today.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          );
+                          const isExpired = daysLeft < 0;
+                          const isWarning = daysLeft >= 0 && daysLeft <= 30;
+                          return (
+                            <div
+                              className={`flex items-center gap-3 p-4 rounded-lg ${isExpired ? "bg-red-50" : isWarning ? "bg-amber-50" : "bg-slate-50"}`}
+                            >
+                              <ShieldCheck
+                                className={`h-5 w-5 ${isExpired ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-600"}`}
+                              />
+                              <div>
+                                <p className="text-xs text-slate-500">
+                                  Insurance Expiry
+                                </p>
+                                <p
+                                  className={`font-semibold ${isExpired ? "text-red-700" : isWarning ? "text-amber-700" : "text-slate-900"}`}
+                                >
+                                  {expiry.toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </p>
+                                {isExpired && (
+                                  <p className="text-xs text-red-500 font-medium">
+                                    Expired {Math.abs(daysLeft)} days ago
+                                  </p>
+                                )}
+                                {isWarning && (
+                                  <p className="text-xs text-amber-500 font-medium">
+                                    Expires in {daysLeft} days
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })()}
-                      {vehicle.revenueLicenseExpiryDate && (() => {
-                        const expiry = new Date(vehicle.revenueLicenseExpiryDate);
-                        const today = new Date();
-                        const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                        const isExpired = daysLeft < 0;
-                        const isWarning = daysLeft >= 0 && daysLeft <= 30;
-                        return (
-                          <div className={`flex items-center gap-3 p-4 rounded-lg ${isExpired ? "bg-red-50" : isWarning ? "bg-amber-50" : "bg-slate-50"}`}>
-                            <FileCheck className={`h-5 w-5 ${isExpired ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-600"}`} />
-                            <div>
-                              <p className="text-xs text-slate-500">Revenue License Expiry</p>
-                              <p className={`font-semibold ${isExpired ? "text-red-700" : isWarning ? "text-amber-700" : "text-slate-900"}`}>
-                                {expiry.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                              </p>
-                              {isExpired && <p className="text-xs text-red-500 font-medium">Expired {Math.abs(daysLeft)} days ago</p>}
-                              {isWarning && <p className="text-xs text-amber-500 font-medium">Expires in {daysLeft} days</p>}
+                          );
+                        })()}
+                      {vehicle.revenueLicenseExpiryDate &&
+                        (() => {
+                          const expiry = new Date(
+                            vehicle.revenueLicenseExpiryDate,
+                          );
+                          const today = new Date();
+                          const daysLeft = Math.ceil(
+                            (expiry.getTime() - today.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          );
+                          const isExpired = daysLeft < 0;
+                          const isWarning = daysLeft >= 0 && daysLeft <= 30;
+                          return (
+                            <div
+                              className={`flex items-center gap-3 p-4 rounded-lg ${isExpired ? "bg-red-50" : isWarning ? "bg-amber-50" : "bg-slate-50"}`}
+                            >
+                              <FileCheck
+                                className={`h-5 w-5 ${isExpired ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-600"}`}
+                              />
+                              <div>
+                                <p className="text-xs text-slate-500">
+                                  Revenue License Expiry
+                                </p>
+                                <p
+                                  className={`font-semibold ${isExpired ? "text-red-700" : isWarning ? "text-amber-700" : "text-slate-900"}`}
+                                >
+                                  {expiry.toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </p>
+                                {isExpired && (
+                                  <p className="text-xs text-red-500 font-medium">
+                                    Expired {Math.abs(daysLeft)} days ago
+                                  </p>
+                                )}
+                                {isWarning && (
+                                  <p className="text-xs text-amber-500 font-medium">
+                                    Expires in {daysLeft} days
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })()}
+                          );
+                        })()}
                     </>
                   )}
                 </div>
@@ -266,7 +366,9 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   {canAdmin && (
                     <Button
                       className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
-                      onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}/edit`)}
+                      onClick={() =>
+                        router.push(`/dashboard/vehicles/${vehicle.id}/edit`)
+                      }
                     >
                       Edit Vehicle
                     </Button>
@@ -290,7 +392,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             {/* ── Maintenance History Tab ── */}
             {activeTab === "history" && (
               <div className="space-y-6">
-
                 {/* Summary Stats */}
                 {!historyLoading && maintenanceHistory.length > 0 && (
                   <div className="grid grid-cols-3 gap-4">
@@ -300,7 +401,9 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Total Requests</p>
-                        <p className="font-bold text-slate-900 text-lg">{maintenanceHistory.length}</p>
+                        <p className="font-bold text-slate-900 text-lg">
+                          {maintenanceHistory.length}
+                        </p>
                       </div>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-lg flex items-center gap-3">
@@ -310,7 +413,9 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                       <div>
                         <p className="text-xs text-slate-500">Total Cost</p>
                         <p className="font-bold text-slate-900 text-lg">
-                          {totalActualCost > 0 ? `Rs. ${totalActualCost.toLocaleString()}` : "—"}
+                          {totalActualCost > 0
+                            ? `Rs. ${totalActualCost.toLocaleString()}`
+                            : "—"}
                         </p>
                       </div>
                     </div>
@@ -341,11 +446,15 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 ) : maintenanceHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-3">
                     <AlertCircle className="h-10 w-10 text-slate-300" />
-                    <p className="text-sm font-medium">No maintenance records found for this vehicle.</p>
+                    <p className="text-sm font-medium">
+                      No maintenance records found for this vehicle.
+                    </p>
                     <Button
                       size="sm"
                       className="bg-blue-950 hover:bg-blue-900 text-white mt-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
-                      onClick={() => router.push("/dashboard/maintenance/create")}
+                      onClick={() =>
+                        router.push("/dashboard/maintenance/create")
+                      }
                     >
                       <Wrench className="mr-2 h-4 w-4" /> Create First Request
                     </Button>
@@ -355,57 +464,94 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                     <table className="w-full text-left text-sm">
                       <thead className="bg-blue-950">
                         <tr>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Type</th>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Description</th>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Status</th>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Cost</th>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Downtime</th>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">Date</th>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">Action</th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                            Type
+                          </th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                            Description
+                          </th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                            Status
+                          </th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                            Cost
+                          </th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                            Downtime
+                          </th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                            Date
+                          </th>
+                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
+                            Action
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {maintenanceHistory
                           .slice()
-                          .sort((a, b) => new Date(b.requestedDate).getTime() - new Date(a.requestedDate).getTime())
+                          .sort(
+                            (a, b) =>
+                              new Date(b.requestedDate).getTime() -
+                              new Date(a.requestedDate).getTime(),
+                          )
                           .map((rec) => (
-                            <tr key={rec.id} className="group hover:bg-slate-50/80 transition-colors">
+                            <tr
+                              key={rec.id}
+                              className="group hover:bg-slate-50/80 transition-colors"
+                            >
                               <td className="px-5 py-3">
                                 <span className="inline-flex px-2 py-1 rounded-md bg-slate-100 text-slate-600 font-medium text-xs">
                                   {rec.maintenanceType.replace(/_/g, " ")}
                                 </span>
                               </td>
-                              <td className="px-5 py-3 text-slate-600 max-w-[180px] truncate">{rec.description}</td>
+                              <td className="px-5 py-3 text-slate-600 max-w-[180px] truncate">
+                                {rec.description}
+                              </td>
                               <td className="px-5 py-3">
                                 <MaintenanceStatusBadge status={rec.status} />
                               </td>
                               <td className="px-5 py-3 text-slate-700 text-xs">
-                                {rec.actualCost != null
-                                  ? `Rs. ${Number(rec.actualCost).toLocaleString()}`
-                                  : rec.estimatedCost != null
-                                  ? <span className="text-slate-400">Est. Rs. {Number(rec.estimatedCost).toLocaleString()}</span>
-                                  : "—"}
+                                {rec.actualCost != null ? (
+                                  `Rs. ${Number(rec.actualCost).toLocaleString()}`
+                                ) : rec.estimatedCost != null ? (
+                                  <span className="text-slate-400">
+                                    Est. Rs.{" "}
+                                    {Number(rec.estimatedCost).toLocaleString()}
+                                  </span>
+                                ) : (
+                                  "—"
+                                )}
                               </td>
                               <td className="px-5 py-3 text-slate-700 text-xs">
                                 {rec.downtimeHours != null
                                   ? rec.downtimeHours === 0
                                     ? "< 1h"
                                     : rec.downtimeHours >= 24
-                                    ? `${Math.floor(rec.downtimeHours / 24)}d ${rec.downtimeHours % 24}h`
-                                    : `${rec.downtimeHours}h`
+                                      ? `${Math.floor(rec.downtimeHours / 24)}d ${rec.downtimeHours % 24}h`
+                                      : `${rec.downtimeHours}h`
                                   : "—"}
                               </td>
                               <td className="px-5 py-3 text-slate-500 text-xs">
-                                {new Date(rec.requestedDate).toLocaleDateString("en-GB", {
-                                  day: "2-digit", month: "short", year: "numeric",
-                                })}
+                                {new Date(rec.requestedDate).toLocaleDateString(
+                                  "en-GB",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  },
+                                )}
                               </td>
                               <td className="px-5 py-3 text-right">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="text-blue-600 hover:text-blue-900 text-xs opacity-80 group-hover:opacity-100 transition-opacity"
-                                  onClick={() => router.push(`/dashboard/maintenance/${rec.id}`)}
+                                  onClick={() =>
+                                    router.push(
+                                      `/dashboard/maintenance/${rec.id}`,
+                                    )
+                                  }
                                 >
                                   View
                                 </Button>

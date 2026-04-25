@@ -7,7 +7,11 @@ import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Car, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -24,9 +28,10 @@ export default function RentalsPage() {
   const fetchRentals = async () => {
     setLoading(true);
     try {
-      const res = (statusFilter !== "ALL")
-        ? await rentalApi.getByStatus(statusFilter as RentalStatus)
-        : await rentalApi.getAll();
+      const res =
+        statusFilter !== "ALL"
+          ? await rentalApi.getByStatus(statusFilter as RentalStatus)
+          : await rentalApi.getAll();
       setRentals(res.data);
     } catch {
       toast.error("Failed to load rentals");
@@ -55,12 +60,23 @@ export default function RentalsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">External Vehicle Rentals</h1>
-            <p className="text-slate-500 mt-1">Rent vehicles from vendors to supplement the company fleet</p>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              External Vehicle Rentals
+            </h1>
+            <p className="text-slate-500 mt-1">
+              Rent vehicles from vendors to supplement the company fleet
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={fetchRentals} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={fetchRentals}
+              disabled={loading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
             </Button>
             {canCreate && (
               <Button
@@ -105,42 +121,72 @@ export default function RentalsPage() {
               <Loader2 className="h-5 w-5 animate-spin" /> Loading rentals...
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No rentals found.</div>
+            <div className="p-8 text-center text-slate-500">
+              No rentals found.
+            </div>
           ) : (
             <table className="w-full text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Vehicle</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Vendor</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Period</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Cost</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">Status</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Vehicle
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Vendor
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Period
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Cost
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="group hover:bg-slate-50/80 transition-colors">
+                  <tr
+                    key={r.id}
+                    className="group hover:bg-slate-50/80 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950 shadow-sm ring-1 ring-black/5">
                           <Car className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="font-medium text-slate-900">{r.plateNumber}</div>
-                          <div className="text-slate-500 text-xs">{r.vehicleType}</div>
+                          <div className="font-medium text-slate-900">
+                            {r.plateNumber}
+                          </div>
+                          <div className="text-slate-500 text-xs">
+                            {r.vehicleType}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-600">{r.vendorName}</td>
                     <td className="px-6 py-4">
                       <div className="text-slate-600">{r.startDate}</div>
-                      <div className="text-slate-400 text-xs">{r.endDate ? `to ${r.endDate}` : "Ongoing"}</div>
+                      <div className="text-slate-400 text-xs">
+                        {r.endDate ? `to ${r.endDate}` : "Ongoing"}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-slate-600">Rs.{r.costPerDay.toLocaleString()}<span className="text-xs text-slate-400">/day (vendor rate)</span></div>
+                      <div className="text-slate-600">
+                        Rs.{r.costPerDay.toLocaleString()}
+                        <span className="text-xs text-slate-400">
+                          /day (vendor rate)
+                        </span>
+                      </div>
                       {r.totalCost && (
-                        <div className="text-emerald-600 text-xs font-medium">Total: Rs.{r.totalCost.toLocaleString()}</div>
+                        <div className="text-emerald-600 text-xs font-medium">
+                          Total: Rs.{r.totalCost.toLocaleString()}
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -151,7 +197,9 @@ export default function RentalsPage() {
                         variant="ghost"
                         size="sm"
                         className="text-blue-600 hover:text-blue-900 opacity-80 group-hover:opacity-100 transition-opacity"
-                        onClick={() => router.push(`/dashboard/rentals/${r.id}`)}
+                        onClick={() =>
+                          router.push(`/dashboard/rentals/${r.id}`)
+                        }
                       >
                         View
                       </Button>

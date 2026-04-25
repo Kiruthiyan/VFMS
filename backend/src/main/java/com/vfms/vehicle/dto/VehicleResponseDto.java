@@ -1,10 +1,12 @@
 package com.vfms.vehicle.dto;
 
-import com.vfms.vehicle.*;
-import lombok.Builder;
-import lombok.Data;
+import com.vfms.vehicle.FuelType;
+import com.vfms.vehicle.VehicleStatus;
+import com.vfms.vehicle.VehicleType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @Builder

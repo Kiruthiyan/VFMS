@@ -17,25 +17,22 @@ public class RentalController {
     private final RentalService rentalService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<RentalResponseDto>> createRental(
-            @Valid @RequestBody RentalRequestDto request) {
+    public ResponseEntity<ApiResponse<RentalResponseDto>> createRental(@Valid @RequestBody RentalRequestDto request) {
         RentalResponseDto response = rentalService.createRental(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Rental record created", response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Rental record created", response));
     }
 
-        // PUT /api/rentals/{id}
+    // PUT /api/rentals/{id}
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RentalResponseDto>> updateRental(
             @PathVariable Long id, @Valid @RequestBody RentalRequestDto request) {
         RentalResponseDto response = rentalService.updateRental(id, request);
         return ResponseEntity.ok(ApiResponse.success("Rental updated", response));
     }
-        // GET /api/rentals
+    // GET /api/rentals
     @GetMapping
     public ResponseEntity<ApiResponse<java.util.List<RentalResponseDto>>> getAllRentals(
-            @RequestParam(required = false) RentalStatus status,
-            @RequestParam(required = false) Long vendorId) {
+            @RequestParam(required = false) RentalStatus status, @RequestParam(required = false) Long vendorId) {
         java.util.List<RentalResponseDto> response;
         if (status != null) {
             response = rentalService.getRentalsByStatus(status);
@@ -46,13 +43,13 @@ public class RentalController {
         }
         return ResponseEntity.ok(ApiResponse.success("Rentals fetched", response));
     }
-        // GET /api/rentals/{id}
+    // GET /api/rentals/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<RentalResponseDto>> getRentalById(@PathVariable Long id) {
         RentalResponseDto response = rentalService.getRentalById(id);
         return ResponseEntity.ok(ApiResponse.success("Rental fetched", response));
     }
-        // POST /api/rentals/{id}/agreement (file upload)
+    // POST /api/rentals/{id}/agreement (file upload)
     @PostMapping("/{id}/agreement")
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadAgreement(
             @PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
@@ -90,8 +87,10 @@ public class RentalController {
     @GetMapping("/files/{fileName}")
     public ResponseEntity<org.springframework.core.io.Resource> getFile(@PathVariable String fileName) {
         try {
-            java.nio.file.Path filePath = java.nio.file.Paths.get("uploads/rental").resolve(fileName);
-            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+            java.nio.file.Path filePath =
+                    java.nio.file.Paths.get("uploads/rental").resolve(fileName);
+            org.springframework.core.io.Resource resource =
+                    new org.springframework.core.io.UrlResource(filePath.toUri());
             String contentType = fileName.endsWith(".pdf") ? "application/pdf" : "application/octet-stream";
             return ResponseEntity.ok()
                     .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
@@ -102,7 +101,7 @@ public class RentalController {
         }
     }
 
-        // PATCH /api/rentals/{id}/return?returnDate=2026-04-20
+    // PATCH /api/rentals/{id}/return?returnDate=2026-04-20
     @PatchMapping("/{id}/return")
     public ResponseEntity<ApiResponse<RentalResponseDto>> confirmReturn(
             @PathVariable Long id, @RequestParam java.time.LocalDate returnDate) {
@@ -110,7 +109,7 @@ public class RentalController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle return confirmed", response));
     }
 
-        // PATCH /api/rentals/{id}/close
+    // PATCH /api/rentals/{id}/close
     @PatchMapping("/{id}/close")
     public ResponseEntity<ApiResponse<RentalResponseDto>> closeRental(@PathVariable Long id) {
         RentalResponseDto response = rentalService.closeRental(id);
@@ -120,13 +119,15 @@ public class RentalController {
     // GET /api/rentals/reports/cost-summary
     @GetMapping("/reports/cost-summary")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getRentalCostSummary() {
-        return ResponseEntity.ok(ApiResponse.success("Rental cost summary fetched", rentalService.getRentalCostSummary()));
+        return ResponseEntity.ok(
+                ApiResponse.success("Rental cost summary fetched", rentalService.getRentalCostSummary()));
     }
 
     // GET /api/rentals/reports/active
     @GetMapping("/reports/active")
     public ResponseEntity<ApiResponse<java.util.List<RentalResponseDto>>> getActiveRentals() {
-        return ResponseEntity.ok(ApiResponse.success("Active rentals fetched", rentalService.getRentalsByStatus(RentalStatus.ACTIVE)));
+        return ResponseEntity.ok(
+                ApiResponse.success("Active rentals fetched", rentalService.getRentalsByStatus(RentalStatus.ACTIVE)));
     }
 
     // GET /api/rentals/reports/cost-per-vendor
@@ -134,5 +135,4 @@ public class RentalController {
     public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> getCostPerVendor() {
         return ResponseEntity.ok(ApiResponse.success("Cost per vendor fetched", rentalService.getCostPerVendor()));
     }
-
 }

@@ -16,7 +16,11 @@ export default function AddVendorPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState<VendorFormData>({
-    name: "", contactPerson: "", phone: "", email: "", address: "",
+    name: "",
+    contactPerson: "",
+    phone: "",
+    email: "",
+    address: "",
   });
 
   const fieldClass = (field: string) =>
@@ -51,7 +55,11 @@ export default function AddVendorPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
-        <Button variant="ghost" onClick={() => router.push("/dashboard/vendors")} className="mb-4 text-slate-600 hover:text-slate-900">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/dashboard/vendors")}
+          className="mb-4 text-slate-600 hover:text-slate-900"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vendors
         </Button>
 
@@ -69,46 +77,111 @@ export default function AddVendorPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Vendor Name *</label>
-                  <Input value={form.name}
-                    onChange={(e) => { setForm({ ...form, name: e.target.value }); setErrors({ ...errors, name: "" }); }}
-                    placeholder="City Rentals" className={fieldClass("name")} />
-                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                    Vendor Name *
+                  </label>
+                  <Input
+                    value={form.name}
+                    onChange={(e) => {
+                      setForm({ ...form, name: e.target.value });
+                      setErrors({ ...errors, name: "" });
+                    }}
+                    placeholder="City Rentals"
+                    className={fieldClass("name")}
+                  />
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                  )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Contact Person <span className="text-slate-400 font-normal">(Optional)</span></label>
-                  <Input value={form.contactPerson || ""}
-                    onChange={(e) => setForm({ ...form, contactPerson: e.target.value })}
-                    placeholder="John Doe" className="text-slate-900" />
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                    Contact Person{" "}
+                    <span className="text-slate-400 font-normal">
+                      (Optional)
+                    </span>
+                  </label>
+                  <Input
+                    value={form.contactPerson || ""}
+                    onChange={(e) =>
+                      setForm({ ...form, contactPerson: e.target.value })
+                    }
+                    placeholder="John Doe"
+                    className="text-slate-900"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Phone <span className="text-slate-400 font-normal">(Optional)</span></label>
-                  <Input value={form.phone || ""}
-                    onChange={(e) => { setForm({ ...form, phone: e.target.value }); setErrors({ ...errors, phone: "" }); }}
-                    placeholder="e.g. 0771234567" className={fieldClass("phone")} />
-                  {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                    Phone{" "}
+                    <span className="text-slate-400 font-normal">
+                      (Optional)
+                    </span>
+                  </label>
+                  <Input
+                    value={form.phone || ""}
+                    onChange={(e) => {
+                      setForm({ ...form, phone: e.target.value });
+                      setErrors({ ...errors, phone: "" });
+                    }}
+                    placeholder="e.g. 0771234567"
+                    className={fieldClass("phone")}
+                  />
+                  {errors.phone && (
+                    <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                  )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email <span className="text-slate-400 font-normal">(Optional)</span></label>
-                  <Input value={form.email || ""}
-                    onChange={(e) => { setForm({ ...form, email: e.target.value }); setErrors({ ...errors, email: "" }); }}
-                    placeholder="vendor@email.com" className={fieldClass("email")} />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                    Email{" "}
+                    <span className="text-slate-400 font-normal">
+                      (Optional)
+                    </span>
+                  </label>
+                  <Input
+                    value={form.email || ""}
+                    onChange={(e) => {
+                      setForm({ ...form, email: e.target.value });
+                      setErrors({ ...errors, email: "" });
+                    }}
+                    placeholder="vendor@email.com"
+                    className={fieldClass("email")}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  )}
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Address <span className="text-slate-400 font-normal">(Optional)</span></label>
-                <Input value={form.address || ""}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  placeholder="123 Main St, Colombo" className="text-slate-900" />
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                  Address{" "}
+                  <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <Input
+                  value={form.address || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, address: e.target.value })
+                  }
+                  placeholder="123 Main St, Colombo"
+                  className="text-slate-900"
+                />
               </div>
               <div className="flex gap-3 pt-3 border-t border-slate-200">
-                <Button type="submit" className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200" disabled={submitting}>
-                  <Save className="mr-2 h-4 w-4" /> {submitting ? "Saving..." : "Add Vendor"}
+                <Button
+                  type="submit"
+                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                  disabled={submitting}
+                >
+                  <Save className="mr-2 h-4 w-4" />{" "}
+                  {submitting ? "Saving..." : "Add Vendor"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => router.push("/dashboard/vendors")}>Cancel</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/dashboard/vendors")}
+                >
+                  Cancel
+                </Button>
               </div>
             </form>
           </CardContent>

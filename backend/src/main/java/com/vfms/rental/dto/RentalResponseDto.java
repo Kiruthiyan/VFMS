@@ -1,12 +1,15 @@
 package com.vfms.rental.dto;
 
 import com.vfms.rental.RentalStatus;
-import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.*;
 
-@Data @Builder @NoArgsConstructor @AllArgsConstructor
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RentalResponseDto {
     private Long id;
     private Long vendorId;

@@ -133,6 +133,19 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>2.43.0</version>
+				<configuration>
+					<lineEndings>WINDOWS</lineEndings>
+					<java>
+						<palantirJavaFormat/>
+						<removeUnusedImports/>
+						<formatAnnotations/>
+					</java>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

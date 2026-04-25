@@ -1,8 +1,8 @@
 package com.vfms.maintenance;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import java.util.List;
 
 @Repository
 public interface MaintenanceRepository extends JpaRepository<MaintenanceRequest, Long> {
@@ -13,4 +13,3 @@ public interface MaintenanceRepository extends JpaRepository<MaintenanceRequest,
 
     List<MaintenanceRequest> findByStatusIn(List<MaintenanceStatus> statuses);
 }
-

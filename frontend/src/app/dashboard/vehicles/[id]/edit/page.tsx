@@ -7,7 +7,11 @@ import { VehicleForm } from "@/components/vehicles/VehicleForm";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-export default function EditVehiclePage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditVehiclePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const [initialData, setInitialData] = useState<VehicleFormData | null>(null);

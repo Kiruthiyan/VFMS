@@ -4,6 +4,12 @@ import com.vfms.common.dto.ApiResponse;
 import com.vfms.maintenance.dto.MaintenanceRequestDto;
 import com.vfms.maintenance.dto.MaintenanceResponseDto;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -11,13 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/maintenance")
@@ -58,7 +57,6 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Request rejected", response));
     }
 
-
     // PATCH /api/maintenance/{id}/submit
     @PatchMapping("/{id}/submit")
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> submitRequest(@PathVariable Long id) {
@@ -77,8 +75,7 @@ public class MaintenanceController {
     // GET /api/maintenance
     @GetMapping
     public ResponseEntity<ApiResponse<List<MaintenanceResponseDto>>> getAllRequests(
-            @RequestParam(required = false) MaintenanceStatus status,
-            @RequestParam(required = false) Long vehicleId) {
+            @RequestParam(required = false) MaintenanceStatus status, @RequestParam(required = false) Long vehicleId) {
         List<MaintenanceResponseDto> response;
         if (status != null) {
             response = maintenanceService.getRequestsByStatus(status);
@@ -151,8 +148,7 @@ public class MaintenanceController {
 
     // GET /api/maintenance/reports/downtime?vehicleId=...
     @GetMapping("/reports/downtime")
-    public ResponseEntity<ApiResponse<List<MaintenanceResponseDto>>> getDowntimeReport(
-            @RequestParam Long vehicleId) {
+    public ResponseEntity<ApiResponse<List<MaintenanceResponseDto>>> getDowntimeReport(@RequestParam Long vehicleId) {
         List<MaintenanceResponseDto> response = maintenanceService.getDowntimeByVehicle(vehicleId);
         return ResponseEntity.ok(ApiResponse.success("Downtime report fetched", response));
     }
@@ -167,19 +163,21 @@ public class MaintenanceController {
     // GET /api/maintenance/reports/cost-summary
     @GetMapping("/reports/cost-summary")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCostSummary() {
-        return ResponseEntity.ok(ApiResponse.success("Cost summary fetched", maintenanceService.getMaintenanceCostSummary()));
+        return ResponseEntity.ok(
+                ApiResponse.success("Cost summary fetched", maintenanceService.getMaintenanceCostSummary()));
     }
 
     // GET /api/maintenance/reports/cost-by-type
     @GetMapping("/reports/cost-by-type")
     public ResponseEntity<ApiResponse<Map<String, BigDecimal>>> getCostByType() {
-        return ResponseEntity.ok(ApiResponse.success("Cost by type fetched", maintenanceService.getCostByMaintenanceType()));
+        return ResponseEntity.ok(
+                ApiResponse.success("Cost by type fetched", maintenanceService.getCostByMaintenanceType()));
     }
 
     // GET /api/maintenance/reports/cost-per-vehicle
     @GetMapping("/reports/cost-per-vehicle")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCostPerVehicle() {
-        return ResponseEntity.ok(ApiResponse.success("Cost per vehicle fetched", maintenanceService.getCostPerVehicle()));
+        return ResponseEntity.ok(
+                ApiResponse.success("Cost per vehicle fetched", maintenanceService.getCostPerVehicle()));
     }
-
 }

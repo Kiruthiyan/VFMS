@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 export type Role = "ADMIN" | "SYSTEM_USER" | "APPROVER" | "DRIVER";
 
@@ -11,9 +17,9 @@ interface RoleContextType {
   isSystemUser: boolean;
   isApprover: boolean;
   isDriver: boolean;
-  canCreate: boolean;   // ADMIN, SYSTEM_USER
-  canApprove: boolean;  // ADMIN, APPROVER
-  canAdmin: boolean;    // ADMIN only
+  canCreate: boolean; // ADMIN, SYSTEM_USER
+  canApprove: boolean; // ADMIN, APPROVER
+  canAdmin: boolean; // ADMIN only
 }
 
 const RoleContext = createContext<RoleContextType>({

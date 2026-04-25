@@ -21,7 +21,10 @@ const roleBadgeColors: Record<string, string> = {
 
 // Build readable breadcrumb from pathname
 function getBreadcrumb(pathname: string): string {
-  const segments = pathname.replace("/dashboard", "").split("/").filter(Boolean);
+  const segments = pathname
+    .replace("/dashboard", "")
+    .split("/")
+    .filter(Boolean);
   if (segments.length === 0) return "Dashboard Overview";
   return segments
     .map((s) => {
@@ -66,10 +69,14 @@ export function Topbar() {
             onClick={() => setShowRolePicker((v) => !v)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
           >
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadgeColors[role]}`}>
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadgeColors[role]}`}
+            >
               {ROLES.find((r) => r.value === role)?.label}
             </span>
-            <span className="text-[10px] text-slate-400 hidden sm:block">Demo Role</span>
+            <span className="text-[10px] text-slate-400 hidden sm:block">
+              Demo Role
+            </span>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
           </button>
 
@@ -81,12 +88,19 @@ export function Topbar() {
               {ROLES.map((r) => (
                 <button
                   key={r.value}
-                  onClick={() => { setRole(r.value); setShowRolePicker(false); }}
+                  onClick={() => {
+                    setRole(r.value);
+                    setShowRolePicker(false);
+                  }}
                   className={`w-full text-left text-sm px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${
-                    role === r.value ? "text-blue-700 font-semibold bg-blue-50" : "text-slate-700"
+                    role === r.value
+                      ? "text-blue-700 font-semibold bg-blue-50"
+                      : "text-slate-700"
                   }`}
                 >
-                  <span className={`h-2 w-2 rounded-full ${role === r.value ? "bg-blue-500" : "bg-slate-200"}`} />
+                  <span
+                    className={`h-2 w-2 rounded-full ${role === r.value ? "bg-blue-500" : "bg-slate-200"}`}
+                  />
                   {r.label}
                 </button>
               ))}
@@ -96,7 +110,13 @@ export function Topbar() {
 
         {/* Avatar */}
         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-xs shadow">
-          {role === "ADMIN" ? "AD" : role === "SYSTEM_USER" ? "SU" : role === "APPROVER" ? "AP" : "DR"}
+          {role === "ADMIN"
+            ? "AD"
+            : role === "SYSTEM_USER"
+              ? "SU"
+              : role === "APPROVER"
+                ? "AP"
+                : "DR"}
         </div>
       </div>
     </header>
