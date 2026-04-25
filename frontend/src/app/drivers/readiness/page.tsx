@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { CheckCircle2, LayoutDashboard, RefreshCw, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
@@ -78,26 +79,31 @@ export default function DriverReadinessPage() {
           </div>
         </div>
 
-        <button
-          className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium border transition-colors"
-          style={{
-            borderColor: 'hsl(var(--primary))',
-            color: 'hsl(var(--primary))',
-            backgroundColor: 'transparent',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'hsl(var(--primary))';
-            e.currentTarget.style.color = 'hsl(var(--primary-foreground))';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'hsl(var(--primary))';
-          }}
-          onClick={fetchDrivers}
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Refresh All
-        </button>
+        <div className="flex items-center gap-2">
+          <Link href="/drivers" className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md border border-border hover:bg-muted transition-colors">
+            Back
+          </Link>
+          <button
+            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium border transition-colors"
+            style={{
+              borderColor: 'hsl(var(--primary))',
+              color: 'hsl(var(--primary))',
+              backgroundColor: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'hsl(var(--primary))';
+              e.currentTarget.style.color = 'hsl(var(--primary-foreground))';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'hsl(var(--primary))';
+            }}
+            onClick={fetchDrivers}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh All
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">

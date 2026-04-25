@@ -119,6 +119,10 @@ export default function StaffPage() {
       <PageHeader icon={<Users2 className="w-5 h-5" />} title="Staff" subtitle="Manage staff members"
         action={
           <div className="flex items-center gap-2">
+            <Link href="/drivers" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors">
+              Back
+            </Link>
+
             <Link href="/service-requests">
               <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
                 Service Requests

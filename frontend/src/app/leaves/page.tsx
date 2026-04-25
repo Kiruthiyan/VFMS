@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch, getErrorMessage } from '@/lib/api';
@@ -115,86 +116,92 @@ export default function LeavesPage() {
         title="Leave Requests"
         subtitle="Pending driver leave approvals"
         action={
-          <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
-            <DialogTrigger asChild>
-              <button
-                className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium"
-                style={{
-                  backgroundColor: 'hsl(var(--primary))',
-                  color: 'hsl(var(--primary-foreground))',
-                }}
-              >
-                New Leave Request
-              </button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Submit Driver Leave Request</DialogTitle>
-              </DialogHeader>
+          <div className="flex items-center gap-2">
+            <Link href="/drivers" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors">
+              Back
+            </Link>
 
-              <div className="space-y-3 pt-1">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Driver</Label>
-                  <Select value={driverId} onValueChange={setDriverId}>
-                    <SelectTrigger className="mt-1 h-9 text-sm">
-                      <SelectValue placeholder="Select driver" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {drivers.map((driver) => (
-                        <SelectItem key={driver.id} value={driver.id}>
-                          {driver.firstName} {driver.lastName} · {driver.employeeId}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-xs text-muted-foreground">Leave Type</Label>
-                  <Select value={leaveType} onValueChange={(value) => setLeaveType(value as LeaveType)}>
-                    <SelectTrigger className="mt-1 h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['ANNUAL', 'MEDICAL', 'EMERGENCY', 'UNPAID'].map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Start Date</Label>
-                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1 h-9 text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">End Date</Label>
-                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1 h-9 text-sm" />
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs text-muted-foreground">Reason</Label>
-                  <Input value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 h-9 text-sm" />
-                </div>
-
+            <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+              <DialogTrigger asChild>
                 <button
-                  className="h-9 w-full rounded-md text-sm font-medium disabled:opacity-50"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium"
                   style={{
                     backgroundColor: 'hsl(var(--primary))',
                     color: 'hsl(var(--primary-foreground))',
                   }}
-                  disabled={requestSubmitting}
-                  onClick={requestLeave}
                 >
-                  {requestSubmitting ? 'Submitting...' : 'Submit Request'}
+                  New Leave Request
                 </button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Submit Driver Leave Request</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Driver</Label>
+                    <Select value={driverId} onValueChange={setDriverId}>
+                      <SelectTrigger className="mt-1 h-9 text-sm">
+                        <SelectValue placeholder="Select driver" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {drivers.map((driver) => (
+                          <SelectItem key={driver.id} value={driver.id}>
+                            {driver.firstName} {driver.lastName} · {driver.employeeId}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Leave Type</Label>
+                    <Select value={leaveType} onValueChange={(value) => setLeaveType(value as LeaveType)}>
+                      <SelectTrigger className="mt-1 h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['ANNUAL', 'MEDICAL', 'EMERGENCY', 'UNPAID'].map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Start Date</Label>
+                      <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1 h-9 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">End Date</Label>
+                      <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1 h-9 text-sm" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Reason</Label>
+                    <Input value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 h-9 text-sm" />
+                  </div>
+
+                  <button
+                    className="h-9 w-full rounded-md text-sm font-medium disabled:opacity-50"
+                    style={{
+                      backgroundColor: 'hsl(var(--primary))',
+                      color: 'hsl(var(--primary-foreground))',
+                    }}
+                    disabled={requestSubmitting}
+                    onClick={requestLeave}
+                  >
+                    {requestSubmitting ? 'Submitting...' : 'Submit Request'}
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
 

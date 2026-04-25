@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -105,42 +106,73 @@ export default function ServiceRequestsPage() {
         title="Service Requests"
         subtitle="Vehicle fault & maintenance requests"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <button
-                className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium"
-                style={{
-                  backgroundColor: 'hsl(var(--primary))',
-                  color: 'hsl(var(--primary-foreground))',
-                }}
-              >
-                <Plus className="w-4 h-4" />
-                New Request
-              </button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>New Service Request</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-2">
+            <Link href="/drivers" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors">
+              Back
+            </Link>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <button
+                  className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium"
+                  style={{
+                    backgroundColor: 'hsl(var(--primary))',
+                    color: 'hsl(var(--primary-foreground))',
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  New Request
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>New Service Request</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Employee ID *</Label>
+                      <Controller
+                        name="staffId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value ? String(field.value) : undefined}
+                          >
+                            <SelectTrigger className="mt-1 h-9 text-sm">
+                              <SelectValue placeholder="Select employee ID" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {staffList.map((staff) => (
+                                <SelectItem key={staff.id} value={String(staff.id)}>
+                                  {staff.employeeId} - {staff.firstName} {staff.lastName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Vehicle ID</Label>
+                      <Input type="number" {...register('vehicleId')} className="mt-1 h-9 text-sm" />
+                    </div>
+                  </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Employee ID *</Label>
+                    <Label className="text-xs text-muted-foreground">Request Type *</Label>
                     <Controller
-                      name="staffId"
+                      name="requestType"
                       control={control}
                       render={({ field }) => (
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value ? String(field.value) : undefined}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger className="mt-1 h-9 text-sm">
-                            <SelectValue placeholder="Select employee ID" />
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {staffList.map((staff) => (
-                              <SelectItem key={staff.id} value={String(staff.id)}>
-                                {staff.employeeId} - {staff.firstName} {staff.lastName}
+                            {['FAULT_REPORT', 'SERVICE_REQUEST', 'INSPECTION_REQUEST'].map((t) => (
+                              <SelectItem key={t} value={t}>
+                                {t.replace(/_/g, ' ')}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -149,70 +181,45 @@ export default function ServiceRequestsPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Vehicle ID</Label>
-                    <Input type="number" {...register('vehicleId')} className="mt-1 h-9 text-sm" />
+                    <Label className="text-xs text-muted-foreground">Urgency</Label>
+                    <Controller
+                      name="urgency"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger className="mt-1 h-9 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['LOW', 'MEDIUM', 'HIGH'].map((u) => (
+                              <SelectItem key={u} value={u}>
+                                {u}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Request Type *</Label>
-                  <Controller
-                    name="requestType"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="mt-1 h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {['FAULT_REPORT', 'SERVICE_REQUEST', 'INSPECTION_REQUEST'].map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {t.replace(/_/g, ' ')}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Urgency</Label>
-                  <Controller
-                    name="urgency"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="mt-1 h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {['LOW', 'MEDIUM', 'HIGH'].map((u) => (
-                            <SelectItem key={u} value={u}>
-                              {u}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Description *</Label>
-                  <Input {...register('description')} className="mt-1 h-9 text-sm" />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full h-9 rounded-md text-sm font-medium disabled:opacity-50"
-                  style={{
-                    backgroundColor: 'hsl(var(--primary))',
-                    color: 'hsl(var(--primary-foreground))',
-                  }}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
-                </button>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Description *</Label>
+                    <Input {...register('description')} className="mt-1 h-9 text-sm" />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-9 rounded-md text-sm font-medium disabled:opacity-50"
+                    style={{
+                      backgroundColor: 'hsl(var(--primary))',
+                      color: 'hsl(var(--primary-foreground))',
+                    }}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                  </button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
       <div className="space-y-2.5">

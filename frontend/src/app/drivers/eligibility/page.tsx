@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { EligibilityCheckResponse } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -34,96 +36,137 @@ export default function EligibilityPage() {
   };
 
   return (
-    <div className="p-6 max-w-xl animate-fade-in">
-      <PageHeader icon={<Search className="w-5 h-5" />} title="Eligibility Check" subtitle="Verify driver eligibility for trip assignment" />
-
-      <Card>
-        <CardHeader className="py-3 px-4 border-b border-border bg-muted/30">
-          <CardTitle className="text-sm font-semibold">Check Parameters</CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-3 space-y-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">Driver Employee ID</Label>
-            <Input
-              value={employeeId}
-              onChange={e => setEmployeeId(e.target.value)}
-              placeholder="Enter driver employee ID"
-              className="mt-1 h-9 text-sm"
-            />
-          </div>
-
-          <div>
-            <Label className="text-xs text-muted-foreground">Vehicle Category</Label>
-            <Select value={vehicleCategory} onValueChange={setVehicleCategory}>
-              <SelectTrigger className="mt-1 h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {['LIGHT', 'MEDIUM', 'HEAVY', 'PASSENGER', 'TANKER'].map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label className="text-xs text-muted-foreground">Trip Date</Label>
-            <Input
-              type="date"
-              value={tripDate}
-              onChange={e => setTripDate(e.target.value)}
-              className="mt-1 h-9 text-sm"
-            />
-          </div>
-
-          <button
-            onClick={check}
-            disabled={loading}
-            className="w-full h-9 rounded-md text-sm font-medium disabled:opacity-50"
-            style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
+    <div className="p-6 animate-fade-in">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <PageHeader
+            icon={<Search className="w-5 h-5" />}
+            title="Eligibility Check"
+            subtitle="Verify driver eligibility for trip assignment"
+          />
+          <Link
+            href="/drivers"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors lg:mt-1"
           >
-            {loading ? 'Checking...' : 'Check Eligibility'}
-          </button>
-        </CardContent>
-      </Card>
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Link>
+        </div>
 
-      {result && (
-        <Card
-          className="mt-4"
-          style={{
-            borderLeftWidth: 4,
-            borderLeftStyle: 'solid',
-            borderLeftColor: result.eligible ? 'hsl(var(--success))' : 'hsl(var(--secondary))'
-          }}
-        >
-          <CardContent className="pt-5 pb-4 px-4">
-            <div className="flex items-center gap-3 mb-3">
-              {result.eligible ? (
-                <CheckCircle2 className="w-8 h-8 flex-shrink-0" style={{ color: 'hsl(var(--success))' }} />
-              ) : (
-                <XCircle className="w-8 h-8 flex-shrink-0" style={{ color: 'hsl(var(--secondary))' }} />
-              )}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+          <Card>
+            <CardHeader className="border-b border-border bg-muted/30 py-3 px-4">
+              <CardTitle className="text-sm font-semibold">Check Parameters</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 px-4 pb-4 pt-3">
               <div>
-                <p className="text-base font-semibold" style={{ color: result.eligible ? 'hsl(var(--success))' : 'hsl(var(--secondary))' }}>
-                  {result.eligible ? 'Eligible for Assignment' : 'Not Eligible'}
-                </p>
-                <p className="text-xs text-muted-foreground">Driver #{result.driverId} · {result.vehicleCategory}</p>
+                <Label className="text-xs text-muted-foreground">Driver Employee ID</Label>
+                <Input
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  placeholder="Enter driver employee ID"
+                  className="mt-1 h-9 text-sm"
+                />
               </div>
-            </div>
 
-            {result.reasons.length > 0 && (
-              <div className="space-y-1.5 pt-2 border-t border-border">
-                {result.reasons.map((r, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs" style={{ color: 'hsl(var(--secondary))' }}>
-                    <XCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    {r}
-                  </div>
-                ))}
+              <div>
+                <Label className="text-xs text-muted-foreground">Vehicle Category</Label>
+                <Select value={vehicleCategory} onValueChange={setVehicleCategory}>
+                  <SelectTrigger className="mt-1 h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['LIGHT', 'MEDIUM', 'HEAVY', 'PASSENGER', 'TANKER'].map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground">Trip Date</Label>
+                <Input
+                  type="date"
+                  value={tripDate}
+                  onChange={(e) => setTripDate(e.target.value)}
+                  className="mt-1 h-9 text-sm"
+                />
+              </div>
+
+              <button
+                onClick={check}
+                disabled={loading}
+                className="h-9 w-full rounded-md text-sm font-medium disabled:opacity-50"
+                style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
+              >
+                {loading ? 'Checking...' : 'Check Eligibility'}
+              </button>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="border-b border-border bg-muted/30 py-3 px-4">
+                <CardTitle className="text-sm font-semibold">How to Use</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 px-4 pb-4 pt-3 text-sm text-muted-foreground">
+                <p>Enter the driver employee ID, choose the vehicle category, and select the trip date.</p>
+                <p>The result will explain whether the driver is eligible and list any blocking reasons.</p>
+              </CardContent>
+            </Card>
+
+            {result ? (
+              <Card
+                style={{
+                  borderLeftWidth: 4,
+                  borderLeftStyle: 'solid',
+                  borderLeftColor: result.eligible ? 'hsl(var(--success))' : 'hsl(var(--secondary))',
+                }}
+              >
+                <CardContent className="px-4 pb-4 pt-5">
+                  <div className="mb-3 flex items-center gap-3">
+                    {result.eligible ? (
+                      <CheckCircle2 className="w-8 h-8 flex-shrink-0" style={{ color: 'hsl(var(--success))' }} />
+                    ) : (
+                      <XCircle className="w-8 h-8 flex-shrink-0" style={{ color: 'hsl(var(--secondary))' }} />
+                    )}
+                    <div>
+                      <p
+                        className="text-base font-semibold"
+                        style={{ color: result.eligible ? 'hsl(var(--success))' : 'hsl(var(--secondary))' }}
+                      >
+                        {result.eligible ? 'Eligible for Assignment' : 'Not Eligible'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Driver #{result.driverId} · {result.vehicleCategory}
+                      </p>
+                    </div>
+                  </div>
+
+                  {result.reasons.length > 0 && (
+                    <div className="space-y-1.5 border-t border-border pt-2">
+                      {result.reasons.map((reason, index) => (
+                        <div key={index} className="flex items-start gap-2 text-xs" style={{ color: 'hsl(var(--secondary))' }}>
+                          <XCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                          {reason}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="flex min-h-[240px] items-center justify-center px-4 py-10 text-center text-sm text-muted-foreground">
+                  Run a check to see eligibility results here.
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
