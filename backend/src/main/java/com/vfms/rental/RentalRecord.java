@@ -58,7 +58,9 @@ public class RentalRecord {
     public void calculateTotalCost() {
         if (startDate != null && endDate != null && costPerDay != null) {
             long days = ChronoUnit.DAYS.between(startDate, endDate);
-            if (days < 1) days = 1;
+            if (days < 1) {
+                days = 1;
+            }
             this.totalCost = costPerDay.multiply(BigDecimal.valueOf(days));
         }
     }

@@ -5,9 +5,19 @@ import com.vfms.rental.dto.RentalRequestDto;
 import com.vfms.rental.dto.RentalResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rentals")
@@ -17,23 +27,27 @@ public class RentalController {
     private final RentalService rentalService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<RentalResponseDto>> createRental(@Valid @RequestBody RentalRequestDto request) {
+    public ResponseEntity<ApiResponse<RentalResponseDto>> createRental(
+            @Valid @RequestBody RentalRequestDto request) {
         RentalResponseDto response = rentalService.createRental(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Rental record created", response));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Rental record created", response));
     }
 
-    // PUT /api/rentals/{id}
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RentalResponseDto>> updateRental(
             @PathVariable Long id, @Valid @RequestBody RentalRequestDto request) {
         RentalResponseDto response = rentalService.updateRental(id, request);
         return ResponseEntity.ok(ApiResponse.success("Rental updated", response));
     }
-    // GET /api/rentals
+
     @GetMapping
-    public ResponseEntity<ApiResponse<java.util.List<RentalResponseDto>>> getAllRentals(
-            @RequestParam(required = false) RentalStatus status, @RequestParam(required = false) Long vendorId) {
-        java.util.List<RentalResponseDto> response;
+    public ResponseEntity<ApiResponse<List<RentalResponseDto>>> getAllRentals(
+            @RequestParam(required = false) RentalStatus status,
+            @RequestParam(required = false) Long vendorId) {
+        List<RentalResponseDto> response;
+
+        // Filtering is done here rather than in the service to keep the service methods focused on single responsibilities
         if (status != null) {
             response = rentalService.getRentalsByStatus(status);
         } else if (vendorId != null) {
@@ -41,23 +55,28 @@ public class RentalController {
         } else {
             response = rentalService.getAllRentals();
         }
+
         return ResponseEntity.ok(ApiResponse.success("Rentals fetched", response));
     }
-    // GET /api/rentals/{id}
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<RentalResponseDto>> getRentalById(@PathVariable Long id) {
         RentalResponseDto response = rentalService.getRentalById(id);
         return ResponseEntity.ok(ApiResponse.success("Rental fetched", response));
     }
-    // POST /api/rentals/{id}/agreement (file upload)
+
     @PostMapping("/{id}/agreement")
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadAgreement(
-            @PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+            @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
+            // Prefixing with rental ID ensures filenames stay unique across rentals and makes it easy to trace back which rental a file belongs to
             String fileName = "agreement_" + id + "_" + file.getOriginalFilename();
-            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/rental");
-            java.nio.file.Files.createDirectories(uploadDir);
+            Path uploadDir = Paths.get("uploads/rental");
+
+            // Directory is created lazily so the app doesn't require manual setup on new environments or after a clean deployment
+            Files.createDirectories(uploadDir);
             file.transferTo(uploadDir.resolve(fileName).toFile());
+
             String fileUrl = "/api/rentals/files/" + fileName;
             RentalResponseDto response = rentalService.uploadAgreement(id, fileUrl);
             return ResponseEntity.ok(ApiResponse.success("Agreement uploaded", response));
@@ -66,15 +85,16 @@ public class RentalController {
         }
     }
 
-    // POST /api/rentals/{id}/invoice (file upload)
     @PostMapping("/{id}/invoice")
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadInvoice(
-            @PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+            @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
+            // Same naming convention as agreements so file management stays consistent
             String fileName = "invoice_" + id + "_" + file.getOriginalFilename();
-            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/rental");
-            java.nio.file.Files.createDirectories(uploadDir);
+            Path uploadDir = Paths.get("uploads/rental");
+            Files.createDirectories(uploadDir);
             file.transferTo(uploadDir.resolve(fileName).toFile());
+
             String fileUrl = "/api/rentals/files/" + fileName;
             RentalResponseDto response = rentalService.uploadInvoice(id, fileUrl);
             return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
@@ -83,15 +103,17 @@ public class RentalController {
         }
     }
 
-    // GET /api/rentals/files/{fileName}
     @GetMapping("/files/{fileName}")
-    public ResponseEntity<org.springframework.core.io.Resource> getFile(@PathVariable String fileName) {
+    public ResponseEntity<Resource> getFile(@PathVariable String fileName) {
         try {
-            java.nio.file.Path filePath =
-                    java.nio.file.Paths.get("uploads/rental").resolve(fileName);
-            org.springframework.core.io.Resource resource =
-                    new org.springframework.core.io.UrlResource(filePath.toUri());
-            String contentType = fileName.endsWith(".pdf") ? "application/pdf" : "application/octet-stream";
+            Path filePath = Paths.get("uploads/rental").resolve(fileName);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            // PDF files are served inline so clients can preview them in the browser without forcing a download, improving the user experience for document review
+            String contentType = fileName.endsWith(".pdf")
+                    ? "application/pdf"
+                    : "application/octet-stream";
+
             return ResponseEntity.ok()
                     .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
                     .header("Content-Type", contentType)
@@ -101,38 +123,38 @@ public class RentalController {
         }
     }
 
-    // PATCH /api/rentals/{id}/return?returnDate=2026-04-20
     @PatchMapping("/{id}/return")
     public ResponseEntity<ApiResponse<RentalResponseDto>> confirmReturn(
-            @PathVariable Long id, @RequestParam java.time.LocalDate returnDate) {
+            @PathVariable Long id, @RequestParam LocalDate returnDate) {
+        // Return date is accepted as a parameter rather than derived from the current date to support backdated returns when logistics delays occur
         RentalResponseDto response = rentalService.confirmReturn(id, returnDate);
         return ResponseEntity.ok(ApiResponse.success("Vehicle return confirmed", response));
     }
 
-    // PATCH /api/rentals/{id}/close
     @PatchMapping("/{id}/close")
     public ResponseEntity<ApiResponse<RentalResponseDto>> closeRental(@PathVariable Long id) {
+        // Closing is a separate step from returning so finance can reconcile costs and verify invoices before marking a rental as fully settled
         RentalResponseDto response = rentalService.closeRental(id);
         return ResponseEntity.ok(ApiResponse.success("Rental closed", response));
     }
 
-    // GET /api/rentals/reports/cost-summary
     @GetMapping("/reports/cost-summary")
-    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getRentalCostSummary() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRentalCostSummary() {
         return ResponseEntity.ok(
                 ApiResponse.success("Rental cost summary fetched", rentalService.getRentalCostSummary()));
     }
 
-    // GET /api/rentals/reports/active
     @GetMapping("/reports/active")
-    public ResponseEntity<ApiResponse<java.util.List<RentalResponseDto>>> getActiveRentals() {
+    public ResponseEntity<ApiResponse<List<RentalResponseDto>>> getActiveRentals() {
+        // Delegates to the existing status filter rather than adding a redundant service method, keeping the service layer lean
         return ResponseEntity.ok(
-                ApiResponse.success("Active rentals fetched", rentalService.getRentalsByStatus(RentalStatus.ACTIVE)));
+                ApiResponse.success("Active rentals fetched",
+                        rentalService.getRentalsByStatus(RentalStatus.ACTIVE)));
     }
 
-    // GET /api/rentals/reports/cost-per-vendor
     @GetMapping("/reports/cost-per-vendor")
-    public ResponseEntity<ApiResponse<java.util.List<java.util.Map<String, Object>>>> getCostPerVendor() {
-        return ResponseEntity.ok(ApiResponse.success("Cost per vendor fetched", rentalService.getCostPerVendor()));
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCostPerVendor() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Cost per vendor fetched", rentalService.getCostPerVendor()));
     }
 }

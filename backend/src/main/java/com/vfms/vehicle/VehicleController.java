@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
@@ -16,31 +18,30 @@ public class VehicleController {
 
     private final VehicleService vehicleService;
 
-    // POST /api/vehicles
     @PostMapping
-    public ResponseEntity<ApiResponse<VehicleResponseDto>> addVehicle(@Valid @RequestBody VehicleRequestDto request) {
+    public ResponseEntity<ApiResponse<VehicleResponseDto>> addVehicle(
+            @Valid @RequestBody VehicleRequestDto request) {
         VehicleResponseDto vehicle = vehicleService.addVehicle(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Vehicle added successfully", vehicle));
     }
 
-    // GET /api/vehicles
+    // Optional param keeps filtering on one endpoint rather than splitting into multiple routes
     @GetMapping
-    public ResponseEntity<ApiResponse<java.util.List<VehicleResponseDto>>> getAllVehicles(
+    public ResponseEntity<ApiResponse<List<VehicleResponseDto>>> getAllVehicles(
             @RequestParam(required = false) VehicleStatus status) {
-        java.util.List<VehicleResponseDto> vehicles =
-                (status != null) ? vehicleService.getVehiclesByStatus(status) : vehicleService.getAllVehicles();
+        List<VehicleResponseDto> vehicles = (status != null)
+                ? vehicleService.getVehiclesByStatus(status)
+                : vehicleService.getAllVehicles();
         return ResponseEntity.ok(ApiResponse.success("Vehicles retrieved", vehicles));
     }
 
-    // GET /api/vehicles/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> getVehicleById(@PathVariable Long id) {
         VehicleResponseDto vehicle = vehicleService.getVehicleById(id);
         return ResponseEntity.ok(ApiResponse.success("Vehicle retrieved", vehicle));
     }
 
-    // PUT /api/vehicles/{id}
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> updateVehicle(
             @PathVariable Long id, @Valid @RequestBody VehicleRequestDto request) {
@@ -48,7 +49,7 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle updated successfully", vehicle));
     }
 
-    // PATCH /api/vehicles/{id}/status?status=AVAILABLE
+    // Separated from PUT so callers can change availability without sending the full vehicle payload, reducing the risk of accidental field overwrites
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> updateVehicleStatus(
             @PathVariable Long id, @RequestParam VehicleStatus status) {
@@ -56,7 +57,7 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.success("Vehicle status updated", vehicle));
     }
 
-    // PATCH /api/vehicles/{id}/retire
+    // Dedicated endpoint so the service can enforce retirement-specific rules (e.g. blocking re-activation)
     @PatchMapping("/{id}/retire")
     public ResponseEntity<ApiResponse<VehicleResponseDto>> retireVehicle(@PathVariable Long id) {
         VehicleResponseDto vehicle = vehicleService.retireVehicle(id);

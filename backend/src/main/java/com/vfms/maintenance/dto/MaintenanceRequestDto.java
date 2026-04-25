@@ -8,9 +8,11 @@ import lombok.Data;
 @Data
 public class MaintenanceRequestDto {
 
-    @NotNull(message = "Vehicle ID is required") private Long vehicleId;
+    @NotNull(message = "Vehicle ID is required") 
+    private Long vehicleId;
 
-    @NotNull(message = "Maintenance type is required") private MaintenanceType maintenanceType;
+    @NotNull(message = "Maintenance type is required") 
+    private MaintenanceType maintenanceType;
 
     @NotBlank(message = "Description is required")
     @Size(max = 500)
