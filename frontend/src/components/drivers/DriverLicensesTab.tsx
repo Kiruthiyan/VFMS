@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import api, { getErrorMessage } from '@/lib/api';
+import api, { apiFetch, getErrorMessage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Star } from 'lucide-react';
+import { Download, Plus, Trash2, Star, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { DriverDocument } from '@/types';
 
 type LicenseCategory = 'A' | 'B' | 'C' | 'CE' | 'D' | 'BE';
 type LicenseStatus = 'VALID' | 'EXPIRING_SOON' | 'EXPIRED';
@@ -56,6 +57,7 @@ function StatusBadge({ status }: { status: LicenseStatus }) {
 
 export function DriverLicensesTab({ driverId }: { driverId: string }) {
   const [licenses, setLicenses] = useState<DriverLicense[]>([]);
+  const [licenseDocuments, setLicenseDocuments] = useState<DriverDocument[]>([]);
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<LicenseFormData>(emptyForm);
@@ -69,8 +71,18 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
     }
   };
 
+  const fetchLicenseDocuments = async () => {
+    try {
+      const documents = await apiFetch<DriverDocument[]>(`/api/drivers/${driverId}/documents`);
+      setLicenseDocuments(documents.filter((document) => document.entityType === 'LICENSE'));
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
   useEffect(() => {
     void fetchLicenses();
+    void fetchLicenseDocuments();
   }, [driverId]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -252,6 +264,33 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
             ) : null}
           </tbody>
         </table>
+      </div>
+
+      <div className="border-t border-gray-200 bg-white px-4 py-4">
+        <h4 className="mb-3 text-sm font-semibold text-gray-900">Uploaded License Documents</h4>
+        <div className="space-y-2">
+          {licenseDocuments.map((doc) => (
+            <div key={doc.id} className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-500/15">
+                  <FileText className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-900">{doc.fileName}</p>
+                  <p className="text-xs text-gray-500">{(doc.fileSize / 1024).toFixed(1)} KB</p>
+                </div>
+              </div>
+              <a href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600">
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+              </a>
+            </div>
+          ))}
+          {licenseDocuments.length === 0 && (
+            <p className="py-4 text-center text-sm text-gray-500">No uploaded license documents found</p>
+          )}
+        </div>
       </div>
     </section>
   );
