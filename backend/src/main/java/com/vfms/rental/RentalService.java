@@ -36,7 +36,13 @@ public class RentalService {
                 .purpose(request.getPurpose())
                 .build();
 
-        // End date may not be known at the time of creation, so we only pre-calculate cost when it is provided to avoid storing incomplete data.
+        
+        // 1. First, check if the dates make sense (The Security Gate)
+        if (request.getEndDate() != null && request.getEndDate().isBefore(request.getStartDate())) {
+            throw new IllegalArgumentException("End date cannot be before the start date!");
+        }
+
+        // 2. If they make sense, then calculate the cost
         if (request.getEndDate() != null) {
             rental.calculateTotalCost();
         }

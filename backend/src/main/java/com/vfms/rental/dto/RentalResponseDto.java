@@ -1,10 +1,15 @@
 package com.vfms.rental.dto;
 
-import com.vfms.rental.RentalStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.*;
+
+import com.vfms.rental.RentalStatus;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
