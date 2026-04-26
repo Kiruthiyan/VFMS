@@ -10,6 +10,23 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Service responsible for detecting potential fuel misuse patterns.
+ *
+ * <p>Evaluates incoming {@link com.vfms.fuel.entity.FuelRecord} objects against
+ * three configurable rules:</p>
+ * <ol>
+ *   <li>Quantity threshold — flags entries that exceed the maximum allowed litres per fill-up.</li>
+ *   <li>Frequency threshold — flags vehicles that exceed the maximum allowed fills per day.</li>
+ *   <li>Odometer regression — flags entries whose odometer reading is lower than the
+ *       previous recorded reading, indicating a possible data error or tampering.</li>
+ * </ol>
+ *
+ * <p>All thresholds are externalised via {@code application.properties} and can be
+ * adjusted without code changes.</p>
+ *
+ * @see com.vfms.fuel.service.FuelService
+ */
 @Service
 @RequiredArgsConstructor
 public class FuelMisuseService {

@@ -14,6 +14,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * User Entity representing a system user with authentication capabilities.
+ * Implements Spring Security's UserDetails for RBAC (Role Based Access
+ * Control).
+ */
 @Entity
 @Table(name = "users")
 @Getter
@@ -28,7 +33,7 @@ public class User implements UserDetails {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String username;        // email address
+    private String username; // email address
 
     @Column(nullable = false)
     private String password;
