@@ -13,13 +13,8 @@ import { loginApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-
-const ROLE_REDIRECT: Record<string, string> = {
-  ADMIN: '/dashboards/admin',
-  APPROVER: '/dashboards/approver',
-  STAFF: '/dashboards/staff',
-  DRIVER: '/dashboards/driver',
-};
+import { ROLE_DASHBOARDS, AUTH_ROUTES, DEFAULT_ROUTES } from '@/lib/constants/routes';
+import { ERROR_MESSAGES } from '@/lib/constants/error-messages';
 
 export function LoginForm() {
   const router = useRouter();
@@ -47,7 +42,7 @@ export function LoginForm() {
       setAuth(response);
       setIsSuccess(true);
       setTimeout(() => {
-        router.replace(ROLE_REDIRECT[response.role] ?? '/dashboards/staff');
+        router.replace(ROLE_DASHBOARDS[response.role] ?? DEFAULT_ROUTES.DEFAULT_DASHBOARD);
       }, 1500);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -55,16 +50,16 @@ export function LoginForm() {
         const apiMessage = (err.response?.data as { message?: string } | undefined)?.message;
 
         if (status === 401) {
-          setServerError('Invalid email or password.');
+          setServerError(ERROR_MESSAGES.INVALID_CREDENTIALS);
         } else if (status === 403) {
-          setServerError(apiMessage ?? 'Your account is disabled. Contact your administrator.');
+          setServerError(apiMessage ?? ERROR_MESSAGES.ACCOUNT_DISABLED);
         } else if (status === 400) {
-          setServerError(apiMessage ?? 'Please verify your email first.');
+          setServerError(apiMessage ?? ERROR_MESSAGES.EMAIL_NOT_VERIFIED);
         } else {
-          setServerError(apiMessage ?? 'Unable to sign in. Please try again.');
+          setServerError(apiMessage ?? ERROR_MESSAGES.SOMETHING_WENT_WRONG);
         }
       } else {
-        setServerError('Unexpected error occurred. Please try again.');
+        setServerError(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
       }
     }
   };
@@ -262,7 +257,7 @@ export function LoginForm() {
         className="text-center text-xs text-slate-600 pt-3"
       >
         <a
-          href="/auth/forgot-password"
+          href={AUTH_ROUTES.FORGOT_PASSWORD}
           className="font-semibold text-slate-900 hover:text-amber-600 transition-colors duration-200 relative group"
         >
           Forgot password?

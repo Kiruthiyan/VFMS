@@ -16,6 +16,7 @@ import {
 import { resendVerificationApi, getErrorMessage } from "@/lib/api/auth";
 import api from "@/lib/api";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 // ── TYPES ─────────────────────────────────────────────────────────────────
 
@@ -255,7 +256,7 @@ export function VerifyEmailCard() {
         </div>
 
         <Link
-          href="/auth/login"
+          href={AUTH_ROUTES.LOGIN}
           className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors"
         >
           Back to Sign In
@@ -295,7 +296,7 @@ export function VerifyEmailCard() {
 
         <p className="text-center text-xs text-slate-600 pt-2">
           <Link
-            href="/auth/login"
+            href={AUTH_ROUTES.LOGIN}
             className="font-medium text-slate-900 hover:text-amber-600 transition-colors"
           >
             Back to Sign In

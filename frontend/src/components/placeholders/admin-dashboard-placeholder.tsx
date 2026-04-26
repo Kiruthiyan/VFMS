@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { logoutApi, getErrorMessage } from "@/lib/api/auth";
 import { ROLE_LABELS, ROLE_COLORS } from "@/lib/rbac";
 import { Button } from "@/components/ui/button";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 export function AdminDashboardPlaceholder() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export function AdminDashboardPlaceholder() {
     } finally {
       clearAuth();
       toast.success("Signed out successfully.");
-      router.push("/auth/login");
+      router.push(AUTH_ROUTES.LOGIN);
     }
   };
 

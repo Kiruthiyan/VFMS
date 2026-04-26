@@ -1,5 +1,6 @@
 package com.vfms.auth.service;
 
+import com.vfms.common.exception.ValidationException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,11 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+/**
+ * Email service for sending transactional emails
+ * Handles: verification, approval, rejection, password reset, and OTP emails
+ * Throws exceptions on failures - never silently fails
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,6 +30,10 @@ public class EmailService {
 
     // ── PUBLIC METHODS ────────────────────────────────────────────────────
 
+    /**
+     * Sends email verification link
+     * Async to prevent blocking user registration flow
+     */
     @Async
     public void sendVerificationEmail(String toEmail, String fullName, String token) {
         String verifyUrl = frontendUrl + "/auth/verify-email?token=" + token;
@@ -31,6 +41,10 @@ public class EmailService {
         sendHtmlEmail(toEmail, subject, verificationEmailHtml(fullName, verifyUrl));
     }
 
+    /**
+     * Sends account approval notification
+     * Async to prevent blocking admin approval flow
+     */
     @Async
     public void sendApprovalEmail(String toEmail, String fullName, String roleName) {
         String loginUrl = frontendUrl + "/auth/login";
@@ -39,21 +53,31 @@ public class EmailService {
         sendHtmlEmail(toEmail, subject, approvalEmailHtml(fullName, displayRole, loginUrl));
     }
 
+    /**
+     * Sends registration rejection notification
+     * Async to prevent blocking admin rejection flow
+     */
     @Async
     public void sendRejectionEmail(String toEmail, String fullName, String reason) {
         String subject = "Your VFMS Registration Was Not Approved";
         sendHtmlEmail(toEmail, subject, rejectionEmailHtml(fullName, reason));
     }
 
+    /**
+     * Sends password reset link
+     * Async to prevent blocking forgot password flow
+     */
     @Async
-    public void sendPasswordResetEmail(String toEmail, String fullName,
-                                    String token) {
+    public void sendPasswordResetEmail(String toEmail, String fullName, String token) {
         String resetUrl = frontendUrl + "/auth/reset-password?token=" + token;
         String subject = "Reset Your VFMS Password";
-        sendHtmlEmail(toEmail, subject,
-                passwordResetEmailHtml(fullName, resetUrl));
+        sendHtmlEmail(toEmail, subject, passwordResetEmailHtml(fullName, resetUrl));
     }
 
+    /**
+     * Sends OTP verification code
+     * Async to prevent blocking OTP request flow
+     */
     @Async
     public void sendOtpEmail(String toEmail, String otp) {
         String subject = "VFMS Email Verification Code";
@@ -62,6 +86,16 @@ public class EmailService {
 
     // ── PRIVATE SEND ──────────────────────────────────────────────────────
 
+    /**
+     * Internal method to send HTML email
+     * Throws exception on failure - never silently fails
+     * This ensures callers know if email delivery failed
+     * 
+     * @param to recipient email address
+     * @param subject email subject
+     * @param htmlBody email content in HTML format
+     * @throws ValidationException if email sending fails
+     */
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -71,8 +105,16 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
             mailSender.send(message);
+            
+            log.info("Email sent successfully to: {}", to);
+            
         } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
+            log.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+            // Throw exception so caller knows email delivery failed
+            throw new ValidationException(
+                "Failed to send email to " + to + ". Please try again later.",
+                e
+            );
         }
     }
 

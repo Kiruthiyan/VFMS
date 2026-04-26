@@ -21,6 +21,9 @@ import java.util.UUID;
 import com.vfms.auth.dto.AuthResponse;
 import com.vfms.auth.dto.LoginRequest;
 import com.vfms.security.JwtService;
+import com.vfms.common.exception.AuthenticationException;
+import com.vfms.common.exception.ValidationException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
@@ -42,7 +45,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password."));
+                .orElseThrow(() -> new AuthenticationException("Invalid email or password."));
         
         String jwtToken = jwtService.generateToken(user);
         return AuthResponse.builder()
@@ -63,13 +66,13 @@ public class AuthService {
 
         // 1. Password match
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("Passwords do not match");
+            throw new ValidationException("Passwords do not match");
         }
 
         // 2. Only DRIVER and SYSTEM_USER can self-register
         if (request.getRequestedRole() != Role.DRIVER
                 && request.getRequestedRole() != Role.SYSTEM_USER) {
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Self-registration is only allowed for Driver and System User roles");
         }
 
@@ -85,7 +88,7 @@ public class AuthService {
                 sendVerificationEmail(existing);
                 return;
             }
-            throw new RuntimeException("An account with this email already exists");
+            throw new ValidationException("An account with this email already exists");
         });
 
         // If the email was handled above as re-registration, stop here
@@ -118,10 +121,10 @@ public class AuthService {
     public void verifyEmail(String token) {
         EmailVerificationToken verificationToken =
                 verificationTokenRepository.findByToken(token)
-                        .orElseThrow(() -> new RuntimeException("Invalid verification link"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Invalid verification link"));
 
         if (verificationToken.isExpired()) {
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Verification link has expired. Please request a new one.");
         }
 
@@ -139,15 +142,15 @@ public class AuthService {
     @Transactional
     public void resendVerification(ResendVerificationRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "No account found with this email"));
 
         if (user.isEmailVerified()) {
-            throw new RuntimeException("Email is already verified");
+            throw new ValidationException("Email is already verified");
         }
 
         if (user.getStatus() != UserStatus.EMAIL_UNVERIFIED) {
-            throw new RuntimeException("Email is already verified");
+            throw new ValidationException("Email is already verified");
         }
 
         // Delete old token and send new one
@@ -172,12 +175,12 @@ public class AuthService {
         if (request.getRequestedRole() == Role.DRIVER) {
             if (request.getLicenseNumber() == null
                     || request.getLicenseNumber().isBlank()) {
-                throw new RuntimeException(
+                throw new ValidationException(
                         "License number is required for Driver registration");
             }
             if (request.getLicenseExpiryDate() == null
                     || request.getLicenseExpiryDate().isBlank()) {
-                throw new RuntimeException(
+                throw new ValidationException(
                         "License expiry date is required for Driver registration");
             }
         }
@@ -185,12 +188,12 @@ public class AuthService {
         if (request.getRequestedRole() == Role.SYSTEM_USER) {
             if (request.getEmployeeId() == null
                     || request.getEmployeeId().isBlank()) {
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Employee ID is required for System User registration");
             }
             if (request.getDepartment() == null
                     || request.getDepartment().isBlank()) {
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Department is required for System User registration");
             }
         }

@@ -1,7 +1,15 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import { useAuthStore } from "@/store/auth-store";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+/**
+ * Configured Axios instance with JWT token injection interceptor
+ * Automatically adds Authorization header from auth store for all requests
+ * 
+ * @example
+ * const response = await api.post('/auth/login', credentials);
+ */
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -10,11 +18,20 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor
-// NOTE: Token injection will be added by feature/auth-login (Kiruthiyan)
+/**
+ * Request interceptor: Injects JWT token from auth store into Authorization header
+ * Allows seamless authenticated API calls across the application
+ */
 api.interceptors.request.use(
   (config) => {
-    // Auth token will be added here when feature/auth-login is merged
+    // Get current token from auth store
+    const token = useAuthStore.getState().accessToken;
+    
+    // Inject token if available
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)

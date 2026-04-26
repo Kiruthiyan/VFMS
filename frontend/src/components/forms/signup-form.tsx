@@ -38,6 +38,9 @@ import {
 import { sendOTPApi, verifyOTPApi, signupApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/auth-store';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { AUTH_ROUTES, PUBLIC_ROUTES } from '@/lib/constants/routes';
+import { SIGNUP_CONFIG } from '@/lib/constants/signup-config';
+import { ERROR_MESSAGES } from '@/lib/constants/error-messages';
 
 type SignupStep = 1 | 2 | 3 | 4 | 5;
 
@@ -72,23 +75,9 @@ function RequirementItem({ met, label }: { met: boolean; label: string }) {
   );
 }
 
-const TOTAL_STEPS = 5;
-
-const STEP_TITLES = {
-  1: 'Email Verification',
-  2: 'Confirm Identity',
-  3: 'Personal Details',
-  4: 'Role & Qualifications',
-  5: 'Security Setup',
-};
-
-const STEP_DESCRIPTIONS = {
-  1: 'Enter your email to begin account creation',
-  2: 'Verify your email with the code we sent',
-  3: 'Tell us more about yourself',
-  4: 'Select your role and provide relevant details',
-  5: 'Create a secure password for your account',
-};
+const TOTAL_STEPS = SIGNUP_CONFIG.TOTAL_STEPS;
+const STEP_TITLES = SIGNUP_CONFIG.STEP_TITLES;
+const STEP_DESCRIPTIONS = SIGNUP_CONFIG.STEP_DESCRIPTIONS;
 
 export function SignupForm() {
   const router = useRouter();
@@ -441,7 +430,7 @@ export function SignupForm() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="button"
-            onClick={() => router.push('/auth/login')}
+            onClick={() => router.push(AUTH_ROUTES.LOGIN)}
             className="flex-1 h-12 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-800 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-slate-900/25 transition-all duration-200"
           >
             <LogIn size={16} strokeWidth={2} /> Go to Login
@@ -450,7 +439,7 @@ export function SignupForm() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="button"
-            onClick={() => router.push('/')}
+            onClick={() => router.push(PUBLIC_ROUTES.HOME)}
             className="flex-1 h-12 border-2 border-slate-200 text-slate-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
           >
             <Home size={16} strokeWidth={2} /> Back to Home
