@@ -61,19 +61,22 @@ The module includes the following major capabilities, each described briefly bel
 ## Technical Architecture
 
 ### Backend
-- Java 21 with Spring Boot
-- Spring Data JPA for persistence
-- Spring Security for request protection
-- Bean Validation for request checks
-- PostgreSQL for data storage
-- Flyway migrations for schema management
+- Java 21
+- Spring Boot 3.4.0
+- Spring Web, Spring Data JPA, Spring Validation, Spring Security, Spring Mail
+- Flyway (flyway-core + flyway-database-postgresql) for schema migrations
+- JWT (jjwt 0.11.5)
+- Databases: PostgreSQL (primary runtime), H2 (runtime/testing support)
+- Build tool: Maven Wrapper (`mvnw`, `mvnw.cmd`)
 
 ### Frontend
-- Next.js App Router
-- TypeScript
-- Tailwind CSS and shadcn/ui components
-- React Hook Form with Zod validation
-- Central API access through a shared client layer
+- Next.js 16.0.7 (App Router)
+- React 19.2.0 + React DOM 19.2.0
+- TypeScript 5
+- Tailwind CSS 4 + shadcn/ui + Radix UI
+- React Hook Form + Zod + @hookform/resolvers
+- Axios for API communication
+- Build/runtime: Node.js + npm
 
 ## Project Structure
 
