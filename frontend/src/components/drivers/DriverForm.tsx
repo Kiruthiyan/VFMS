@@ -8,19 +8,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
+const hasMinDigits = (value: string, minDigits = 10) => value.replace(/\D/g, '').length >= minDigits;
+
 const driverSchema = z.object({
   employeeId: z.string().min(1, 'Required'),
   firstName: z.string().min(1, 'Required'),
   lastName: z.string().min(1, 'Required'),
   nic: z.string().min(1, 'Required'),
   dateOfBirth: z.string().optional(),
-  phone: z.string().min(1, 'Required'),
+  phone: z
+    .string()
+    .min(1, 'Required')
+    .refine((value) => hasMinDigits(value), { message: 'Phone number must have at least 10 digits' }),
   licenseNumber: z.string().min(1, 'Required'),
   licenseExpiryDate: z.string().min(1, 'Required'),
   email: z.string().email().optional().or(z.literal('')),
   address: z.string().optional(),
   emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
+  emergencyContactPhone: z
+    .string()
+    .optional()
+    .refine((value) => !value || hasMinDigits(value), {
+      message: 'Emergency contact phone must have at least 10 digits',
+    }),
   department: z.string().optional(),
   designation: z.string().optional(),
   dateOfJoining: z.string().optional(),

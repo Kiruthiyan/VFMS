@@ -101,6 +101,10 @@ export default function StaffPage() {
       return;
     }
 
+    if (!window.confirm(`Remove staff member ${item.firstName} ${item.lastName}? This will set status to Inactive.`)) {
+      return;
+    }
+
     setRemovingId(item.id);
     try {
       await apiFetch(`/api/staff/${item.id}/deactivate`, { method: 'PATCH' });
