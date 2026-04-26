@@ -8,6 +8,7 @@ export const metadata = {
 
 export default function LoginPage() {
   return (
+<<<<<<< HEAD
     <main className="min-h-screen bg-gradient-to-b from-white via-slate-50/30 to-white">
       {/* Decorative Background Elements */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
@@ -17,6 +18,25 @@ export default function LoginPage() {
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-slate-50/35 via-slate-50/15 to-transparent rounded-full blur-3xl" />
         {/* Center Accent */}
         <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-amber-50/20 via-transparent to-transparent rounded-full blur-2xl" />
+=======
+    <div className="min-h-screen bg-[#F5F7FB] flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-xl border border-[#E4E7EC] shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="bg-[#0B1736] px-6 py-8 text-center">
+            <div className="h-12 w-12 bg-[#F4B400] rounded-lg flex items-center justify-center mx-auto mb-4">
+              <span className="text-[#0B1736] text-xl font-bold">V</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-1">Sign In</h1>
+            <p className="text-sm text-[#FFFFFF] opacity-90">Enter your credentials</p>
+          </div>
+          
+          {/* Content */}
+          <div className="p-6 text-center">
+            <p className="text-[#475467]">Login feature coming soon...</p>
+          </div>
+        </div>
+>>>>>>> origin/feature/user-management
       </div>
 
       {/* Header Navigation */}

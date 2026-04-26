@@ -2,6 +2,7 @@ package com.vfms.common.exception;
 
 /**
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Thrown when an requested resource (e.g., Vehicle, Driver, FuelRecord) is not
  * found in the database.
  */
@@ -19,10 +20,18 @@ public class ResourceNotFoundException extends RuntimeException {
  */
 public class ResourceNotFoundException extends RuntimeException {
 >>>>>>> origin/feature/user-auth
+=======
+ * Exception thrown when a requested resource cannot be found.
+ * Typical HTTP mapping: 404 Not Found.
+ */
+public class ResourceNotFoundException extends RuntimeException {
+
+>>>>>>> origin/feature/user-management
     public ResourceNotFoundException(String message) {
         super(message);
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     /**
      * Constructs a new ResourceNotFoundException with a detail message and a root cause.
@@ -32,6 +41,8 @@ public class ResourceNotFoundException extends RuntimeException {
      */
 =======
 >>>>>>> origin/feature/user-auth
+=======
+>>>>>>> origin/feature/user-management
     public ResourceNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }

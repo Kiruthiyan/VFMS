@@ -2,9 +2,13 @@ package com.vfms.fuel.controller;
 
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelRecordResponse;
+<<<<<<< HEAD
 import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.service.FuelService;
 import com.vfms.user.entity.User;
+=======
+import com.vfms.fuel.service.FuelService;
+>>>>>>> origin/feature/user-management
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +16,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+<<<<<<< HEAD
+=======
+import org.springframework.security.core.userdetails.UserDetails;
+>>>>>>> origin/feature/user-management
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +37,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/fuel")
 @RequiredArgsConstructor
+<<<<<<< HEAD
 @PreAuthorize("hasRole('ADMIN')")
+=======
+>>>>>>> origin/feature/user-management
 public class FuelController {
 
     private final FuelService fuelService;
@@ -50,7 +61,11 @@ public class FuelController {
     public ResponseEntity<FuelRecordResponse> createFuelRecord(
             @Valid @RequestPart("data") CreateFuelRecordRequest request,
             @RequestPart(value = "receipt", required = false) MultipartFile receipt,
+<<<<<<< HEAD
             @AuthenticationPrincipal User user) {
+=======
+            @AuthenticationPrincipal UserDetails user) {
+>>>>>>> origin/feature/user-management
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(fuelService.createFuelRecord(request, receipt, user));
     }
@@ -340,7 +355,12 @@ public class FuelController {
     public ResponseEntity<FuelRecordResponse> updateFuelRecord(
             @PathVariable UUID id,
             @Valid @RequestBody CreateFuelRecordRequest request) {
+<<<<<<< HEAD
         return ResponseEntity.ok(fuelService.updateFuelRecord(id, request));
+=======
+        // TODO: Implement update logic in FuelService
+        return ResponseEntity.ok(fuelService.getById(id));
+>>>>>>> origin/feature/user-management
     }
 
     /**
@@ -353,8 +373,14 @@ public class FuelController {
     @PatchMapping("/{id}")
     public ResponseEntity<FuelRecordResponse> patchFuelRecord(
             @PathVariable UUID id,
+<<<<<<< HEAD
             @Valid @RequestBody PatchFuelRecordRequest updates) {
         return ResponseEntity.ok(fuelService.patchFuelRecord(id, updates));
+=======
+            @RequestBody CreateFuelRecordRequest updates) {
+        // TODO: Implement partial update logic in FuelService
+        return ResponseEntity.ok(fuelService.getById(id));
+>>>>>>> origin/feature/user-management
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -369,7 +395,12 @@ public class FuelController {
      */
     @PatchMapping("/{id}/flag")
     public ResponseEntity<FuelRecordResponse> flagFuelRecord(@PathVariable UUID id) {
+<<<<<<< HEAD
         return ResponseEntity.ok(fuelService.flagFuelRecord(id));
+=======
+        // TODO: Implement flag logic in FuelService
+        return ResponseEntity.ok(fuelService.getById(id));
+>>>>>>> origin/feature/user-management
     }
 
     /**
@@ -380,7 +411,12 @@ public class FuelController {
      */
     @PatchMapping("/{id}/unflag")
     public ResponseEntity<FuelRecordResponse> unflagFuelRecord(@PathVariable UUID id) {
+<<<<<<< HEAD
         return ResponseEntity.ok(fuelService.unflagFuelRecord(id));
+=======
+        // TODO: Implement unflag logic in FuelService
+        return ResponseEntity.ok(fuelService.getById(id));
+>>>>>>> origin/feature/user-management
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -395,7 +431,12 @@ public class FuelController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFuelRecord(@PathVariable UUID id) {
+<<<<<<< HEAD
         fuelService.deleteFuelRecord(id);
+=======
+        // TODO: Implement deleteById in FuelService and uncomment below
+        // fuelService.deleteById(id);
+>>>>>>> origin/feature/user-management
         return ResponseEntity.noContent().build();
     }
 

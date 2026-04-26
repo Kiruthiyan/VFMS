@@ -88,6 +88,7 @@ public class FuelRecord {
 
     @Column(name = "created_by")
     private String createdBy;          // email of user who added record
+<<<<<<< HEAD
 
     // Explicit accessors (keeps builds resilient even if Lombok processing is misconfigured)
     public UUID getId() { return id; }
@@ -124,4 +125,6 @@ public class FuelRecord {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+=======
+>>>>>>> origin/feature/user-management
 }

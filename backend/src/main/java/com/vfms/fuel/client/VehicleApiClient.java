@@ -3,7 +3,10 @@ package com.vfms.fuel.client;
 import com.vfms.fuel.dto.VehicleDetailDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+<<<<<<< HEAD
 import com.vfms.common.exception.ResourceNotFoundException;
+=======
+>>>>>>> origin/feature/user-management
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -123,9 +126,12 @@ public class VehicleApiClient {
             //   3. Use Jackson to deserialize into VehicleDetailDto
             //   4. Return the Java object
             VehicleDetailDto vehicle = restTemplate.getForObject(url, VehicleDetailDto.class);
+<<<<<<< HEAD
             if (vehicle == null) {
                 throw new ResourceNotFoundException("Vehicle not found: " + vehicleId);
             }
+=======
+>>>>>>> origin/feature/user-management
             
             // ── STEP 3: Log success with vehicle details ──
             log.info("Successfully fetched vehicle: {} - {}", vehicleId, vehicle.getDisplayName());
@@ -136,7 +142,11 @@ public class VehicleApiClient {
         } catch (RestClientException e) {
             // Handle any REST client errors (network, parsing, HTTP errors)
             log.error("Error fetching vehicle {}: {}", vehicleId, e.getMessage());
+<<<<<<< HEAD
             throw new ResourceNotFoundException("Failed to fetch vehicle details: " + vehicleId, e);
+=======
+            throw new RuntimeException("Failed to fetch vehicle details: " + vehicleId, e);
+>>>>>>> origin/feature/user-management
         }
     }
 
@@ -282,7 +292,11 @@ public class VehicleApiClient {
             return allVehicles.stream()
                     .filter(v -> v.getPlateNumber().equalsIgnoreCase(plateNumber))
                     .findFirst()  // Get first match
+<<<<<<< HEAD
                     .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found: " + plateNumber));
+=======
+                    .orElseThrow(() -> new RuntimeException("Vehicle not found: " + plateNumber));
+>>>>>>> origin/feature/user-management
                     
         } catch (Exception e) {
             log.error("Error fetching vehicle by plate {}: {}", plateNumber, e.getMessage());

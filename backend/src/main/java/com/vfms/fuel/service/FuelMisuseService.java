@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+<<<<<<< HEAD
 /**
  * Service responsible for detecting potential fuel misuse patterns.
  *
@@ -27,6 +28,8 @@ import java.util.List;
  *
  * @see com.vfms.fuel.service.FuelService
  */
+=======
+>>>>>>> origin/feature/user-management
 @Service
 @RequiredArgsConstructor
 public class FuelMisuseService {

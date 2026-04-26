@@ -5,12 +5,18 @@ import com.vfms.driver.repository.DriverRepository;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelRecordResponse;
+<<<<<<< HEAD
 import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.dto.VehicleDetailDto;
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
+=======
+import com.vfms.fuel.dto.VehicleDetailDto;
+import com.vfms.fuel.entity.FuelRecord;
+import com.vfms.fuel.repository.FuelRecordRepository;
+>>>>>>> origin/feature/user-management
 import com.vfms.vehicle.entity.Vehicle;
 import com.vfms.vehicle.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +50,12 @@ public class FuelService {
     private final FuelStorageService fuelStorageService;
     private final FuelMisuseService fuelMisuseService;
 
+<<<<<<< HEAD
     /** Reason assigned when an admin manually flags a fuel record for review. */
     private static final String MANUAL_FLAG_REASON = "Manually flagged by admin";
 
+=======
+>>>>>>> origin/feature/user-management
     // ── CREATE FUEL ENTRY ────────────────────────────────────────────────
 
     @Transactional
@@ -58,14 +67,22 @@ public class FuelService {
         // Validate vehicle exists using real-time API call to vehicle endpoint
         if (!vehicleApiClient.vehicleExists(request.getVehicleId())) {
             log.warn("Vehicle not found: {}", request.getVehicleId());
+<<<<<<< HEAD
             throw new ResourceNotFoundException("Vehicle not found: " + request.getVehicleId());
+=======
+            throw new RuntimeException("Vehicle not found: " + request.getVehicleId());
+>>>>>>> origin/feature/user-management
         }
 
         // Fetch vehicle from database (for reference) - still needed for foreign key
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
                 .orElseThrow(() -> {
                     log.error("Vehicle not found in database: {}", request.getVehicleId());
+<<<<<<< HEAD
                     return new ResourceNotFoundException("Vehicle not found in database: " + request.getVehicleId());
+=======
+                    return new RuntimeException("Vehicle not found in database");
+>>>>>>> origin/feature/user-management
                 });
 
         // Optional driver
@@ -74,7 +91,11 @@ public class FuelService {
             driver = driverRepository.findById(request.getDriverId())
                     .orElseThrow(() -> {
                         log.error("Driver not found: {}", request.getDriverId());
+<<<<<<< HEAD
                         return new ResourceNotFoundException("Driver not found: " + request.getDriverId());
+=======
+                        return new RuntimeException("Driver not found");
+>>>>>>> origin/feature/user-management
                     });
         }
 
@@ -87,7 +108,11 @@ public class FuelService {
         FuelRecord record = FuelRecord.builder()
                 .vehicle(vehicle)
                 .driver(driver)
+<<<<<<< HEAD
                 .fuelDate(request.getFuelDate())
+=======
+                .fuelDate(LocalDate.parse(request.getFuelDate()))
+>>>>>>> origin/feature/user-management
                 .quantity(request.getQuantity())
                 .costPerLitre(request.getCostPerLitre())
                 .totalCost(totalCost)
@@ -196,7 +221,11 @@ public class FuelService {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fuel record not found: {}", id);
+<<<<<<< HEAD
                     return new ResourceNotFoundException("Fuel record not found: " + id);
+=======
+                    return new RuntimeException("Fuel record not found");
+>>>>>>> origin/feature/user-management
                 });
         // Convert to response using cached vehicle data
         return toResponse(record);
@@ -225,7 +254,11 @@ public class FuelService {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fuel record not found: {}", id);
+<<<<<<< HEAD
                     return new ResourceNotFoundException("Fuel record not found: " + id);
+=======
+                    return new RuntimeException("Fuel record not found");
+>>>>>>> origin/feature/user-management
                 });
         // Convert to response with API call to fetch real-time vehicle data
         return toResponseWithRealTimeData(record);
@@ -282,7 +315,11 @@ public class FuelService {
         // ── STEP 1: Verify vehicle exists using real-time API call ──
         if (!vehicleApiClient.vehicleExists(vehicleId)) {
             log.warn("Vehicle not found: {}", vehicleId);
+<<<<<<< HEAD
             throw new ResourceNotFoundException("Vehicle not found: " + vehicleId);
+=======
+            throw new RuntimeException("Vehicle not found: " + vehicleId);
+>>>>>>> origin/feature/user-management
         }
 
         // ── STEP 2: Query database for all records for this vehicle ──
@@ -336,6 +373,7 @@ public class FuelService {
                 .collect(Collectors.toList());
     }
 
+<<<<<<< HEAD
     // ── UPDATE / PATCH / FLAG / DELETE ─────────────────────────────────────
 
     @Transactional
@@ -468,6 +506,8 @@ public class FuelService {
         }
     }
 
+=======
+>>>>>>> origin/feature/user-management
     // ── TO RESPONSE ───────────────────────────────────────────────────────
 
     /**

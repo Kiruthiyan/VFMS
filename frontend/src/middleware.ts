@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 <<<<<<< HEAD
 /**
+<<<<<<< HEAD
  * Middleware for route protection
  * - Only ADMIN users can access /admin/fuel/* routes
  * - Non-admin users are redirected to /
  * - Public routes: /, /auth/*
+=======
+ * Global middleware entry point for request preprocessing.
+ *
+ * This middleware currently forwards requests without mutation while route-level
+ * guards handle access control in the application layer.
+>>>>>>> origin/feature/user-management
  */
 
 export function middleware(request: NextRequest) {

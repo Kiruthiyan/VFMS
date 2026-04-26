@@ -35,10 +35,14 @@ const itemVariants: Variants = {
 const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
   <Link
     href={href}
-    className="relative text-sm font-semibold text-slate-600 hover:text-black transition-colors group"
+    className="relative text-sm font-semibold text-slate-700 hover:text-blue-950 transition-colors group"
   >
     {children}
+<<<<<<< HEAD
     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#F4B400] transition-all group-hover:w-full" />
+=======
+    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-400 transition-all group-hover:w-full" />
+>>>>>>> origin/feature/user-management
   </Link>
 );
 
@@ -70,7 +74,11 @@ const CountUp = ({ value, label, suffix = "" }: { value: number, label: string, 
       <span className="text-4xl font-black text-slate-900 tracking-tighter">
         {count.toLocaleString()}{suffix}
       </span>
+<<<<<<< HEAD
       <span className="text-xs font-bold text-yellow-600 uppercase tracking-widest mt-1">{label}</span>
+=======
+      <span className="text-xs font-bold text-blue-950 uppercase tracking-widest mt-1">{label}</span>
+>>>>>>> origin/feature/user-management
     </div>
   );
 };
@@ -93,7 +101,11 @@ export default function LandingPage() {
     <div className="relative min-h-screen bg-white text-slate-900 selection:bg-yellow-200 scroll-smooth">
 
       {/* Scroll Progress Bar */}
+<<<<<<< HEAD
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-[#F4B400] origin-left z-[60]" style={{ scaleX }} />
+=======
+      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-blue-950 origin-left z-[60]" style={{ scaleX }} />
+>>>>>>> origin/feature/user-management
 
       {/* --- NAVIGATION --- */}
       <nav className={cn(
@@ -102,10 +114,17 @@ export default function LandingPage() {
       )}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
+<<<<<<< HEAD
             <div className="w-10 h-10 bg-[#0B1736] rounded-xl flex items-center justify-center transition-transform group-hover:rotate-12">
               <Truck className="text-[#F4B400] w-6 h-6" />
             </div>
             <span className="text-xl font-black tracking-tighter">FLEETPRO<span className="text-[#F4B400]">.</span></span>
+=======
+            <div className="w-10 h-10 bg-blue-950 rounded-xl flex items-center justify-center transition-transform group-hover:rotate-12">
+              <Truck className="text-amber-400 w-6 h-6" />
+            </div>
+            <span className="text-xl font-black tracking-tighter">FLEETPRO<span className="text-amber-400">.</span></span>
+>>>>>>> origin/feature/user-management
           </Link>
 
           <div className="hidden md:flex items-center gap-10">
@@ -116,10 +135,14 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-4">
             <Link href="/auth/login">
-              <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-50">Log In</Button>
+              <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-100 text-slate-700">Log In</Button>
             </Link>
             <Link href="/auth/signup">
+<<<<<<< HEAD
               <Button className="bg-[#0B1736] text-white hover:bg-blue-950 rounded-full px-6 font-bold shadow-lg shadow-blue-200">
+=======
+              <Button className="bg-blue-950 text-white hover:bg-blue-900 rounded-lg px-6 font-bold shadow-lg shadow-blue-200">
+>>>>>>> origin/feature/user-management
                 Get Started
               </Button>
             </Link>
@@ -158,7 +181,7 @@ export default function LandingPage() {
               </motion.h1>
 
               <motion.p variants={itemVariants} className="text-xl text-slate-600 max-w-lg leading-relaxed mb-10 font-medium">
-                The world's most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
+                The world&apos;s most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
               </motion.p>
 
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
@@ -221,8 +244,13 @@ export default function LandingPage() {
       <section id="features" className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
+<<<<<<< HEAD
             <h2 className="text-sm font-black text-[#F4B400] uppercase tracking-[0.3em] mb-4">The Platform</h2>
             <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Everything you need, <br />nothing you don't.</h3>
+=======
+            <h2 className="text-sm font-black text-amber-500 uppercase tracking-[0.3em] mb-4">The Platform</h2>
+            <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Everything you need, <br />nothing you don&apos;t.</h3>
+>>>>>>> origin/feature/user-management
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

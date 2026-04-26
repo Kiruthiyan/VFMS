@@ -29,11 +29,19 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     /**
+<<<<<<< HEAD
      * SECURITY CONFIG - Fuel Management Module (Admin Only)
      * Updated to enforce role-based access control (@PreAuthorize annotations).
      * - Public endpoints: GET /, /auth/**, /api/ping
      * - Fuel management: ADMIN role only
      * - Other modules: Role-based via @PreAuthorize on controller methods
+=======
+        * Baseline stateless security configuration for the User Management module.
+        *
+        * Current behavior keeps request authorization permissive while module
+        * integration remains in progress. CORS, CSRF, and session policy are fully
+        * configured to support JWT-based security integration.
+>>>>>>> origin/feature/user-management
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,6 +51,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+<<<<<<< HEAD
                         // Public endpoints - accessible to all
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/auth/**").permitAll()
@@ -52,6 +61,11 @@ public class SecurityConfig {
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 );
+=======
+                    .requestMatchers("/api/auth/**", "/api/password/**", "/h2-console/**").permitAll()
+                    .anyRequest().authenticated())
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+>>>>>>> origin/feature/user-management
 
         return http.build();
     }
@@ -61,7 +75,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
+        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
