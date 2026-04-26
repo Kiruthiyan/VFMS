@@ -7,6 +7,6 @@ import java.util.UUID;
 public class ApprovalDTO {
     private UUID approverId;
     private String notes;
-    private UUID assignedVehicleId;
+    private Long assignedVehicleId;
     private UUID assignedDriverId;
 }

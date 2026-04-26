@@ -48,6 +48,8 @@ export default function TripsPage() {
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [showFilters, setShowFilters] = useState(false);
+    const [activeStatusFilter, setActiveStatusFilter] = useState("ALL");
     const router = useRouter();
     const { currentUser } = useRole();
 
@@ -64,7 +66,6 @@ export default function TripsPage() {
             } else if (currentUser.role === "DRIVER") {
                 response = await api.get(`/trips/driver/${currentUser.id}`);
             } else {
-                // STAFF and ADMIN see all trips
                 response = await api.get("/trips");
             }
             setTrips(response.data);
@@ -75,10 +76,13 @@ export default function TripsPage() {
         }
     };
 
-    const filtered = trips.filter(t =>
-        t.destination.toLowerCase().includes(search.toLowerCase()) ||
-        t.purpose.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = trips.filter(t => {
+        const matchesSearch =
+            t.destination.toLowerCase().includes(search.toLowerCase()) ||
+            t.purpose.toLowerCase().includes(search.toLowerCase());
+        const matchesStatus = activeStatusFilter === "ALL" || t.status === activeStatusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
     const formatDate = (dateStr: string) =>
         new Date(dateStr).toLocaleString("en-GB", {
@@ -89,7 +93,7 @@ export default function TripsPage() {
     const getPageTitle = () => {
         switch (currentUser.role) {
             case "SYSTEM_USER": return "My Trip Requests";
-            case "STAFF": return "Pending Approvals";
+            case "STAFF": return "Trip Management";
             case "DRIVER": return "My Assignments";
             case "ADMIN": return "All Trips";
         }
@@ -131,8 +135,11 @@ export default function TripsPage() {
     return (
         <div className="min-h-screen bg-slate-50 p-6 space-y-6">
 
+            {/* Role Switcher — top right, doesn't block content */}
+            <RoleSwitcher />
+
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pr-36">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900">
                         {getPageTitle()}
@@ -168,21 +175,71 @@ export default function TripsPage() {
                 ))}
             </div>
 
-            {/* Search */}
-            <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                    <Input
-                        placeholder="Search by destination or purpose..."
-                        className="pl-9 border-none bg-transparent focus-visible:ring-0"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+            {/* Search & Filter */}
+            <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                        <Input
+                            placeholder="Search by destination or purpose..."
+                            className="pl-9 border-none bg-transparent focus-visible:ring-0"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <div className="h-6 w-px bg-slate-200" />
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                            showFilters || activeStatusFilter !== "ALL"
+                                ? "bg-blue-950 text-white"
+                                : "text-slate-600 hover:bg-slate-50"
+                        }`}
+                    >
+                        <Filter className="h-4 w-4" />
+                        Filter
+                        {activeStatusFilter !== "ALL" && (
+                            <span className="bg-amber-400 text-blue-950 text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                                1
+                            </span>
+                        )}
+                    </button>
                 </div>
-                <div className="h-6 w-px bg-slate-200" />
-                <Button variant="ghost" size="sm" className="text-slate-600">
-                    <Filter className="mr-2 h-4 w-4" /> Filter
-                </Button>
+
+                {/* Filter panel */}
+                {showFilters && (
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                            Filter by Status
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {["ALL", "NEW", "SUBMITTED", "APPROVED", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED"].map(status => (
+                                <button
+                                    key={status}
+                                    onClick={() => setActiveStatusFilter(status)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                        activeStatusFilter === status
+                                            ? "bg-blue-950 text-white border-blue-950"
+                                            : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                                    }`}
+                                >
+                                    {status}
+                                    <span className="ml-1 opacity-60">
+                                        ({status === "ALL" ? trips.length : trips.filter(t => t.status === status).length})
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                        {activeStatusFilter !== "ALL" && (
+                            <button
+                                onClick={() => setActiveStatusFilter("ALL")}
+                                className="mt-3 text-xs text-red-500 font-medium hover:text-red-700"
+                            >
+                                Clear filter
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Table */}
@@ -284,7 +341,10 @@ export default function TripsPage() {
                                                 <DropdownMenuSeparator />
                                                 {["SYSTEM_USER", "STAFF", "ADMIN"].includes(currentUser.role) &&
                                                     !["COMPLETED", "CANCELLED", "REJECTED"].includes(trip.status) && (
-                                                        <DropdownMenuItem className="text-red-600">
+                                                        <DropdownMenuItem
+                                                            className="text-red-600"
+                                                            onClick={() => router.push(`/trips/${trip.id}`)}
+                                                        >
                                                             Cancel trip
                                                         </DropdownMenuItem>
                                                     )}
@@ -297,9 +357,6 @@ export default function TripsPage() {
                     </TableBody>
                 </Table>
             </div>
-
-            {/* Role Switcher for testing */}
-            <RoleSwitcher />
         </div>
     );
 }

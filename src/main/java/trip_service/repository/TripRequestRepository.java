@@ -41,7 +41,7 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
             "AND t.departureTime < :returnTime " +
             "AND t.returnTime > :departureTime")
     List<TripRequest> findConflictingVehicleBookings(
-            @Param("vehicleId") UUID vehicleId,
+            @Param("vehicleId") Long vehicleId,
             @Param("departureTime") LocalDateTime departureTime,
             @Param("returnTime") LocalDateTime returnTime);
 

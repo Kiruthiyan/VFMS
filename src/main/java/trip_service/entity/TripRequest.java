@@ -50,10 +50,10 @@ public class TripRequest {
     @Column(name = "status", nullable = false)
     private TripStatus status = TripStatus.NEW;
 
-    @Column(name = "assigned_vehicle_id")
-    private UUID assignedVehicleId;
+    @Column(name = "vehicle_id")
+    private Long assignedVehicleId;
 
-    @Column(name = "assigned_driver_id")
+    @Column(name = "driver_id")
     private UUID assignedDriverId;
 
     @Column(name = "approver_id")
