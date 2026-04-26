@@ -1,6 +1,7 @@
 package com.vfms.admin.service;
 
 import com.vfms.admin.dto.*;
+import com.vfms.admin.config.UserManagementProperties;
 import com.vfms.auth.service.EmailService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
@@ -29,10 +30,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-
-    private static final String TEMP_PASSWORD_CHARS =
-            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
-    private static final int TEMP_PASSWORD_LENGTH = 10;
+    private final UserManagementProperties userManagementProperties;
 
     // ── CREATE USER (Admin) ──────────────────────────────────────────────
 
@@ -133,8 +131,7 @@ public class AdminUserService {
                 userRepository.countByStatusAndDeletedAtIsNull(UserStatus.REJECTED));
         counts.put("deactivated",
                 userRepository.countByStatusAndDeletedAtIsNull(UserStatus.DEACTIVATED));
-        counts.put("deleted",
-                (long) userRepository.findByDeletedAtIsNotNullOrderByDeletedAtDesc().size());
+        counts.put("deleted", userRepository.countByDeletedAtIsNotNull());
         return counts;
     }
 
@@ -154,7 +151,7 @@ public class AdminUserService {
                     + "Current status: " + user.getStatus());
         }
 
-        if ("APPROVE".equalsIgnoreCase(request.getDecision())) {
+        if (request.getDecision() == ReviewDecision.APPROVE) {
 
             if (request.getAssignedRole() != null
                     && request.getAssignedRole() != user.getRole()) {
@@ -171,7 +168,7 @@ public class AdminUserService {
                     user.getFullName(),
                     user.getRole().name());
 
-        } else if ("REJECT".equalsIgnoreCase(request.getDecision())) {
+        } else if (request.getDecision() == ReviewDecision.REJECT) {
 
             if (request.getRejectionReason() == null
                     || request.getRejectionReason().isBlank()) {
@@ -350,10 +347,16 @@ public class AdminUserService {
 
     private String generateTempPassword() {
         SecureRandom random = new SecureRandom();
-        StringBuilder sb = new StringBuilder(TEMP_PASSWORD_LENGTH);
-        for (int i = 0; i < TEMP_PASSWORD_LENGTH; i++) {
-            sb.append(TEMP_PASSWORD_CHARS.charAt(
-                    random.nextInt(TEMP_PASSWORD_CHARS.length())));
+        int length = Math.max(8, userManagementProperties.getTempPassword().getLength());
+        String chars = userManagementProperties.getTempPassword().getChars();
+        if (chars == null || chars.isBlank()) {
+            throw new ValidationException("Temporary password character set is not configured.");
+        }
+
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(
+                    random.nextInt(chars.length())));
         }
         return sb.toString();
     }

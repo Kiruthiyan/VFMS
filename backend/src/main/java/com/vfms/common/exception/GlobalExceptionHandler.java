@@ -57,8 +57,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
         log.error("Unexpected runtime exception", ex);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                ErrorResponse.builder().status(400).message(ex.getMessage()).build()
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ErrorResponse.builder().status(500).message("An unexpected error occurred").build()
         );
     }
 

@@ -158,7 +158,7 @@ export default function LandingPage() {
               </motion.h1>
 
               <motion.p variants={itemVariants} className="text-xl text-slate-600 max-w-lg leading-relaxed mb-10 font-medium">
-                The world's most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
+                The world&apos;s most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
               </motion.p>
 
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
@@ -228,7 +228,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-sm font-black text-amber-500 uppercase tracking-[0.3em] mb-4">The Platform</h2>
-            <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Everything you need, <br />nothing you don't.</h3>
+            <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Everything you need, <br />nothing you don&apos;t.</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

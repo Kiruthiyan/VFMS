@@ -26,6 +26,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     long countByDeletedAtIsNull();
 
+    long countByDeletedAtIsNotNull();
+
     // ── SOFT-DELETED USERS (history) ──────────────────────────────────────
 
     List<User> findByDeletedAtIsNotNullOrderByDeletedAtDesc();

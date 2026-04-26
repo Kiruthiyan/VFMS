@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SupabaseStorageConfig {
 
-    @Value("${supabase.storage.url}")
+    @Value("${supabase.storage.url:}")
     private String storageUrl;
 
-    @Value("${supabase.storage.bucket}")
+    @Value("${supabase.storage.bucket:}")
     private String bucket;
 
-    @Value("${supabase.storage.service-key}")
+    @Value("${supabase.storage.service-key:}")
     private String serviceKey;
 
     public String getStorageUrl() { return storageUrl; }

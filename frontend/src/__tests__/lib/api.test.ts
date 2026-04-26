@@ -45,7 +45,10 @@ describe('API Configuration', () => {
     });
 
     // When
-    const contentType = apiInstance.defaults.headers.common['Content-Type'];
+    const contentType =
+      // Axios may normalize into defaults.headers (not always defaults.headers.common)
+      (apiInstance.defaults.headers as any)?.common?.['Content-Type'] ??
+      (apiInstance.defaults.headers as any)?.['Content-Type'];
 
     // Then
     expect(contentType).toBe('application/json');
@@ -183,7 +186,10 @@ describe('API Configuration', () => {
     });
 
     // Then
-    expect(apiInstance.defaults.headers.common['Content-Type']).toBe('application/json');
+    const contentType =
+      (apiInstance.defaults.headers as any)?.common?.['Content-Type'] ??
+      (apiInstance.defaults.headers as any)?.['Content-Type'];
+    expect(contentType).toBe('application/json');
   });
 
   it('should handle multiple interceptors', () => {

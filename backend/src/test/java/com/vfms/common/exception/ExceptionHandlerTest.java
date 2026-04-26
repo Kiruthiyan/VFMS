@@ -82,7 +82,7 @@ class ExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should map RuntimeException to 400 Bad Request")
+    @DisplayName("Should map RuntimeException to 500 Internal Server Error")
     void testRuntimeExceptionMapping() {
         // Given
         String errorMessage = "An unexpected error occurred";
@@ -93,9 +93,9 @@ class ExceptionHandlerTest {
 
         // Then
         assertNotNull(response);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(400, response.getBody().getStatus());
-        assertEquals(errorMessage, response.getBody().getMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(500, response.getBody().getStatus());
+        assertEquals("An unexpected error occurred", response.getBody().getMessage());
     }
 
     @Test
