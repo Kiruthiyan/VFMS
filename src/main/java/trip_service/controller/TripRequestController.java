@@ -12,6 +12,8 @@ import trip_service.enums.TripStatus;
 import java.util.List;
 import java.util.UUID;
 import trip_service.dto.ApprovalDTO;
+import trip_service.dto.VehicleOptionDTO;
+import trip_service.dto.DriverOptionDTO;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -74,6 +76,16 @@ public class TripRequestController {
     @PatchMapping("/{id}/assign-vehicle")
     public ResponseEntity<TripRequest> assignVehicle(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
         return ResponseEntity.ok(service.assignVehicle(id, dto));
+    }
+
+    @GetMapping("/available-vehicles")
+    public ResponseEntity<List<VehicleOptionDTO>> getAvailableVehicles() {
+        return ResponseEntity.ok(service.getAvailableVehicles());
+    }
+
+    @GetMapping("/available-drivers")
+    public ResponseEntity<List<DriverOptionDTO>> getAvailableDrivers() {
+        return ResponseEntity.ok(service.getAvailableDrivers());
     }
 
     @PatchMapping("/{id}/start")

@@ -10,11 +10,17 @@ import java.util.List;
 import java.util.UUID;
 import trip_service.dto.ApprovalDTO;
 import java.time.LocalDateTime;
+import trip_service.dto.VehicleOptionDTO;
+import trip_service.dto.DriverOptionDTO;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Service
 @RequiredArgsConstructor
 public class TripRequestService {
 
+    @PersistenceContext
+    private EntityManager entityManager;
     private final TripRequestRepository repository;
 
     public TripRequest createTrip(CreateTripRequestDTO dto) {
@@ -41,6 +47,33 @@ public class TripRequestService {
 
     public List<TripRequest> getTripsByStatus(TripStatus status) {
         return repository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
+    public List<VehicleOptionDTO> getAvailableVehicles() {
+        List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT id, brand, model, plate_number FROM vehicles WHERE status = 'AVAILABLE'"
+        ).getResultList();
+
+        return rows.stream().map(row -> new VehicleOptionDTO(
+                ((Number) row[0]).longValue(),
+                (String) row[1],
+                (String) row[2],
+                (String) row[3]
+        )).toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<DriverOptionDTO> getAvailableDrivers() {
+        List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT id::text, first_name, last_name, employee_id FROM drivers WHERE status = 'ACTIVE'"
+        ).getResultList();
+
+        return rows.stream().map(row -> new DriverOptionDTO(
+                (String) row[0],
+                (String) row[1],
+                (String) row[2],
+                (String) row[3]
+        )).toList();
     }
 
     public TripRequest getTripById(UUID tripId) {

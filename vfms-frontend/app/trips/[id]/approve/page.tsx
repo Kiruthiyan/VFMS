@@ -5,10 +5,9 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
     ArrowLeft, CheckCircle, XCircle,
-    Calendar, MapPin, Users, Loader2
+    Calendar, MapPin, Users, Loader2, AlertTriangle
 } from "lucide-react";
 import api from "@/lib/api";
 
@@ -69,8 +68,12 @@ export default function ApproveTripPage() {
 
     const handleApprove = async () => {
         setError("");
-        if (!form.assignedVehicleId || !form.assignedDriverId) {
-            setError("Please assign both a vehicle and a driver before approving");
+        if (!form.assignedVehicleId.trim()) {
+            setError("Please assign a vehicle before approving");
+            return;
+        }
+        if (!form.assignedDriverId.trim()) {
+            setError("Please assign a driver before approving");
             return;
         }
         setActionLoading("approve");
@@ -87,7 +90,11 @@ export default function ApproveTripPage() {
     const handleReject = async () => {
         setError("");
         if (!form.notes.trim()) {
-            setError("Rejection reason is required");
+            setError("Rejection reason is required — please explain why this trip is being rejected");
+            return;
+        }
+        if (form.notes.trim().length < 10) {
+            setError("Please provide a more detailed rejection reason (at least 10 characters)");
             return;
         }
         setActionLoading("reject");
@@ -117,7 +124,6 @@ export default function ApproveTripPage() {
         <div className="min-h-screen bg-slate-50 p-6">
             <div className="max-w-2xl mx-auto space-y-4">
 
-                {/* Back button */}
                 <button
                     onClick={() => router.back()}
                     className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
@@ -125,7 +131,7 @@ export default function ApproveTripPage() {
                     <ArrowLeft className="h-4 w-4" /> Back
                 </button>
 
-                {/* Trip Summary Card */}
+                {/* Trip Summary */}
                 <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
                         <div className="flex items-center gap-3">
@@ -142,12 +148,10 @@ export default function ApproveTripPage() {
                             </div>
                         </div>
                     </CardHeader>
-
                     <CardContent className="p-6 space-y-4">
-                        {/* Trip info summary */}
                         <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 space-y-3">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider w-24">Purpose</span>
+                            <div className="flex items-start gap-3">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider w-24 pt-0.5">Purpose</span>
                                 <span className="text-slate-900 font-medium text-sm">{trip.purpose}</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -170,20 +174,22 @@ export default function ApproveTripPage() {
 
                 {/* Action Card */}
                 <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <CardHeader className="bg-blue-950 py-4 rounded-t-xl">
-                        <CardTitle className="text-white text-base font-bold">
-                            {rejectMode ? "Reject Trip" : "Approve & Assign"}
+                    <CardHeader className={`py-4 rounded-t-xl ${rejectMode ? "bg-red-600" : "bg-blue-950"}`}>
+                        <CardTitle className="text-white text-base font-bold flex items-center gap-2">
+                            {rejectMode ? (
+                                <><XCircle className="h-4 w-4" /> Reject Trip Request</>
+                            ) : (
+                                <><CheckCircle className="h-4 w-4" /> Approve & Assign Resources</>
+                            )}
                         </CardTitle>
                     </CardHeader>
 
                     <CardContent className="p-6 space-y-4">
-
                         {!rejectMode ? (
                             <>
-                                {/* Assign Vehicle */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700">
-                                        Assign Vehicle ID
+                                        Vehicle ID <span className="text-red-500">*</span>
                                     </label>
                                     <Input
                                         name="assignedVehicleId"
@@ -197,10 +203,9 @@ export default function ApproveTripPage() {
                                     </p>
                                 </div>
 
-                                {/* Assign Driver */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700">
-                                        Assign Driver ID
+                                        Driver ID <span className="text-red-500">*</span>
                                     </label>
                                     <Input
                                         name="assignedDriverId"
@@ -214,10 +219,10 @@ export default function ApproveTripPage() {
                                     </p>
                                 </div>
 
-                                {/* Notes */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700">
-                                        Notes — optional
+                                        Approval Notes
+                                        <span className="ml-1 text-xs text-slate-400 font-normal">(optional)</span>
                                     </label>
                                     <textarea
                                         name="notes"
@@ -225,40 +230,67 @@ export default function ApproveTripPage() {
                                         value={form.notes}
                                         onChange={handleChange}
                                         rows={3}
-                                        className="flex w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm hover:border-slate-300 resize-none"
+                                        className="flex w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-all shadow-sm hover:border-slate-300 resize-none"
                                     />
                                 </div>
                             </>
                         ) : (
                             <>
-                                {/* Rejection reason */}
+                                {/* Warning banner */}
+                                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                                    <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-bold text-red-700">
+                                            You are rejecting this trip request
+                                        </p>
+                                        <p className="text-xs text-red-600 mt-0.5">
+                                            The requester will be notified with your reason. This action cannot be undone.
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-700">
+                                    <label className="text-sm font-bold text-slate-700">
                                         Rejection Reason <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
                                         name="notes"
-                                        placeholder="Explain why this trip request is being rejected..."
+                                        placeholder="Explain clearly why this trip request is being rejected. The requester will see this reason..."
                                         value={form.notes}
                                         onChange={handleChange}
-                                        rows={4}
-                                        className="flex w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm hover:border-slate-300 resize-none"
+                                        rows={5}
+                                        className={`flex w-full rounded-xl border px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 transition-all shadow-sm resize-none ${
+                                            form.notes.trim().length === 0 && actionLoading === ""
+                                                ? "border-red-200 bg-red-50"
+                                                : "border-slate-200 bg-white hover:border-slate-300"
+                                        }`}
                                     />
-                                    <p className="text-xs text-red-500">
-                                        A reason is required when rejecting a trip request
-                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs text-red-500 font-medium">
+                                            A detailed reason is required before rejecting
+                                        </p>
+                                        <span className={`text-xs font-medium ${
+                                            form.notes.trim().length >= 10
+                                                ? "text-green-600"
+                                                : "text-slate-400"
+                                        }`}>
+                                            {form.notes.trim().length} chars
+                                            {form.notes.trim().length < 10 && " (min 10)"}
+                                        </span>
+                                    </div>
                                 </div>
                             </>
                         )}
 
                         {/* Error */}
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+                            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 shrink-0" />
                                 {error}
                             </div>
                         )}
 
-                        {/* Action buttons */}
+                        {/* Buttons */}
                         <div className="flex gap-3 pt-2">
                             {!rejectMode ? (
                                 <>
@@ -266,7 +298,7 @@ export default function ApproveTripPage() {
                                         type="button"
                                         variant="outline"
                                         className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
-                                        onClick={() => { setRejectMode(true); setError(""); }}
+                                        onClick={() => { setRejectMode(true); setError(""); setForm(f => ({ ...f, notes: "" })); }}
                                     >
                                         <XCircle className="mr-2 h-4 w-4" />
                                         Reject
@@ -279,7 +311,7 @@ export default function ApproveTripPage() {
                                         {actionLoading === "approve" ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                            <><CheckCircle className="mr-2 h-4 w-4" /> Approve</>
+                                            <><CheckCircle className="mr-2 h-4 w-4" /> Approve Trip</>
                                         )}
                                     </Button>
                                 </>
@@ -289,19 +321,19 @@ export default function ApproveTripPage() {
                                         type="button"
                                         variant="outline"
                                         className="flex-1"
-                                        onClick={() => { setRejectMode(false); setError(""); }}
+                                        onClick={() => { setRejectMode(false); setError(""); setForm(f => ({ ...f, notes: "" })); }}
                                     >
-                                        Back
+                                        Cancel
                                     </Button>
                                     <Button
                                         onClick={handleReject}
-                                        disabled={actionLoading === "reject"}
-                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                        disabled={actionLoading === "reject" || form.notes.trim().length < 10}
+                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
                                     >
                                         {actionLoading === "reject" ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                            <><XCircle className="mr-2 h-4 w-4" /> Confirm Reject</>
+                                            <><XCircle className="mr-2 h-4 w-4" /> Confirm Rejection</>
                                         )}
                                     </Button>
                                 </>
