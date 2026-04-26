@@ -47,7 +47,7 @@ public class AsyncConfig {
         
         // Reject policy: throw exception if queue is full (fail-fast)
         // Never silently drop tasks
-        executor.setRejectedExecutionHandler(new ThreadPoolTaskExecutor.AbortPolicy());
+        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());
         
         // Initialize the executor
         executor.initialize();

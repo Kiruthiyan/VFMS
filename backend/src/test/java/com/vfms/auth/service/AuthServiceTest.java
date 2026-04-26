@@ -4,6 +4,7 @@ import com.vfms.common.exception.AuthenticationException;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
+import com.vfms.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;

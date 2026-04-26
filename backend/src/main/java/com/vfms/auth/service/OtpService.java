@@ -120,25 +120,6 @@ public class OtpService {
     public void cleanupExpiredOtps() {
         otpRepository.deleteExpiredOtps(Instant.now());
     }
-            throw new RuntimeException("[INVALID_OTP] Verification code is incorrect. Please check and try again.");
-        }
-
-        log.info("[OTP-VERIFY] OTP verified successfully for email: {}", email);
-        
-        // Mark as verified
-        otpVerification.setVerified(true);
-        otpRepository.save(otpVerification);
-        
-        return true;
-    }
-
-    /**
-     * Clean up expired and verified OTPs
-     */
-    @Transactional
-    public void cleanupExpiredOtps() {
-        otpRepository.deleteExpiredOtps(Instant.now());
-    }
 
     /**
      * Generate random 6-digit OTP
