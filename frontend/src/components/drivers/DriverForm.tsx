@@ -16,21 +16,13 @@ const driverSchema = z.object({
   lastName: z.string().min(1, 'Required'),
   nic: z.string().min(1, 'Required'),
   dateOfBirth: z.string().optional(),
-  phone: z
-    .string()
-    .min(1, 'Required')
-    .refine((value) => hasMinDigits(value), { message: 'Phone number must have at least 10 digits' }),
+  phone: z.string().min(1, 'Required'),
   licenseNumber: z.string().min(1, 'Required'),
   licenseExpiryDate: z.string().min(1, 'Required'),
   email: z.string().email().optional().or(z.literal('')),
   address: z.string().optional(),
   emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z
-    .string()
-    .optional()
-    .refine((value) => !value || hasMinDigits(value), {
-      message: 'Emergency contact phone must have at least 10 digits',
-    }),
+  emergencyContactPhone: z.string().optional().or(z.literal('')),
   department: z.string().optional(),
   designation: z.string().optional(),
   dateOfJoining: z.string().optional(),
@@ -54,7 +46,13 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
     setError,
     clearErrors,
     formState: { errors, isSubmitting },
-  } = useForm<DriverFormData>({ resolver: zodResolver(driverSchema), defaultValues: driver || {} });
+  } = useForm<DriverFormData>({
+    resolver: zodResolver(driverSchema),
+    defaultValues: {
+      ...(driver || {}),
+      emergencyContactPhone: driver?.emergencyContactPhone ?? '',
+    },
+  });
 
   const normalizePayload = (data: DriverFormData) => {
     const emptyToNull = (value?: string) => {
@@ -140,8 +138,28 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
       return false;
     };
 
+    clearErrors();
+    const phone = data.phone.trim();
+    if (!hasMinDigits(phone)) {
+      setError('phone', {
+        type: 'manual',
+        message: 'Phone number must have at least 10 digits',
+      });
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
+    const emergencyPhone = (data.emergencyContactPhone || '').trim();
+    if (emergencyPhone && !hasMinDigits(emergencyPhone)) {
+      setError('emergencyContactPhone', {
+        type: 'manual',
+        message: 'Emergency contact phone must have at least 10 digits',
+      });
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     try {
-      clearErrors();
       const payload = normalizePayload(data);
       if (driver) {
         await apiFetch(`/api/drivers/${driver.id}`, {
@@ -267,6 +285,11 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
               borderColor: '#d1d5db',
             }}
           />
+          {errors.emergencyContactPhone && (
+            <p className="text-xs mt-1" style={{ color: 'hsl(var(--destructive))' }}>
+              {String(errors.emergencyContactPhone.message)}
+            </p>
+          )}
         </div>
       </div>
 

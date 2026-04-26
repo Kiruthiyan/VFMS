@@ -17,6 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Eye, Pencil, Plus, Search, Trash2, Users2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const hasMinDigits = (value: string, minDigits = 10) => value.replace(/\D/g, '').length >= minDigits;
+
 const staffSchema = z.object({ employeeId: z.string().min(1), firstName: z.string().min(1), lastName: z.string().min(1), email: z.string().email().optional().or(z.literal('')), phone: z.string().optional(), department: z.string().optional(), designation: z.string().optional(), role: z.enum(['SYSTEM_USER','APPROVER']), dateOfJoining: z.string().optional() });
 type StaffFormData = z.infer<typeof staffSchema>;
 
@@ -29,13 +31,23 @@ export default function StaffPage() {
   const [activeStaff, setActiveStaff] = useState<Staff | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
-  const { register, handleSubmit, control, reset, formState: { isSubmitting } } = useForm<StaffFormData>({ resolver: zodResolver(staffSchema), defaultValues: { role: 'SYSTEM_USER' } });
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<StaffFormData>({ resolver: zodResolver(staffSchema), defaultValues: { role: 'SYSTEM_USER' } });
   const {
     register: editRegister,
     handleSubmit: handleEditSubmit,
     control: editControl,
     reset: resetEdit,
-    formState: { isSubmitting: isEditSubmitting },
+    setError: setEditError,
+    clearErrors: clearEditErrors,
+    formState: { errors: editErrors, isSubmitting: isEditSubmitting },
   } = useForm<StaffFormData>({ resolver: zodResolver(staffSchema), defaultValues: { role: 'SYSTEM_USER' } });
 
   const fetchStaff = () => apiFetch<PageResponse<Staff>>('/api/staff?size=50').then(d => setStaff(d.content)).catch(e => toast.error(e.message));
@@ -79,12 +91,29 @@ export default function StaffPage() {
   };
 
   const onSubmit = async (data: StaffFormData) => {
+    clearErrors();
+    const phone = (data.phone || '').trim();
+    if (phone && !hasMinDigits(phone)) {
+      setError('phone', { type: 'manual', message: 'Phone number must have at least 10 digits' });
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     try { await apiFetch('/api/staff', { method: 'POST', body: JSON.stringify(data) }); toast.success('Added'); setOpen(false); reset(); fetchStaff(); }
     catch (e: any) { toast.error(e.message); }
   };
 
   const onEditSubmit = async (data: StaffFormData) => {
     if (!activeStaff) return;
+
+    clearEditErrors();
+    const phone = (data.phone || '').trim();
+    if (phone && !hasMinDigits(phone)) {
+      setEditError('phone', { type: 'manual', message: 'Phone number must have at least 10 digits' });
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     try {
       await apiFetch(`/api/staff/${activeStaff.id}`, { method: 'PUT', body: JSON.stringify(data) });
       toast.success('Staff updated');
@@ -155,7 +184,11 @@ export default function StaffPage() {
                     <div><Label className="text-xs text-muted-foreground">First Name *</Label><Input {...register('firstName')} className="mt-1 h-9 text-sm" /></div>
                     <div><Label className="text-xs text-muted-foreground">Last Name *</Label><Input {...register('lastName')} className="mt-1 h-9 text-sm" /></div>
                     <div><Label className="text-xs text-muted-foreground">Email</Label><Input type="email" {...register('email')} className="mt-1 h-9 text-sm" /></div>
-                    <div><Label className="text-xs text-muted-foreground">Phone</Label><Input {...register('phone')} className="mt-1 h-9 text-sm" /></div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Phone</Label>
+                      <Input {...register('phone')} className="mt-1 h-9 text-sm" />
+                      {errors.phone && <p className="mt-1 text-xs" style={{ color: 'hsl(var(--destructive))' }}>{String(errors.phone.message)}</p>}
+                    </div>
                     <div><Label className="text-xs text-muted-foreground">Department</Label><Input {...register('department')} className="mt-1 h-9 text-sm" /></div>
                     <div><Label className="text-xs text-muted-foreground">Designation</Label><Input {...register('designation')} className="mt-1 h-9 text-sm" /></div>
                     <div><Label className="text-xs text-muted-foreground">Date of Joining</Label><Input type="date" {...register('dateOfJoining')} className="mt-1 h-9 text-sm" /></div>
@@ -247,7 +280,11 @@ export default function StaffPage() {
               <div><Label className="text-xs text-muted-foreground">First Name *</Label><Input {...editRegister('firstName')} className="mt-1 h-9 text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Last Name *</Label><Input {...editRegister('lastName')} className="mt-1 h-9 text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Email</Label><Input type="email" {...editRegister('email')} className="mt-1 h-9 text-sm" /></div>
-              <div><Label className="text-xs text-muted-foreground">Phone</Label><Input {...editRegister('phone')} className="mt-1 h-9 text-sm" /></div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Phone</Label>
+                <Input {...editRegister('phone')} className="mt-1 h-9 text-sm" />
+                {editErrors.phone && <p className="mt-1 text-xs" style={{ color: 'hsl(var(--destructive))' }}>{String(editErrors.phone.message)}</p>}
+              </div>
               <div><Label className="text-xs text-muted-foreground">Department</Label><Input {...editRegister('department')} className="mt-1 h-9 text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Designation</Label><Input {...editRegister('designation')} className="mt-1 h-9 text-sm" /></div>
               <div><Label className="text-xs text-muted-foreground">Date of Joining</Label><Input type="date" {...editRegister('dateOfJoining')} className="mt-1 h-9 text-sm" /></div>
