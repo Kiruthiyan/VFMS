@@ -10,11 +10,16 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor
-// NOTE: Token injection will be added by feature/auth-login (Kiruthiyan)
+/**
+ * Request interceptor.
+ *
+ * Authentication tokens are injected at the Next.js middleware layer
+ * (see middleware.ts), so no additional token handling is needed here.
+ * The interceptor is kept for future extensibility (e.g., adding
+ * request-level logging or correlation IDs).
+ */
 api.interceptors.request.use(
   (config) => {
-    // Auth token will be added here when feature/auth-login is merged
     return config;
   },
   (error) => Promise.reject(error)
