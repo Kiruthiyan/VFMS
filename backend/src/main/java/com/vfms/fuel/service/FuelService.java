@@ -44,6 +44,9 @@ public class FuelService {
     private final FuelStorageService fuelStorageService;
     private final FuelMisuseService fuelMisuseService;
 
+    /** Reason assigned when an admin manually flags a fuel record for review. */
+    private static final String MANUAL_FLAG_REASON = "Manually flagged by admin";
+
     // ── CREATE FUEL ENTRY ────────────────────────────────────────────────
 
     @Transactional
@@ -429,7 +432,7 @@ public class FuelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
         record.setFlaggedForMisuse(true);
         if (record.getFlagReason() == null || record.getFlagReason().isBlank()) {
-            record.setFlagReason("Manually flagged by admin");
+            record.setFlagReason(MANUAL_FLAG_REASON);
         }
         return toResponse(fuelRecordRepository.save(record));
     }

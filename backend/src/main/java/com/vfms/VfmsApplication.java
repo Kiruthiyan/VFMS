@@ -5,6 +5,19 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.env.AbstractEnvironment;
 
+/**
+ * Entry point for the Vehicle Fleet Management System (VFMS) Spring Boot application.
+ *
+ * <p>A static initialiser block runs before the Spring context is created to load
+ * environment-specific secrets (database credentials, JWT secret, mail credentials,
+ * etc.) from a local {@code .env} file using the Dotenv library.  Each key is
+ * promoted to a JVM system property so that Spring's {@code ${...}} placeholder
+ * resolution can pick them up transparently.</p>
+ *
+ * <p>If the {@code .env} file is absent (e.g., in CI/CD environments where variables
+ * are injected directly), the loader silently skips the file rather than failing
+ * the startup.</p>
+ */
 @SpringBootApplication
 public class VfmsApplication {
 
