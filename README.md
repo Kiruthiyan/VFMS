@@ -1,451 +1,144 @@
-# VFMS - Staff, Driver, Certification, Document, Availability, Qualification, Readiness, Infraction, Performance, and Service Request Management
+# FleetPro - Vehicle Fleet Management System (VFMS)
 
-Vehicle Fleet Management System (VFMS) module for managing staff profiles, driver profiles, certifications, licenses, driver document uploads, driver availability tracking, driver assignment readiness, driver qualification validation, driver infraction records, driver performance monitoring, and staff vehicle service requests.
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-green)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 
-This branch/project currently implements Staff Management, Driver Management, Driver License Management, Driver Certification Management, Driver Document Upload, Driver Availability Tracking, Driver Assignment Readiness, Driver Qualification Validation, Driver Eligibility Checking, Driver Infraction Tracking, Driver Performance Monitoring, and Staff Vehicle Service Request Management with a Spring Boot backend and a Next.js frontend.
+> **Module Focus:** Driver and Staff Managemant Module
+> **Status:** Complete
+
+## Project Overview
+
+FleetPro is a Vehicle Fleet Management System designed to support the daily operational needs of a fleet-driven organization. This repository contains the Driver and Staff Managemant Module, which is responsible for maintaining workforce records, supporting driver readiness decisions, and giving administrators a single place to manage the people connected to fleet operations.
+
+The module combines a Spring Boot backend and a Next.js frontend to provide a structured workflow for handling driver and staff data. It is built to reduce manual tracking, improve traceability, and support safer operational decisions.
+
+## Module Focus
+
+This module is centered on the administration of drivers and staff members within VFMS. It keeps core records, supports related operational checks, and helps the system maintain reliable data for fleet planning and daily use.
+
+## Key Features
+
+The module includes the following major capabilities, each described briefly below.
+
+### Driver and Staff Records
+- Maintain driver and staff profiles in a centralized system.
+- Store identity, contact, employment, and status information.
+- Support search, review, update, and controlled removal.
+
+### License and Certification Handling
+- Track driver licenses and expiry dates.
+- Store certification records linked to each driver.
+- Support validation of required qualification documents.
+
+### Document Management
+- Upload and manage driver-related documents.
+- Keep supporting files organized for operational reference.
+- Allow administrators to view and remove documents when needed.
+
+### Availability and Readiness
+- Track whether a driver is available, on leave, or occupied.
+- Maintain readiness data for assignment decisions.
+- Help operations staff quickly identify drivers suitable for dispatch.
+
+### Qualification and Eligibility Checks
+- Verify whether a driver meets vehicle category requirements.
+- Check assignment eligibility using employee details and trip requirements.
+- Return clear reasons when a driver does not qualify.
+
+### Infraction and Performance Monitoring
+- Record driver infractions and their resolution status.
+- Track monthly performance scores for review.
+- Support follow-up decisions based on driver history.
+
+### Staff Service Requests
+- Allow staff to submit vehicle-related service requests.
+- Track requests through an operational status flow.
+- Help the support team monitor and resolve active requests.
+
+## Technical Architecture
+
+### Backend
+- Java 21 with Spring Boot
+- Spring Data JPA for persistence
+- Spring Security for request protection
+- Bean Validation for request checks
+- PostgreSQL for data storage
+- Flyway migrations for schema management
+
+### Frontend
+- Next.js App Router
+- TypeScript
+- Tailwind CSS and shadcn/ui components
+- React Hook Form with Zod validation
+- Central API access through a shared client layer
+
+## Project Structure
+
+```text
+Driver & Staff Management/
+├── backend/
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/vfms/
+│       │   ├── common/
+│       │   ├── config/
+│       │   └── dsm/
+│       │       ├── controller/
+│       │       ├── dto/
+│       │       ├── entity/
+│       │       ├── repository/
+│       │       ├── scheduler/
+│       │       └── service/
+│       └── resources/
+│           └── db/migration/
+└── frontend/
+    └── src/
+        ├── app/
+        ├── components/
+        ├── lib/
+        └── types/
+```
+
+## Getting Started
+
+### Prerequisites
+- Java JDK 21+
+- Node.js 18+
+- Maven Wrapper included in the backend
+- PostgreSQL database
+
+### Backend Setup
+
+1. Move into the backend directory.
+2. Configure the database and environment values in the application files or local environment.
+3. Start the backend server with the Maven Wrapper.
+
+### Frontend Setup
+
+1. Move into the frontend directory.
+2. Install the Node.js dependencies.
+3. Start the development server.
+
+## Testing
+
+The backend includes automated tests for the main module services. These tests cover driver and staff-related business logic and help confirm that the module behaves correctly after changes.
+
+Run the backend tests from the backend directory using the Maven Wrapper.
 
 ## Module Owner
 
 - Kavishanth (Student C)
 
-## Developed by
+## Developed By
 
 - Kavishanth
 
-## Tech Stack
+## Notes
 
-- Backend: Java 21, Spring Boot 3.4, Spring Data JPA, Spring Security, Validation, PostgreSQL
-- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui, Axios, React Hook Form, Zod
-- Build Tools: Maven Wrapper and npm
-
-## Current Scope
-
-### Staff Management (Implemented)
-- Create staff profile
-- Get staff by id
-- List staff with pagination
-- Update staff profile
-- Deactivate staff profile
-- Basic frontend staff page with search and add-staff dialog
-
-### Driver Certification Management (Implemented)
-- Add driver certification record
-- Get certifications by driver
-- Update certification record
-- Delete certification record
-- Frontend certifications tab with form dialog and list display
-- Certification status tracking (VALID, EXPIRING_SOON, EXPIRED)
-- Certification types (DEFENSIVE_DRIVING, FIRST_AID, HAZMAT, HEAVY_VEHICLE, PASSENGER_TRANSPORT, OTHER)
-
-### Certification Expiry Monitoring (Implemented)
-- Daily scheduled job updates certification status automatically
-- Scheduler: backend/src/main/java/com/vfms/dsm/scheduler/CertificationExpiryScheduler.java
-- Runs every day at 06:00 using cron: 0 0 6 * * *
-- Expired certifications are marked as EXPIRED and logged as CERT_EXPIRED notifications
-- Certifications expiring within 30 days are marked as EXPIRING_SOON and logged as CERT_EXPIRING_SOON notifications
-
-### Driver Document Upload (Implemented - Latest)
-- Upload one or multiple documents for a driver
-- List uploaded documents per driver
-- Delete uploaded documents
-- Supported file types: PDF, JPG, PNG
-- Document entity types: LICENSE, CERTIFICATION, PROFILE, OTHER
-- Frontend documents tab with drag-and-drop and quick download/delete actions
-
-### Driver Availability Tracking (Implemented - Latest)
-- Track a driver's current availability state
-- Update availability with reason and actor metadata
-- View availability status history by driver
-- Filter drivers by availability status
-- Frontend availability tab for current status and status update actions
-
-### Driver Infraction Tracking (Implemented - Latest)
-- Log driver infractions/incidents with type, severity, date, description, and penalty notes
-- View infractions by driver (latest first)
-- Resolve open infractions
-- Severity levels: LOW, MEDIUM, HIGH, CRITICAL
-- Resolution statuses: OPEN, UNDER_REVIEW, RESOLVED
-- Frontend infractions tab with form dialog and incident list
-
-### Driver Performance Monitoring (Implemented - Latest)
-- Monthly driver performance scores are calculated and stored per year/month period
-- Composite scoring includes trip completion, fuel efficiency, feedback score, and infraction deductions
-- Non-resolved HIGH and CRITICAL infractions contribute weighted deductions
-- Automated scheduler runs monthly: `0 0 1 1 * *` (first day of each month at 01:00)
-- Frontend performance tab shows latest score KPIs and historical monthly trend
-
-### Driver Qualification Validation (Implemented - Latest)
-- Validate whether a driver is qualified for a requested vehicle category
-- Qualification checks include required license class and required certification types
-- Returns a decision with reasons when requirements are not met
-- Supports categories: LIGHT, MEDIUM, HEAVY, PASSENGER, TANKER
-- Exposed as a read-only API endpoint for operational pre-dispatch checks
-
-### Driver Eligibility Check (Implemented - Latest)
-- Check whether a driver is eligible for trip assignment using employee ID, vehicle category, and trip date
-- Combines driver status, availability, license validity, qualification validation, and unresolved critical infractions
-- Returns an eligibility decision with reasons when requirements are not met
-- Frontend eligibility page available at `/drivers/eligibility`
-- Input uses Driver Employee ID instead of driver UUID
-
-### Driver Assignment Readiness (Implemented - Latest)
-- Maintains a cache of assignment readiness per driver in `driver_readiness_cache`
-- Readiness is computed from license validity, certification validity, and current availability status
-- Supports per-driver readiness fetch and explicit per-driver refresh
-- Includes scheduled refresh every 30 minutes for all drivers
-- Frontend readiness dashboard available at `/drivers/readiness`
-- Dashboard includes ready/busy/issues stats, search by driver ID, and manual refresh actions
-
-### Latest Developed Files (driver-assignment-readiness)
-- backend/src/main/java/com/vfms/dsm/entity/DriverReadinessCache.java
-- backend/src/main/java/com/vfms/dsm/repository/DriverReadinessCacheRepository.java
-- backend/src/main/java/com/vfms/dsm/service/DriverReadinessService.java
-- backend/src/main/java/com/vfms/dsm/controller/DriverReadinessController.java
-- backend/src/main/resources/db/migration/V16__create_driver_readiness_cache.sql
-- frontend/src/app/drivers/readiness/page.tsx
-
-### Latest Developed Files (driver-infraction-tracking)
-- backend/src/main/java/com/vfms/dsm/entity/DriverInfraction.java
-- backend/src/main/java/com/vfms/dsm/repository/DriverInfractionRepository.java
-- backend/src/main/java/com/vfms/dsm/service/DriverInfractionService.java
-- backend/src/main/java/com/vfms/dsm/controller/DriverInfractionController.java
-- backend/src/main/java/com/vfms/dsm/dto/InfractionRequest.java
-- backend/src/main/resources/db/migration/V14__create_driver_infractions.sql
-- frontend/src/components/drivers/DriverInfractionsTab.tsx
-
-### Latest Developed Files (driver-performance-monitoring)
-- backend/src/main/java/com/vfms/dsm/entity/DriverPerformanceScore.java
-- backend/src/main/java/com/vfms/dsm/repository/DriverPerformanceScoreRepository.java
-- backend/src/main/java/com/vfms/dsm/service/DriverPerformanceService.java
-- backend/src/main/java/com/vfms/dsm/controller/DriverPerformanceController.java
-- backend/src/main/resources/db/migration/V15__create_driver_performance_scores.sql
-- frontend/src/components/drivers/DriverPerformanceTab.tsx
-
-### Latest Developed Files (driver-qualification-validation)
-- backend/src/main/java/com/vfms/dsm/service/DriverQualificationService.java
-- backend/src/main/java/com/vfms/dsm/controller/DriverQualificationController.java
-- backend/src/main/java/com/vfms/dsm/dto/QualificationCheckRequest.java
-- backend/src/main/java/com/vfms/dsm/dto/QualificationCheckResponse.java
-- backend/src/main/resources/db/migration/V10__create_vehicle_license_requirements.sql
-
-### Latest Developed Files (driver-eligibility-check)
-- backend/src/main/java/com/vfms/dsm/dto/EligibilityCheckRequest.java
-- backend/src/main/java/com/vfms/dsm/dto/EligibilityCheckResponse.java
-- backend/src/main/java/com/vfms/dsm/service/DriverEligibilityService.java
-- backend/src/main/java/com/vfms/dsm/controller/DriverEligibilityController.java
-- frontend/src/app/drivers/eligibility/page.tsx
-
-### Staff Vehicle Service Requests (Implemented - Latest)
-- Staff can submit vehicle fault and maintenance related requests
-- Request types: FAULT_REPORT, SERVICE_REQUEST, INSPECTION_REQUEST
-- Urgency levels: LOW, MEDIUM, HIGH
-- Request lifecycle status: OPEN, ACKNOWLEDGED, IN_PROGRESS, RESOLVED
-- View currently open requests
-- Update request status from operations flow
-- Frontend page for request submission and open-request status actions
-
-### In progress / placeholders
-- Authentication login/signup pages are placeholders in frontend
-- Security config currently permits all requests and is marked for JWT integration later
-
-## Project Structure
-
-```text
-VFMS/
-├── backend/
-│   ├── pom.xml
-│   └── src/main/
-│       ├── java/com/vfms/
-│       │   ├── config/
-│       │   └── dsm/
-│       │       ├── controller/
-│       │       │   ├── DriverController.java
-│       │       │   ├── DriverAvailabilityController.java
-│       │       │   ├── DriverCertificationController.java
-│       │       │   ├── DriverDocumentController.java
-│       │       │   ├── DriverInfractionController.java
-│       │       │   ├── DriverPerformanceController.java
-│       │       │   ├── DriverReadinessController.java
-│       │       │   ├── DriverQualificationController.java
-│       │       │   ├── DriverLicenseController.java
-│       │       │   ├── StaffServiceRequestController.java
-│       │       │   └── StaffController.java
-│       │       ├── dto/
-│       │       │   ├── CertificationRequest.java
-│       │       │   ├── AvailabilityUpdateRequest.java
-│       │       │   ├── InfractionRequest.java
-│       │       │   ├── QualificationCheckRequest.java
-│       │       │   ├── QualificationCheckResponse.java
-│       │       │   ├── ServiceRequestDto.java
-│       │       │   └── ...
-│       │       ├── entity/
-│       │       │   ├── Driver.java
-│       │       │   ├── DriverAvailability.java
-│       │       │   ├── DriverAvailabilityLog.java
-│       │       │   ├── DriverCertification.java
-│       │       │   ├── DriverDocument.java
-│       │       │   ├── DriverInfraction.java
-│       │       │   ├── DriverPerformanceScore.java
-│       │       │   ├── DriverReadinessCache.java
-│       │       │   ├── DriverLicense.java
-│       │       │   ├── Staff.java
-│       │       │   ├── StaffServiceRequest.java
-│       │       │   └── BaseEntity.java
-│       │       ├── exception/
-│       │       ├── repository/
-│       │       │   ├── DriverRepository.java
-│       │       │   ├── DriverAvailabilityRepository.java
-│       │       │   ├── DriverAvailabilityLogRepository.java
-│       │       │   ├── DriverCertificationRepository.java
-│       │       │   ├── DriverDocumentRepository.java
-│       │       │   ├── DriverInfractionRepository.java
-│       │       │   ├── DriverPerformanceScoreRepository.java
-│       │       │   ├── DriverReadinessCacheRepository.java
-│       │       │   ├── DriverLicenseRepository.java
-│       │       │   ├── NotificationLogRepository.java
-│       │       │   ├── StaffServiceRequestRepository.java
-│       │       │   └── StaffRepository.java
-│       │       ├── scheduler/
-│       │       │   ├── LicenseExpiryScheduler.java
-│       │       │   └── CertificationExpiryScheduler.java
-│       │       └── service/
-│       │           ├── DriverService.java
-│       │           ├── DriverAvailabilityService.java
-│       │           ├── DriverCertificationService.java
-│       │           ├── DriverDocumentService.java
-│       │           ├── DriverInfractionService.java
-│       │           ├── DriverPerformanceService.java
-│       │           ├── DriverReadinessService.java
-│       │           ├── DriverQualificationService.java
-│       │           ├── DriverLicenseService.java
-│       │           ├── StaffServiceRequestService.java
-│       │           └── StaffService.java
-│       └── resources/
-│           ├── application.properties
-│           └── db/migration/
-│               ├── V1__create_drivers.sql
-│               ├── V10__create_vehicle_license_requirements.sql
-│               ├── V11__create_staff_service_requests.sql
-│               ├── V2__create_staff.sql
-│               ├── V3__create_driver_licenses.sql
-│               ├── V4__create_notification_log.sql
-│               ├── V13__create_driver_availability.sql
-│               ├── V14__create_driver_infractions.sql
-│               ├── V15__create_driver_performance_scores.sql
-│               ├── V16__create_driver_readiness_cache.sql
-│               ├── V7__create_driver_certifications.sql
-│               ├── V8__normalize_notification_log_entity_id_to_uuid.sql
-│               └── V12__create_driver_documents.sql
-└── frontend/
-    ├── package.json
-    └── src/
-    ├── app/
-    │   ├── auth/
-    │   ├── drivers/
-    │   │   ├── readiness/
-    │   │   │   └── page.tsx
-    │   ├── service-requests/
-    │   ├── staff/
-    │   └── page.tsx
-    ├── components/
-    │   ├── drivers/
-    │   │   ├── DriverForm.tsx
-    │   │   ├── DriverLicensesTab.tsx
-    │   │   ├── DriverCertificationsTab.tsx
-    │   │   ├── DriverAvailabilityTab.tsx
-    │   │   ├── DriverDocumentsTab.tsx
-    │   │   ├── DriverInfractionsTab.tsx
-    │   │   └── DriverPerformanceTab.tsx
-    │   └── ...
-    ├── lib/
-    └── types/
-```
-
-## Backend API
-
-### Staff Endpoints
-
-Base path: /api/staff
-
-- POST /api/staff
-    - Create a staff profile
-- GET /api/staff/{id}
-    - Fetch one staff profile
-- GET /api/staff?page=0&size=10
-    - Fetch paginated staff profiles
-- PUT /api/staff/{id}
-    - Update a staff profile
-- PATCH /api/staff/{id}/deactivate
-    - Mark staff as inactive
-
-### Staff Service Request Endpoints (NEW)
-
-Base path: /api/staff
-
-- POST /api/staff/service-requests
-    - Create a new staff service request
-- GET /api/staff/{staffId}/service-requests
-    - Get all requests created by a specific staff member
-- GET /api/staff/service-requests/open
-    - Get all currently open service requests
-- PATCH /api/staff/service-requests/{id}/status?status={status}
-    - Update request status
-    - Status values: OPEN, ACKNOWLEDGED, IN_PROGRESS, RESOLVED
-
-### Driver Endpoints
-
-Base path: /api/drivers
-
-- POST /api/drivers
-    - Create a driver profile
-- GET /api/drivers/{id}
-    - Fetch one driver profile
-- GET /api/drivers?page=0&size=10
-    - Fetch paginated driver profiles
-- PUT /api/drivers/{id}
-    - Update a driver profile
-- PATCH /api/drivers/{id}/deactivate
-    - Deactivate a driver
-- PATCH /api/drivers/{id}/status?status={status}
-    - Update driver status (ACTIVE, INACTIVE, SUSPENDED)
-
-### Driver License Endpoints
-
-Base path: /api/drivers
-
-- POST /api/drivers/{driverId}/licenses
-    - Add a license to a driver
-- GET /api/drivers/{driverId}/licenses
-    - Get all licenses for a driver
-- PUT /api/drivers/licenses/{id}
-    - Update a driver license
-- DELETE /api/drivers/licenses/{id}
-    - Delete a driver license
-
-### Driver Certification Endpoints (NEW)
-
-Base path: /api/drivers
-
-- POST /api/drivers/{driverId}/certifications
-    - Add a certification to a driver
-- GET /api/drivers/{driverId}/certifications
-    - Get all certifications for a driver
-- PUT /api/drivers/certifications/{id}
-    - Update a driver certification
-- DELETE /api/drivers/certifications/{id}
-    - Delete a driver certification
-
-### Driver Document Endpoints (NEW)
-
-Base path: /api/drivers
-
-- POST /api/drivers/{driverId}/documents
-    - Upload a document for a driver (multipart form-data)
-    - Request params: file, entityType, entityId (optional)
-- GET /api/drivers/{driverId}/documents
-    - Get all documents for a driver
-- DELETE /api/drivers/documents/{id}
-    - Delete a document by id
-
-### Driver Availability Endpoints (NEW)
-
-Base path: /api/drivers
-
-- GET /api/drivers/{driverId}/availability
-    - Get current availability for a driver
-- PATCH /api/drivers/{driverId}/availability
-    - Update driver availability (status, reason)
-    - Requires header: X-User-Id
-- GET /api/drivers/{driverId}/availability/history
-    - Get availability change history for a driver
-- GET /api/drivers/availability?status={status}
-    - Get all drivers by availability status
-    - Status values: AVAILABLE, ON_TRIP, ON_LEAVE, INACTIVE
-
-### Driver Readiness Endpoints (NEW)
-
-Base path: /api/drivers
-
-- GET /api/drivers/{driverId}/readiness
-    - Get cached readiness data for one driver
-- GET /api/drivers/readiness/available
-    - Get drivers that are ready for assignment (license valid + certs valid + AVAILABLE)
-- POST /api/drivers/{driverId}/readiness/refresh
-    - Recompute and refresh readiness cache for one driver
-
-### Driver Infraction Endpoints (NEW)
-
-Base path: /api/drivers
-
-- POST /api/drivers/infractions
-    - Log a new infraction for a driver
-- GET /api/drivers/{driverId}/infractions
-    - Get all infractions for a driver (ordered by incident date desc)
-- PATCH /api/drivers/infractions/{id}/resolve
-    - Mark an infraction as RESOLVED and set resolved date
-
-### Driver Performance Endpoints (NEW)
-
-Base path: /api/drivers
-
-- GET /api/drivers/{driverId}/performance-scores
-    - Get all performance score records for a driver
-    - Ordered by period year/month descending (latest first)
-
-### Driver Qualification Endpoints (NEW)
-
-Base path: /api/drivers
-
-- GET /api/drivers/{driverId}/qualification?vehicleCategory={category}
-    - Validate if the driver is qualified for the given vehicle category
-    - Response includes qualified=true/false and unmet requirement reasons
-    - Supported categories: LIGHT, MEDIUM, HEAVY, PASSENGER, TANKER
-
-### Driver Eligibility Endpoints (NEW)
-
-Base path: /api/internal/drivers
-
-- POST /api/internal/drivers/eligibility
-    - Check whether a driver is eligible for assignment
-    - Request body fields: employeeId, vehicleCategory, tripDate
-- GET /api/internal/drivers/eligibility?employeeId={employeeId}&vehicleCategory={category}&tripDate={yyyy-MM-dd}
-    - Read-only eligibility check using query parameters
-    - Input uses Driver Employee ID instead of UUID
-    - Response includes eligible=true/false and unmet requirement reasons
-
-## Database
-
-Database migrations are available in:
-- backend/src/main/resources/db/migration/
-
-Current migrations:
-- V1__create_drivers.sql - Driver profiles table
-- V10__create_vehicle_license_requirements.sql - Vehicle category to required license/certification mapping table (NEW)
-- V11__create_staff_service_requests.sql - Staff service requests table and indexes (NEW)
-- V2__create_staff.sql - Staff profiles table
-- V3__create_driver_licenses.sql - Driver licenses table
-- V4__create_notification_log.sql - Notification logs table
-- V13__create_driver_availability.sql - Driver availability and availability log tables (NEW)
-- V14__create_driver_infractions.sql - Driver infractions table and indexes (NEW)
-- V15__create_driver_performance_scores.sql - Driver performance score table and indexes (NEW)
-- V16__create_driver_readiness_cache.sql - Driver assignment readiness cache table and indexes (NEW)
-- V7__create_driver_certifications.sql - Driver certifications table (NEW)
-- V8__normalize_notification_log_entity_id_to_uuid.sql - Schema normalization migration
-- V12__create_driver_documents.sql - Driver documents table and indexes (NEW)
-
-Document upload configuration:
-- app.upload.dir (optional) - upload storage directory (default: uploads/documents)
-
-Required database environment variables in backend:
-- DB_URL
-- DB_USER
-- DB_PASSWORD
-
-Other backend env vars:
-- JWT_SECRET
-- MAIL_USERNAME
-- MAIL_PASSWORD
-- CORS_ALLOWED_ORIGINS (optional, has localhost defaults)
+This module is part of a larger VFMS group project and focuses on the administrative layer for drivers and staff. It is intended for administrators and operations users who need dependable access to workforce records and related support functions.
 
 ## Run Locally
 
