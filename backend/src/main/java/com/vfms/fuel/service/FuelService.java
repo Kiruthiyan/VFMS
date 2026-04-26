@@ -5,9 +5,12 @@ import com.vfms.driver.repository.DriverRepository;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelRecordResponse;
+import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.dto.VehicleDetailDto;
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
+import com.vfms.common.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ValidationException;
 import com.vfms.vehicle.entity.Vehicle;
 import com.vfms.vehicle.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,14 +55,14 @@ public class FuelService {
         // Validate vehicle exists using real-time API call to vehicle endpoint
         if (!vehicleApiClient.vehicleExists(request.getVehicleId())) {
             log.warn("Vehicle not found: {}", request.getVehicleId());
-            throw new RuntimeException("Vehicle not found: " + request.getVehicleId());
+            throw new ResourceNotFoundException("Vehicle not found: " + request.getVehicleId());
         }
 
         // Fetch vehicle from database (for reference) - still needed for foreign key
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
                 .orElseThrow(() -> {
                     log.error("Vehicle not found in database: {}", request.getVehicleId());
-                    return new RuntimeException("Vehicle not found in database");
+                    return new ResourceNotFoundException("Vehicle not found in database: " + request.getVehicleId());
                 });
 
         // Optional driver
@@ -68,7 +71,7 @@ public class FuelService {
             driver = driverRepository.findById(request.getDriverId())
                     .orElseThrow(() -> {
                         log.error("Driver not found: {}", request.getDriverId());
-                        return new RuntimeException("Driver not found");
+                        return new ResourceNotFoundException("Driver not found: " + request.getDriverId());
                     });
         }
 
@@ -81,7 +84,7 @@ public class FuelService {
         FuelRecord record = FuelRecord.builder()
                 .vehicle(vehicle)
                 .driver(driver)
-                .fuelDate(LocalDate.parse(request.getFuelDate()))
+                .fuelDate(request.getFuelDate())
                 .quantity(request.getQuantity())
                 .costPerLitre(request.getCostPerLitre())
                 .totalCost(totalCost)
@@ -190,7 +193,7 @@ public class FuelService {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fuel record not found: {}", id);
-                    return new RuntimeException("Fuel record not found");
+                    return new ResourceNotFoundException("Fuel record not found: " + id);
                 });
         // Convert to response using cached vehicle data
         return toResponse(record);
@@ -219,7 +222,7 @@ public class FuelService {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Fuel record not found: {}", id);
-                    return new RuntimeException("Fuel record not found");
+                    return new ResourceNotFoundException("Fuel record not found: " + id);
                 });
         // Convert to response with API call to fetch real-time vehicle data
         return toResponseWithRealTimeData(record);
@@ -276,7 +279,7 @@ public class FuelService {
         // ── STEP 1: Verify vehicle exists using real-time API call ──
         if (!vehicleApiClient.vehicleExists(vehicleId)) {
             log.warn("Vehicle not found: {}", vehicleId);
-            throw new RuntimeException("Vehicle not found: " + vehicleId);
+            throw new ResourceNotFoundException("Vehicle not found: " + vehicleId);
         }
 
         // ── STEP 2: Query database for all records for this vehicle ──
@@ -328,6 +331,138 @@ public class FuelService {
         return records.stream()
                 .map(this::toResponseWithEfficiency)
                 .collect(Collectors.toList());
+    }
+
+    // ── UPDATE / PATCH / FLAG / DELETE ─────────────────────────────────────
+
+    @Transactional
+    public FuelRecordResponse updateFuelRecord(UUID id, CreateFuelRecordRequest request) {
+        FuelRecord record = fuelRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
+
+        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found in database: " + request.getVehicleId()));
+
+        Driver driver = null;
+        if (request.getDriverId() != null) {
+            driver = driverRepository.findById(request.getDriverId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + request.getDriverId()));
+        }
+
+        record.setVehicle(vehicle);
+        record.setDriver(driver);
+        record.setFuelDate(request.getFuelDate());
+        record.setQuantity(request.getQuantity());
+        record.setCostPerLitre(request.getCostPerLitre());
+        record.setTotalCost(calculateTotalCost(request.getQuantity(), request.getCostPerLitre()));
+        record.setOdometerReading(request.getOdometerReading());
+        record.setFuelStation(request.getFuelStation());
+        record.setNotes(request.getNotes());
+
+        reEvaluateMisuse(record);
+
+        FuelRecord saved = fuelRecordRepository.save(record);
+
+        vehicle.setOdometerReading(request.getOdometerReading());
+        vehicleRepository.save(vehicle);
+
+        return toResponse(saved);
+    }
+
+    @Transactional
+    public FuelRecordResponse patchFuelRecord(UUID id, PatchFuelRecordRequest updates) {
+        FuelRecord record = fuelRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
+
+        if (updates.getVehicleId() != null) {
+            Vehicle vehicle = vehicleRepository.findById(updates.getVehicleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found in database: " + updates.getVehicleId()));
+            record.setVehicle(vehicle);
+        }
+
+        if (updates.getDriverId() != null) {
+            Driver driver = driverRepository.findById(updates.getDriverId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + updates.getDriverId()));
+            record.setDriver(driver);
+        }
+
+        if (updates.getFuelDate() != null) {
+            record.setFuelDate(updates.getFuelDate());
+        }
+        if (updates.getQuantity() != null) {
+            record.setQuantity(updates.getQuantity());
+        }
+        if (updates.getCostPerLitre() != null) {
+            record.setCostPerLitre(updates.getCostPerLitre());
+        }
+        if (updates.getOdometerReading() != null) {
+            record.setOdometerReading(updates.getOdometerReading());
+        }
+        if (updates.getFuelStation() != null) {
+            record.setFuelStation(updates.getFuelStation());
+        }
+        if (updates.getNotes() != null) {
+            record.setNotes(updates.getNotes());
+        }
+
+        if (record.getQuantity() == null || record.getCostPerLitre() == null) {
+            throw new ValidationException("Quantity and costPerLitre must be set to compute total cost.");
+        }
+        record.setTotalCost(calculateTotalCost(record.getQuantity(), record.getCostPerLitre()));
+
+        reEvaluateMisuse(record);
+
+        FuelRecord saved = fuelRecordRepository.save(record);
+
+        if (updates.getOdometerReading() != null) {
+            Vehicle v = saved.getVehicle();
+            v.setOdometerReading(updates.getOdometerReading());
+            vehicleRepository.save(v);
+        }
+
+        return toResponse(saved);
+    }
+
+    @Transactional
+    public FuelRecordResponse flagFuelRecord(UUID id) {
+        FuelRecord record = fuelRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
+        record.setFlaggedForMisuse(true);
+        if (record.getFlagReason() == null || record.getFlagReason().isBlank()) {
+            record.setFlagReason("Manually flagged by admin");
+        }
+        return toResponse(fuelRecordRepository.save(record));
+    }
+
+    @Transactional
+    public FuelRecordResponse unflagFuelRecord(UUID id) {
+        FuelRecord record = fuelRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
+        record.setFlaggedForMisuse(false);
+        record.setFlagReason(null);
+        return toResponse(fuelRecordRepository.save(record));
+    }
+
+    @Transactional
+    public void deleteFuelRecord(UUID id) {
+        if (!fuelRecordRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Fuel record not found: " + id);
+        }
+        fuelRecordRepository.deleteById(id);
+    }
+
+    private BigDecimal calculateTotalCost(BigDecimal quantity, BigDecimal costPerLitre) {
+        return quantity.multiply(costPerLitre).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private void reEvaluateMisuse(FuelRecord record) {
+        record.setFlaggedForMisuse(false);
+        record.setFlagReason(null);
+        String reason = fuelMisuseService.checkForMisuse(record);
+        if (reason != null) {
+            record.setFlaggedForMisuse(true);
+            record.setFlagReason(reason);
+        }
     }
 
     // ── TO RESPONSE ───────────────────────────────────────────────────────
