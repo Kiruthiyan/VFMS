@@ -2,18 +2,29 @@ package com.vfms.admin.dto;
 
 import com.vfms.common.enums.Role;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
+ * Request DTO for admin review actions.
+ *
+ * Decision must be APPROVE or REJECT (case-insensitive).
+ * Rejection reason is required by service rule when decision is REJECT.
+ */
 @Data
 public class ReviewUserRequest {
 
-    // "APPROVE" or "REJECT"
     @NotBlank(message = "Decision is required")
+    @Pattern(
+            regexp = "^(?i)(APPROVE|REJECT)$",
+            message = "Decision must be APPROVE or REJECT"
+    )
     private String decision;
 
     // Optional — admin can promote SYSTEM_USER to APPROVER only
     private Role assignedRole;
 
-    // Required when decision = REJECT
+    @Size(max = 500, message = "Rejection reason must not exceed 500 characters")
     private String rejectionReason;
 }
