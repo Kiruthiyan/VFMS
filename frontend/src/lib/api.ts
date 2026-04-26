@@ -18,6 +18,7 @@ export const api = axios.create({
   timeout: 15000,
 });
 
+<<<<<<< HEAD
 /**
 <<<<<<< HEAD
  * Request interceptor.
@@ -44,6 +45,34 @@ api.interceptors.request.use(
     }
     
 >>>>>>> origin/feature/user-auth
+=======
+function resolveAccessToken(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem("auth-store");
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as { accessToken?: string; state?: { accessToken?: string } };
+    return parsed.accessToken ?? parsed.state?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Request interceptor: inject Bearer token when available
+api.interceptors.request.use(
+  (config) => {
+    const token = resolveAccessToken();
+    if (token) {
+      config.headers = config.headers ?? {};
+      (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+    }
+>>>>>>> origin/feature/user-management
     return config;
   },
   (error) => Promise.reject(error)

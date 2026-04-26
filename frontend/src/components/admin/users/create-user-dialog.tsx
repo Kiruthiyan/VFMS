@@ -1,0 +1,327 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { X, UserPlus } from "lucide-react";
+import { createUserApi, getErrorMessage } from "@/lib/api/admin";
+import type { CreateUserRequest } from "@/lib/api/admin";
+import type { UserRole } from "@/lib/auth";
+import { ROLE_LABELS } from "@/lib/auth";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { FormMessage } from "@/components/ui/form-message";
+
+interface CreateUserDialogProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const inputClass =
+  "w-full rounded-lg border border-[#E4E7EC] bg-white px-3 py-2.5 " +
+  "text-sm text-[#101828] placeholder:text-[#667085] " +
+  "focus:outline-none focus:ring-2 focus:ring-[#0B1736]/30 " +
+  "focus:border-[#0B1736] disabled:opacity-50 transition-colors";
+
+const labelClass = "block text-xs font-semibold text-[#344054] mb-1.5";
+
+const ROLE_OPTIONS: UserRole[] = ["ADMIN", "APPROVER", "SYSTEM_USER", "DRIVER"];
+
+export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) {
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { isSubmitting, errors },
+  } = useForm<CreateUserRequest>({
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      nic: "",
+      role: "SYSTEM_USER",
+    },
+  });
+
+  const selectedRole = watch("role");
+
+  const onSubmit = async (data: CreateUserRequest) => {
+    setServerError(null);
+    try {
+      await createUserApi(data);
+      toast.success("User created successfully! A welcome email with a temporary password has been sent.");
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setServerError(getErrorMessage(err));
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <div className="relative z-10 w-full max-w-lg bg-white border border-[#E4E7EC] rounded-xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="bg-[#0B1736] px-6 py-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 bg-[#F4B400] rounded-lg flex items-center justify-center">
+              <UserPlus className="w-4 h-4 text-[#0B1736]" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Create New User</h3>
+              <p className="text-xs text-white/70 mt-0.5">
+                A temporary password will be emailed to the user
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white/80 hover:text-white transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="p-6 space-y-4 overflow-y-auto"
+        >
+          {serverError && (
+            <FormMessage type="error" message={serverError} />
+          )}
+
+          {/* Full Name */}
+          <div>
+            <label className={labelClass}>Full Name *</label>
+            <input
+              type="text"
+              placeholder="Enter full name"
+              {...register("fullName", { required: "Full name is required" })}
+              disabled={isSubmitting}
+              className={inputClass}
+            />
+            {errors.fullName && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.fullName.message}
+              </p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className={labelClass}>Email *</label>
+            <input
+              type="email"
+              placeholder="name@company.com"
+              {...register("email", { required: "Email is required" })}
+              disabled={isSubmitting}
+              className={inputClass}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          {/* Phone + NIC row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Phone</label>
+              <input
+                type="tel"
+                placeholder="07XXXXXXXX"
+                {...register("phone")}
+                disabled={isSubmitting}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>NIC *</label>
+              <input
+                type="text"
+                placeholder="NIC number"
+                {...register("nic", { required: "NIC is required" })}
+                disabled={isSubmitting}
+                className={inputClass}
+              />
+              {errors.nic && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.nic.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Role Selection */}
+          <div>
+            <label className={labelClass}>Role *</label>
+            <select
+              {...register("role", { required: "Role is required" })}
+              disabled={isSubmitting}
+              className={inputClass}
+            >
+              {ROLE_OPTIONS.map((role) => (
+                <option key={role} value={role}>
+                  {ROLE_LABELS[role]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* ── DRIVER-SPECIFIC FIELDS ──────────────────────────── */}
+          {selectedRole === "DRIVER" && (
+            <div className="space-y-3 p-4 bg-[#F9FAFC] rounded-lg border border-[#E4E7EC]">
+              <p className="text-xs font-semibold text-[#475467] uppercase tracking-wider">
+                Driver Details
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>License No.</label>
+                  <input
+                    type="text"
+                    placeholder="License number"
+                    {...register("licenseNumber")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>License Expiry</label>
+                  <input
+                    type="date"
+                    {...register("licenseExpiryDate")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Experience (yrs)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    {...register("experienceYears", { valueAsNumber: true })}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Certifications</label>
+                  <input
+                    type="text"
+                    placeholder="Certifications"
+                    {...register("certifications")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── STAFF / APPROVER FIELDS ─────────────────────────── */}
+          {(selectedRole === "SYSTEM_USER" ||
+            selectedRole === "APPROVER" ||
+            selectedRole === "ADMIN") && (
+            <div className="space-y-3 p-4 bg-[#F9FAFC] rounded-lg border border-[#E4E7EC]">
+              <p className="text-xs font-semibold text-[#475467] uppercase tracking-wider">
+                Staff Details
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Employee ID</label>
+                  <input
+                    type="text"
+                    placeholder="EMP-XXX"
+                    {...register("employeeId")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Department</label>
+                  <input
+                    type="text"
+                    placeholder="Department"
+                    {...register("department")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Designation</label>
+                  <input
+                    type="text"
+                    placeholder="Designation"
+                    {...register("designation")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Office Location</label>
+                  <input
+                    type="text"
+                    placeholder="Office location"
+                    {...register("officeLocation")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              {selectedRole === "APPROVER" && (
+                <div>
+                  <label className={labelClass}>Approval Level</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Level 1"
+                    {...register("approvalLevel")}
+                    disabled={isSubmitting}
+                    className={inputClass}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 h-11 rounded-lg border border-[#E4E7EC]
+                         bg-[#F9FAFC] text-[#475467] hover:bg-[#F5F7FB]
+                         font-medium text-sm transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 h-11 rounded-lg bg-[#0B1736] text-white
+                         hover:bg-[#122347] font-bold text-sm flex items-center
+                         justify-center gap-2 disabled:opacity-60
+                         disabled:cursor-not-allowed transition-colors
+                         shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)]"
+            >
+              {isSubmitting && <LoadingSpinner size={14} />}
+              {isSubmitting ? "Creating..." : "Create User"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
