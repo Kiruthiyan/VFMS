@@ -56,10 +56,28 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        
+        // Set allowed origins from configuration
         config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        
+        // Allow all HTTP methods needed for REST API
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        
+        // Explicitly list allowed headers (SECURITY: Never use "*" with allowCredentials=true)
+        config.setAllowedHeaders(List.of(
+            "Authorization",      // JWT token
+            "Content-Type",       // JSON content type
+            "Accept",             // Response format
+            "X-Requested-With"    // AJAX request identifier
+        ));
+        
+        // Allow credentials (cookies, authorization headers)
+        // SECURITY: This only works with explicit headers (not "*")
         config.setAllowCredentials(true);
+        
+        // Expose headers that browser can access from JS
+        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
