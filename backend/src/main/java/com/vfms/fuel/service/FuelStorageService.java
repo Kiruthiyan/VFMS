@@ -3,6 +3,7 @@ package com.vfms.fuel.service;
 import com.vfms.fuel.config.SupabaseStorageConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.vfms.common.exception.ValidationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,12 @@ public class FuelStorageService {
      */
     public String uploadReceipt(MultipartFile file) {
         try {
+            if (config.getStorageUrl() == null || config.getStorageUrl().isBlank()
+                    || config.getBucket() == null || config.getBucket().isBlank()
+                    || config.getServiceKey() == null || config.getServiceKey().isBlank()) {
+                throw new ValidationException("Supabase storage is not configured.");
+            }
+
             String fileName = "receipts/"
                     + UUID.randomUUID()
                     + "_"
@@ -61,8 +68,7 @@ public class FuelStorageService {
 
         } catch (Exception e) {
             log.error("Failed to upload receipt: {}", e.getMessage());
-            throw new RuntimeException(
-                    "Failed to upload receipt. Please try again.");
+            throw new ValidationException("Failed to upload receipt. Please try again.");
         }
     }
 }

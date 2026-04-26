@@ -88,4 +88,40 @@ public class FuelRecord {
 
     @Column(name = "created_by")
     private String createdBy;          // email of user who added record
+
+    // Explicit accessors (keeps builds resilient even if Lombok processing is misconfigured)
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public Vehicle getVehicle() { return vehicle; }
+    public void setVehicle(Vehicle vehicle) { this.vehicle = vehicle; }
+    public Driver getDriver() { return driver; }
+    public void setDriver(Driver driver) { this.driver = driver; }
+    public LocalDate getFuelDate() { return fuelDate; }
+    public void setFuelDate(LocalDate fuelDate) { this.fuelDate = fuelDate; }
+    public BigDecimal getQuantity() { return quantity; }
+    public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
+    public BigDecimal getCostPerLitre() { return costPerLitre; }
+    public void setCostPerLitre(BigDecimal costPerLitre) { this.costPerLitre = costPerLitre; }
+    public BigDecimal getTotalCost() { return totalCost; }
+    public void setTotalCost(BigDecimal totalCost) { this.totalCost = totalCost; }
+    public Double getOdometerReading() { return odometerReading; }
+    public void setOdometerReading(Double odometerReading) { this.odometerReading = odometerReading; }
+    public String getFuelStation() { return fuelStation; }
+    public void setFuelStation(String fuelStation) { this.fuelStation = fuelStation; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
+    public String getReceiptUrl() { return receiptUrl; }
+    public void setReceiptUrl(String receiptUrl) { this.receiptUrl = receiptUrl; }
+    public String getReceiptFileName() { return receiptFileName; }
+    public void setReceiptFileName(String receiptFileName) { this.receiptFileName = receiptFileName; }
+    public boolean isFlaggedForMisuse() { return flaggedForMisuse; }
+    public void setFlaggedForMisuse(boolean flaggedForMisuse) { this.flaggedForMisuse = flaggedForMisuse; }
+    public String getFlagReason() { return flagReason; }
+    public void setFlagReason(String flagReason) { this.flagReason = flagReason; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
 }
