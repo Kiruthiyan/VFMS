@@ -1,15 +1,21 @@
 package com.vfms.vehicle.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import com.vfms.vehicle.FuelType;
 import com.vfms.vehicle.VehicleStatus;
 import com.vfms.vehicle.VehicleType;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class VehicleResponseDto {
     private Long id;
     private String plateNumber;
