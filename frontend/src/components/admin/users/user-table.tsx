@@ -28,9 +28,11 @@ interface UserTableProps {
   onRefresh: () => void;
 }
 
+const DEFAULT_LOCALE = "en-US";
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return new Date(dateStr).toLocaleDateString(DEFAULT_LOCALE, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -39,7 +41,7 @@ function formatDate(dateStr: string | null): string {
 
 function formatDateTime(dateStr: string | null): string {
   if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return new Date(dateStr).toLocaleDateString(DEFAULT_LOCALE, {
     year: "numeric",
     month: "short",
     day: "numeric",

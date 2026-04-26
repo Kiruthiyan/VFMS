@@ -75,7 +75,7 @@ public class AdminUserController {
             @Valid @RequestBody ReviewUserRequest request) {
         adminUserService.reviewUser(userId, request);
 
-        String message = "APPROVE".equalsIgnoreCase(request.getDecision())
+        String message = request.getDecision() == ReviewDecision.APPROVE
                 ? "User approved successfully."
                 : "User rejected.";
 
@@ -118,7 +118,7 @@ public class AdminUserController {
     @PutMapping("/{userId}")
     public ResponseEntity<UserSummaryResponse> updateUser(
             @PathVariable UUID userId,
-            @RequestBody UpdateUserRequest request) {
+            @Valid @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(
                 adminUserService.updateUser(userId, request));
     }
