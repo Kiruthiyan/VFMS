@@ -4,6 +4,9 @@ import com.vfms.admin.dto.*;
 import com.vfms.auth.service.EmailService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
+import com.vfms.common.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ValidationException;
+import com.vfms.security.SecurityContextProvider;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +40,7 @@ public class AdminUserService {
     public UserSummaryResponse createUser(CreateUserRequest request) {
         // Check duplicate email among active users
         if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
-            throw new RuntimeException(
+            throw new ValidationException(
                     "An active account with this email already exists.");
         }
 
@@ -55,7 +58,7 @@ public class AdminUserService {
                 .emailVerified(true)
                 .createdByAdmin(true)
                 .passwordChangeRequired(true)
-                .createdBy("admin") // placeholder — will use actual admin email when auth is merged
+                .createdBy(SecurityContextProvider.getCurrentUserEmail())
                 .build();
 
         // Apply role-specific fields
@@ -142,11 +145,11 @@ public class AdminUserService {
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
-            throw new RuntimeException("Cannot review a deleted user.");
+            throw new ValidationException("Cannot review a deleted user.");
         }
 
         if (user.getStatus() != UserStatus.PENDING_APPROVAL) {
-            throw new RuntimeException(
+            throw new ValidationException(
                     "User is not in PENDING_APPROVAL status. "
                     + "Current status: " + user.getStatus());
         }
@@ -172,7 +175,7 @@ public class AdminUserService {
 
             if (request.getRejectionReason() == null
                     || request.getRejectionReason().isBlank()) {
-                throw new RuntimeException("Rejection reason is required");
+                throw new ValidationException("Rejection reason is required");
             }
 
             user.setStatus(UserStatus.REJECTED);
@@ -186,7 +189,7 @@ public class AdminUserService {
                     request.getRejectionReason());
 
         } else {
-            throw new RuntimeException("Decision must be APPROVE or REJECT");
+            throw new ValidationException("Decision must be APPROVE or REJECT");
         }
     }
 
@@ -197,14 +200,14 @@ public class AdminUserService {
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
-            throw new RuntimeException("User is already deleted.");
+            throw new ValidationException("User is already deleted.");
         }
 
         // Preserve current status for potential restore
         user.setStatusBeforeDeletion(user.getStatus());
         user.setDeletedAt(LocalDateTime.now());
         user.setDeletedReason(request.getReason());
-        user.setDeletedBy("admin"); // placeholder
+        user.setDeletedBy(SecurityContextProvider.getCurrentUserEmail());
         user.setStatus(UserStatus.DEACTIVATED);
         userRepository.save(user);
 
@@ -219,7 +222,7 @@ public class AdminUserService {
         User user = findUser(userId);
 
         if (user.getDeletedAt() == null) {
-            throw new RuntimeException("User is not deleted and cannot be restored.");
+            throw new ValidationException("User is not deleted and cannot be restored.");
         }
 
         // Restore to previous status
@@ -232,7 +235,7 @@ public class AdminUserService {
         user.setDeletedReason(null);
         user.setDeletedBy(null);
         user.setStatusBeforeDeletion(null);
-        user.setRestoredBy("admin"); // placeholder
+        user.setRestoredBy(SecurityContextProvider.getCurrentUserEmail());
         userRepository.save(user);
 
         log.info("[ADMIN-RESTORE] User restored: {} ({}) to status: {}",
@@ -246,7 +249,7 @@ public class AdminUserService {
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
-            throw new RuntimeException("Cannot toggle status of a deleted user.");
+            throw new ValidationException("Cannot toggle status of a deleted user.");
         }
 
         if (user.getStatus() == UserStatus.APPROVED) {
@@ -254,7 +257,7 @@ public class AdminUserService {
         } else if (user.getStatus() == UserStatus.DEACTIVATED) {
             user.setStatus(UserStatus.APPROVED);
         } else {
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Only APPROVED or DEACTIVATED accounts can be toggled. "
                     + "Current status: " + user.getStatus());
         }
@@ -270,7 +273,7 @@ public class AdminUserService {
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
-            throw new RuntimeException("Cannot edit a deleted user.");
+            throw new ValidationException("Cannot edit a deleted user.");
         }
 
         // Common fields
@@ -281,7 +284,7 @@ public class AdminUserService {
             // Check duplicate among active users (exclude current user)
             if (!request.getEmail().equals(user.getEmail())
                     && userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
-                throw new RuntimeException("An active account with this email already exists.");
+                throw new ValidationException("An active account with this email already exists.");
             }
             user.setEmail(request.getEmail());
         }
@@ -342,7 +345,7 @@ public class AdminUserService {
     private User findUser(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found: " + userId));
+                new ResourceNotFoundException("User not found: " + userId));
     }
 
     private String generateTempPassword() {

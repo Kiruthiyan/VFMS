@@ -1,5 +1,4 @@
-// Shared auth types — used across all modules
-// Auth functions (login, register, etc.) are in feature/auth-login (Kiruthiyan)
+// Shared authentication types and route helpers used across frontend modules.
 
 export type UserRole = "ADMIN" | "APPROVER" | "SYSTEM_USER" | "DRIVER";
 

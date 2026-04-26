@@ -10,11 +10,32 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor
-// NOTE: Token injection will be added by feature/auth-login (Kiruthiyan)
+function resolveAccessToken(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem("auth-store");
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as { accessToken?: string; state?: { accessToken?: string } };
+    return parsed.accessToken ?? parsed.state?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Request interceptor: inject Bearer token when available
 api.interceptors.request.use(
   (config) => {
-    // Auth token will be added here when feature/auth-login is merged
+    const token = resolveAccessToken();
+    if (token) {
+      config.headers = config.headers ?? {};
+      (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
