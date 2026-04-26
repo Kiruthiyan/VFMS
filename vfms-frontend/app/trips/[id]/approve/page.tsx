@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     ArrowLeft, CheckCircle, XCircle,
-    Calendar, MapPin, Users, Loader2, AlertTriangle
+    Calendar, MapPin, Users, Loader2, AlertTriangle, Car, User
 } from "lucide-react";
 import api from "@/lib/api";
 
@@ -19,6 +18,20 @@ interface Trip {
     returnTime: string;
     status: string;
     passengerCount: number;
+}
+
+interface VehicleOption {
+    id: number;
+    brand: string;
+    model: string;
+    plateNumber: string;
+}
+
+interface DriverOption {
+    id: string;
+    firstName: string;
+    lastName: string;
+    employeeId: string;
 }
 
 const formatDate = (dateStr: string) =>
@@ -34,6 +47,8 @@ export default function ApproveTripPage() {
 
     const [trip, setTrip] = useState<Trip | null>(null);
     const [loading, setLoading] = useState(true);
+    const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
+    const [drivers, setDrivers] = useState<DriverOption[]>([]);
     const [actionLoading, setActionLoading] = useState("");
     const [form, setForm] = useState({
         approverId: "00000000-0000-0000-0000-000000000002",
@@ -46,6 +61,8 @@ export default function ApproveTripPage() {
 
     useEffect(() => {
         fetchTrip();
+        fetchVehicles();
+        fetchDrivers();
     }, [id]);
 
     const fetchTrip = async () => {
@@ -59,26 +76,40 @@ export default function ApproveTripPage() {
         }
     };
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
+    const fetchVehicles = async () => {
+        try {
+            const res = await api.get("/trips/available-vehicles");
+            setVehicles(res.data);
+        } catch (err) {
+            console.error("Failed to fetch vehicles", err);
+        }
+    };
+
+    const fetchDrivers = async () => {
+        try {
+            const res = await api.get("/trips/available-drivers");
+            setDrivers(res.data);
+        } catch (err) {
+            console.error("Failed to fetch drivers", err);
+        }
     };
 
     const handleApprove = async () => {
         setError("");
-        if (!form.assignedVehicleId.trim()) {
-            setError("Please assign a vehicle before approving");
+        if (!form.assignedVehicleId) {
+            setError("Please select a vehicle before approving");
             return;
         }
-        if (!form.assignedDriverId.trim()) {
-            setError("Please assign a driver before approving");
+        if (!form.assignedDriverId) {
+            setError("Please select a driver before approving");
             return;
         }
         setActionLoading("approve");
         try {
-            await api.patch(`/trips/${id}/approve`, form);
+            await api.patch(`/trips/${id}/approve`, {
+                ...form,
+                assignedVehicleId: Number(form.assignedVehicleId),
+            });
             router.push(`/trips/${id}`);
         } catch (err: any) {
             setError(err.response?.data?.message || "Failed to approve trip");
@@ -90,7 +121,7 @@ export default function ApproveTripPage() {
     const handleReject = async () => {
         setError("");
         if (!form.notes.trim()) {
-            setError("Rejection reason is required — please explain why this trip is being rejected");
+            setError("Rejection reason is required");
             return;
         }
         if (form.notes.trim().length < 10) {
@@ -187,50 +218,76 @@ export default function ApproveTripPage() {
                     <CardContent className="p-6 space-y-4">
                         {!rejectMode ? (
                             <>
+                                {/* Vehicle Dropdown */}
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-700">
-                                        Vehicle ID <span className="text-red-500">*</span>
+                                    <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                        <Car className="h-4 w-4 text-slate-400" />
+                                        Select Vehicle <span className="text-red-500">*</span>
                                     </label>
-                                    <Input
-                                        name="assignedVehicleId"
-                                        placeholder="e.g. 00000000-0000-0000-0000-000000000003"
-                                        value={form.assignedVehicleId}
-                                        onChange={handleChange}
-                                        className="bg-white text-slate-900 font-mono text-xs"
-                                    />
+                                    {vehicles.length === 0 ? (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
+                                            No available vehicles at the moment
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={form.assignedVehicleId}
+                                            onChange={(e) => setForm(f => ({ ...f, assignedVehicleId: e.target.value }))}
+                                            className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all shadow-sm hover:border-slate-300"
+                                        >
+                                            <option value="">-- Select a vehicle --</option>
+                                            {vehicles.map(v => (
+                                                <option key={v.id} value={v.id}>
+                                                    {v.brand} {v.model} — {v.plateNumber}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
                                     <p className="text-xs text-slate-400">
-                                        Enter the vehicle UUID from the vehicle management module
+                                        Showing only available vehicles
                                     </p>
                                 </div>
 
+                                {/* Driver Dropdown */}
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-700">
-                                        Driver ID <span className="text-red-500">*</span>
+                                    <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                        <User className="h-4 w-4 text-slate-400" />
+                                        Select Driver <span className="text-red-500">*</span>
                                     </label>
-                                    <Input
-                                        name="assignedDriverId"
-                                        placeholder="e.g. 00000000-0000-0000-0000-000000000004"
-                                        value={form.assignedDriverId}
-                                        onChange={handleChange}
-                                        className="bg-white text-slate-900 font-mono text-xs"
-                                    />
+                                    {drivers.length === 0 ? (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
+                                            No active drivers at the moment
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={form.assignedDriverId}
+                                            onChange={(e) => setForm(f => ({ ...f, assignedDriverId: e.target.value }))}
+                                            className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all shadow-sm hover:border-slate-300"
+                                        >
+                                            <option value="">-- Select a driver --</option>
+                                            {drivers.map(d => (
+                                                <option key={d.id} value={d.id}>
+                                                    {d.firstName} {d.lastName} — {d.employeeId}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
                                     <p className="text-xs text-slate-400">
-                                        Enter the driver UUID from the driver management module
+                                        Showing only active drivers
                                     </p>
                                 </div>
 
+                                {/* Notes */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700">
                                         Approval Notes
                                         <span className="ml-1 text-xs text-slate-400 font-normal">(optional)</span>
                                     </label>
                                     <textarea
-                                        name="notes"
                                         placeholder="Any additional notes for this approval..."
                                         value={form.notes}
-                                        onChange={handleChange}
+                                        onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
                                         rows={3}
-                                        className="flex w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-all shadow-sm hover:border-slate-300 resize-none"
+                                        className="flex w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all shadow-sm hover:border-slate-300 resize-none"
                                     />
                                 </div>
                             </>
@@ -254,13 +311,12 @@ export default function ApproveTripPage() {
                                         Rejection Reason <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
-                                        name="notes"
-                                        placeholder="Explain clearly why this trip request is being rejected. The requester will see this reason..."
+                                        placeholder="Explain clearly why this trip request is being rejected..."
                                         value={form.notes}
-                                        onChange={handleChange}
+                                        onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
                                         rows={5}
-                                        className={`flex w-full rounded-xl border px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 transition-all shadow-sm resize-none ${
-                                            form.notes.trim().length === 0 && actionLoading === ""
+                                        className={`flex w-full rounded-xl border px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition-all shadow-sm resize-none ${
+                                            form.notes.trim().length === 0
                                                 ? "border-red-200 bg-red-50"
                                                 : "border-slate-200 bg-white hover:border-slate-300"
                                         }`}
@@ -270,9 +326,7 @@ export default function ApproveTripPage() {
                                             A detailed reason is required before rejecting
                                         </p>
                                         <span className={`text-xs font-medium ${
-                                            form.notes.trim().length >= 10
-                                                ? "text-green-600"
-                                                : "text-slate-400"
+                                            form.notes.trim().length >= 10 ? "text-green-600" : "text-slate-400"
                                         }`}>
                                             {form.notes.trim().length} chars
                                             {form.notes.trim().length < 10 && " (min 10)"}
