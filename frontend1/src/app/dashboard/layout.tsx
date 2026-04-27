@@ -1,36 +1,62 @@
-import { Sidebar } from "@/components/layout/Sidebar";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden">
-            <Sidebar />
-            <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-                {/* Glass Header */}
-                <header className="h-20 shrink-0 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-30 px-8 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="h-8 w-1 bg-amber-400 rounded-full" />
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Dashboard Overview</h2>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="p-2 rounded-full bg-slate-100 text-slate-400 hover:text-slate-900 cursor-pointer transition-colors">
-                            <div className="w-5 h-5" />
-                        </div>
-                    </div>
-                </header>
+  const pathname = usePathname();
 
-                <main className="flex-1 overflow-y-auto p-8 relative scroll-smooth">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-
-                    <div className="max-w-7xl mx-auto relative z-10 space-y-8 pb-20">
-                        {children}
-                    </div>
-                </main>
-            </div>
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      {/* Main Sidebar */}
+      <aside className="w-64 bg-gray-900 text-white flex flex-col">
+        <div className="p-4 text-xl font-bold border-b border-gray-800">
+          VFMS
         </div>
-    );
+        <nav className="flex-1 p-4 space-y-2">
+          <Link
+            href="/dashboard/admin"
+            className={`block px-4 py-2 rounded-md transition-colors ${
+              pathname.startsWith("/dashboard/admin") ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800"
+            }`}
+          >
+            Admin Panel
+          </Link>
+          <Link
+            href="/dashboard/approver"
+            className={`block px-4 py-2 rounded-md transition-colors ${
+              pathname.startsWith("/dashboard/approver") ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800"
+            }`}
+          >
+            Approver Portal
+          </Link>
+          <Link
+            href="/dashboard/driver"
+            className={`block px-4 py-2 rounded-md transition-colors ${
+              pathname.startsWith("/dashboard/driver") ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800"
+            }`}
+          >
+            Driver Portal
+          </Link>
+          <Link
+            href="/dashboard/user"
+            className={`block px-4 py-2 rounded-md transition-colors ${
+              pathname.startsWith("/dashboard/user") ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800"
+            }`}
+          >
+            User Portal
+          </Link>
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {children}
+      </div>
+    </div>
+  );
 }

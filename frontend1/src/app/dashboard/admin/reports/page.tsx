@@ -83,7 +83,7 @@ export default function ReportsPage() {
             <div className="space-y-4">
                 <h2 className="text-xl font-bold">Available Reports</h2>
                 <div className="grid md:grid-cols-3 gap-4">
-                    <Link href="/dashboard/reports/maintenance">
+                    <Link href="/dashboard/admin/reports/maintenance">
                         <Card className="hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group h-full">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
@@ -93,7 +93,7 @@ export default function ReportsPage() {
                             </CardHeader>
                         </Card>
                     </Link>
-                    <Link href="/dashboard/reports/fuel">
+                    <Link href="/dashboard/admin/reports/fuel">
                         <Card className="hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group h-full">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
@@ -103,7 +103,7 @@ export default function ReportsPage() {
                             </CardHeader>
                         </Card>
                     </Link>
-                    <Link href="/dashboard/reports/utilization">
+                    <Link href="/dashboard/admin/reports/utilization">
                         <Card className="hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group h-full">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
@@ -113,7 +113,7 @@ export default function ReportsPage() {
                             </CardHeader>
                         </Card>
                     </Link>
-                    <Link href="/dashboard/reports/performance">
+                    <Link href="/dashboard/admin/reports/performance">
                         <Card className="hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group h-full">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
@@ -123,7 +123,7 @@ export default function ReportsPage() {
                             </CardHeader>
                         </Card>
                     </Link>
-                    <Link href="/dashboard/reports/rentals">
+                    <Link href="/dashboard/admin/reports/rentals">
                         <Card className="hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group h-full">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
@@ -133,7 +133,7 @@ export default function ReportsPage() {
                             </CardHeader>
                         </Card>
                     </Link>
-                    <Link href="/dashboard/reports/export">
+                    <Link href="/dashboard/admin/reports/export">
                         <Card className="hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group h-full">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
