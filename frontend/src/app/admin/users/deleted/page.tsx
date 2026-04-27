@@ -5,8 +5,10 @@ import { Trash2, RefreshCw, ArrowLeft } from "lucide-react";
 import { getDeletedUsersApi, getErrorMessage } from "@/lib/api/admin";
 import type { UserSummary } from "@/lib/api/admin";
 import { UserTable } from "@/components/admin/users/user-table";
+import { AdminShell } from "@/components/layout/admin-shell";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
+import Link from "next/link";
 
 export default function DeletedUsersPage() {
   const [deletedUsers, setDeletedUsers] = useState<UserSummary[]>([]);
@@ -31,8 +33,8 @@ export default function DeletedUsersPage() {
   }, [fetchDeleted]);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB] px-4 py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <AdminShell>
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* Header Card */}
         <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
           <div className="bg-red-600 px-6 py-6 flex items-center justify-between">
@@ -65,7 +67,7 @@ export default function DeletedUsersPage() {
                 />
                 Refresh
               </button>
-              <a
+              <Link
                 href="/admin/users"
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold
                            bg-white text-red-600 rounded-lg
@@ -73,7 +75,7 @@ export default function DeletedUsersPage() {
               >
                 <ArrowLeft size={16} />
                 Back to Users
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -107,6 +109,6 @@ export default function DeletedUsersPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminShell>
   );
 }
