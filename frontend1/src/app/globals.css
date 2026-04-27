@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Modern Blue & Indigo - Professional & Trustworthy */
+    --primary: 243 75% 59%;
+    /* Indigo Blue #4F46E5 */
+    --primary-foreground: 0 0% 100%;
+
+    /* Deep Blue Secondary */
+    --secondary: 221 83% 40%;
+    /* Deep Blue #1E40AF */
+    --secondary-foreground: 0 0% 100%;
+
+    /* State Colors */
+    --info: 199 89% 48%;
+    /* Sky Blue #0EA5E9 */
+    --success: 145 63% 42%;
+    /* Green #10B981 */
+    --warning: 38 92% 50%;
+    /* Amber #F59E0B */
+    --destructive: 0 84% 60%;
+    /* Red #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Neutral Colors */
+    --background: 0 0% 100%;
+    /* White */
+    --foreground: 222 47% 11%;
+    /* Dark Blue Gray #0F172A */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --muted: 214 32% 91%;
+    /* Light Blue Gray #E2E8F0 */
+    --muted-foreground: 215 16% 47%;
+
+    --border: 214 32% 91%;
+    /* Light Blue Gray #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 243 75% 59%;
+    /* Ring matches Primary */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark Mode - Modern Blue & Indigo */
+    --background: 222 47% 11%;
+    /* Dark Blue Gray #0F172A */
+    --foreground: 0 0% 100%;
+
+    --card: 217 33% 17%;
+    /* Darker Blue Gray #1E293B */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 217 33% 17%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 243 75% 59%;
+    /* Indigo Blue #4F46E5 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 221 83% 40%;
+    /* Deep Blue #1E40AF */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 215 28% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 199 89% 48%;
+    /* Sky Blue #0EA5E9 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    /* Red #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 243 75% 59%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.dark .glass-panel {
+  background: rgba(29, 29, 29, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Sliding Auth Page Styles */
+.auth-container.right-panel-active .sign-in-container {
+  transform: translateX(100%);
+  opacity: 0;
+  z-index: 1;
+}
+
+.auth-container.right-panel-active .sign-up-container {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: show 0.6s;
+}
+
+@keyframes show {
+
+  0%,
+  49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 1;
+    z-index: 5;
+  }
+}
+
+.auth-container.right-panel-active .overlay-container {
+  transform: translateX(-100%);
+}
+
+.auth-container.right-panel-active .overlay {
+  transform: translateX(50%);
+}
+
+.auth-container.right-panel-active .overlay-left {
+  transform: translateX(0);
+}
+
+.auth-container.right-panel-active .overlay-right {
+  transform: translateX(20%);
+}
+
+/* Utility Animations */
+.animate-gradient-slow {
+  background-size: 200% 200%;
+  animation: gradient 8s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .5;
+  }
+}
