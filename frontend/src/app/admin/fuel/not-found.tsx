@@ -23,7 +23,7 @@ export default function FuelNotFound() {
           Fuel Record Not Found
         </h2>
         <p className="text-slate-600 mb-8">
-          The fuel record you're looking for doesn't exist or has been deleted.
+          The fuel record you&apos;re looking for doesn&apos;t exist or has been deleted.
         </p>
 
         {/* Actions */}

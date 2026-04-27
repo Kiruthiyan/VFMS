@@ -10,7 +10,15 @@ interface AdminShellProps {
 }
 
 export function AdminShell({ children, requireAdmin = false }: AdminShellProps) {
-  const { isAdmin } = useUser();
+  const { isAdmin, loading, user } = useUser();
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-white text-slate-900">
+        <div className="container mx-auto px-4 py-8">{children}</div>
+      </main>
+    );
+  }
 
   // Show access denied message if admin-only content is requested
   if (requireAdmin && !isAdmin) {
@@ -27,7 +35,7 @@ export function AdminShell({ children, requireAdmin = false }: AdminShellProps) 
             Fuel Management module is restricted to <span className="font-semibold text-red-600">ADMIN users only</span>.
           </p>
           <p className="text-sm text-slate-500">
-            Your current role: <span className="font-semibold">DRIVER</span>
+            Your current role: <span className="font-semibold">{user?.role ?? "Unknown"}</span>
           </p>
           <a 
             href="/"

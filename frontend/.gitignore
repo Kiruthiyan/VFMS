@@ -1,74 +1,46 @@
 # ===============================
-# DEPENDENCIES
+# FRONTEND IGNORE RULES
 # ===============================
+
+# Dependencies
 node_modules/
 .pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-# ===============================
-# NEXT.JS BUILD FILES
-# ===============================
+# Build output
 .next/
 out/
 dist/
 build/
+coverage/
+*.tsbuildinfo
 
-# ===============================
-# PRODUCTION / DEPLOYMENT
-# ===============================
+# Deployment
 .vercel/
 
-# ===============================
-# TESTING / COVERAGE
-# ===============================
-coverage/
-
-# ===============================
-# ENV FILES (IMPORTANT)
-# ===============================
+# Environment files
 .env
 .env.*
 !.env.example
 
-# ===============================
-# LOG FILES
-# ===============================
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 dev.log
 
-# ===============================
-# TYPESCRIPT
-# ===============================
-*.tsbuildinfo
-next-env.d.ts
+# IDE and editor files
+.idea/
+.vscode/
 
-# ===============================
-# OS FILES
-# ===============================
+# OS files
 .DS_Store
 Thumbs.db
-
-# ===============================
-# SECURITY / KEYS
-# ===============================
-*.pem
-
-# ===============================
-# IDE FILES
-# ===============================
-.vscode/
-.idea/
-
-# ===============================
-# MISC
-# ===============================
 *.swp
 *.swo
+*.orig
+
+# Security
+*.pem

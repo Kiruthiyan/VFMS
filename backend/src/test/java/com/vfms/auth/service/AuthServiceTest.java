@@ -1,130 +1,121 @@
 package com.vfms.auth.service;
 
+import com.vfms.auth.dto.LoginRequest;
+import com.vfms.auth.dto.RegisterRequest;
+import com.vfms.auth.repository.EmailVerificationTokenRepository;
+import com.vfms.auth.entity.RefreshToken;
+import com.vfms.common.enums.Role;
+import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.AuthenticationException;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.security.JwtService;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * Unit tests for AuthService
- * Tests authentication flows: login, logout, and error scenarios
- * 
- * Test Coverage:
- * - Valid login credentials
- * - Invalid email/password
- * - Email not verified
- * - Account disabled
- */
+@ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService Unit Tests")
-@ActiveProfiles("test")
 class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
 
     @Mock
-    private AuthenticationManager authenticationManager;
+    private EmailVerificationTokenRepository verificationTokenRepository;
+
+    @Mock
+    private EmailService emailService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @Mock
     private JwtService jwtService;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private AuthenticationManager authenticationManager;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private AuthService authService;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
     @DisplayName("Should login successfully with valid credentials")
-    void testLoginSuccess() {
-        // Arrange
-        String email = "user@example.com";
-        String password = "Test@123";
-        User mockUser = createMockUser(email, "APPROVED");
+    void shouldLoginSuccessfullyWithValidCredentials() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("user@example.com");
+        request.setPassword("Secure@123");
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(null);
-        when(jwtService.generateToken(mockUser)).thenReturn("mock_jwt_token");
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .fullName("Test User")
+                .email("user@example.com")
+                .password("encoded-password")
+                .role(Role.SYSTEM_USER)
+                .status(UserStatus.APPROVED)
+                .emailVerified(true)
+                .phone("0771234567")
+                .nic("123456789")
+                .build();
 
-        // Act
-        assertDoesNotThrow(() -> {
-            authService.login(new com.vfms.auth.dto.LoginRequest(email, password));
-        });
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(jwtService.generateToken(user)).thenReturn("jwt-token");
+        when(refreshTokenService.createRefreshToken(user)).thenReturn(
+                RefreshToken.builder().token("refresh-token").user(user).build()
+        );
 
-        // Assert
-        verify(userRepository).findByEmail(email);
+        assertEquals("jwt-token", authService.login(request).getAccessToken());
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtService).generateToken(mockUser);
+        verify(userRepository).findByEmail("user@example.com");
     }
 
     @Test
-    @DisplayName("Should throw AuthenticationException for invalid credentials")
-    void testLoginInvalidCredentials() {
-        // Arrange
-        String email = "user@example.com";
-        String password = "WrongPassword123";
+    @DisplayName("Should throw AuthenticationException when authenticated user cannot be loaded")
+    void shouldThrowAuthenticationExceptionWhenAuthenticatedUserCannotBeLoaded() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("missing@example.com");
+        request.setPassword("Secure@123");
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new org.springframework.security.core.AuthenticationException("Invalid credentials") {});
+        when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(AuthenticationException.class, () -> {
-            authService.login(new com.vfms.auth.dto.LoginRequest(email, password));
-        });
-
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        assertThrows(AuthenticationException.class, () -> authService.login(request));
     }
 
     @Test
-    @DisplayName("Should throw AuthenticationException if user not found")
-    void testLoginUserNotFound() {
-        // Arrange
-        String email = "nonexistent@example.com";
+    @DisplayName("Should reject registration when passwords do not match")
+    void shouldRejectRegistrationWhenPasswordsDoNotMatch() {
+        RegisterRequest request = new RegisterRequest();
+        request.setFullName("Test User");
+        request.setEmail("new@example.com");
+        request.setPhone("0771234567");
+        request.setNic("123456789");
+        request.setPassword("Secure@123");
+        request.setConfirmPassword("Mismatch@123");
+        request.setRequestedRole(Role.SYSTEM_USER);
+        request.setEmployeeId("EMP001");
+        request.setDepartment("Operations");
+        request.setOfficeLocation("HQ");
+        request.setDesignation("Coordinator");
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(AuthenticationException.class, () -> {
-            authService.login(new com.vfms.auth.dto.LoginRequest(email, "password"));
-        });
-
-        verify(userRepository).findByEmail(email);
-    }
-
-    /**
-     * Helper method to create mock user for testing
-     * @param email User email
-     * @param status User status (PENDING, APPROVED, REJECTED, DISABLED)
-     * @return Mock User object
-     */
-    private User createMockUser(String email, String status) {
-        User user = new User();
-        user.setId("test-id");
-        user.setEmail(email);
-        user.setFullName("Test User");
-        user.setPassword("encoded_password");
-        return user;
+        assertThrows(ValidationException.class, () -> authService.register(request));
     }
 }

@@ -79,7 +79,7 @@ export default function VerifyEmailPage() {
 
           {/* Footer */}
           <p className="text-center text-xs text-slate-600 mt-6">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/auth/signup"
               className="font-semibold text-slate-900 hover:text-amber-600 transition-colors"

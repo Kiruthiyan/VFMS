@@ -20,6 +20,46 @@ export interface ApiSuccessResponse {
   data?: unknown;
 }
 
+interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+function unwrapResponse<T>(response: ApiEnvelope<T> | T): T {
+  if (
+    typeof response === "object" &&
+    response !== null &&
+    "success" in response &&
+    "message" in response &&
+    "data" in response
+  ) {
+    return (response as ApiEnvelope<T>).data;
+  }
+
+  return response as T;
+}
+
+function unwrapSuccessResponse(
+  response: ApiEnvelope<unknown> | ApiSuccessResponse
+): ApiSuccessResponse {
+  if (
+    typeof response === "object" &&
+    response !== null &&
+    "success" in response &&
+    "message" in response
+  ) {
+    const envelope = response as ApiEnvelope<unknown>;
+    return {
+      success: envelope.success,
+      message: envelope.message,
+      data: envelope.data,
+    };
+  }
+
+  return response as ApiSuccessResponse;
+}
+
 // Signup registration data
 export interface SignupRequest {
   email: string;
@@ -52,8 +92,8 @@ export interface OTPVerificationResponse extends ApiSuccessResponse {
 
 // LOGIN API
 export async function loginApi(data: { email: string; password: string }): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>("/api/auth/login", data);
-  return response.data;
+  const response = await api.post<ApiEnvelope<AuthResponse>>("/api/auth/login", data);
+  return unwrapResponse(response.data);
 }
 
 // SIGNUP API - Send OTP to email
@@ -61,12 +101,11 @@ export async function sendOTPApi(email: string): Promise<ApiSuccessResponse> {
   try {
     const response = await api.post<ApiSuccessResponse>("/api/auth/send-otp", { email: email.trim() });
     return response.data;
-  } catch (error) {
-    throw {
-      message: "Failed to send verification code. Please check your email address.",
-      code: "SEND_OTP_FAILED",
-      originalError: error,
-    };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response?.data?.message) {
+      throw error;
+    }
+    throw error;
   }
 }
 
@@ -90,7 +129,7 @@ export async function verifyOTPApi(email: string, otp: string): Promise<OTPVerif
 }
 
 // SIGNUP API - Complete registration
-export async function signupApi(data: SignupRequest): Promise<AuthResponse> {
+export async function signupApi(data: SignupRequest): Promise<ApiSuccessResponse> {
   try {
     // Sanitize and trim all string fields
     const sanitizedData: SignupRequest = {
@@ -114,8 +153,8 @@ export async function signupApi(data: SignupRequest): Promise<AuthResponse> {
       confirmPassword: sanitizedData.password
     };
 
-    const response = await api.post<AuthResponse>("/api/auth/register", backendPayload);
-    return response.data;
+    const response = await api.post<ApiEnvelope<unknown>>("/api/auth/register", backendPayload);
+    return unwrapSuccessResponse(response.data);
   } catch (error) {
     const errorMessage = apiGetErrorMessage(error);
     throw {
@@ -128,31 +167,31 @@ export async function signupApi(data: SignupRequest): Promise<AuthResponse> {
 
 // RESEND VERIFICATION
 export async function resendVerificationApi(email: string): Promise<ApiSuccessResponse> {
-  const response = await api.post<ApiSuccessResponse>(
+  const response = await api.post<ApiEnvelope<unknown>>(
     "/api/auth/resend-verification",
     { email: email.trim() }
   );
-  return response.data;
+  return unwrapSuccessResponse(response.data);
 }
 
 // TOKEN REFRESH
 export async function refreshTokenApi(refreshToken: string): Promise<AuthResponse> {
-  const response = await api.post<AuthResponse>("/api/auth/refresh", {
+  const response = await api.post<ApiEnvelope<AuthResponse>>("/api/auth/refresh", {
     refreshToken,
   });
-  return response.data;
+  return unwrapResponse(response.data);
 }
 
 // LOGOUT
 export async function logoutApi(): Promise<ApiSuccessResponse> {
-  const response = await api.post<ApiSuccessResponse>("/api/auth/logout");
-  return response.data;
+  const response = await api.post<ApiEnvelope<unknown>>("/api/auth/logout");
+  return unwrapSuccessResponse(response.data);
 }
 
 // GET CURRENT USER
 export async function getMeApi(): Promise<AuthResponse> {
-  const response = await api.get<AuthResponse>("/api/user/me");
-  return response.data;
+  const response = await api.get<ApiEnvelope<AuthResponse>>("/api/user/me");
+  return unwrapResponse(response.data);
 }
 
 export function getErrorMessage(error: unknown): string {
@@ -164,11 +203,11 @@ export function getErrorMessage(error: unknown): string {
 export async function forgotPasswordApi(
   email: string
 ): Promise<ApiSuccessResponse> {
-  const response = await api.post<ApiSuccessResponse>(
+  const response = await api.post<ApiEnvelope<unknown>>(
     "/api/auth/forgot-password",
     { email }
   );
-  return response.data;
+  return unwrapSuccessResponse(response.data);
 }
 
 export async function verifyPasswordResetOtpApi(
@@ -189,11 +228,11 @@ export async function resetPasswordApi(data: {
   newPassword: string;
   confirmPassword: string;
 }): Promise<ApiSuccessResponse> {
-  const response = await api.post<ApiSuccessResponse>(
+  const response = await api.post<ApiEnvelope<unknown>>(
     "/api/auth/reset-password",
     data
   );
-  return response.data;
+  return unwrapSuccessResponse(response.data);
 }
 
 export async function changePasswordApi(data: {
@@ -201,9 +240,9 @@ export async function changePasswordApi(data: {
   newPassword: string;
   confirmPassword: string;
 }): Promise<ApiSuccessResponse> {
-  const response = await api.post<ApiSuccessResponse>(
+  const response = await api.post<ApiEnvelope<unknown>>(
     "/api/user/change-password",
     data
   );
-  return response.data;
+  return unwrapSuccessResponse(response.data);
 }

@@ -1,18 +1,46 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
+
 import { AdminShell } from "@/components/layout/admin-shell";
 import { FuelEntryForm } from "@/components/fuel/fuel-entry-form";
 import { PageHeader } from "@/components/ui/page-header";
+import { FormMessage } from "@/components/ui/form-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  getFuelFormMetadataApi,
+  getErrorMessage,
+  type FuelLookupOption,
+} from "@/lib/api/fuel";
 
 export default function CreateFuelEntryPage() {
   const router = useRouter();
+  const [vehicles, setVehicles] = useState<FuelLookupOption[]>([]);
+  const [drivers, setDrivers] = useState<FuelLookupOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // In a real app these would be fetched from APIs
-  const vehicles: { id: string; label: string }[] = [];
-  const drivers: { id: string; label: string }[] = [];
+  const loadMetadata = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const metadata = await getFuelFormMetadataApi();
+      setVehicles(metadata.vehicles);
+      setDrivers(metadata.drivers);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMetadata();
+  }, [loadMetadata]);
 
   const handleSuccess = () => {
     router.push("/admin/fuel");
@@ -22,7 +50,6 @@ export default function CreateFuelEntryPage() {
     <AdminShell>
       <div className="min-h-screen bg-slate-50">
         <div className="max-w-3xl mx-auto px-6 py-8">
-          {/* Breadcrumb Navigation */}
           <div className="flex items-center gap-2 mb-8">
             <Link
               href="/admin/fuel"
@@ -35,7 +62,6 @@ export default function CreateFuelEntryPage() {
             <span className="text-slate-700 text-xs font-medium">Create Entry</span>
           </div>
 
-          {/* Page Header */}
           <div className="mb-8">
             <PageHeader
               title="Create Fuel Entry"
@@ -44,17 +70,24 @@ export default function CreateFuelEntryPage() {
             />
           </div>
 
-          {/* Form Container */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="bg-blue-950 px-8 py-5 border-b border-slate-200">
               <h2 className="text-base font-bold text-white">Fuel Entry Details</h2>
             </div>
             <div className="p-8">
-              <FuelEntryForm
-                vehicles={vehicles}
-                drivers={drivers}
-                onSuccess={handleSuccess}
-              />
+              {loading ? (
+                <div className="flex justify-center py-10">
+                  <LoadingSpinner size={24} className="text-blue-950" />
+                </div>
+              ) : error ? (
+                <FormMessage type="error" message={error} />
+              ) : (
+                <FuelEntryForm
+                  vehicles={vehicles}
+                  drivers={drivers}
+                  onSuccess={handleSuccess}
+                />
+              )}
             </div>
           </div>
         </div>

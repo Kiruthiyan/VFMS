@@ -3,10 +3,10 @@ import type { UserRole } from "@/lib/api/auth";
 // ── ROLE CONFIG ───────────────────────────────────────────────────────────
 
 export const ROLE_HOME: Record<UserRole, string> = {
-  ADMIN: "/admin/dashboard",
-  APPROVER: "/approvals/dashboard",
-  SYSTEM_USER: "/dashboard",
-  DRIVER: "/driver/dashboard",
+  ADMIN: "/dashboards/admin",
+  APPROVER: "/dashboards/approver",
+  SYSTEM_USER: "/dashboards/staff",
+  DRIVER: "/dashboards/driver",
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -26,10 +26,11 @@ export const ROLE_COLORS: Record<UserRole, string> = {
 // ── ROUTE OWNERSHIP ───────────────────────────────────────────────────────
 
 export const ROUTE_ROLES: { prefix: string; role: UserRole }[] = [
+  { prefix: "/dashboards/admin", role: "ADMIN" },
+  { prefix: "/dashboards/approver", role: "APPROVER" },
+  { prefix: "/dashboards/staff", role: "SYSTEM_USER" },
+  { prefix: "/dashboards/driver", role: "DRIVER" },
   { prefix: "/admin", role: "ADMIN" },
-  { prefix: "/approvals", role: "APPROVER" },
-  { prefix: "/dashboard", role: "SYSTEM_USER" },
-  { prefix: "/driver", role: "DRIVER" },
 ];
 
 export function getRouteOwner(pathname: string): UserRole | null {

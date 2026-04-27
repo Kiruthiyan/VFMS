@@ -34,11 +34,7 @@ public class Vehicle {
     @Column(nullable = false)
     private String model;
 
-<<<<<<< HEAD
-    @Column(nullable = false)
-=======
     @Column(nullable = false, name = "vehicle_year")
->>>>>>> origin/feature/user-management
     private Integer year;
 
     @Enumerated(EnumType.STRING)

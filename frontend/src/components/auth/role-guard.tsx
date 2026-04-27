@@ -17,11 +17,12 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const hydrated = useAuthStore((s) => s.hydrated);
   const user = useAuthStore((s) => s.user);
   const accessToken = useAuthStore((s) => s.accessToken);
   const toastShownRef = useRef(false);
 
-  const isLoading = accessToken === null && user === null;
+  const isLoading = !hydrated;
   const isAuthenticated = !!accessToken && !!user;
   const hasCorrectRole = user?.role === allowedRole;
 

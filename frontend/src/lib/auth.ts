@@ -23,10 +23,10 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export const ROLE_REDIRECTS: Record<UserRole, string> = {
-  ADMIN: "/admin/dashboard",
-  APPROVER: "/approvals/dashboard",
-  SYSTEM_USER: "/dashboard",
-  DRIVER: "/driver/dashboard",
+  ADMIN: "/dashboards/admin",
+  APPROVER: "/dashboards/approver",
+  SYSTEM_USER: "/dashboards/staff",
+  DRIVER: "/dashboards/driver",
 };
 
 export const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/signup"];

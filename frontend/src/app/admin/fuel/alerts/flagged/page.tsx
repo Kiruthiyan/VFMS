@@ -4,8 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { Flag, RefreshCw, CheckCircle2, Link2, Plus } from "lucide-react";
 import Link from "next/link";
 import {
-  getAllFuelRecordsApi,
+  getFlaggedFuelRecordsApi,
   getErrorMessage,
+  unflagFuelRecordApi,
   type FuelRecord,
 } from "@/lib/api/fuel";
 import { AdminShell } from "@/components/layout/admin-shell";
@@ -38,14 +39,13 @@ export default function FlaggedRecordsPage() {
   const [error, setError] = useState<string | null>(null);
   const [unflaggingId, setUnflaggingId] = useState<string | null>(null);
 
-  // Filter only flagged records
-  const flaggedRecords = records.filter((r) => r.flaggedForMisuse);
+  const flaggedRecords = records;
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getAllFuelRecordsApi();
+      const data = await getFlaggedFuelRecordsApi();
       setRecords(data);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -60,13 +60,14 @@ export default function FlaggedRecordsPage() {
 
   const handleUnflag = async (recordId: string) => {
     setUnflaggingId(recordId);
-    // TODO: Implement unflag API call
-    // await unflagFuelRecordApi(recordId);
-    // Then refresh the records
-    setTimeout(() => {
+    try {
+      await unflagFuelRecordApi(recordId);
+      await fetchAll();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
       setUnflaggingId(null);
-      fetchAll();
-    }, 1000); // Simulated delay
+    }
   };
 
   const getRiskColor = (reason: string | null): string => {

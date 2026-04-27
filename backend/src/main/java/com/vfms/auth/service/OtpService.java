@@ -28,22 +28,22 @@ public class OtpService {
      */
     @Transactional
     public void sendOtp(String email) {
+        OtpVerification otpVerification = null;
         try {
             log.info("[OTP-SEND] Starting OTP generation for email: {}", email);
-            
+
             // Find existing OTP and update it, or create new one
             var existingOtp = otpRepository.findByEmail(email);
-            
+
             // Generate 6-digit OTP
             String otp = generateOtp();
             Instant now = Instant.now();
             Instant expiryTime = now.plus(OTP_VALIDITY_MINUTES, ChronoUnit.MINUTES);
-            
+
             // LOG SECURELY: Don't log the actual OTP or expiry details
-            log.info("[OTP-SEND] OTP generation completed for email: {} (validity: {} minutes)", 
+            log.info("[OTP-SEND] OTP generation completed for email: {} (validity: {} minutes)",
                     email, OTP_VALIDITY_MINUTES);
-            
-            OtpVerification otpVerification;
+
             if (existingOtp.isPresent()) {
                 // Update existing OTP
                 log.debug("[OTP-SEND] Updating existing OTP record for email: {}", email);
@@ -61,15 +61,22 @@ public class OtpService {
                         .verified(false)
                         .build();
             }
-            
+
             otpRepository.save(otpVerification);
             log.debug("[OTP-SEND] OTP record saved for email: {}", email);
-            
+
             // Send OTP via email
             emailService.sendOtpEmail(email, otp);
             log.info("[OTP-SEND] Verification email sent successfully for: {}", email);
         } catch (Exception e) {
             log.error("[OTP-SEND] Error during OTP generation for email: {}", email, e);
+            if (otpVerification != null) {
+                try {
+                    otpRepository.delete(otpVerification);
+                } catch (Exception deleteError) {
+                    log.warn("[OTP-SEND] Failed to clean up OTP record for {} after send failure", email, deleteError);
+                }
+            }
             throw new ValidationException("Failed to send verification code. Please try again later.", e);
         }
     }
@@ -102,25 +109,6 @@ public class OtpService {
         if (!otpVerification.getOtp().equals(otp)) {
             log.warn("[OTP-VERIFY] Invalid verification code provided for email: {}", email);
             throw new ValidationException("[INVALID_OTP] Verification code is incorrect. Please check and try again.");
-        }
-
-        log.info("[OTP-VERIFY] OTP verified successfully for email: {}", email);
-        
-        // Mark as verified
-        otpVerification.setVerified(true);
-        otpRepository.save(otpVerification);
-        
-        return true;
-    }
-
-    /**
-     * Clean up expired and verified OTPs
-     */
-    @Transactional
-    public void cleanupExpiredOtps() {
-        otpRepository.deleteExpiredOtps(Instant.now());
-    }
-            throw new RuntimeException("[INVALID_OTP] Verification code is incorrect. Please check and try again.");
         }
 
         log.info("[OTP-VERIFY] OTP verified successfully for email: {}", email);

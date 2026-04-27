@@ -1,59 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-export interface MockUser {
-  id: string;
-  name: string;
-  role: 'ADMIN' | 'DRIVER' | 'APPROVER' | 'SYSTEM_USER';
-}
-
-const DEFAULT_ADMIN_USER: MockUser = {
-  id: 'admin-1',
-  name: 'Admin User',
-  role: 'ADMIN',
-};
-
-const DEFAULT_DRIVER_USER: MockUser = {
-  id: 'driver-1',
-  name: 'Driver User',
-  role: 'DRIVER',
-};
+import { useAuthStore } from '@/store/auth-store';
 
 export function useUser() {
-  const [user, setUser] = useState<MockUser>(DEFAULT_ADMIN_USER);
-  const [loading, setLoading] = useState(false);
+  const hydrated = useAuthStore((state) => state.hydrated);
+  const authUser = useAuthStore((state) => state.user);
 
-  // Check for user role from localStorage (for testing different roles)
-  useEffect(() => {
-    try {
-      const savedRole = localStorage.getItem('user-role') as MockUser['role'] | null;
-      if (savedRole && ['ADMIN', 'DRIVER', 'APPROVER', 'SYSTEM_USER'].includes(savedRole)) {
-        setUser(prev => ({ ...prev, role: savedRole }));
+  const user = authUser
+    ? {
+        id: authUser.userId,
+        name: authUser.fullName,
+        role: authUser.role,
       }
-    } catch (error) {
-      console.log('Could not load user role from localStorage');
-    }
-  }, []);
-
-  const setUserRole = (role: MockUser['role']) => {
-    setUser(prev => ({ ...prev, role }));
-    localStorage.setItem('user-role', role);
-  };
-
-  const isAdmin = user.role === 'ADMIN';
-  const isDriver = user.role === 'DRIVER';
+    : null;
 
   return {
     user,
-    loading,
-    setUserRole,
-    isAdmin,
-    isDriver,
+    loading: !hydrated,
+    isAdmin: authUser?.role === 'ADMIN',
+    isDriver: authUser?.role === 'DRIVER',
+    isApprover: authUser?.role === 'APPROVER',
+    isSystemUser: authUser?.role === 'SYSTEM_USER',
   };
 }
-
-export const mockUsers = {
-  default: DEFAULT_ADMIN_USER,
-  driver: DEFAULT_DRIVER_USER,
-};

@@ -7,6 +7,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  * Async configuration for email sending and other background tasks
  * Configures thread pool to prevent resource exhaustion and handle concurrent async operations
@@ -47,7 +49,7 @@ public class AsyncConfig {
         
         // Reject policy: throw exception if queue is full (fail-fast)
         // Never silently drop tasks
-        executor.setRejectedExecutionHandler(new ThreadPoolTaskExecutor.AbortPolicy());
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         
         // Initialize the executor
         executor.initialize();

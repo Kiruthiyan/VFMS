@@ -47,10 +47,10 @@ class FuelServiceTest {
     private UserDetails userDetails;
 
     @Test
-    @DisplayName("createFuelRecord should throw 404 when vehicle does not exist in API")
-    void createFuelRecord_shouldThrowWhenVehicleNotInApi() {
+    @DisplayName("createFuelRecord should throw 404 when vehicle does not exist in repository")
+    void createFuelRecord_shouldThrowWhenVehicleIsMissing() {
         CreateFuelRecordRequest req = baseCreateRequest();
-        when(vehicleApiClient.vehicleExists(req.getVehicleId())).thenReturn(false);
+        when(vehicleRepository.findById(req.getVehicleId())).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> fuelService.createFuelRecord(req, null, userDetails));
@@ -69,10 +69,11 @@ class FuelServiceTest {
                 .model("Camry")
                 .odometerReading(900.0)
                 .build();
+        Driver driver = Driver.builder().id(req.getDriverId()).fullName("Test Driver").build();
 
         when(userDetails.getUsername()).thenReturn("admin@vfms.com");
-        when(vehicleApiClient.vehicleExists(req.getVehicleId())).thenReturn(true);
         when(vehicleRepository.findById(req.getVehicleId())).thenReturn(Optional.of(vehicle));
+        when(driverRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
         when(fuelMisuseService.checkForMisuse(any())).thenReturn(null);
         when(fuelRecordRepository.save(any())).thenAnswer(inv -> {
             FuelRecord r = inv.getArgument(0);

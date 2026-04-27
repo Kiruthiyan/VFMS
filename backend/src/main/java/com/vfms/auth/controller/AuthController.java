@@ -1,14 +1,18 @@
 package com.vfms.auth.controller;
 
 import com.vfms.auth.dto.RegisterRequest;
+import com.vfms.auth.dto.RefreshTokenRequest;
 import com.vfms.auth.dto.ResendVerificationRequest;
 import com.vfms.auth.service.AuthService;
 import com.vfms.auth.service.OtpService;
 import com.vfms.common.dto.ApiResponse;
+import com.vfms.common.exception.ValidationException;
+import com.vfms.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -189,10 +193,14 @@ public class AuthController {
                             "Verification code sent to your email. Please check your inbox.",
                             null)
             );
+            } catch (ValidationException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponse.error(e.getMessage())
+                );
         } catch (Exception e) {
             // Generic error message for security (don't expose system details)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ApiResponse.error("Failed to send verification code. Please check your email address and try again.")
+                    ApiResponse.error("Failed to send verification code. Please try again later.")
             );
         }
     }
@@ -485,6 +493,20 @@ public class AuthController {
         // Call service to authenticate and generate token
         com.vfms.auth.dto.AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<com.vfms.auth.dto.AuthResponse>> refresh(
+            @Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Token refreshed successfully", authService.refresh(request))
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal User user) {
+        authService.logout(user);
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
