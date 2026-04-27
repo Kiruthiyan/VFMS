@@ -37,7 +37,14 @@ public class VfmsApplication {
             "MAIL_PASSWORD",
             "CORS_ALLOWED_ORIGINS",
             "FRONTEND_URL",
-            "SUPABASE_STORAGE_URL"
+            "SUPABASE_STORAGE_URL",
+            // Admin seed bootstrap — override defaults in production via these vars
+            "ADMIN_SEED_ENABLED",
+            "ADMIN_SEED_EMAIL",
+            "ADMIN_SEED_PASSWORD",
+            "ADMIN_SEED_FULL_NAME",
+            "ADMIN_SEED_PHONE",
+            "ADMIN_SEED_NIC"
         };
         
         for (String key : keys) {

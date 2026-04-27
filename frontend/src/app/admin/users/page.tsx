@@ -18,9 +18,11 @@ import { getAllUsersApi, getUserCountsApi, getErrorMessage } from "@/lib/api/adm
 import type { UserSummary, UserCounts } from "@/lib/api/admin";
 import type { UserStatus, UserRole } from "@/lib/auth";
 import { UserTable } from "@/components/admin/users/user-table";
+import { AdminShell } from "@/components/layout/admin-shell";
 import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
+import Link from "next/link";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -157,8 +159,8 @@ export default function AllUsersPage() {
   }, [statusFilter, roleFilter, search]);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB] px-4 py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <AdminShell>
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* Header Card */}
         <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
           <div className="bg-[#0B1736] px-6 py-6 flex items-center justify-between">
@@ -299,7 +301,7 @@ export default function AllUsersPage() {
             ))}
 
             {/* Link to deleted users */}
-            <a
+            <Link
               href="/admin/users/deleted"
               className="px-4 py-2 rounded-lg text-xs font-semibold
                          border border-red-200 bg-red-50 text-red-600
@@ -307,7 +309,7 @@ export default function AllUsersPage() {
             >
               <Trash2 size={12} />
               View Deleted ({counts?.deleted ?? 0})
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -402,6 +404,6 @@ export default function AllUsersPage() {
           onSuccess={fetchAll}
         />
       )}
-    </div>
+    </AdminShell>
   );
 }

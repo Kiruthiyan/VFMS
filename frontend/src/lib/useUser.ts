@@ -10,6 +10,7 @@ export function useUser() {
     ? {
         id: authUser.userId,
         name: authUser.fullName,
+        email: authUser.email,
         role: authUser.role,
       }
     : null;

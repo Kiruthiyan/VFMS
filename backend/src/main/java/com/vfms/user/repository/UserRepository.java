@@ -1,5 +1,6 @@
 package com.vfms.user.repository;
 
+import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,8 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
+
+    boolean existsByRoleAndDeletedAtIsNull(Role role);
 
     boolean existsByEmail(String email);
 

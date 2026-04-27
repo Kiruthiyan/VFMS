@@ -5,6 +5,7 @@ import { Clock, RefreshCw } from "lucide-react";
 import { getPendingUsersApi, getErrorMessage } from "@/lib/api/admin";
 import type { UserSummary } from "@/lib/api/admin";
 import { UserTable } from "@/components/admin/users/user-table";
+import { AdminShell } from "@/components/layout/admin-shell";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
 
@@ -31,8 +32,8 @@ export default function PendingUsersPage() {
   }, [fetchPending]);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB] px-4 py-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <AdminShell>
+      <div className="mx-auto max-w-6xl space-y-6">
 
         {/* Header Card */}
         <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
@@ -85,6 +86,6 @@ export default function PendingUsersPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminShell>
   );
 }

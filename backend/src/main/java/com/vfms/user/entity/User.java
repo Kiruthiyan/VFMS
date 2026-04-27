@@ -9,7 +9,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -46,6 +49,11 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @Column(nullable = false, unique = true)
+    private String username;
+
     @Column(nullable = false)
     private String password;
 
@@ -65,34 +73,26 @@ public class User implements UserDetails {
     private UserStatus status = UserStatus.EMAIL_UNVERIFIED;
 
     @Builder.Default
-    @Column(
-            nullable = false,
-            name = "email_verified",
-            columnDefinition = "boolean default false"
-    )
+    @Column(nullable = false, name = "email_verified")
     private boolean emailVerified = false;
-
-    @Column(name = "rejection_reason")
-    private String rejectionReason;
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
 
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
     @Builder.Default
-    @Column(
-            nullable = false,
-            name = "created_by_admin",
-            columnDefinition = "boolean default false"
-    )
+    @Column(nullable = false)
     private boolean createdByAdmin = false;
 
     @Builder.Default
-    @Column(
-            nullable = false,
-            name = "password_change_required",
-            columnDefinition = "boolean default false"
-    )
+    @Column(nullable = false)
     private boolean passwordChangeRequired = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean enabled = true;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -119,7 +119,6 @@ public class User implements UserDetails {
     @Column(name = "license_expiry_date")
     private LocalDate licenseExpiryDate;
 
-    @Column(name = "certifications")
     private String certifications;
 
     @Column(name = "experience_years")
@@ -128,13 +127,11 @@ public class User implements UserDetails {
     @Column(name = "employee_id")
     private String employeeId;
 
-    @Column(name = "department")
     private String department;
 
     @Column(name = "office_location")
     private String officeLocation;
 
-    @Column(name = "designation")
     private String designation;
 
     @Column(name = "approval_level")
@@ -147,6 +144,15 @@ public class User implements UserDetails {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    void syncUsername() {
+        if (email != null) {
+            email = email.trim().toLowerCase();
+            username = email;
+        }
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -165,16 +171,18 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return status != UserStatus.DEACTIVATED && status != UserStatus.REJECTED;
+        return deletedAt == null
+                && status != UserStatus.DEACTIVATED
+                && status != UserStatus.REJECTED;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
-    }
+    } 
 
     @Override
     public boolean isEnabled() {
-        return status == UserStatus.APPROVED;
+        return enabled && deletedAt == null && status == UserStatus.APPROVED;
     }
 }
