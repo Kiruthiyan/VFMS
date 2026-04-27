@@ -1,6 +1,4 @@
-import type { UserRole } from "@/lib/api/auth";
-
-// ── ROLE CONFIG ───────────────────────────────────────────────────────────
+import type { UserRole } from "@/lib/auth";
 
 export const ROLE_HOME: Record<UserRole, string> = {
   ADMIN: "/dashboards/admin",
@@ -23,8 +21,6 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   DRIVER: "text-green-400 bg-green-950/40 border-green-800/40",
 };
 
-// ── ROUTE OWNERSHIP ───────────────────────────────────────────────────────
-
 export const ROUTE_ROLES: { prefix: string; role: UserRole }[] = [
   { prefix: "/dashboards/admin", role: "ADMIN" },
   { prefix: "/dashboards/approver", role: "APPROVER" },
@@ -34,7 +30,7 @@ export const ROUTE_ROLES: { prefix: string; role: UserRole }[] = [
 ];
 
 export function getRouteOwner(pathname: string): UserRole | null {
-  const match = ROUTE_ROLES.find((r) => pathname.startsWith(r.prefix));
+  const match = ROUTE_ROLES.find((route) => pathname.startsWith(route.prefix));
   return match ? match.role : null;
 }
 
@@ -43,15 +39,18 @@ export function canAccess(
   pathname: string
 ): boolean {
   const requiredRole = getRouteOwner(pathname);
-  if (!requiredRole) return true; // no restriction
+  if (!requiredRole) {
+    return true;
+  }
+
   return userRole === requiredRole;
 }
 
-// ── COOKIE HELPERS (used by auth-store on login/logout) ───────────────────
-
 export function setAuthCookies(token: string, role: string): void {
-  if (typeof document === "undefined") return;
-  // 7 days
+  if (typeof document === "undefined") {
+    return;
+  }
+
   const expires = new Date(
     Date.now() + 7 * 24 * 60 * 60 * 1000
   ).toUTCString();
@@ -60,7 +59,10 @@ export function setAuthCookies(token: string, role: string): void {
 }
 
 export function clearAuthCookies(): void {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined") {
+    return;
+  }
+
   document.cookie = "vfms-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   document.cookie = "vfms-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 }

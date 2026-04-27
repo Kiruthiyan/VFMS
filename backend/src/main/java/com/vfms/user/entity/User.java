@@ -2,8 +2,19 @@ package com.vfms.user.entity;
 
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,10 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * User entity representing a system user with authentication capabilities.
- * Implements Spring Security's UserDetails for Role-Based Access Control (RBAC).
- */
 @Entity
 @Table(name = "users")
 @Getter
@@ -32,8 +39,6 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
-    // ── COMMON FIELDS ─────────────────────────────────────────────────────
 
     @Column(nullable = false)
     private String fullName;
@@ -60,10 +65,12 @@ public class User implements UserDetails {
     private UserStatus status = UserStatus.EMAIL_UNVERIFIED;
 
     @Builder.Default
-    @Column(nullable = false, name = "email_verified")
+    @Column(
+            nullable = false,
+            name = "email_verified",
+            columnDefinition = "boolean default false"
+    )
     private boolean emailVerified = false;
-
-    // ── ADMIN REVIEW FIELDS ───────────────────────────────────────────────
 
     @Column(name = "rejection_reason")
     private String rejectionReason;
@@ -71,17 +78,21 @@ public class User implements UserDetails {
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
 
-    // ── ADMIN-CREATED USER FLAGS ──────────────────────────────────────────
-
     @Builder.Default
-    @Column(nullable = false, name = "created_by_admin")
+    @Column(
+            nullable = false,
+            name = "created_by_admin",
+            columnDefinition = "boolean default false"
+    )
     private boolean createdByAdmin = false;
 
     @Builder.Default
-    @Column(nullable = false, name = "password_change_required")
+    @Column(
+            nullable = false,
+            name = "password_change_required",
+            columnDefinition = "boolean default false"
+    )
     private boolean passwordChangeRequired = false;
-
-    // ── SOFT DELETE FIELDS ────────────────────────────────────────────────
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -93,8 +104,6 @@ public class User implements UserDetails {
     @Column(name = "status_before_deletion")
     private UserStatus statusBeforeDeletion;
 
-    // ── AUDIT TRAIL FIELDS ────────────────────────────────────────────────
-
     @Column(name = "created_by")
     private String createdBy;
 
@@ -103,8 +112,6 @@ public class User implements UserDetails {
 
     @Column(name = "restored_by")
     private String restoredBy;
-
-    // ── DRIVER-SPECIFIC FIELDS ────────────────────────────────────────────
 
     @Column(name = "license_number")
     private String licenseNumber;
@@ -117,8 +124,6 @@ public class User implements UserDetails {
 
     @Column(name = "experience_years")
     private Integer experienceYears;
-
-    // ── STAFF / APPROVER-SPECIFIC FIELDS ─────────────────────────────────
 
     @Column(name = "employee_id")
     private String employeeId;
@@ -135,8 +140,6 @@ public class User implements UserDetails {
     @Column(name = "approval_level")
     private String approvalLevel;
 
-    // ── TIMESTAMPS ────────────────────────────────────────────────────────
-
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
     private LocalDateTime createdAt;
@@ -145,14 +148,11 @@ public class User implements UserDetails {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ── SPRING SECURITY ───────────────────────────────────────────────────
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
-    /** Username is the email address for Spring Security compatibility. */
     @Override
     public String getUsername() {
         return email;

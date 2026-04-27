@@ -1,8 +1,6 @@
 import api, { getErrorMessage } from "@/lib/api";
 import type { UserRole, UserStatus } from "@/lib/auth";
 
-// ── TYPES ─────────────────────────────────────────────────────────────────
-
 export interface UserSummary {
   id: string;
   fullName: string;
@@ -16,22 +14,17 @@ export interface UserSummary {
   updatedAt: string | null;
   reviewedAt: string | null;
   rejectionReason: string | null;
-  // Admin-created flags
   createdByAdmin: boolean;
   passwordChangeRequired: boolean;
-  // Soft-delete
   deletedAt: string | null;
   deletedReason: string | null;
-  // Audit trail
   createdBy: string | null;
   deletedBy: string | null;
   restoredBy: string | null;
-  // Driver
   licenseNumber: string | null;
   licenseExpiryDate: string | null;
   certifications: string | null;
   experienceYears: number | null;
-  // Staff
   employeeId: string | null;
   department: string | null;
   officeLocation: string | null;
@@ -45,12 +38,10 @@ export interface CreateUserRequest {
   phone?: string;
   nic: string;
   role: UserRole;
-  // Driver
   licenseNumber?: string;
   licenseExpiryDate?: string;
   certifications?: string;
   experienceYears?: number;
-  // Staff
   employeeId?: string;
   department?: string;
   officeLocation?: string;
@@ -94,8 +85,6 @@ export interface UserCounts {
   deleted: number;
 }
 
-// ── API CALLS ─────────────────────────────────────────────────────────────
-
 export async function createUserApi(
   data: CreateUserRequest
 ): Promise<UserSummary> {
@@ -124,9 +113,7 @@ export async function getUserCountsApi(): Promise<UserCounts> {
 }
 
 export async function getUserApi(userId: string): Promise<UserSummary> {
-  const response = await api.get<UserSummary>(
-    `/api/admin/users/${userId}`
-  );
+  const response = await api.get<UserSummary>(`/api/admin/users/${userId}`);
   return response.data;
 }
 

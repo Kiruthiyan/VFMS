@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import { ReactNode } from "react";
 import { useUser } from "@/lib/useUser";
 import { AlertCircle } from "lucide-react";
@@ -37,12 +38,12 @@ export function AdminShell({ children, requireAdmin = false }: AdminShellProps) 
           <p className="text-sm text-slate-500">
             Your current role: <span className="font-semibold">{user?.role ?? "Unknown"}</span>
           </p>
-          <a 
+          <Link
             href="/"
             className="inline-block mt-6 px-6 py-2.5 bg-blue-950 hover:bg-blue-900 text-white font-semibold rounded-lg transition-colors"
           >
             Go to Home
-          </a>
+          </Link>
         </div>
       </main>
     );

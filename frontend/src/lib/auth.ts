@@ -10,9 +10,11 @@ export type UserStatus =
   | "DEACTIVATED";
 
 export interface AuthUser {
+  userId?: string;
   email: string;
   fullName: string;
   role: UserRole;
+  status?: UserStatus;
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {

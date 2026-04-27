@@ -1,5 +1,6 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
+import type { UserRole, UserStatus } from "@/lib/auth";
 import { useAuthStore } from "@/store/auth-store";
 
 const API_BASE_URL =
@@ -13,29 +14,118 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-function resolveAccessToken(): string | null {
-  const storeToken = useAuthStore.getState().accessToken;
-  if (storeToken) {
-    return storeToken;
-  }
+interface PersistedAuthState {
+  accessToken?: string;
+  refreshToken?: string;
+  state?: {
+    accessToken?: string;
+    refreshToken?: string;
+  };
+}
 
+interface AuthTokens {
+  accessToken: string | null;
+  refreshToken: string | null;
+}
+
+interface AuthRefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+}
+
+interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+let refreshPromise: Promise<string | null> | null = null;
+
+function readPersistedAuth(): PersistedAuthState | null {
   if (typeof window === "undefined") {
     return null;
   }
 
   try {
     const raw = window.localStorage.getItem("vfms-auth");
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as {
-      accessToken?: string;
-      state?: { accessToken?: string };
-    };
-
-    return parsed.state?.accessToken ?? parsed.accessToken ?? null;
+    return raw ? (JSON.parse(raw) as PersistedAuthState) : null;
   } catch {
+    return null;
+  }
+}
+
+function resolveTokens(): AuthTokens {
+  const store = useAuthStore.getState();
+  const persisted = readPersistedAuth();
+
+  return {
+    accessToken:
+      store.accessToken ??
+      persisted?.state?.accessToken ??
+      persisted?.accessToken ??
+      null,
+    refreshToken:
+      store.refreshToken ??
+      persisted?.state?.refreshToken ??
+      persisted?.refreshToken ??
+      null,
+  };
+}
+
+function resolveAccessToken(): string | null {
+  return resolveTokens().accessToken;
+}
+
+function shouldSkipRefresh(config?: InternalAxiosRequestConfig): boolean {
+  const url = config?.url ?? "";
+  return url.includes("/api/auth/login") || url.includes("/api/auth/refresh");
+}
+
+function redirectToLogin(): void {
+  useAuthStore.getState().clearAuth();
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/auth/login"
+  ) {
+    window.location.replace("/auth/login");
+  }
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  const { refreshToken } = resolveTokens();
+
+  if (!refreshToken) {
+    redirectToLogin();
+    return null;
+  }
+
+  try {
+    const response = await axios.post<ApiEnvelope<AuthRefreshResponse>>(
+      `${API_BASE_URL}/api/auth/refresh`,
+      { refreshToken },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+
+    const refreshedAuth = response.data.data;
+    useAuthStore.getState().setAuth(refreshedAuth);
+    return refreshedAuth.accessToken;
+  } catch {
+    redirectToLogin();
     return null;
   }
 }
@@ -57,12 +147,39 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
-      window.location.href = "/auth/login";
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+
+    if (
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      shouldSkipRefresh(originalRequest)
+    ) {
+      if (error.response?.status === 401 && shouldSkipRefresh(originalRequest)) {
+        useAuthStore.getState().clearAuth();
+      }
+
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    originalRequest._retry = true;
+
+    refreshPromise ??= refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+
+    const newAccessToken = await refreshPromise;
+
+    if (!newAccessToken) {
+      return Promise.reject(error);
+    }
+
+    originalRequest.headers = originalRequest.headers ?? {};
+    (originalRequest.headers as Record<string, string>).Authorization =
+      `Bearer ${newAccessToken}`;
+
+    return api(originalRequest);
   }
 );
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useAuthStore } from "@/store/auth-store";
-import type { UserRole } from "@/lib/api/auth";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
+
+import type { UserRole } from "@/lib/auth";
 import { ROLE_HOME, ROLE_LABELS } from "@/lib/rbac";
+import { useAuthStore } from "@/store/auth-store";
 
 interface RoleGuardProps {
   allowedRole: UserRole;
@@ -17,9 +18,9 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const hydrated = useAuthStore((s) => s.hydrated);
-  const user = useAuthStore((s) => s.user);
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const hydrated = useAuthStore((state) => state.hydrated);
+  const user = useAuthStore((state) => state.user);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const toastShownRef = useRef(false);
 
   const isLoading = !hydrated;
@@ -27,19 +28,18 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
   const hasCorrectRole = user?.role === allowedRole;
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
 
-    // Not logged in
     if (!isAuthenticated) {
       router.replace(`/auth/login?from=${encodeURIComponent(pathname)}`);
       return;
     }
 
-    // Wrong role
     if (!hasCorrectRole && user) {
       const homeUrl = ROLE_HOME[user.role];
 
-      // Show toast only once per navigation
       if (!toastShownRef.current) {
         toastShownRef.current = true;
         toast.error(
@@ -52,27 +52,22 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
       return;
     }
 
-    // Show unauthorized toast if redirected here with ?unauthorized=1
-    if (
-      searchParams.get("unauthorized") === "1" &&
-      !toastShownRef.current
-    ) {
+    if (searchParams.get("unauthorized") === "1" && !toastShownRef.current) {
       toastShownRef.current = true;
       toast.error("You are not authorized to access that page.", {
         duration: 4000,
       });
     }
   }, [
-    isLoading,
-    isAuthenticated,
     hasCorrectRole,
-    user,
-    router,
+    isAuthenticated,
+    isLoading,
     pathname,
+    router,
     searchParams,
+    user,
   ]);
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -84,7 +79,6 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
     );
   }
 
-  // Not authenticated or wrong role — show nothing while redirecting
   if (!isAuthenticated || !hasCorrectRole) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
