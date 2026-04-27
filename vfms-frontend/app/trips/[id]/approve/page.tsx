@@ -107,8 +107,10 @@ export default function ApproveTripPage() {
         setActionLoading("approve");
         try {
             await api.patch(`/trips/${id}/approve`, {
-                ...form,
+                approverId: form.approverId,
+                notes: form.notes,
                 assignedVehicleId: Number(form.assignedVehicleId),
+                assignedDriverId: form.assignedDriverId,
             });
             router.push(`/trips/${id}`);
         } catch (err: any) {
@@ -156,7 +158,7 @@ export default function ApproveTripPage() {
             <div className="max-w-2xl mx-auto space-y-4">
 
                 <button
-                    onClick={() => router.back()}
+                    onClick={() => router.push("/trips")}
                     className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4" /> Back

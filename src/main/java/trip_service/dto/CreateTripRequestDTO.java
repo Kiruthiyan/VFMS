@@ -27,6 +27,7 @@ public class CreateTripRequestDTO {
     private LocalDateTime returnTime;
 
     @Min(value = 1, message = "At least 1 passenger required")
+    @Max(value = 54, message = "Passenger count cannot exceed 54")
     private Integer passengerCount = 1;
 
     private BigDecimal distanceKm;
