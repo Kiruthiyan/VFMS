@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { X, UserPlus } from "lucide-react";
-import { createUserApi, getErrorMessage } from "@/lib/api/admin";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+
 import type { CreateUserRequest } from "@/lib/api/admin";
-import type { UserRole } from "@/lib/auth";
+import { createUserApi, getErrorMessage } from "@/lib/api/admin";
 import { ROLE_LABELS } from "@/lib/auth";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import type { UserRole } from "@/lib/auth";
 import { FormMessage } from "@/components/ui/form-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface CreateUserDialogProps {
   onClose: () => void;
@@ -26,13 +27,16 @@ const labelClass = "block text-xs font-semibold text-[#344054] mb-1.5";
 
 const ROLE_OPTIONS: UserRole[] = ["ADMIN", "APPROVER", "SYSTEM_USER", "DRIVER"];
 
-export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) {
+export function CreateUserDialog({
+  onClose,
+  onSuccess,
+}: CreateUserDialogProps) {
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { isSubmitting, errors },
   } = useForm<CreateUserRequest>({
     defaultValues: {
@@ -44,13 +48,16 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
     },
   });
 
-  const selectedRole = watch("role");
+  const selectedRole = useWatch({ control, name: "role" });
 
   const onSubmit = async (data: CreateUserRequest) => {
     setServerError(null);
+
     try {
       await createUserApi(data);
-      toast.success("User created successfully! A welcome email with a temporary password has been sent.");
+      toast.success(
+        "User created successfully! A welcome email with a temporary password has been sent."
+      );
       onSuccess();
       onClose();
     } catch (err) {
@@ -65,38 +72,38 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-lg bg-white border border-[#E4E7EC] rounded-xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-[#0B1736] px-6 py-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-[#F4B400] rounded-lg flex items-center justify-center">
-              <UserPlus className="w-4 h-4 text-[#0B1736]" />
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[#E4E7EC] bg-white shadow-lg">
+        <div className="shrink-0 bg-[#0B1736] px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F4B400]">
+                <UserPlus className="h-4 w-4 text-[#0B1736]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  Create New User
+                </h3>
+                <p className="mt-0.5 text-xs text-white/70">
+                  A temporary password will be emailed to the user
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-white">Create New User</h3>
-              <p className="text-xs text-white/70 mt-0.5">
-                A temporary password will be emailed to the user
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white/80 transition-colors hover:text-white"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors"
-          >
-            <X size={18} />
-          </button>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="p-6 space-y-4 overflow-y-auto"
+          className="space-y-4 overflow-y-auto p-6"
         >
-          {serverError && (
-            <FormMessage type="error" message={serverError} />
-          )}
+          {serverError && <FormMessage type="error" message={serverError} />}
 
-          {/* Full Name */}
           <div>
             <label className={labelClass}>Full Name *</label>
             <input
@@ -107,13 +114,12 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
               className={inputClass}
             />
             {errors.fullName && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="mt-1 text-xs text-red-500">
                 {errors.fullName.message}
               </p>
             )}
           </div>
 
-          {/* Email */}
           <div>
             <label className={labelClass}>Email *</label>
             <input
@@ -124,13 +130,12 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
               className={inputClass}
             />
             {errors.email && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="mt-1 text-xs text-red-500">
                 {errors.email.message}
               </p>
             )}
           </div>
 
-          {/* Phone + NIC row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Phone</label>
@@ -152,14 +157,13 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
                 className={inputClass}
               />
               {errors.nic && (
-                <p className="text-xs text-red-500 mt-1">
+                <p className="mt-1 text-xs text-red-500">
                   {errors.nic.message}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Role Selection */}
           <div>
             <label className={labelClass}>Role *</label>
             <select
@@ -175,10 +179,9 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
             </select>
           </div>
 
-          {/* ── DRIVER-SPECIFIC FIELDS ──────────────────────────── */}
           {selectedRole === "DRIVER" && (
-            <div className="space-y-3 p-4 bg-[#F9FAFC] rounded-lg border border-[#E4E7EC]">
-              <p className="text-xs font-semibold text-[#475467] uppercase tracking-wider">
+            <div className="space-y-3 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
                 Driver Details
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -228,12 +231,11 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
             </div>
           )}
 
-          {/* ── STAFF / APPROVER FIELDS ─────────────────────────── */}
           {(selectedRole === "SYSTEM_USER" ||
             selectedRole === "APPROVER" ||
             selectedRole === "ADMIN") && (
-            <div className="space-y-3 p-4 bg-[#F9FAFC] rounded-lg border border-[#E4E7EC]">
-              <p className="text-xs font-semibold text-[#475467] uppercase tracking-wider">
+            <div className="space-y-3 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
                 Staff Details
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -295,26 +297,19 @@ export function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) 
             </div>
           )}
 
-          {/* Buttons */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-lg border border-[#E4E7EC]
-                         bg-[#F9FAFC] text-[#475467] hover:bg-[#F5F7FB]
-                         font-medium text-sm transition-colors disabled:opacity-50"
+              className="flex-1 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] text-sm font-medium text-[#475467] transition-colors hover:bg-[#F5F7FB] disabled:opacity-50 h-11"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-lg bg-[#0B1736] text-white
-                         hover:bg-[#122347] font-bold text-sm flex items-center
-                         justify-center gap-2 disabled:opacity-60
-                         disabled:cursor-not-allowed transition-colors
-                         shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)]"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0B1736] text-sm font-bold text-white shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)] transition-colors hover:bg-[#122347] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting && <LoadingSpinner size={14} />}
               {isSubmitting ? "Creating..." : "Create User"}

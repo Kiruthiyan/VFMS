@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence, useScroll, useSpring, useInView, Variants } from 'framer-motion';
 import {
@@ -191,10 +192,13 @@ export default function LandingPage() {
               className="relative hidden lg:block perspective-1000"
             >
               <div className="relative bg-white rounded-[2rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border border-slate-100 p-4 overflow-hidden">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1551288049-bbbda536339a?auto=format&fit=crop&q=80&w=1000"
                   alt="Dashboard"
-                  className="rounded-xl w-full"
+                  width={1000}
+                  height={667}
+                  className="rounded-xl w-full h-auto"
+                  priority
                 />
 
                 {/* Floating Elements */}

@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { X } from "lucide-react";
-import { updateUserApi, getErrorMessage } from "@/lib/api/admin";
-import type { UserSummary, UpdateUserRequest } from "@/lib/api/admin";
-import type { UserRole } from "@/lib/auth";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+
+import {
+  getErrorMessage,
+  updateUserApi,
+  type UpdateUserRequest,
+  type UserSummary,
+} from "@/lib/api/admin";
 import { ROLE_LABELS } from "@/lib/auth";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import type { UserRole } from "@/lib/auth";
 import { FormMessage } from "@/components/ui/form-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface EditUserDialogProps {
   user: UserSummary;
@@ -37,7 +42,7 @@ export function EditUserDialog({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { isSubmitting },
   } = useForm<UpdateUserRequest>({
     defaultValues: {
@@ -58,10 +63,11 @@ export function EditUserDialog({
     },
   });
 
-  const selectedRole = watch("role");
+  const selectedRole = useWatch({ control, name: "role" });
 
   const onSubmit = async (data: UpdateUserRequest) => {
     setServerError(null);
+
     try {
       const updated = await updateUserApi(user.id, data);
       toast.success("User details updated.");
@@ -79,18 +85,18 @@ export function EditUserDialog({
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-lg bg-white border border-[#E4E7EC] rounded-xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-[#0B1736] px-6 py-4 flex items-start justify-between shrink-0">
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[#E4E7EC] bg-white shadow-lg">
+        <div className="flex items-start justify-between bg-[#0B1736] px-6 py-4">
           <div>
             <h3 className="text-lg font-bold text-white">Edit User</h3>
-            <p className="text-sm text-white mt-0.5 opacity-90">
+            <p className="mt-0.5 text-sm text-white opacity-90">
               {user.fullName}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-white hover:text-white transition-colors ml-4 opacity-90"
+            className="ml-4 text-white opacity-90 transition-colors hover:text-white"
           >
             <X size={18} />
           </button>
@@ -98,13 +104,10 @@ export function EditUserDialog({
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="p-6 space-y-4 overflow-y-auto"
+          className="space-y-4 overflow-y-auto p-6"
         >
-          {serverError && (
-            <FormMessage type="error" message={serverError} />
-          )}
+          {serverError && <FormMessage type="error" message={serverError} />}
 
-          {/* Full Name + Email */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Full Name</label>
@@ -126,7 +129,6 @@ export function EditUserDialog({
             </div>
           </div>
 
-          {/* Phone + NIC */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Phone</label>
@@ -148,7 +150,6 @@ export function EditUserDialog({
             </div>
           </div>
 
-          {/* Role */}
           <div>
             <label className={labelClass}>Role</label>
             <select
@@ -164,10 +165,9 @@ export function EditUserDialog({
             </select>
           </div>
 
-          {/* ── DRIVER FIELDS ───────────────────────────────── */}
           {selectedRole === "DRIVER" && (
-            <div className="space-y-3 p-4 bg-[#F9FAFC] rounded-lg border border-[#E4E7EC]">
-              <p className="text-xs font-semibold text-[#475467] uppercase tracking-wider">
+            <div className="space-y-3 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
                 Driver Details
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -214,12 +214,11 @@ export function EditUserDialog({
             </div>
           )}
 
-          {/* ── STAFF FIELDS ────────────────────────────────── */}
           {(selectedRole === "SYSTEM_USER" ||
             selectedRole === "APPROVER" ||
             selectedRole === "ADMIN") && (
-            <div className="space-y-3 p-4 bg-[#F9FAFC] rounded-lg border border-[#E4E7EC]">
-              <p className="text-xs font-semibold text-[#475467] uppercase tracking-wider">
+            <div className="space-y-3 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
                 Staff Details
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -282,19 +281,14 @@ export function EditUserDialog({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-lg border border-[#E4E7EC]
-                         bg-[#F9FAFC] text-[#475467] hover:bg-[#F5F7FB]
-                         font-medium text-sm transition-colors disabled:opacity-50"
+              className="flex-1 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] text-sm font-medium text-[#475467] transition-colors hover:bg-[#F5F7FB] disabled:opacity-50 h-11"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-lg bg-[#0B1736] text-white
-                         hover:bg-[#122347] font-bold text-sm flex items-center
-                         justify-center gap-2 disabled:opacity-60
-                         disabled:cursor-not-allowed transition-colors shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)]"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0B1736] text-sm font-bold text-white shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)] transition-colors hover:bg-[#122347] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting && <LoadingSpinner size={14} />}
               {isSubmitting ? "Saving..." : "Save Changes"}

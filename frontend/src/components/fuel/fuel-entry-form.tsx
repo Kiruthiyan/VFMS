@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { FileText, Upload, X } from "lucide-react";
@@ -48,8 +48,8 @@ export function FuelEntryForm({
   driverName,
   onSuccess,
 }: FuelEntryFormProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptInputKey, setReceiptInputKey] = useState(0);
   const [isDragActive, setIsDragActive] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [flagWarning, setFlagWarning] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export function FuelEntryForm({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FuelEntryFormValues>({
@@ -68,8 +68,8 @@ export function FuelEntryForm({
     },
   });
 
-  const quantity = watch("quantity");
-  const costPerLitre = watch("costPerLitre");
+  const quantity = useWatch({ control, name: "quantity" });
+  const costPerLitre = useWatch({ control, name: "costPerLitre" });
   const estimatedTotal =
     quantity && costPerLitre
       ? (Number(quantity) * Number(costPerLitre)).toFixed(2)
@@ -77,9 +77,7 @@ export function FuelEntryForm({
 
   function resetReceiptSelection() {
     setReceiptFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    setReceiptInputKey((currentKey) => currentKey + 1);
   }
 
   function selectReceipt(file: File) {
@@ -375,14 +373,14 @@ export function FuelEntryForm({
                 </button>
               </div>
             ) : (
-              <div
+              <label
+                htmlFor="fuel-receipt-upload"
                 role="button"
                 tabIndex={0}
-                onClick={() => fileInputRef.current?.click()}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    fileInputRef.current?.click();
+                    event.currentTarget.click();
                   }
                 }}
                 onDragOver={(event) => {
@@ -405,7 +403,8 @@ export function FuelEntryForm({
                 }`}
               >
                 <input
-                  ref={fileInputRef}
+                  key={receiptInputKey}
+                  id="fuel-receipt-upload"
                   type="file"
                   accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                   className="hidden"
@@ -420,7 +419,7 @@ export function FuelEntryForm({
                 <p className="mt-1 text-xs font-medium text-slate-600">
                   JPG, PNG, or PDF - Max 5MB
                 </p>
-              </div>
+              </label>
             )}
           </div>
         </div>
