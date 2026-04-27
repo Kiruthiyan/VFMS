@@ -17,10 +17,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
 
 const inputClass =
-  "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 " +
-  "text-sm text-blue-900 placeholder:text-slate-500 " +
-  "focus:outline-none focus:ring-2 focus:ring-yellow-500/50 " +
-  "focus:border-yellow-500 disabled:opacity-50 transition-colors";
+  "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 " +
+  "text-sm text-slate-900 placeholder:text-slate-500 " +
+  "focus:outline-none focus:ring-2 focus:ring-amber-400 " +
+  "focus:border-amber-400 disabled:opacity-50 transition-colors";
 
 export function ChangePasswordForm() {
   const router = useRouter();
@@ -52,23 +52,23 @@ export function ChangePasswordForm() {
   };
 
   return (
-    <div className="max-w-md">
+    <div className="max-w-xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-[#0B1736] border border-[#0B1736] flex items-center justify-center">
-          <ShieldCheck className="w-5 h-5 text-[#F4B400]" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950">
+          <ShieldCheck className="h-5 w-5 text-amber-300" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-blue-900">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
             Change Password
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-500">
             Update your account password
           </p>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-300 rounded-2xl p-6">
+      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {serverError && (
             <FormMessage type="error" message={serverError} />
@@ -76,8 +76,8 @@ export function ChangePasswordForm() {
 
           {/* Current Password */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-blue-900">
-              Current Password <span className="text-yellow-600">*</span>
+            <label className="block text-sm font-semibold text-slate-900">
+              Current Password <span className="text-amber-600">*</span>
             </label>
             <div className="relative">
               <input
@@ -105,12 +105,12 @@ export function ChangePasswordForm() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-slate-300" />
+          <div className="border-t border-slate-200" />
 
           {/* New Password */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-blue-900">
-              New Password <span className="text-yellow-600">*</span>
+            <label className="block text-sm font-semibold text-slate-900">
+              New Password <span className="text-amber-600">*</span>
             </label>
             <div className="relative">
               <input
@@ -139,8 +139,8 @@ export function ChangePasswordForm() {
 
           {/* Confirm New Password */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-blue-900">
-              Confirm New Password <span className="text-yellow-600">*</span>
+            <label className="block text-sm font-semibold text-slate-900">
+              Confirm New Password <span className="text-amber-600">*</span>
             </label>
             <div className="relative">
               <input
@@ -173,19 +173,15 @@ export function ChangePasswordForm() {
               type="button"
               onClick={() => router.back()}
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-xl border border-slate-300 
-                         bg-white text-blue-900 hover:bg-slate-50 
-                         font-medium text-sm transition-colors"
+              variant="outline"
+              className="flex-1"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 h-11 rounded-xl bg-[#F4B400] text-white
-                         hover:bg-yellow-400 font-bold text-sm flex items-center
-                         justify-center gap-2 disabled:opacity-60
-                         disabled:cursor-not-allowed transition-colors"
+              className="flex-1"
             >
               {isSubmitting && <LoadingSpinner size={14} />}
               {isSubmitting ? "Saving..." : "Change Password"}

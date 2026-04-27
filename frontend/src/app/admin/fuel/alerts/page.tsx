@@ -1,35 +1,24 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
-  RefreshCw,
   CheckCircle,
-  Eye,
-  TrendingUp,
-  Droplets,
-  Gauge,
   Clock,
-  Filter,
+  Droplets,
+  Eye,
+  Gauge,
+  RefreshCw,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+
 import { AdminShell } from "@/components/layout/admin-shell";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { FormMessage } from "@/components/ui/form-message";
-import {
-  getAllFuelRecordsApi,
-  getErrorMessage,
-  type FuelRecord,
-} from "@/lib/api/fuel";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormMessage } from "@/components/ui/form-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Table,
   TableBody,
@@ -38,10 +27,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-// ────────────────────────────────────────────────────────────────────────────
-// TYPES & INTERFACES
-// ────────────────────────────────────────────────────────────────────────────
+import {
+  getAllFuelRecordsApi,
+  getErrorMessage,
+  type FuelRecord,
+} from "@/lib/api/fuel";
 
 interface FuelAlert {
   id: string;
@@ -62,15 +52,10 @@ interface FuelAlert {
 
 type FilterStatus = "ALL" | "PENDING" | "REVIEWED" | "RESOLVED";
 
-// ────────────────────────────────────────────────────────────────────────────
-// ALERT DETECTION & ANALYSIS LOGIC
-// ────────────────────────────────────────────────────────────────────────────
-
 function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
   const alerts: FuelAlert[] = [];
   const vehicleMap = new Map<string, FuelRecord[]>();
 
-  // Group records by vehicle plate
   records.forEach((record) => {
     const plate = record.vehiclePlate;
     if (!vehicleMap.has(plate)) {
@@ -79,29 +64,23 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
     vehicleMap.get(plate)!.push(record);
   });
 
-  // Analyze each vehicle for anomalies
   vehicleMap.forEach((vehicleRecords, plate) => {
     if (vehicleRecords.length === 0) return;
 
-    // Sort by date for chronological analysis
     const sorted = [...vehicleRecords].sort(
       (a, b) =>
         new Date(a.fuelDate).getTime() - new Date(b.fuelDate).getTime()
     );
 
-    const avgQuantity =
-      sorted.reduce((sum, r) => sum + r.quantity, 0) / sorted.length;
     const avgEfficiency =
       sorted
         .filter((r) => r.efficiencyKmPerLitre !== null)
         .reduce((sum, r) => sum + (r.efficiencyKmPerLitre || 0), 0) /
         sorted.length || 10;
 
-    // Analyze each fuel record
     sorted.forEach((record, index) => {
       const vehicleId = record.vehicleId;
 
-      // ALERT 1: EXCESSIVE_REFUELING - Multiple fills within 24 hours
       if (index > 0) {
         const prevRecord = sorted[index - 1];
         const hoursDiff =
@@ -117,16 +96,15 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
             alertType: "EXCESSIVE_REFUELING",
             severity: "HIGH",
             date: record.fuelDate,
-            details: `Multiple refills: ${record.quantity}L refilled only ${hoursDiff.toFixed(
+            details: `Multiple refills: ${record.quantity}L only ${hoursDiff.toFixed(
               1
-            )} hours after previous fill`,
+            )} hours after the previous fill.`,
             status: "PENDING",
             recordId: record.id,
           });
         }
       }
 
-      // ALERT 2: UNUSUAL_QUANTITY - Exceeds typical tank capacity
       if (record.quantity > 60) {
         alerts.push({
           id: `ALERT-${record.id}-QUANTITY`,
@@ -135,17 +113,15 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
           alertType: "UNUSUAL_QUANTITY",
           severity: "MEDIUM",
           date: record.fuelDate,
-          details: `Unusually high quantity: ${record.quantity}L filled (typical capacity: ~60L)`,
+          details: `Unusually high quantity: ${record.quantity}L filled.`,
           status: "PENDING",
           recordId: record.id,
         });
       }
 
-      // ALERT 3: SUSPICIOUS_MILEAGE - Odometer inconsistencies
       if (index > 0) {
         const prevRecord = sorted[index - 1];
 
-        // Odometer decreased (possible tampering)
         if (record.odometerReading < prevRecord.odometerReading) {
           alerts.push({
             id: `ALERT-${record.id}-MILEAGE-DOWN`,
@@ -154,15 +130,15 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
             alertType: "SUSPICIOUS_MILEAGE",
             severity: "HIGH",
             date: record.fuelDate,
-            details: `Odometer decreased from ${prevRecord.odometerReading}km to ${record.odometerReading}km (possible tampering)`,
+            details: `Odometer decreased from ${prevRecord.odometerReading}km to ${record.odometerReading}km.`,
             status: "PENDING",
             recordId: record.id,
           });
         }
 
-        // Excessive mileage jump
         const mileageJump =
           record.odometerReading - prevRecord.odometerReading;
+
         if (mileageJump > 1500) {
           alerts.push({
             id: `ALERT-${record.id}-MILEAGE-JUMP`,
@@ -171,61 +147,53 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
             alertType: "SUSPICIOUS_MILEAGE",
             severity: "MEDIUM",
             date: record.fuelDate,
-            details: `Excessive mileage jump: +${mileageJump}km since last record (possible fraud)`,
+            details: `Large mileage jump: +${mileageJump}km since the previous record.`,
             status: "PENDING",
             recordId: record.id,
           });
         }
       }
 
-      // ALERT 4: ABNORMAL_CONSUMPTION - Deviation from baseline efficiency
-      if (sorted.length >= 3 && index >= 2) {
-        if (record.efficiencyKmPerLitre) {
-          const efficiency = record.efficiencyKmPerLitre;
-          const deviation =
-            (Math.abs(efficiency - avgEfficiency) / avgEfficiency) * 100;
+      if (sorted.length >= 3 && index >= 2 && record.efficiencyKmPerLitre) {
+        const efficiency = record.efficiencyKmPerLitre;
+        const deviation =
+          (Math.abs(efficiency - avgEfficiency) / avgEfficiency) * 100;
 
-          if (deviation > 50) {
-            alerts.push({
-              id: `ALERT-${record.id}-CONSUMPTION`,
-              vehicleId,
-              vehiclePlate: plate,
-              alertType: "ABNORMAL_CONSUMPTION",
-              severity: "MEDIUM",
-              date: record.fuelDate,
-              details: `Abnormal consumption: ${efficiency.toFixed(
-                1
-              )} km/L (avg: ${avgEfficiency.toFixed(
-                1
-              )} km/L, deviation: ${deviation.toFixed(0)}%)`,
-              status: "PENDING",
-              recordId: record.id,
-            });
-          }
+        if (deviation > 50) {
+          alerts.push({
+            id: `ALERT-${record.id}-CONSUMPTION`,
+            vehicleId,
+            vehiclePlate: plate,
+            alertType: "ABNORMAL_CONSUMPTION",
+            severity: "MEDIUM",
+            date: record.fuelDate,
+            details: `Efficiency ${efficiency.toFixed(
+              1
+            )} km/L differs sharply from the average ${avgEfficiency.toFixed(
+              1
+            )} km/L.`,
+            status: "PENDING",
+            recordId: record.id,
+          });
         }
       }
 
-      // ALERT 5: OFF_PATTERN_TIMING - Unusual refueling schedule
       if (index > 2) {
         const recentRecords = sorted.slice(Math.max(0, index - 5), index);
-        const daysBetweenRefills = recentRecords
-          .slice(1)
-          .map((r, i) => {
-            const prev = recentRecords[i];
-            return (
-              (new Date(r.fuelDate).getTime() -
-                new Date(prev.fuelDate).getTime()) /
-              (1000 * 60 * 60 * 24)
-            );
-          });
+        const daysBetweenRefills = recentRecords.slice(1).map((r, i) => {
+          const prev = recentRecords[i];
+          return (
+            (new Date(r.fuelDate).getTime() -
+              new Date(prev.fuelDate).getTime()) /
+            (1000 * 60 * 60 * 24)
+          );
+        });
 
         const avgDaysBetween = Math.max(...daysBetweenRefills, 1);
         const currentDays =
-          index > 0
-            ? (new Date(record.fuelDate).getTime() -
-                new Date(sorted[index - 1].fuelDate).getTime()) /
-              (1000 * 60 * 60 * 24)
-            : 0;
+          (new Date(record.fuelDate).getTime() -
+            new Date(sorted[index - 1].fuelDate).getTime()) /
+          (1000 * 60 * 60 * 24);
 
         if (currentDays > avgDaysBetween * 3 && currentDays > 14) {
           alerts.push({
@@ -235,9 +203,9 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
             alertType: "OFF_PATTERN_TIMING",
             severity: "LOW",
             date: record.fuelDate,
-            details: `Off-pattern timing: ${currentDays.toFixed(
+            details: `${currentDays.toFixed(
               0
-            )} days since last fill (avg: ${avgDaysBetween.toFixed(0)} days)`,
+            )} days since the previous fill, which is outside the usual pattern.`,
             status: "PENDING",
             recordId: record.id,
           });
@@ -246,7 +214,6 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
     });
   });
 
-  // Sort by severity and date
   alerts.sort((a, b) => {
     const severityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
     if (severityOrder[a.severity] !== severityOrder[b.severity]) {
@@ -258,9 +225,49 @@ function analyzeAlerts(records: FuelRecord[]): FuelAlert[] {
   return alerts;
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ────────────────────────────────────────────────────────────────────────────
+function getAlertIcon(type: FuelAlert["alertType"]) {
+  switch (type) {
+    case "EXCESSIVE_REFUELING":
+      return <TrendingUp className="h-4 w-4" />;
+    case "UNUSUAL_QUANTITY":
+      return <Droplets className="h-4 w-4" />;
+    case "SUSPICIOUS_MILEAGE":
+      return <Gauge className="h-4 w-4" />;
+    case "OFF_PATTERN_TIMING":
+      return <Clock className="h-4 w-4" />;
+    default:
+      return <AlertTriangle className="h-4 w-4" />;
+  }
+}
+
+function formatAlertType(type: FuelAlert["alertType"]) {
+  return type
+    .split("_")
+    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function severityClasses(severity: FuelAlert["severity"]) {
+  switch (severity) {
+    case "HIGH":
+      return "bg-red-100 text-red-700 border-red-200";
+    case "MEDIUM":
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    default:
+      return "bg-blue-100 text-blue-700 border-blue-200";
+  }
+}
+
+function statusClasses(status: FuelAlert["status"]) {
+  switch (status) {
+    case "PENDING":
+      return "bg-red-100 text-red-700 border-red-200";
+    case "REVIEWED":
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    default:
+      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  }
+}
 
 export default function FuelAlertsPage() {
   const [alerts, setAlerts] = useState<FuelAlert[]>([]);
@@ -268,18 +275,19 @@ export default function FuelAlertsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterStatus>("ALL");
   const [alertStates, setAlertStates] = useState<
-    Record<string, "PENDING" | "REVIEWED" | "RESOLVED">
+    Record<string, FuelAlert["status"]>
   >({});
 
   const fetchAndAnalyze = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
       const records = await getAllFuelRecordsApi();
       const detectedAlerts = analyzeAlerts(records);
       setAlerts(detectedAlerts);
 
-      const states: Record<string, "PENDING" | "REVIEWED" | "RESOLVED"> = {};
+      const states: Record<string, FuelAlert["status"]> = {};
       detectedAlerts.forEach((alert) => {
         states[alert.id] = alert.status;
       });
@@ -304,338 +312,272 @@ export default function FuelAlertsPage() {
     setAlertStates((prev) => ({ ...prev, [alertId]: "RESOLVED" }));
   };
 
-  const getAlertIcon = (type: string) => {
-    switch (type) {
-      case "EXCESSIVE_REFUELING":
-        return <TrendingUp className="h-4 w-4" />;
-      case "UNUSUAL_QUANTITY":
-        return <Droplets className="h-4 w-4" />;
-      case "SUSPICIOUS_MILEAGE":
-        return <Gauge className="h-4 w-4" />;
-      case "ABNORMAL_CONSUMPTION":
-        return <AlertTriangle className="h-4 w-4" />;
-      case "OFF_PATTERN_TIMING":
-        return <Clock className="h-4 w-4" />;
-      default:
-        return <AlertTriangle className="h-4 w-4" />;
-    }
-  };
-
-  const getSeverityColor = (severity: string): string => {
-    switch (severity) {
-      case "HIGH":
-        return "bg-red-100 text-red-900 border-red-200";
-      case "MEDIUM":
-        return "bg-amber-100 text-amber-900 border-amber-200";
-      case "LOW":
-        return "bg-blue-100 text-blue-900 border-blue-200";
-      default:
-        return "bg-slate-100 text-slate-900";
-    }
-  };
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "PENDING":
-        return "bg-red-100 text-red-900 border-red-200";
-      case "REVIEWED":
-        return "bg-amber-100 text-amber-900 border-amber-200";
-      case "RESOLVED":
-        return "bg-green-100 text-green-900 border-green-200";
-      default:
-        return "bg-slate-100 text-slate-900";
-    }
-  };
-
-  const formatAlertType = (type: string) => {
-    return type
-      .split("_")
-      .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-      .join(" ");
-  };
-
   const filteredAlerts =
     filter === "ALL"
       ? alerts
-      : alerts.filter((a) => alertStates[a.id] === filter);
+      : alerts.filter((alert) => alertStates[alert.id] === filter);
 
   const stats = {
     total: alerts.length,
-    pending: alerts.filter((a) => alertStates[a.id] === "PENDING").length,
-    high: alerts.filter((a) => a.severity === "HIGH").length,
+    pending: alerts.filter((alert) => alertStates[alert.id] === "PENDING")
+      .length,
+    high: alerts.filter((alert) => alert.severity === "HIGH").length,
   };
 
   return (
     <AdminShell>
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
-            <div className="flex-1">
-              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">
-                Fuel Alerts & Anomalies
-              </h1>
-              <p className="text-slate-600 text-sm font-medium">
-                Automated detection of suspicious fuel consumption patterns and misuse
-              </p>
-            </div>
-
-            <button
-              onClick={fetchAndAnalyze}
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 font-semibold text-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 whitespace-nowrap h-fit"
-            >
-              <RefreshCw
-                size={18}
-                strokeWidth={2.5}
-                className={loading ? "animate-spin" : ""}
-              />
-              <span>Refresh</span>
-            </button>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex-1">
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">
+              Fuel Alerts & Anomalies
+            </h1>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              Automated detection of suspicious fuel usage patterns and
+              inconsistent records.
+            </p>
           </div>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="flex justify-center py-24">
-              <div className="text-center">
-                <LoadingSpinner size={32} className="text-blue-600 mx-auto mb-4" />
-                <p className="text-slate-600 font-500">Analyzing fuel records...</p>
-              </div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && !loading && (
-            <FormMessage type="error" message={error} />
-          )}
-
-          {/* Dashboard Content */}
-          {!loading && !error && (
-            <>
-              {/* Statistics Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-                {/* Total Alerts Card */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
-                  <CardHeader className="bg-blue-950 py-4 border-b-0">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
-                        Total Alerts
-                      </CardTitle>
-                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
-                        <AlertTriangle
-                          size={18}
-                          className="text-blue-950"
-                          strokeWidth={2.5}
-                        />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">
-                      {stats.total}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">
-                      Detected anomalies
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Pending Alerts Card */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
-                  <CardHeader className="bg-blue-950 py-4 border-b-0">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
-                        Pending Review
-                      </CardTitle>
-                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
-                        <Eye
-                          size={18}
-                          className="text-blue-950"
-                          strokeWidth={2.5}
-                        />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">
-                      {stats.pending}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">
-                      Awaiting action
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* High Severity Card */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
-                  <CardHeader className="bg-blue-950 py-4 border-b-0">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
-                        High Severity
-                      </CardTitle>
-                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
-                        <AlertTriangle
-                          size={18}
-                          className="text-blue-950"
-                          strokeWidth={2.5}
-                        />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">
-                      {stats.high}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">
-                      Critical issues
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Filter Tabs */}
-              <div className="flex gap-2 mb-8 flex-wrap">
-                {(["ALL", "PENDING", "REVIEWED", "RESOLVED"] as FilterStatus[]).map(
-                  (filterOption) => (
-                    <button
-                      key={filterOption}
-                      onClick={() => setFilter(filterOption)}
-                      className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                        filter === filterOption
-                          ? "bg-blue-950 text-white shadow-lg shadow-blue-200"
-                          : "bg-white text-slate-700 border border-slate-200 hover:border-slate-400"
-                      }`}
-                    >
-                      {filterOption}
-                    </button>
-                  )
-                )}
-              </div>
-
-              {/* Alerts Table */}
-              {filteredAlerts.length === 0 ? (
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
-                  <CardContent className="py-16 text-center">
-                    <CheckCircle
-                      size={48}
-                      className="mx-auto mb-4 text-emerald-600"
-                    />
-                    <p className="text-slate-900 font-bold text-lg mb-1">
-                      No alerts found
-                    </p>
-                    <p className="text-slate-600">
-                      {filter === "ALL"
-                        ? "Great! No suspicious patterns detected."
-                        : `No ${filter.toLowerCase()} alerts to display.`}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <CardHeader className="bg-blue-950 py-4 border-b border-slate-200">
-                    <CardTitle className="text-white font-bold text-base">
-                      Alert Details ({filteredAlerts.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-slate-50 border-b border-slate-200">
-                            <TableHead className="text-slate-700 font-bold">
-                              Vehicle
-                            </TableHead>
-                            <TableHead className="text-slate-700 font-bold">
-                              Alert Type
-                            </TableHead>
-                            <TableHead className="text-slate-700 font-bold">
-                              Details
-                            </TableHead>
-                            <TableHead className="text-slate-700 font-bold">
-                              Severity
-                            </TableHead>
-                            <TableHead className="text-slate-700 font-bold">
-                              Status
-                            </TableHead>
-                            <TableHead className="text-slate-700 font-bold text-right">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredAlerts.map((alert) => (
-                            <TableRow
-                              key={alert.id}
-                              className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
-                            >
-                              <TableCell className="font-semibold text-slate-900">
-                                {alert.vehiclePlate}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  {getAlertIcon(alert.alertType)}
-                                  <span className="text-sm font-500 text-slate-700">
-                                    {formatAlertType(alert.alertType)}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-sm text-slate-600 max-w-xs">
-                                {alert.details}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  className={`${getSeverityColor(
-                                    alert.severity
-                                  )}`}
-                                >
-                                  {alert.severity}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  className={`${getStatusColor(
-                                    alertStates[alert.id]
-                                  )}`}
-                                >
-                                  {alertStates[alert.id]}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  {alertStates[alert.id] === "PENDING" && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        handleMarkReviewed(alert.id)
-                                      }
-                                      className="text-xs"
-                                    >
-                                      Review
-                                    </Button>
-                                  )}
-                                  {alertStates[alert.id] === "REVIEWED" && (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleResolve(alert.id)}
-                                      className="text-xs"
-                                    >
-                                      Resolve
-                                    </Button>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          )}
+          <button
+            type="button"
+            onClick={fetchAndAnalyze}
+            disabled={loading}
+            className="inline-flex h-fit items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshCw
+              size={18}
+              strokeWidth={2.5}
+              className={loading ? "animate-spin" : ""}
+            />
+            <span>Refresh</span>
+          </button>
         </div>
+
+        {loading && (
+          <div className="flex justify-center py-24">
+            <div className="text-center">
+              <LoadingSpinner size={32} className="mx-auto mb-4 text-slate-950" />
+              <p className="text-slate-600">Analyzing fuel records...</p>
+            </div>
+          </div>
+        )}
+
+        {error && !loading && <FormMessage type="error" message={error} />}
+
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <Card>
+                <CardHeader className="bg-slate-950 py-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-white">
+                      Total Alerts
+                    </CardTitle>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
+                      <AlertTriangle
+                        size={18}
+                        className="text-slate-950"
+                        strokeWidth={2.5}
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-5 pt-6">
+                  <p className="text-4xl font-bold text-slate-900">
+                    {stats.total}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-slate-600">
+                    Detected anomalies
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="bg-slate-950 py-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-white">
+                      Pending Review
+                    </CardTitle>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
+                      <Eye
+                        size={18}
+                        className="text-slate-950"
+                        strokeWidth={2.5}
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-5 pt-6">
+                  <p className="text-4xl font-bold text-slate-900">
+                    {stats.pending}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-slate-600">
+                    Awaiting action
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="bg-slate-950 py-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-white">
+                      High Severity
+                    </CardTitle>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
+                      <AlertTriangle
+                        size={18}
+                        className="text-slate-950"
+                        strokeWidth={2.5}
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-5 pt-6">
+                  <p className="text-4xl font-bold text-slate-900">
+                    {stats.high}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-slate-600">
+                    Critical issues
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {(["ALL", "PENDING", "REVIEWED", "RESOLVED"] as FilterStatus[]).map(
+                (option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setFilter(option)}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                      filter === option
+                        ? "bg-slate-950 text-white shadow-lg shadow-slate-950/10"
+                        : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                )
+              )}
+            </div>
+
+            {filteredAlerts.length === 0 ? (
+              <Card>
+                <CardContent className="py-16 text-center">
+                  <CheckCircle
+                    size={48}
+                    className="mx-auto mb-4 text-emerald-600"
+                  />
+                  <p className="mb-1 text-lg font-semibold text-slate-900">
+                    No alerts found
+                  </p>
+                  <p className="text-slate-600">
+                    {filter === "ALL"
+                      ? "No suspicious patterns were detected."
+                      : `No ${filter.toLowerCase()} alerts to display.`}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="overflow-hidden">
+                <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                  <CardTitle className="text-base font-bold text-white">
+                    Alert Details ({filteredAlerts.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-slate-200 bg-slate-50">
+                          <TableHead className="font-bold text-slate-700">
+                            Vehicle
+                          </TableHead>
+                          <TableHead className="font-bold text-slate-700">
+                            Alert Type
+                          </TableHead>
+                          <TableHead className="font-bold text-slate-700">
+                            Details
+                          </TableHead>
+                          <TableHead className="font-bold text-slate-700">
+                            Severity
+                          </TableHead>
+                          <TableHead className="font-bold text-slate-700">
+                            Status
+                          </TableHead>
+                          <TableHead className="text-right font-bold text-slate-700">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredAlerts.map((alert) => (
+                          <TableRow
+                            key={alert.id}
+                            className="border-b border-slate-200 hover:bg-slate-50"
+                          >
+                            <TableCell className="font-semibold text-slate-900">
+                              {alert.vehiclePlate}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getAlertIcon(alert.alertType)}
+                                <span className="text-sm text-slate-700">
+                                  {formatAlertType(alert.alertType)}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="max-w-xs text-sm text-slate-600">
+                              {alert.details}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={severityClasses(alert.severity)}>
+                                {alert.severity}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={statusClasses(alertStates[alert.id])}>
+                                {alertStates[alert.id]}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Link
+                                  href={`/admin/fuel/${alert.recordId}`}
+                                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50"
+                                >
+                                  View
+                                </Link>
+                                {alertStates[alert.id] === "PENDING" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleMarkReviewed(alert.id)}
+                                  >
+                                    Review
+                                  </Button>
+                                )}
+                                {alertStates[alert.id] === "REVIEWED" && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleResolve(alert.id)}
+                                  >
+                                    Resolve
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
       </div>
     </AdminShell>
   );

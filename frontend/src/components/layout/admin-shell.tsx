@@ -50,16 +50,16 @@ export function AdminShell({ children }: AdminShellProps) {
 
   const SidebarContent = (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-200 px-6 py-5">
+      <div className="border-b border-slate-800 px-6 py-5">
         <Link href="/dashboards/admin" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-amber-400 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20">
             <Shield className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
               VFMS
             </p>
-            <h1 className="text-lg font-semibold text-slate-950">
+            <h1 className="text-lg font-semibold text-white">
               Admin Panel
             </h1>
           </div>
@@ -70,7 +70,7 @@ export function AdminShell({ children }: AdminShellProps) {
         <div className="space-y-6">
           {adminNavigationSections.map((section) => (
             <div key={section.title} className="space-y-2">
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+              <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 {section.title}
               </p>
               <div className="space-y-1">
@@ -84,18 +84,18 @@ export function AdminShell({ children }: AdminShellProps) {
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        "group flex items-start gap-3 rounded-2xl px-3 py-3 transition-all",
+                        "group flex items-start gap-3 rounded-2xl border border-transparent px-3 py-3 transition-all duration-200",
                         active
-                          ? "bg-slate-950 text-white shadow-lg shadow-slate-950/10"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                          ? "bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20"
+                          : "text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white"
                       )}
                     >
                       <span
                         className={cn(
                           "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
                           active
-                            ? "bg-white/10 text-amber-300"
-                            : "bg-slate-100 text-slate-500 group-hover:bg-white"
+                            ? "bg-slate-950/10 text-slate-950"
+                            : "bg-slate-800 text-slate-500 group-hover:bg-slate-700 group-hover:text-amber-300"
                         )}
                       >
                         <Icon className="h-4 w-4" />
@@ -108,7 +108,7 @@ export function AdminShell({ children }: AdminShellProps) {
                           <span
                             className={cn(
                               "mt-0.5 block text-xs",
-                              active ? "text-slate-300" : "text-slate-400"
+                              active ? "text-slate-900/75" : "text-slate-500"
                             )}
                           >
                             {item.description}
@@ -124,13 +124,13 @@ export function AdminShell({ children }: AdminShellProps) {
         </div>
       </div>
 
-      <div className="border-t border-slate-200 px-4 py-4">
+      <div className="border-t border-slate-800 px-4 py-4">
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-semibold text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600"
+          className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-semibold text-slate-300 transition-colors hover:bg-red-500/10 hover:text-red-300"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800">
             <LogOut className="h-4 w-4" />
           </span>
           Logout
@@ -148,21 +148,21 @@ export function AdminShell({ children }: AdminShellProps) {
         />
       )}
 
-      <aside className="fixed inset-y-0 left-0 z-50 hidden w-80 border-r border-slate-200 bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 z-50 hidden w-72 border-r border-slate-800 bg-slate-950 lg:block">
         {SidebarContent}
       </aside>
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-80 border-r border-slate-200 bg-white transition-transform lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-800 bg-slate-950 transition-transform lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-end border-b border-slate-200 px-4 py-3">
+        <div className="flex items-center justify-end border-b border-slate-800 px-4 py-3">
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -170,7 +170,7 @@ export function AdminShell({ children }: AdminShellProps) {
         {SidebarContent}
       </aside>
 
-      <div className="lg:pl-80">
+      <div className="lg:pl-72">
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
@@ -190,7 +190,7 @@ export function AdminShell({ children }: AdminShellProps) {
                     </span>
                   ))}
                 </div>
-                <h2 className="truncate text-xl font-semibold text-slate-950 sm:text-2xl">
+                <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
                   {pageTitle}
                 </h2>
               </div>
@@ -212,7 +212,7 @@ export function AdminShell({ children }: AdminShellProps) {
                   onClick={() => setProfileOpen((current) => !current)}
                   className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 transition-colors hover:bg-slate-100"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-amber-300">
                     {user?.name?.slice(0, 1) ?? "A"}
                   </div>
                   <div className="hidden text-left sm:block">
@@ -267,7 +267,9 @@ export function AdminShell({ children }: AdminShellProps) {
           </div>
         </header>
 
-        <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl space-y-6">{children}</div>
+        </main>
       </div>
     </div>
   );

@@ -62,8 +62,7 @@ export default function FuelEntryLogsPage() {
 
   return (
     <AdminShell>
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="space-y-6">
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
             <div className="flex-1">
@@ -75,7 +74,7 @@ export default function FuelEntryLogsPage() {
             <div className="flex flex-col sm:flex-row gap-3 h-fit">
               <Link
                 href="/admin/fuel/create"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-950 hover:bg-blue-900 text-white font-semibold text-sm transition-all duration-200 shadow-lg shadow-blue-200 hover:shadow-blue-300 active:scale-95 whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-200 shadow-lg shadow-amber-500/20 hover:bg-amber-300 active:scale-95 whitespace-nowrap"
               >
                 <Plus size={18} strokeWidth={2.5} />
                 <span>New Entry</span>
@@ -92,7 +91,7 @@ export default function FuelEntryLogsPage() {
           </div>
 
           {/* Filter Bar */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+            <div className="mb-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
             <FuelFilterBar
               vehicles={vehicles}
               drivers={drivers}
@@ -105,19 +104,19 @@ export default function FuelEntryLogsPage() {
           {loading ? (
             <div className="flex justify-center py-24">
               <div className="text-center">
-                <LoadingSpinner size={32} className="text-blue-600 mx-auto mb-4" />
-                <p className="text-slate-600 font-500">Loading fuel records...</p>
+                <LoadingSpinner size={32} className="mx-auto mb-4 text-slate-950" />
+                <p className="text-sm font-medium text-slate-600">Loading fuel records...</p>
               </div>
             </div>
           ) : error ? (
             <FormMessage type="error" message={error} />
           ) : records.length === 0 ? (
-            <Card className="bg-white rounded-xl shadow-sm border border-slate-200 text-center py-16">
+            <Card className="py-16 text-center">
               <CardContent>
-                <p className="text-slate-600 font-500 mb-4">No fuel records found</p>
+                <p className="mb-4 text-sm font-medium text-slate-600">No fuel records found</p>
                 <Link
                   href="/admin/fuel/create"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-950 hover:bg-blue-900 text-white font-semibold text-sm transition-all"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800"
                 >
                   <Plus size={16} />
                   Create First Entry
@@ -125,8 +124,8 @@ export default function FuelEntryLogsPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-4 border-b border-slate-200">
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-slate-950 py-4 border-b border-slate-200">
                 <CardTitle className="text-white font-bold text-base">
                   All Fuel Records ({records.length})
                 </CardTitle>
@@ -138,7 +137,6 @@ export default function FuelEntryLogsPage() {
               </CardContent>
             </Card>
           )}
-        </div>
       </div>
     </AdminShell>
   );

@@ -20,11 +20,11 @@ import {
 } from "@/lib/validators/fuel/fuel-entry-schema";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 " +
+  "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 " +
   "text-sm font-medium text-slate-900 placeholder:text-slate-500 " +
-  "focus:outline-none focus:ring-2 focus:ring-blue-950/40 focus:border-blue-950 " +
+  "focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 " +
   "disabled:opacity-60 disabled:bg-slate-50 transition-all duration-200 " +
-  "shadow-sm hover:shadow-md";
+  "shadow-sm hover:border-slate-300";
 
 const MAX_RECEIPT_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_RECEIPT_TYPES = new Set([
@@ -151,9 +151,9 @@ export function FuelEntryForm({
         />
       )}
 
-      <div>
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900">
-          <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-950 text-xs text-white">
+      <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
             1
           </span>
           Vehicle and Driver Information
@@ -206,9 +206,9 @@ export function FuelEntryForm({
         </div>
       </div>
 
-      <div className="border-t border-slate-200 pt-6">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900">
-          <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-950 text-xs text-white">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
             2
           </span>
           Fuel Details
@@ -246,9 +246,9 @@ export function FuelEntryForm({
         </div>
       </div>
 
-      <div className="border-t border-slate-200 pt-6">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900">
-          <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-950 text-xs text-white">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
             3
           </span>
           Fuel Quantity and Cost
@@ -317,19 +317,19 @@ export function FuelEntryForm({
       </div>
 
       {estimatedTotal && (
-        <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-6 py-4">
+        <div className="flex items-center justify-between rounded-3xl border border-amber-200 bg-amber-50 px-6 py-4">
           <span className="text-sm font-semibold text-slate-900">
             Estimated Total Cost
           </span>
-          <span className="text-2xl font-bold text-blue-950">
+          <span className="text-2xl font-semibold text-slate-950">
             LKR {estimatedTotal}
           </span>
         </div>
       )}
 
-      <div className="border-t border-slate-200 pt-6">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900">
-          <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-950 text-xs text-white">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
             4
           </span>
           Additional Information
@@ -344,7 +344,7 @@ export function FuelEntryForm({
               placeholder="Any additional notes about this fuel entry..."
               {...register("notes")}
               disabled={isSubmitting}
-              className={inputClass + " resize-none"}
+              className={inputClass + " h-auto resize-none py-3"}
             />
           </div>
 
@@ -354,9 +354,9 @@ export function FuelEntryForm({
             </label>
 
             {receiptFile ? (
-              <div className="flex items-center justify-between rounded-lg border border-blue-300 bg-blue-50 px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
                 <div className="flex items-center gap-3 text-sm text-slate-900">
-                  <FileText size={18} className="font-semibold text-blue-950" />
+                  <FileText size={18} className="font-semibold text-slate-950" />
                   <span className="max-w-xs truncate font-medium">
                     {receiptFile.name}
                   </span>
@@ -396,9 +396,9 @@ export function FuelEntryForm({
                   setIsDragActive(false);
                   handleFileSelection(event.dataTransfer.files);
                 }}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-8 text-center transition-all duration-200 ${
+                  className={`flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed px-6 py-8 text-center transition-all duration-200 ${
                   isDragActive
-                    ? "border-blue-950 bg-blue-50 shadow-md"
+                    ? "border-amber-400 bg-amber-50 shadow-md"
                     : "border-slate-300 bg-white hover:border-slate-400 hover:shadow-md"
                 }`}
               >
@@ -425,7 +425,7 @@ export function FuelEntryForm({
         </div>
       </div>
 
-      <div className="flex gap-3 border-t border-slate-200 pt-6">
+      <div className="flex gap-3 pt-2">
         <button
           type="button"
           onClick={() => {
@@ -435,14 +435,14 @@ export function FuelEntryForm({
             });
             resetReceiptSelection();
           }}
-          className="h-11 flex-1 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-900 transition-all hover:bg-slate-50"
+          className="h-11 flex-1 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 transition-all hover:bg-slate-50"
         >
           Clear Form
         </button>
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-950 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all duration-200 hover:bg-blue-900 active:bg-blue-950 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-11 flex-1 items-center justify-center gap-2"
         >
           {isSubmitting && <LoadingSpinner size={14} />}
           {isSubmitting ? "Saving..." : "Save Fuel Entry"}

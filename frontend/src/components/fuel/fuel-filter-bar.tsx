@@ -21,10 +21,10 @@ interface FuelFilterBarProps {
 }
 
 const selectClass =
-  "rounded-xl border border-slate-200 bg-white px-4 py-3 " +
+  "h-11 rounded-xl border border-slate-200 bg-white px-4 py-2.5 " +
   "text-sm text-slate-900 focus:outline-none focus:ring-2 " +
-  "focus:ring-blue-950/40 appearance-none cursor-pointer transition-all duration-200 " +
-  "placeholder:text-slate-400 shadow-sm hover:shadow-md";
+  "focus:ring-amber-400 appearance-none cursor-pointer transition-all duration-200 " +
+  "placeholder:text-slate-400 shadow-sm hover:border-slate-300";
 
 export function FuelFilterBar({
   vehicles,
@@ -47,9 +47,9 @@ export function FuelFilterBar({
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-wrap items-end gap-4">
       <div className="space-y-1">
-        <label className="block text-xs text-slate-700 font-medium">From</label>
+        <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">From</label>
         <input
           type="date"
           value={from}
@@ -59,7 +59,7 @@ export function FuelFilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs text-slate-700 font-medium">To</label>
+        <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">To</label>
         <input
           type="date"
           value={to}
@@ -69,7 +69,7 @@ export function FuelFilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs text-slate-700 font-medium">Vehicle</label>
+        <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Vehicle</label>
         <select
           value={vehicleId}
           onChange={(e) => setVehicleId(e.target.value)}
@@ -83,7 +83,7 @@ export function FuelFilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs text-slate-700 font-medium">Driver</label>
+        <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Driver</label>
         <select
           value={driverId}
           onChange={(e) => setDriverId(e.target.value)}
@@ -99,9 +99,7 @@ export function FuelFilterBar({
       <Button
         onClick={handleFilter}
         disabled={loading}
-        className="h-9 px-4 rounded-xl bg-amber-500 text-slate-900
-                   hover:bg-amber-400 font-semibold text-sm flex items-center
-                   gap-2 disabled:opacity-60 transition-colors"
+        className="h-11 px-5"
       >
         <SlidersHorizontal size={13} />
         {loading ? "Filtering..." : "Apply"}

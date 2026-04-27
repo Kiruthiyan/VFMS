@@ -48,8 +48,7 @@ export default function CreateFuelEntryPage() {
 
   return (
     <AdminShell>
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="space-y-6">
           <div className="flex items-center gap-2 mb-8">
             <Link
               href="/admin/fuel"
@@ -70,14 +69,14 @@ export default function CreateFuelEntryPage() {
             />
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-blue-950 px-8 py-5 border-b border-slate-200">
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <div className="bg-slate-950 px-8 py-5 border-b border-slate-200">
               <h2 className="text-base font-bold text-white">Fuel Entry Details</h2>
             </div>
             <div className="p-8">
               {loading ? (
                 <div className="flex justify-center py-10">
-                  <LoadingSpinner size={24} className="text-blue-950" />
+                  <LoadingSpinner size={24} className="text-slate-950" />
                 </div>
               ) : error ? (
                 <FormMessage type="error" message={error} />
@@ -90,7 +89,6 @@ export default function CreateFuelEntryPage() {
               )}
             </div>
           </div>
-        </div>
       </div>
     </AdminShell>
   );
