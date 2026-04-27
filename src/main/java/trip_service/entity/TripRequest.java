@@ -62,6 +62,12 @@ public class TripRequest {
     @Column(name = "approval_notes", columnDefinition = "TEXT")
     private String approvalNotes;
 
+    @Column(name = "start_time")
+    private LocalDateTime startTime;
+
+    @Column(name = "end_time")
+    private LocalDateTime endTime;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

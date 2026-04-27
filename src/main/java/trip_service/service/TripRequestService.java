@@ -76,6 +76,20 @@ public class TripRequestService {
         )).toList();
     }
 
+    @SuppressWarnings("unchecked")
+    public List<DriverOptionDTO> getAllDrivers() {
+        List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT id::text, first_name, last_name, employee_id FROM drivers ORDER BY first_name"
+        ).getResultList();
+
+        return rows.stream().map(row -> new DriverOptionDTO(
+                (String) row[0],
+                (String) row[1],
+                (String) row[2],
+                (String) row[3]
+        )).toList();
+    }
+
     public TripRequest getTripById(UUID tripId) {
         return findById(tripId);
     }
@@ -118,8 +132,8 @@ public class TripRequestService {
 
     public TripRequest approveTrip(UUID tripId, ApprovalDTO dto) {
         TripRequest trip = findById(tripId);
-        if (trip.getStatus() != TripStatus.SUBMITTED) {
-            throw new RuntimeException("Only SUBMITTED trips can be approved");
+        if (trip.getStatus() != TripStatus.SUBMITTED && trip.getStatus() != TripStatus.DRIVER_REJECTED) {
+            throw new RuntimeException("Only SUBMITTED or DRIVER_REJECTED trips can be approved");
         }
         trip.setStatus(TripStatus.APPROVED);
         trip.setApproverId(dto.getApproverId());
@@ -172,12 +186,35 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
-    public TripRequest startTrip(UUID tripId) {
+    public TripRequest driverAcceptTrip(UUID tripId) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.APPROVED) {
-            throw new RuntimeException("Only APPROVED trips can be started");
+            throw new RuntimeException("Only APPROVED trips can be accepted by driver");
+        }
+        trip.setStatus(TripStatus.DRIVER_CONFIRMED);
+        return repository.save(trip);
+    }
+
+    public TripRequest driverRejectTrip(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.APPROVED) {
+            throw new RuntimeException("Only APPROVED trips can be rejected by driver");
+        }
+        // Clear assignment so staff can reassign a different driver/vehicle
+        trip.setStatus(TripStatus.DRIVER_REJECTED);
+        trip.setApprovalNotes("Driver rejected: " + dto.getNotes());
+        trip.setAssignedDriverId(null);
+        trip.setAssignedVehicleId(null);
+        return repository.save(trip);
+    }
+
+    public TripRequest startTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.DRIVER_CONFIRMED) {
+            throw new RuntimeException("Only DRIVER_CONFIRMED trips can be started");
         }
         trip.setStatus(TripStatus.ONGOING);
+        trip.setStartTime(LocalDateTime.now());
         return repository.save(trip);
     }
 
@@ -187,6 +224,7 @@ public class TripRequestService {
             throw new RuntimeException("Only ONGOING trips can be completed");
         }
         trip.setStatus(TripStatus.COMPLETED);
+        trip.setEndTime(LocalDateTime.now());
         return repository.save(trip);
     }
 
