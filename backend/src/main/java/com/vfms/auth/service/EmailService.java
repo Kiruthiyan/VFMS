@@ -76,9 +76,8 @@ public class EmailService {
 
     /**
      * Sends OTP verification code
-     * Async to prevent blocking OTP request flow
+     * Synchronous to ensure API can report delivery failures immediately
      */
-    @Async
     public void sendOtpEmail(String toEmail, String otp) {
         String subject = "VFMS Email Verification Code";
         sendHtmlEmail(toEmail, subject, otpEmailHtml(otp));

@@ -83,3 +83,5 @@ public class RegisterRequest {
     @NotBlank(message = "Designation is required for staff")
     @Size(min = 2, max = 50, message = "Designation must be between 2 and 50 characters")
     private String designation;
+
+}

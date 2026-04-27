@@ -35,10 +35,10 @@ const itemVariants: Variants = {
 const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
   <Link
     href={href}
-    className="relative text-sm font-semibold text-slate-600 hover:text-black transition-colors group"
+    className="relative text-sm font-semibold text-slate-700 hover:text-blue-950 transition-colors group"
   >
     {children}
-    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#F4B400] transition-all group-hover:w-full" />
+    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-400 transition-all group-hover:w-full" />
   </Link>
 );
 
@@ -116,7 +116,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-4">
             <Link href="/auth/login">
-              <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-50">Log In</Button>
+              <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-100 text-slate-700">Log In</Button>
             </Link>
             <Link href="/auth/signup">
               <Button className="bg-[#0B1736] text-white hover:bg-blue-950 rounded-full px-6 font-bold shadow-lg shadow-blue-200">
@@ -158,7 +158,7 @@ export default function LandingPage() {
               </motion.h1>
 
               <motion.p variants={itemVariants} className="text-xl text-slate-600 max-w-lg leading-relaxed mb-10 font-medium">
-                The world's most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
+                The world&apos;s most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
               </motion.p>
 
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
@@ -506,8 +506,8 @@ export default function LandingPage() {
             </div>
 
             {[{ title: 'Product', links: [{ l: 'Features', h: '#features' }, { l: 'Solutions', h: '#solutions' }, { l: 'Pricing', h: '#pricing' }] },
-              { title: 'Company', links: [{ l: 'About', h: '#' }, { l: 'Careers', h: '#' }, { l: 'Blog', h: '#' }] },
-              { title: 'Support', links: [{ l: 'Documentation', h: '#' }, { l: 'Help Center', h: '#' }, { l: 'Status', h: '#' }] }
+            { title: 'Company', links: [{ l: 'About', h: '#' }, { l: 'Careers', h: '#' }, { l: 'Blog', h: '#' }] },
+            { title: 'Support', links: [{ l: 'Documentation', h: '#' }, { l: 'Help Center', h: '#' }, { l: 'Status', h: '#' }] }
             ].map((col, i) => (
               <div key={i}>
                 <h4 className="font-black text-xs uppercase tracking-[0.2em] mb-6 text-slate-900">{col.title}</h4>

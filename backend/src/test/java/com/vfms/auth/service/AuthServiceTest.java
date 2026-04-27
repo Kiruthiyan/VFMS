@@ -1,5 +1,6 @@
 package com.vfms.auth.service;
 
+import com.vfms.security.JwtService;
 import com.vfms.common.exception.AuthenticationException;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.user.entity.User;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -70,7 +72,7 @@ class AuthServiceTest {
 
         // Act
         assertDoesNotThrow(() -> {
-            authService.login(new com.vfms.auth.dto.LoginRequest(email, password));
+            authService.login(createLoginRequest(email, password));
         });
 
         // Assert
@@ -87,11 +89,12 @@ class AuthServiceTest {
         String password = "WrongPassword123";
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new org.springframework.security.core.AuthenticationException("Invalid credentials") {});
+                .thenThrow(new org.springframework.security.core.AuthenticationException("Invalid credentials") {
+                });
 
         // Act & Assert
         assertThrows(AuthenticationException.class, () -> {
-            authService.login(new com.vfms.auth.dto.LoginRequest(email, password));
+            authService.login(createLoginRequest(email, password));
         });
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
@@ -107,7 +110,7 @@ class AuthServiceTest {
 
         // Act & Assert
         assertThrows(AuthenticationException.class, () -> {
-            authService.login(new com.vfms.auth.dto.LoginRequest(email, "password"));
+            authService.login(createLoginRequest(email, "password"));
         });
 
         verify(userRepository).findByEmail(email);
@@ -115,16 +118,24 @@ class AuthServiceTest {
 
     /**
      * Helper method to create mock user for testing
-     * @param email User email
+     * 
+     * @param email  User email
      * @param status User status (PENDING, APPROVED, REJECTED, DISABLED)
      * @return Mock User object
      */
     private User createMockUser(String email, String status) {
         User user = new User();
-        user.setId("test-id");
+        user.setId(UUID.randomUUID());
         user.setEmail(email);
         user.setFullName("Test User");
         user.setPassword("encoded_password");
         return user;
+    }
+
+    private com.vfms.auth.dto.LoginRequest createLoginRequest(String email, String password) {
+        com.vfms.auth.dto.LoginRequest loginRequest = new com.vfms.auth.dto.LoginRequest();
+        loginRequest.setEmail(email);
+        loginRequest.setPassword(password);
+        return loginRequest;
     }
 }

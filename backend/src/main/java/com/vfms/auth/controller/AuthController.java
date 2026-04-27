@@ -4,6 +4,7 @@ import com.vfms.auth.dto.RegisterRequest;
 import com.vfms.auth.dto.ResendVerificationRequest;
 import com.vfms.auth.service.AuthService;
 import com.vfms.auth.service.OtpService;
+import com.vfms.common.exception.ValidationException;
 import com.vfms.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -189,10 +190,14 @@ public class AuthController {
                             "Verification code sent to your email. Please check your inbox.",
                             null)
             );
+        } catch (ValidationException e) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.error(e.getMessage())
+            );
         } catch (Exception e) {
-            // Generic error message for security (don't expose system details)
+            // Generic error message for unexpected failures
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ApiResponse.error("Failed to send verification code. Please check your email address and try again.")
+                    ApiResponse.error("Failed to send verification code. Please try again later.")
             );
         }
     }

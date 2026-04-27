@@ -75,7 +75,7 @@ class PasswordServiceTest {
             request.setToken("valid-token");
             
             // Attempting to reset with weak password should fail
-            when(userRepository.findById("test-id")).thenReturn(Optional.of(testUser));
+            when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
         });
     }
 
@@ -181,7 +181,7 @@ class PasswordServiceTest {
      */
     private User createTestUser() {
         User user = new User();
-        user.setId("test-id");
+        user.setId(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"));
         user.setEmail("test@example.com");
         user.setFullName("Test User");
         user.setPassword("encoded_current_password");
