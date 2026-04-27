@@ -1,0 +1,288 @@
+﻿
+    // ====================
+    // INDIVIDUAL DRIVER REPORT
+    // ====================
+    
+    exportDriverReportPDF: (driverId: string) => {
+        const driver = DRIVER_PERFORMANCE.find(d => d.driverId === driverId);
+        if (!driver) {
+            alert('Driver not found!');
+            return;
+        }
+        
+        const doc = new jsPDF();
+        const fileName = Driver__Report.pdf;
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(Driver Report: , 14, 20);
+        
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(Generated: , 14, 30);
+        
+        autoTable(doc, {
+            startY: 40,
+            head: [['Field', 'Value']],
+            body: [
+                ['Driver ID', driver.driverId],
+                ['Name', driver.driverName],
+                ['License Number', driver.licenseNumber],
+                ['Assigned Vehicle', driver.assignedVehicle],
+                ['Total Trips', driver.totalTrips.toString()],
+                ['Total Distance (km)', driver.totalDistance.toLocaleString()],
+                ['Violations', driver.violations.toString()],
+                ['Feedback Rating', ${driver.feedbackRating}/5.0],
+                ['Safety Score', ${driver.safetyScore}/100],
+                ['On-Time Delivery Rate', ${driver.onTimeDeliveryRate}%]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [139, 92, 246] }
+        });
+        
+        doc.save(fileName);
+    },
+    
+    exportDriverReportExcel: (driverId: string) => {
+        const driver = DRIVER_PERFORMANCE.find(d => d.driverId === driverId);
+        if (!driver) {
+            alert('Driver not found!');
+            return;
+        }
+        
+        const fileName = Driver__Report.xlsx;
+        const data = [
+            { Field: 'Driver ID', Value: driver.driverId },
+            { Field: 'Name', Value: driver.driverName },
+            { Field: 'License Number', Value: driver.licenseNumber },
+            { Field: 'Assigned Vehicle', Value: driver.assignedVehicle },
+            { Field: 'Total Trips', Value: driver.totalTrips },
+            { Field: 'Total Distance (km)', Value: driver.totalDistance },
+            { Field: 'Violations', Value: driver.violations },
+            { Field: 'Feedback Rating', Value: driver.feedbackRating },
+            { Field: 'Safety Score', Value: driver.safetyScore },
+            { Field: 'On-Time Delivery Rate (%)', Value: driver.onTimeDeliveryRate }
+        ];
+        
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Driver Report');
+        XLSX.writeFile(wb, fileName);
+    },
+    
+    // Individual Fuel Log Report (by vehicle)
+    exportFuelLogReportPDF: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const fuelLogs = FUEL_LOGS.filter(f => f.vehicleId === vehicleId);
+        
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+        
+        const doc = new jsPDF();
+        const fileName = Fuel_Log__Report.pdf;
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(Fuel Logs: , 14, 20);
+        
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(Vehicle:  , 14, 30);
+        doc.text(Total Logs: , 14, 36);
+        
+        const totalCost = fuelLogs.reduce((sum, f) => sum + f.totalCost, 0);
+        const totalQuantity = fuelLogs.reduce((sum, f) => sum + f.fuelQuantity, 0);
+        
+        autoTable(doc, {
+            startY: 44,
+            head: [['Date', 'Quantity (L)', 'Price/L', 'Total Cost', 'Station']],
+            body: fuelLogs.map(f => [
+                f.date,
+                f.fuelQuantity.toString(),
+                $,
+                $,
+                f.fuelStation
+            ]),
+            foot: [['TOTAL', totalQuantity.toString() + ' L', '', $, '']],
+            theme: 'grid',
+            headStyles: { fillColor: [34, 197, 94] }
+        });
+        
+        doc.save(fileName);
+    },
+    
+    exportFuelLogReportExcel: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const fuelLogs = FUEL_LOGS.filter(f => f.vehicleId === vehicleId);
+        
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+        
+        const fileName = Fuel_Log__Report.xlsx;
+        const data = fuelLogs.map(f => ({
+            Date: f.date,
+            'Vehicle': vehicle.licensePlate,
+            'Quantity (L)': f.fuelQuantity,
+            'Price per Liter': f.pricePerLiter,
+            'Total Cost': f.totalCost,
+            'Odometer': f.odometer,
+            'Fuel Station': f.fuelStation
+        }));
+        
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Fuel Logs');
+        XLSX.writeFile(wb, fileName);
+    },
+    
+    // Individual Maintenance Report (by vehicle)
+    exportMaintenanceLogReportPDF: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const maintenanceLogs = MAINTENANCE_RECORDS.filter(m => m.vehicleId === vehicleId);
+        
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+        
+        const doc = new jsPDF();
+        const fileName = Maintenance_Log__Report.pdf;
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(Maintenance Records: , 14, 20);
+        
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(Vehicle:  , 14, 30);
+        doc.text(Total Records: , 14, 36);
+        
+        const totalCost = maintenanceLogs
+            .filter(m => m.status === 'Completed')
+            .reduce((sum, m) => sum + m.cost, 0);
+        
+        autoTable(doc, {
+            startY: 44,
+            head: [['Date', 'Type', 'Cost', 'Status', 'Mechanic']],
+            body: maintenanceLogs.map(m => [
+                m.serviceDate,
+                m.serviceType,
+                $,
+                m.status,
+                m.mechanic
+            ]),
+            theme: 'grid',
+            headStyles: { fillColor: [245, 158, 11] }
+        });
+        
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(Total Maintenance Cost: c:\Users\USER\OneDrive\Desktop\VFMS_directory{totalCost}, 14, finalY);
+        
+        doc.save(fileName);
+    },
+    
+    exportMaintenanceLogReportExcel: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const maintenanceLogs = MAINTENANCE_RECORDS.filter(m => m.vehicleId === vehicleId);
+        
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+        
+        const fileName = Maintenance_Log__Report.xlsx;
+        const data = maintenanceLogs.map(m => ({
+            Date: m.serviceDate,
+            'Vehicle': vehicle.licensePlate,
+            'Service Type': m.serviceType,
+            'Description': m.description,
+            'Cost': m.cost,
+            'Status': m.status,
+            'Mechanic': m.mechanic
+        }));
+        
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Records');
+        XLSX.writeFile(wb, fileName);
+    },
+    
+    // Individual Rental Report
+    exportRentalReportPDF: (rentalId: string) => {
+        const RENTAL_RECORDS = require('./enhancedMockData').RENTAL_RECORDS;
+        const rental = RENTAL_RECORDS.find((r: any) => r.id === rentalId);
+        
+        if (!rental) {
+            alert('Rental not found!');
+            return;
+        }
+        
+        const doc = new jsPDF();
+        const fileName = Rental__Report.pdf;
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Rental Agreement Report', 14, 20);
+        
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(Rental ID: , 14, 30);
+        doc.text(Generated: , 14, 36);
+        
+        autoTable(doc, {
+            startY: 44,
+            head: [['Field', 'Details']],
+            body: [
+                ['Vehicle', rental.licensePlate],
+                ['Customer', rental.customerName],
+                ['Contact', rental.customerPhone],
+                ['Start Date', rental.startDate],
+                ['End Date', rental.endDate],
+                ['Duration', ${rental.days} days],
+                ['Daily Rate', $],
+                ['Total Cost', $],
+                ['Status', rental.status],
+                ['Purpose', rental.purpose]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [236, 72, 153] }
+        });
+        
+        doc.save(fileName);
+    },
+    
+    exportRentalReportExcel: (rentalId: string) => {
+        const RENTAL_RECORDS = require('./enhancedMockData').RENTAL_RECORDS;
+        const rental = RENTAL_RECORDS.find((r: any) => r.id === rentalId);
+        
+        if (!rental) {
+            alert('Rental not found!');
+            return;
+        }
+        
+        const fileName = Rental__Report.xlsx;
+        const data = [
+            { Field: 'Rental ID', Details: rental.id },
+            { Field: 'Vehicle', Details: rental.licensePlate },
+            { Field: 'Customer Name', Details: rental.customerName },
+            { Field: 'Contact', Details: rental.customerPhone },
+            { Field: 'Start Date', Details: rental.startDate },
+            { Field: 'End Date', Details: rental.endDate },
+            { Field: 'Duration (days)', Details: rental.days },
+            { Field: 'Daily Rate', Details: rental.dailyRate },
+            { Field: 'Total Cost', Details: rental.totalCost },
+            { Field: 'Status', Details: rental.status },
+            { Field: 'Purpose', Details: rental.purpose }
+        ];
+        
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Rental Report');
+        XLSX.writeFile(wb, fileName);
+    },
