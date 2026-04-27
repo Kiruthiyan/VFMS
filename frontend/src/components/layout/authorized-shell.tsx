@@ -1,9 +1,10 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useUser } from '@/lib/useUser';
-import { AlertCircle, Home } from 'lucide-react';
 import Link from 'next/link';
+import { AlertCircle, Home } from 'lucide-react';
+
+import { useUser } from '@/lib/useUser';
 
 interface AuthorizedShellProps {
   children: ReactNode;
@@ -12,49 +13,48 @@ interface AuthorizedShellProps {
   pageDescription?: string;
 }
 
-/**
- * Professional wrapper for authorized pages
- * Enforces role-based access control with proper error handling
- */
 export function AuthorizedShell({
   children,
   requiredRole = 'ADMIN',
   pageTitle,
   pageDescription,
 }: AuthorizedShellProps) {
-  const { user, isAdmin } = useUser();
+  const { user, isAdmin, loading } = useUser();
 
-  // ❌ Check authorization
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-white text-slate-900">
+        <div className="container mx-auto px-4 py-8">{children}</div>
+      </main>
+    );
+  }
+
   const isAuthorized =
-    requiredRole === 'ADMIN' ? isAdmin : user.role === requiredRole;
+    requiredRole === 'ADMIN' ? isAdmin : user?.role === requiredRole;
 
   if (!isAuthorized) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center p-4">
         <div className="max-w-lg">
-          {/* Error Card */}
           <div className="bg-white rounded-2xl shadow-xl border-2 border-red-200 p-8">
-            {/* Icon */}
             <div className="flex justify-center mb-6">
               <div className="h-16 w-16 bg-gradient-to-br from-red-100 to-red-50 rounded-full flex items-center justify-center">
                 <AlertCircle size={32} className="text-red-600" strokeWidth={1.5} />
               </div>
             </div>
 
-            {/* Text */}
             <h1 className="text-2xl font-bold text-slate-900 text-center mb-3">
               Access Denied
             </h1>
             <p className="text-slate-600 text-center mb-2">
-              You don't have permission to access this page.
+              You don&apos;t have permission to access this page.
             </p>
             <p className="text-sm text-slate-500 text-center mb-6">
               Required Role: <span className="font-bold text-red-600">{requiredRole}</span>
               <br />
-              Your Role: <span className="font-bold text-blue-600">{user.role}</span>
+              Your Role: <span className="font-bold text-blue-600">{user?.role ?? 'Unknown'}</span>
             </p>
 
-            {/* Actions */}
             <div className="flex gap-3">
               <Link
                 href="/"
@@ -72,7 +72,6 @@ export function AuthorizedShell({
             </div>
           </div>
 
-          {/* Info */}
           <p className="text-xs text-slate-500 text-center mt-6">
             Contact your administrator if you believe this is a mistake
           </p>
@@ -83,7 +82,6 @@ export function AuthorizedShell({
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      {/* Optional Header */}
       {pageTitle && (
         <header className="border-b border-slate-200 py-4">
           <div className="container mx-auto px-4">
@@ -95,7 +93,6 @@ export function AuthorizedShell({
         </header>
       )}
 
-      {/* Content */}
       <div className="container mx-auto px-4 py-8">
         {children}
       </div>

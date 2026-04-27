@@ -1,77 +1,55 @@
 # ===============================
-# GENERAL
+# BACKEND IGNORE RULES
 # ===============================
-.DS_Store
-Thumbs.db
-*.log
 
-# ===============================
-# ENV FILES (IMPORTANT)
-# ===============================
+# Environment files
 .env
 .env.*
 !.env.example
 
-# ===============================
-# SPRING BOOT / MAVEN BUILD
-# ===============================
+# Maven / Java build output
 target/
 *.class
 *.jar
 *.war
 *.ear
+.m2/
 
-# Maven Wrapper
-.mvn/wrapper/maven-wrapper.jar
+# Logs and temp files
+*.log
+*.tmp
+test_output.txt
+test_results_*.txt
 
-# ===============================
-# DATABASE FILES (LOCAL ONLY)
-# ===============================
+# Local database and uploads
 *.db
 *.mv.db
 *.lock.db
 data/
 uploads/
 
-# ===============================
-# IDE FILES
-# ===============================
-
-## IntelliJ IDEA
+# IDE files
 .idea/
-*.iws
-*.iml
-*.ipr
-
-## Eclipse / STS
+.vscode/
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
-## NetBeans
+# NetBeans
 /nbproject/private/
 /nbbuild/
-/dist/
 /nbdist/
 /.nb-gradle/
 build/
 
-## VS Code
-.vscode/
-
-# ===============================
-# TEST / TEMP FILES
-# ===============================
-test_output.txt
-test_results_*.txt
-*.tmp
-
-# ===============================
-# OS TEMP FILES
-# ===============================
+# OS files
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
+*.orig
+

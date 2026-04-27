@@ -46,6 +46,16 @@ export interface FuelFilterParams {
   driverId?: string;
 }
 
+export interface FuelLookupOption {
+  id: string;
+  label: string;
+}
+
+export interface FuelFormMetadata {
+  vehicles: FuelLookupOption[];
+  drivers: FuelLookupOption[];
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // CREATE OPERATIONS
 // ────────────────────────────────────────────────────────────────────────────
@@ -75,6 +85,11 @@ export async function createFuelRecordApi(
 /** Get all fuel records */
 export async function getAllFuelRecordsApi(): Promise<FuelRecord[]> {
   const response = await api.get<FuelRecord[]>("/api/v1/fuel");
+  return response.data;
+}
+
+export async function getFuelFormMetadataApi(): Promise<FuelFormMetadata> {
+  const response = await api.get<FuelFormMetadata>("/api/v1/fuel/metadata");
   return response.data;
 }
 

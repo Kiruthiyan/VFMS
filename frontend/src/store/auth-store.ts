@@ -31,9 +31,11 @@ interface AuthUser {
  * @property isAuthenticated - Function to check if user is authenticated
  */
 interface AuthState {
+  hydrated: boolean;
   user: AuthUser | null;
   accessToken: string | null;
   refreshToken: string | null;
+  setHydrated: (hydrated: boolean) => void;
   setAuth: (data: AuthResponse) => void;
   clearAuth: () => void;
   isAuthenticated: () => boolean;
@@ -51,12 +53,15 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
+      hydrated: false,
       user: null,
       accessToken: null,
       refreshToken: null,
+      setHydrated: (hydrated) => set({ hydrated }),
 
       setAuth: (data: AuthResponse) => {
         set({
+          hydrated: true,
           user: {
             userId: data.userId,
             fullName: data.fullName,
@@ -72,7 +77,12 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearAuth: () => {
-        set({ user: null, accessToken: null, refreshToken: null });
+        set({
+          hydrated: true,
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+        });
         clearAuthCookies();
       },
 
@@ -85,6 +95,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "vfms-auth",
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true);
+      },
     }
   )
 );

@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Fuel Manager",
-  description: "VFMS - Fuel Management System",
+  title: "Admin Portal",
+  description: "VFMS Admin Panel",
 };
 
 export default function RootLayout({
@@ -16,8 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased bg-white`}>
+      <body className="antialiased">
         {children}
+        <Toaster />
       </body>
     </html>
   );

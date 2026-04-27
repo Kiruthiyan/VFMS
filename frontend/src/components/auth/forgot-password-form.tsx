@@ -56,7 +56,7 @@ export function ForgotPasswordForm() {
         </motion.div>
         <h2 className="text-2xl font-black text-slate-900 mb-2">Check Your Email</h2>
         <p className="text-slate-600 text-sm font-medium mb-4">
-          If an account exists for <span className="font-semibold text-slate-900">{submittedEmail}</span>, we've sent a reset link.
+          If an account exists for <span className="font-semibold text-slate-900">{submittedEmail}</span>, we&apos;ve sent a reset link.
         </p>
         <button
           onClick={() => {
@@ -65,7 +65,7 @@ export function ForgotPasswordForm() {
           }}
           className="text-amber-600 hover:text-amber-700 text-sm font-medium transition-colors mb-4"
         >
-          Didn't receive it? Try again
+          Didn&apos;t receive it? Try again
         </button>
         <Link
           href="/auth/login"

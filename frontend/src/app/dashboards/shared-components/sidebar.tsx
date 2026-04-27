@@ -37,29 +37,22 @@ export function DashboardSidebar() {
 }
 
 function getNavItemsByRole(role?: string) {
+  const dashboardHrefByRole: Record<string, string> = {
+    ADMIN: "/dashboards/admin",
+    APPROVER: "/dashboards/approver",
+    DRIVER: "/dashboards/driver",
+    SYSTEM_USER: "/dashboards/staff",
+  };
+
   const commonItems = [
-    { label: 'Dashboard', href: `/dashboards/${role?.toLowerCase() || 'dashboard'}` },
+    { label: 'Dashboard', href: role ? dashboardHrefByRole[role] ?? "/" : "/" },
     { label: 'Settings', href: '/settings/change-password' },
   ];
 
-  const roleSpecificItems: Record<string, any[]> = {
+  const roleSpecificItems: Record<string, Array<{ label: string; href: string }>> = {
     ADMIN: [
-      { label: 'Users', href: '/dashboards/admin/users' },
-      { label: 'Reports', href: '/dashboards/admin/reports' },
-      { label: 'Settings', href: '/dashboards/admin/settings' },
-    ],
-    DRIVER: [
-      { label: 'My Vehicles', href: '/dashboards/driver/vehicles' },
-      { label: 'Trip History', href: '/dashboards/driver/trips' },
-      { label: 'Fuel Expenses', href: '/dashboards/driver/expenses' },
-    ],
-    APPROVER: [
-      { label: 'Pending Requests', href: '/dashboards/approver/requests' },
-      { label: 'Approved History', href: '/dashboards/approver/history' },
-    ],
-    STAFF: [
-      { label: 'My Vehicles', href: '/dashboards/staff/vehicles' },
-      { label: 'Fuel Requests', href: '/dashboards/staff/requests' },
+      { label: 'Manage Users', href: '/admin/users' },
+      { label: 'Fuel Management', href: '/admin/fuel' },
     ],
   };
 

@@ -35,8 +35,6 @@ class FuelMisuseServiceTest {
         setField("maxEntriesPerDay", 3);
 
         FuelRecord record = baseRecord(BigDecimal.valueOf(60), 1000.0);
-        when(fuelRecordRepository.countByVehicleAndDate(any(), any())).thenReturn(0L);
-        when(fuelRecordRepository.findLatestByVehicle(any())).thenReturn(List.of());
 
         String reason = fuelMisuseService.checkForMisuse(record);
         assertNotNull(reason);

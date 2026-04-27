@@ -1,248 +1,127 @@
-/**
-<<<<<<< HEAD
- * Signup flow configuration
- * Defines steps, titles, descriptions, and validation rules
- */
-
 export const SIGNUP_CONFIG = {
   TOTAL_STEPS: 5,
   STEPS: [
     {
       number: 1,
-      title: 'Email Verification',
-      description: 'Enter your email to begin account creation',
-      fields: ['email'],
+      title: "Email Verification",
+      description: "Enter your email to begin account creation",
+      fields: ["email"],
     },
     {
       number: 2,
-      title: 'Confirm Identity',
-      description: 'Verify your email with the code we sent',
-      fields: ['otp'],
+      title: "Confirm Identity",
+      description: "Verify your email with the code we sent",
+      fields: ["otp"],
     },
     {
       number: 3,
-      title: 'Personal Details',
-      description: 'Tell us more about yourself',
-      fields: ['firstName', 'lastName'],
+      title: "Personal Details",
+      description: "Tell us more about yourself",
+      fields: ["fullName", "phone", "nic"],
     },
     {
       number: 4,
-      title: 'Role & Qualifications',
-      description: 'Select your role and provide relevant details',
-      fields: ['role', 'phone', 'nic'],
+      title: "Role and Qualifications",
+      description: "Select your role and provide any required details",
+      fields: [
+        "role",
+        "licenseNumber",
+        "licenseExpiryDate",
+        "employeeId",
+        "department",
+        "designation",
+        "officeLocation",
+      ],
     },
     {
       number: 5,
-      title: 'Security Setup',
-      description: 'Create a secure password for your account',
-      fields: ['password', 'confirmPassword'],
+      title: "Security Setup",
+      description: "Create a secure password for your account",
+      fields: ["password", "confirmPassword"],
     },
   ],
-  
-  // Step titles object for easy access
   STEP_TITLES: {
-    1: 'Email Verification',
-    2: 'Confirm Identity',
-    3: 'Personal Details',
-    4: 'Role & Qualifications',
-    5: 'Security Setup',
+    1: "Email Verification",
+    2: "Confirm Identity",
+    3: "Personal Details",
+    4: "Role and Qualifications",
+    5: "Security Setup",
   },
-  
-  // Step descriptions object for easy access
   STEP_DESCRIPTIONS: {
-    1: 'Enter your email to begin account creation',
-    2: 'Verify your email with the code we sent',
-    3: 'Tell us more about yourself',
-    4: 'Select your role and provide relevant details',
-    5: 'Create a secure password for your account',
+    1: "Enter your email to begin account creation",
+    2: "Verify your email with the code we sent",
+    3: "Tell us more about yourself",
+    4: "Select your role and provide any required details",
+    5: "Create a secure password for your account",
   },
-  
-  // Requirements display
   PASSWORD_REQUIREMENTS: [
-    { label: 'At least 8 characters', key: 'length' },
-    { label: 'One uppercase letter (A-Z)', key: 'uppercase' },
-    { label: 'One lowercase letter (a-z)', key: 'lowercase' },
-    { label: 'One number (0-9)', key: 'number' },
-    { label: 'One special character (@$!%*?&)', key: 'special' },
+    { label: "At least 8 characters", key: "length", regex: /.{8,}/ },
+    { label: "One uppercase letter (A-Z)", key: "uppercase", regex: /[A-Z]/ },
+    { label: "One lowercase letter (a-z)", key: "lowercase", regex: /[a-z]/ },
+    { label: "One number (0-9)", key: "number", regex: /\d/ },
+    {
+      label: "One special character (@$!%*?&)",
+      key: "special",
+      regex: /[@$!%*?&]/,
+    },
   ],
-=======
- * Signup flow configuration and constants
- * Defines the signup process structure, validation rules, and user-facing text
- * Ensures consistency across all signup-related components and steps
- * 
- * Usage: import { SIGNUP_CONFIG } from '@/lib/constants/signup-config'
- */
-
-export const SIGNUP_CONFIG = {
-  // Total number of steps in the signup process
-  totalSteps: 4,
-  
-  // Maximum length for text inputs
-  maxLengths: {
-    fullName: 100,
-    email: 255,
-    password: 255,
-    phoneNumber: 20,
-    nic: 20,
-    employeeId: 10,
-    licenseNumber: 20,
-    department: 100,
-    designation: 100,
-  },
-  
-  // Minimum length for text inputs
-  minLengths: {
-    fullName: 2,
-    password: 8,
-    phoneNumber: 10,
-    nic: 9,
-    employeeId: 5,
-    licenseNumber: 8,
-  },
-};
-
-/**
- * Signup step definitions - Each step's title and description
- * Used to render step indicators and provide user guidance
- */
-export const SIGNUP_STEPS = {
-  1: {
-    title: 'Basic Information',
-    description: 'Enter your name, email, and phone number',
-  },
-  2: {
-    title: 'Security',
-    description: 'Create a strong password',
-  },
-  3: {
-    title: 'Verification',
-    description: 'Verify your email address',
-  },
-  4: {
-    title: 'Role Details',
-    description: 'Provide role-specific information',
-  },
 } as const;
 
-/**
- * Password complexity requirements - Displayed to users during signup
- * Each requirement must be met for password validation to pass
- */
-export const PASSWORD_REQUIREMENTS = [
-  {
-    text: 'At least 8 characters',
-    regex: /.{8,}/,
-  },
-  {
-    text: 'At least one uppercase letter (A-Z)',
-    regex: /[A-Z]/,
-  },
-  {
-    text: 'At least one lowercase letter (a-z)',
-    regex: /[a-z]/,
-  },
-  {
-    text: 'At least one digit (0-9)',
-    regex: /\d/,
-  },
-  {
-    text: 'At least one special character (@$!%*?&)',
-    regex: /[@$!%*?&]/,
-  },
-] as const;
+export const SIGNUP_STEPS = SIGNUP_CONFIG.STEPS;
+export const PASSWORD_REQUIREMENTS = SIGNUP_CONFIG.PASSWORD_REQUIREMENTS;
 
-/**
- * Check if password meets all complexity requirements
- * Used in real-time password validation
- * 
- * @param password - Password to validate
- * @returns object with isValid flag and failedRequirements array
- * 
- * @example
- * const result = validatePasswordComplexity('MyPass123!');
- * // Returns: { isValid: true, failedRequirements: [] }
- */
 export function validatePasswordComplexity(password: string): {
   isValid: boolean;
   failedRequirements: string[];
 } {
-  const failed = PASSWORD_REQUIREMENTS
-    .filter(req => !req.regex.test(password))
-    .map(req => req.text);
-  
+  const failedRequirements = PASSWORD_REQUIREMENTS.filter(
+    (requirement) => !requirement.regex.test(password)
+  ).map((requirement) => requirement.label);
+
   return {
-    isValid: failed.length === 0,
-    failedRequirements: failed,
+    isValid: failedRequirements.length === 0,
+    failedRequirements,
   };
 }
 
-/**
- * Available user roles in signup
- * Only DRIVER and SYSTEM_USER can self-register
- * ADMIN and APPROVER are created by administrators only
- */
-export const AVAILABLE_SIGNUP_ROLES = [
-  'DRIVER',
-  'SYSTEM_USER',
-] as const;
+export const AVAILABLE_SIGNUP_ROLES = ["DRIVER", "SYSTEM_USER"] as const;
 
 export type SignupRole = (typeof AVAILABLE_SIGNUP_ROLES)[number];
 
-/**
- * Role-specific fields required in signup process
- * Maps each role to the additional fields that must be collected
- */
 export const ROLE_SPECIFIC_FIELDS: Record<SignupRole, string[]> = {
-  DRIVER: [
-    'licenseNumber',
-    'licenseExpiryDate',
-    'experienceYears',
-    'certifications',
-  ],
-  SYSTEM_USER: [
-    'employeeId',
-    'department',
-    'designation',
-    'officeLocation',
-  ],
+  DRIVER: ["licenseNumber", "licenseExpiryDate"],
+  SYSTEM_USER: ["employeeId", "department", "designation", "officeLocation"],
 };
 
-/**
- * Field validation rules
- * Specifies regex patterns and constraints for role-specific fields
- */
 export const FIELD_VALIDATION = {
   licenseNumber: {
     pattern: /^[A-Z0-9]{8,20}$/,
-    message: 'Invalid license number format (8-20 alphanumeric characters)',
+    message: "Invalid license number format (8-20 alphanumeric characters)",
   },
   licenseExpiryDate: {
     pattern: /^\d{4}-\d{2}-\d{2}$/,
-    message: 'License expiry date must be in YYYY-MM-DD format',
+    message: "License expiry date must be in YYYY-MM-DD format",
   },
   employeeId: {
-    pattern: /^[A-Z0-9]{5,10}$/,
-    message: 'Invalid employee ID format (5-10 alphanumeric characters)',
+    pattern: /^[A-Z0-9]{3,20}$/,
+    message: "Invalid employee ID format",
   },
   nic: {
-    pattern: /^\d{9,12}$/,
-    message: 'NIC must be 9-12 digits',
+    pattern: /^[0-9VvXx]{9,12}$/,
+    message: "NIC must be 9-12 characters",
   },
-  phoneNumber: {
-    pattern: /^[0-9+\-()\\s]{10,15}$/,
-    message: 'Invalid phone number format',
+  phone: {
+    pattern: /^[0-9+\-()\s]{10,15}$/,
+    message: "Invalid phone number format",
   },
 } as const;
 
-/**
- * Signup error messages - Specific to signup process
- */
 export const SIGNUP_ERROR_MESSAGES = {
-  EMAIL_ALREADY_REGISTERED: 'This email is already registered. Try logging in instead.',
-  INVALID_ROLE: 'Invalid role selected. Please choose Driver or System User.',
-  MISSING_REQUIRED_FIELDS: 'Please fill in all required fields.',
-  PASSWORD_MISMATCH: 'Passwords do not match.',
-  WEAK_PASSWORD: 'Password does not meet complexity requirements.',
-  INVALID_EMAIL_FORMAT: 'Please enter a valid email address.',
->>>>>>> origin/feature/user-management
+  EMAIL_ALREADY_REGISTERED:
+    "This email is already registered. Try logging in instead.",
+  INVALID_ROLE: "Invalid role selected. Please choose Driver or System User.",
+  MISSING_REQUIRED_FIELDS: "Please fill in all required fields.",
+  PASSWORD_MISMATCH: "Passwords do not match.",
+  WEAK_PASSWORD: "Password does not meet complexity requirements.",
+  INVALID_EMAIL_FORMAT: "Please enter a valid email address.",
 } as const;

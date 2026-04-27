@@ -1,90 +1,68 @@
 # ===============================
-# GENERAL
+# REPOSITORY-WIDE IGNORE RULES
 # ===============================
+
+# OS files
 .DS_Store
 Thumbs.db
-*.log
 
-# ===============================
-# ENV FILES (IMPORTANT)
-# ===============================
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+*.orig
+
+# Environment files
 .env
 .env.*
 !.env.example
 
-# ===============================
-# BACKEND (SPRING BOOT / MAVEN)
-# ===============================
+# Editors and local tooling
+.idea/
+.vscode/
+.claude/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Java / Maven
 target/
 *.class
 *.jar
 *.war
 *.ear
-
-# Maven Wrapper
 .mvn/wrapper/maven-wrapper.jar
+backend/.m2/
 
-# Ignore build folders inside modules (keep structure clean)
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# ===============================
-# DATABASE FILES (LOCAL ONLY)
-# ===============================
+# Database and storage artifacts
 *.db
 *.mv.db
 *.lock.db
 backend/data/
 backend/uploads/
 
-# ===============================
-# IDE FILES
-# ===============================
-
-## STS / Eclipse
+# IDE-specific Java files
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
-## IntelliJ IDEA
-.idea/
-*.iws
-*.iml
-*.ipr
-
-## NetBeans
+# NetBeans
 /nbproject/private/
 /nbbuild/
-/dist/
 /nbdist/
 /.nb-gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-## VS Code
-.vscode/
+# Deployment
+.vercel/
 
-# ===============================
-# FRONTEND (NEXT.JS / NODE)
-# ===============================
-node_modules/
-.next/
-out/
-dist/
-
-# ===============================
-# TEST / TEMP FILES
-# ===============================
-test_output.txt
-test_results_*.txt
-
-# ===============================
-# OS GENERATED FILES
-# ===============================
-*.swp
-*.swo

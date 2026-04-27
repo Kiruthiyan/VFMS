@@ -35,7 +35,7 @@ import {
   type SignupStep4Values,
   type SignupStep5Values,
 } from '@/lib/validators/auth/signup-schema';
-import { sendOTPApi, verifyOTPApi, signupApi } from '@/lib/api/auth';
+import { getErrorMessage, sendOTPApi, verifyOTPApi, signupApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/auth-store';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AUTH_ROUTES, PUBLIC_ROUTES } from '@/lib/constants/routes';
@@ -87,6 +87,7 @@ export function SignupForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [otpResendCountdown, setOtpResendCountdown] = useState(0);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [showPasswordStep5, setShowPasswordStep5] = useState(false);
   const [showConfirmPasswordStep5, setShowConfirmPasswordStep5] = useState(false);
@@ -101,8 +102,8 @@ export function SignupForm() {
 
   // Step 2: OTP
   const step2Form = useForm<SignupStep2Values>({
-    resolver: zodResolver(signupStep2Schema),
-    mode: 'onSubmit', // Only validate when user clicks Verify button, not while typing
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
     defaultValues: {
       otp: formData.step2?.otp || '',
     },
@@ -159,8 +160,7 @@ export function SignupForm() {
   const handleStep1Submit = async (data: SignupStep1Values) => {
     setServerError(null);
     try {
-      // Call API to send OTP
-      const response = await sendOTPApi(data.email);
+      await sendOTPApi(data.email);
       
       // Save to form state and advance
       setFormData((prev) => ({ ...prev, step1: data }));
@@ -178,24 +178,30 @@ export function SignupForm() {
         });
       }, 1000);
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || 'Failed to send verification code. Please check your email address and try again.'
-        : (err as any)?.message || 'Failed to send verification code. Please try again.';
-      setServerError(message);
+      const message = getErrorMessage(err);
+      const fallbackMessage = 'Failed to send verification code. Please try again.';
+      const finalMessage = message && message !== 'Something went wrong' ? message : fallbackMessage;
+      setServerError(finalMessage);
     }
   };
 
-  const handleStep2Submit = async (data: SignupStep2Values) => {
-    // Validate OTP length before sending to server
-    if (data.otp.length !== 6) {
-      setServerError('Verification code must be exactly 6 digits');
+  const handleStep2Submit = async (_data: SignupStep2Values) => {
+    const currentOtpValue = step2Form.getValues('otp') || '';
+    const normalizedOtp = String(currentOtpValue).replace(/\D/g, '').slice(0, 6);
+    const parsed = signupStep2Schema.safeParse({ otp: normalizedOtp });
+
+    if (!parsed.success) {
+      const message = parsed.error.issues[0]?.message || 'Please enter a valid verification code.';
+      step2Form.setError('otp', { type: 'manual', message });
+      setServerError(message);
       return;
     }
 
+    step2Form.clearErrors('otp');
     setServerError(null);
     try {
       // Verify OTP with backend
-      const response = await verifyOTPApi(formData.step1?.email || '', data.otp);
+      const response = await verifyOTPApi(formData.step1?.email || '', normalizedOtp);
       
       if (!response.success || (response.data && !(response.data as any).verified)) {
         throw new Error('[INVALID_OTP] Verification code is incorrect. Please check and try again.');
@@ -203,7 +209,7 @@ export function SignupForm() {
 
       // Mark OTP as verified and save data
       setOtpVerified(true);
-      setFormData((prev) => ({ ...prev, step2: data }));
+      setFormData((prev) => ({ ...prev, step2: { otp: normalizedOtp } }));
       setCurrentStep(3);
     } catch (err: unknown) {
       let message = 'Verification failed. Please try again.';
@@ -233,6 +239,13 @@ export function SignupForm() {
 
   // Clear server error when user starts typing a corrected code
   const handleOtpChange = (value: string) => {
+    const normalizedOtp = value.replace(/\D/g, '').slice(0, 6);
+    step2Form.setValue('otp', normalizedOtp, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
+    });
+    step2Form.clearErrors('otp');
     if (serverError) {
       setServerError(null);
     }
@@ -625,7 +638,12 @@ export function SignupForm() {
                 inputMode="numeric"
                 autoFocus
                 {...step2Form.register('otp', {
-                  onChange: (e) => handleOtpChange(e.target.value),
+                  setValueAs: (value) => String(value ?? '').replace(/\D/g, '').slice(0, 6),
+                  onChange: (e) => {
+                    const normalizedValue = String(e.target.value ?? '').replace(/\D/g, '').slice(0, 6);
+                    e.target.value = normalizedValue;
+                    handleOtpChange(normalizedValue);
+                  },
                 })}
                 className="w-full px-4 py-3.5 text-center text-2xl font-black tracking-widest rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
                            focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 focus:bg-white focus:shadow-lg focus:shadow-blue-500/15
@@ -661,20 +679,43 @@ export function SignupForm() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
+                  disabled={isResendingOtp}
+                  onClick={async () => {
                     setServerError(null);
-                    step2Form.setValue('otp', ''); // Clear the field for fresh attempt
-                    setOtpResendCountdown(120); // Match the 2-minute backend OTP validity
-                    const timer = setInterval(() => {
-                      setOtpResendCountdown((prev) => {
-                        if (prev <= 1) clearInterval(timer);
-                        return prev - 1;
-                      });
-                    }, 1000);
+                    const email = formData.step1?.email;
+                    if (!email) {
+                      setServerError('Email is missing. Please go back and enter your email again.');
+                      return;
+                    }
+
+                    try {
+                      setIsResendingOtp(true);
+                      await sendOTPApi(email);
+                      step2Form.setValue('otp', ''); // Clear the field for fresh attempt
+                      step2Form.clearErrors('otp');
+
+                      setOtpResendCountdown(120); // Match the 2-minute backend OTP validity
+                      const timer = setInterval(() => {
+                        setOtpResendCountdown((prev) => {
+                          if (prev <= 1) {
+                            clearInterval(timer);
+                            return 0;
+                          }
+                          return prev - 1;
+                        });
+                      }, 1000);
+                    } catch (err: unknown) {
+                      const message = getErrorMessage(err);
+                      const fallbackMessage = 'Failed to resend verification code. Please try again.';
+                      const finalMessage = message && message !== 'Something went wrong' ? message : fallbackMessage;
+                      setServerError(finalMessage);
+                    } finally {
+                      setIsResendingOtp(false);
+                    }
                   }}
-                  className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                  className="text-blue-600 font-semibold hover:text-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Didn't receive? Resend
+                  {isResendingOtp ? 'Resending...' : 'Didn\'t receive? Resend'}
                 </button>
               )}
             </motion.div>
