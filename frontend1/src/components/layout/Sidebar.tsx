@@ -28,13 +28,13 @@ const roleMenuItems = [
 ];
 
 const reportMenuItems = [
-    { icon: LayoutDashboard, label: "Reports Overview", href: "/dashboard/reports" },
-    { icon: FileText, label: "Maintenance Trends", href: "/dashboard/reports/maintenance" },
-    { icon: BarChart3, label: "Fuel Analysis", href: "/dashboard/reports/fuel" },
-    { icon: Truck, label: "Vehicle Utilization", href: "/dashboard/reports/utilization" },
-    { icon: Users, label: "Driver Analytics", href: "/dashboard/reports/drivers" },
-    { icon: Calendar, label: "Rental Insights", href: "/dashboard/reports/rentals" },
-    { icon: Download, label: "Export Reports", href: "/dashboard/reports/export" },
+    { icon: LayoutDashboard, label: "Reports Overview", href: "/dashboard/admin/reports" },
+    { icon: FileText, label: "Maintenance Trends", href: "/dashboard/admin/reports/maintenance" },
+    { icon: BarChart3, label: "Fuel Analysis", href: "/dashboard/admin/reports/fuel" },
+    { icon: Truck, label: "Vehicle Utilization", href: "/dashboard/admin/reports/utilization" },
+    { icon: Users, label: "Driver Analytics", href: "/dashboard/admin/reports/drivers" },
+    { icon: Calendar, label: "Rental Insights", href: "/dashboard/admin/reports/rentals" },
+    { icon: Download, label: "Export Reports", href: "/dashboard/admin/reports/export" },
 ];
 
 
@@ -46,7 +46,7 @@ export function Sidebar() {
             <h4 className="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{title}</h4>
             <div className="space-y-1">
                 {items.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/dashboard/reports" && pathname?.startsWith(item.href + "/"));
+                    const isActive = pathname === item.href || (item.href !== "/dashboard/admin/reports" && pathname?.startsWith(item.href + "/"));
                     return (
                         <Link
                             key={item.href}
