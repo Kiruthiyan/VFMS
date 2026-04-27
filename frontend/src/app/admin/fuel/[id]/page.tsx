@@ -1,16 +1,37 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { ArrowLeft, FileText } from 'lucide-react';
-import Link from 'next/link';
-import { useUser } from '@/lib/useUser';
-import { getFuelRecordByIdApi, getErrorMessage, type FuelRecord } from '@/lib/api/fuel';
-import { AdminShell } from '@/components/layout/admin-shell';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { FormMessage } from '@/components/ui/form-message';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { ArrowLeft, FileText } from "lucide-react";
+import Link from "next/link";
+
+import { AdminShell } from "@/components/layout/admin-shell";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormMessage } from "@/components/ui/form-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  getErrorMessage,
+  getFuelRecordByIdApi,
+  type FuelRecord,
+} from "@/lib/api/fuel";
+
+function DetailBlock({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
 
 export default function AdminFuelDetailPage() {
   const params = useParams();
@@ -25,10 +46,11 @@ export default function AdminFuelDetailPage() {
       try {
         const id = Array.isArray(params.id) ? params.id[0] : params.id;
         if (!id) {
-          setError('Invalid fuel record ID');
+          setError("Invalid fuel record ID");
           setLoading(false);
           return;
         }
+
         const fetchedRecord = await getFuelRecordByIdApi(id);
         setRecord(fetchedRecord);
       } catch (err) {
@@ -42,218 +64,203 @@ export default function AdminFuelDetailPage() {
   }, [params.id]);
 
   return (
-    <AdminShell requireAdmin={true}>
-      <div className="min-h-screen bg-slate-50 p-8">
-        <div className="space-y-6">
-        {/* Back Link */}
+    <AdminShell>
+      <div className="space-y-6">
         <Link
           href="/admin/fuel"
-          className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950"
         >
           <ArrowLeft size={14} />
           Back to Fuel Management
         </Link>
 
-        {/* Header */}
-        <div className="pb-2 border-b border-amber-200">
-          <h1 className="text-3xl font-bold text-slate-900">Fuel Entry Details</h1>
-          <p className="text-sm text-slate-500 mt-1">Complete fuel record information</p>
+        <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+            Fuel Entry Details
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Complete record information for audit, review, and supporting
+            documentation.
+          </p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <LoadingSpinner size={28} className="text-amber-400" />
+            <LoadingSpinner size={28} className="text-slate-950" />
           </div>
         ) : error ? (
           <FormMessage type="error" message={error} />
         ) : !record ? (
           <FormMessage type="error" message="Fuel entry not found" />
         ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Vehicle Info */}
-            <Card className="bg-white border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                <CardTitle className="text-sm text-white">Vehicle</CardTitle>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                <CardTitle className="text-base text-white">Vehicle</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div>
-                  <p className="text-xs text-slate-500">License Plate</p>
-                  <p className="text-lg font-bold text-slate-900">{record.vehiclePlate}</p>
-                  </div>
-                <div>
-                  <p className="text-xs text-slate-500">Make & Model</p>
-                  <p className="text-sm text-slate-700">{record.vehicleMakeModel}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Vehicle ID</p>
-                  <p className="text-xs font-mono text-slate-600">{record.vehicleId}</p>
-                </div>
+              <CardContent className="grid gap-5 pt-6">
+                <DetailBlock label="License Plate" value={record.vehiclePlate} />
+                <DetailBlock
+                  label="Make & Model"
+                  value={record.vehicleMakeModel}
+                />
+                <DetailBlock label="Vehicle ID" value={record.vehicleId} />
               </CardContent>
             </Card>
 
-            {/* Driver Info */}
-            <Card className="bg-white border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                <CardTitle className="text-sm text-white">Driver</CardTitle>
+            <Card>
+              <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                <CardTitle className="text-base text-white">Driver</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div>
-                  <p className="text-xs text-slate-500">Driver Name</p>
-                  <p className="text-lg font-bold text-slate-900">{record.driverName || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Driver ID</p>
-                  <p className="text-xs font-mono text-slate-600">{record.driverId || 'N/A'}</p>
-                </div>
+              <CardContent className="grid gap-5 pt-6">
+                <DetailBlock
+                  label="Driver Name"
+                  value={record.driverName || "N/A"}
+                />
+                <DetailBlock
+                  label="Driver ID"
+                  value={record.driverId || "N/A"}
+                />
               </CardContent>
             </Card>
 
-            {/* Fuel Details */}
-            <Card className="bg-white border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                <CardTitle className="text-sm text-white">Fuel Details</CardTitle>
+            <Card>
+              <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                <CardTitle className="text-base text-white">
+                  Fuel Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-slate-500">Quantity</p>
-                    <p className="text-lg font-bold text-amber-600">{record.quantity}L</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Cost per Liter</p>
-                    <p className="text-lg font-bold text-slate-900">₹{record.costPerLitre.toFixed(2)}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Total Cost</p>
-                  <p className="text-lg font-bold text-green-600">₹{record.totalCost.toFixed(2)}</p>
-                </div>
+              <CardContent className="grid gap-5 pt-6 sm:grid-cols-2">
+                <DetailBlock
+                  label="Quantity"
+                  value={`${record.quantity.toFixed(2)} L`}
+                />
+                <DetailBlock
+                  label="Cost per Litre"
+                  value={`LKR ${record.costPerLitre.toFixed(2)}`}
+                />
+                <DetailBlock
+                  label="Total Cost"
+                  value={`LKR ${record.totalCost.toFixed(2)}`}
+                />
               </CardContent>
             </Card>
 
-            {/* Odometer & Efficiency */}
-            <Card className="bg-white border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                <CardTitle className="text-sm text-white">Vehicle Condition</CardTitle>
+            <Card>
+              <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                <CardTitle className="text-base text-white">
+                  Vehicle Condition
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-xs text-slate-500">Odometer Reading</p>
-                  <p className="text-lg font-bold text-slate-900">{record.odometerReading}km</p>
-                </div>
-                {record.efficiencyKmPerLitre && (
-                  <div>
-                    <p className="text-xs text-slate-500">Fuel Efficiency</p>
-                    <p className="text-lg font-bold text-slate-900">
-                      {record.efficiencyKmPerLitre.toFixed(2)}km/L
-                    </p>
-                  </div>
-                )}
-                {record.distanceSinceLast && (
-                  <div>
-                    <p className="text-xs text-slate-500">Distance Since Last</p>
-                    <p className="text-sm text-slate-700">{record.distanceSinceLast}km</p>
-                  </div>
-                )}
+              <CardContent className="grid gap-5 pt-6 sm:grid-cols-2">
+                <DetailBlock
+                  label="Odometer"
+                  value={`${record.odometerReading.toLocaleString()} km`}
+                />
+                <DetailBlock
+                  label="Fuel Efficiency"
+                  value={
+                    record.efficiencyKmPerLitre
+                      ? `${record.efficiencyKmPerLitre.toFixed(2)} km/L`
+                      : "N/A"
+                  }
+                />
+                <DetailBlock
+                  label="Distance Since Last"
+                  value={
+                    record.distanceSinceLast
+                      ? `${record.distanceSinceLast.toLocaleString()} km`
+                      : "N/A"
+                  }
+                />
               </CardContent>
             </Card>
 
-            {/* Station & Date */}
-            <Card className="bg-white border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                <CardTitle className="text-sm text-white">Refueling Details</CardTitle>
+            <Card>
+              <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                <CardTitle className="text-base text-white">
+                  Refueling Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {record.fuelStation && (
-                  <div>
-                    <p className="text-xs text-slate-500">Fuel Station</p>
-                    <p className="text-sm font-semibold text-slate-900">{record.fuelStation}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-xs text-slate-500">Fuel Date</p>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {new Date(record.fuelDate).toLocaleDateString()}
-                  </p>
-                </div>
+              <CardContent className="grid gap-5 pt-6">
+                <DetailBlock
+                  label="Fuel Station"
+                  value={record.fuelStation || "N/A"}
+                />
+                <DetailBlock
+                  label="Fuel Date"
+                  value={new Date(record.fuelDate).toLocaleDateString()}
+                />
               </CardContent>
             </Card>
 
-            {/* Status & Flags */}
-            <Card className="bg-white border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                <CardTitle className="text-sm text-white">Alert Status</CardTitle>
+            <Card>
+              <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                <CardTitle className="text-base text-white">
+                  Alert Status
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="grid gap-4 pt-6">
                 {record.flaggedForMisuse ? (
-                  <div>
-                    <Badge className="bg-red-100 text-red-900 border-red-200">
-                      ⚠ Flagged for Review
+                  <>
+                    <Badge className="w-fit border-red-200 bg-red-100 text-red-700">
+                      Flagged for Review
                     </Badge>
                     {record.flagReason && (
-                      <p className="text-xs text-red-700 mt-2">{record.flagReason}</p>
+                      <p className="text-sm text-red-600">{record.flagReason}</p>
                     )}
-                  </div>
+                  </>
                 ) : (
-                  <div>
-                    <Badge className="bg-green-100 text-green-900 border-green-200">
-                      ✓ No Alert
-                    </Badge>
-                  </div>
+                  <Badge className="w-fit border-emerald-200 bg-emerald-100 text-emerald-700">
+                    No Alert
+                  </Badge>
                 )}
               </CardContent>
             </Card>
 
-            {/* Record Metadata */}
-            <Card className="bg-white border-slate-200 overflow-hidden">
-              <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                <CardTitle className="text-sm text-white">Record Info</CardTitle>
+            <Card>
+              <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                <CardTitle className="text-base text-white">
+                  Record Info
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div>
-                  <p className="text-xs text-slate-500">Record ID</p>
-                  <p className="text-xs font-mono text-slate-600">{record.id}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Created By</p>
-                  <p className="text-xs text-slate-700">{record.createdBy}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Created At</p>
-                  <p className="text-xs text-slate-600">
-                    {new Date(record.createdAt).toLocaleString()}
-                  </p>
-                </div>
+              <CardContent className="grid gap-5 pt-6">
+                <DetailBlock label="Record ID" value={record.id} />
+                <DetailBlock label="Created By" value={record.createdBy} />
+                <DetailBlock
+                  label="Created At"
+                  value={new Date(record.createdAt).toLocaleString()}
+                />
               </CardContent>
             </Card>
 
-            {/* Notes */}
             {record.notes && (
-              <Card className="bg-white border-slate-200 md:col-span-2 overflow-hidden">
-                <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                  <CardTitle className="text-sm text-white">Notes</CardTitle>
+              <Card className="md:col-span-2">
+                <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                  <CardTitle className="text-base text-white">Notes</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-700">{record.notes}</p>
+                <CardContent className="pt-6">
+                  <p className="text-sm leading-6 text-slate-700">
+                    {record.notes}
+                  </p>
                 </CardContent>
               </Card>
             )}
 
-            {/* Receipt */}
             {record.receiptUrl && (
-              <Card className="bg-white border-slate-200 md:col-span-2 overflow-hidden">
-                <CardHeader className="bg-blue-950 py-3 rounded-t rounded-b-none border-b-0">
-                  <CardTitle className="text-sm text-white flex items-center gap-2">
+              <Card className="md:col-span-2">
+                <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
+                  <CardTitle className="flex items-center gap-2 text-base text-white">
                     <FileText size={16} />
                     Receipt
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <a
                     href={record.receiptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-300"
                   >
                     <FileText size={16} />
                     View Receipt ({record.receiptFileName})
@@ -264,7 +271,6 @@ export default function AdminFuelDetailPage() {
           </div>
         )}
       </div>
-    </div>
     </AdminShell>
   );
 }

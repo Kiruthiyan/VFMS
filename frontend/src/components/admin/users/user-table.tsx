@@ -3,23 +3,29 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  MoreVertical,
-  UserX,
-  UserCheck,
-  Pencil,
-  Trash2,
-  RotateCcw,
   ChevronDown,
   ChevronUp,
+  MoreVertical,
+  Pencil,
+  RotateCcw,
   ShieldCheck,
+  Trash2,
+  UserCheck,
+  UserX,
 } from "lucide-react";
-import { toggleUserStatusApi, restoreUserApi, getErrorMessage } from "@/lib/api/admin";
+
 import type { UserSummary } from "@/lib/api/admin";
-import { UserStatusBadge } from "./user-status-badge";
-import { UserRoleBadge } from "./user-role-badge";
-import { ReviewDialog } from "./review-dialog";
-import { EditUserDialog } from "./edit-user-dialog";
+import {
+  getErrorMessage,
+  restoreUserApi,
+  toggleUserStatusApi,
+} from "@/lib/api/admin";
+
 import { DeleteUserDialog } from "./delete-user-dialog";
+import { EditUserDialog } from "./edit-user-dialog";
+import { ReviewDialog } from "./review-dialog";
+import { UserRoleBadge } from "./user-role-badge";
+import { UserStatusBadge } from "./user-status-badge";
 
 interface UserTableProps {
   users: UserSummary[];
@@ -31,7 +37,7 @@ interface UserTableProps {
 const DEFAULT_LOCALE = "en-US";
 
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
+  if (!dateStr) return "N/A";
   return new Date(dateStr).toLocaleDateString(DEFAULT_LOCALE, {
     year: "numeric",
     month: "short",
@@ -40,7 +46,7 @@ function formatDate(dateStr: string | null): string {
 }
 
 function formatDateTime(dateStr: string | null): string {
-  if (!dateStr) return "—";
+  if (!dateStr) return "N/A";
   return new Date(dateStr).toLocaleDateString(DEFAULT_LOCALE, {
     year: "numeric",
     month: "short",
@@ -93,12 +99,16 @@ export function UserTable({
 
   if (users.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="w-12 h-12 rounded-full bg-[#F5F7FB] flex items-center justify-center mx-auto mb-3">
-          <UserX className="w-5 h-5 text-[#98A2B3]" />
+      <div className="py-16 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
+          {showDeletedActions ? (
+            <RotateCcw className="h-5 w-5 text-slate-400" />
+          ) : (
+            <UserX className="h-5 w-5 text-slate-400" />
+          )}
         </div>
-        <p className="text-[#667085] text-sm font-medium">No users found.</p>
-        <p className="text-[#98A2B3] text-xs mt-1">
+        <p className="text-sm font-medium text-slate-600">No users found.</p>
+        <p className="mt-1 text-xs text-slate-400">
           {showDeletedActions
             ? "No deleted users in history."
             : "Try adjusting your filters or create a new user."}
@@ -112,80 +122,73 @@ export function UserTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#E4E7EC] bg-[#F9FAFC]">
-              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
+            <tr className="border-b border-slate-200 bg-slate-50">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                 User
               </th>
-              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Role
               </th>
-              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Status
               </th>
-              <th className="text-left py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                 {showDeletedActions ? "Deleted" : "Registered"}
               </th>
-              <th className="text-right py-3 px-6 text-xs font-semibold text-[#667085] uppercase tracking-wider">
+              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E4E7EC]">
+          <tbody className="divide-y divide-slate-200">
             {users.map((user) => (
-              <tr key={user.id} className="group">
-                {/* Main row */}
-                <td className="py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="font-medium text-[#101828]">
+              <tr key={user.id} className="transition-colors hover:bg-slate-50">
+                <td className="px-6 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                      {user.fullName.slice(0, 1)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate font-semibold text-slate-950">
                           {user.fullName}
                         </p>
                         {user.createdByAdmin && (
-                          <span
-                            title="Created by admin"
-                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5
-                                       text-[10px] font-semibold rounded-full
-                                       bg-indigo-50 text-indigo-600 border border-indigo-200"
-                          >
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700">
                             <ShieldCheck size={10} />
-                            Admin
+                            Admin Created
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[#667085]">{user.email}</p>
+                      <p className="truncate text-xs text-slate-500">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
                 </td>
 
-                {/* Role */}
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   <UserRoleBadge role={user.role} />
                 </td>
 
-                {/* Status */}
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   <UserStatusBadge status={user.status} />
                 </td>
 
-                {/* Date */}
-                <td className="py-4 px-6 text-[#475467]">
+                <td className="px-6 py-4 text-sm text-slate-600">
                   {showDeletedActions
                     ? formatDateTime(user.deletedAt)
                     : formatDate(user.createdAt)}
                 </td>
 
-                {/* Actions */}
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   <div className="flex items-center justify-end gap-1">
-                    {/* Expand row */}
                     <button
+                      type="button"
                       onClick={() =>
-                        setExpandedRow(
-                          expandedRow === user.id ? null : user.id
-                        )
+                        setExpandedRow(expandedRow === user.id ? null : user.id)
                       }
-                      className="p-1.5 rounded-lg text-[#667085] hover:text-[#0B1736] hover:bg-[#F5F7FB] transition-colors"
+                      className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                       title="View details"
                     >
                       {expandedRow === user.id ? (
@@ -195,63 +198,58 @@ export function UserTable({
                       )}
                     </button>
 
-                    {/* Deleted page: Restore button */}
                     {showDeletedActions && (
                       <button
+                        type="button"
                         onClick={() => handleRestore(user)}
                         disabled={restoringId === user.id}
-                        className="p-1.5 rounded-lg text-[#12B76A] hover:bg-[#ECFDF5] transition-colors disabled:opacity-40"
+                        className="rounded-xl p-2 text-emerald-600 transition-colors hover:bg-emerald-50 disabled:opacity-40"
                         title="Restore user"
                       >
                         <RotateCcw
                           size={14}
-                          className={
-                            restoringId === user.id ? "animate-spin" : ""
-                          }
+                          className={restoringId === user.id ? "animate-spin" : ""}
                         />
                       </button>
                     )}
 
-                    {/* Active page actions */}
                     {!showDeletedActions && (
                       <>
-                        {/* Review (pending only) */}
                         {showReviewActions &&
                           user.status === "PENDING_APPROVAL" && (
                             <button
+                              type="button"
                               onClick={() => setReviewingUser(user)}
-                              className="p-1.5 rounded-lg text-[#F79009] hover:bg-[#FFFBEB] transition-colors"
+                              className="rounded-xl p-2 text-amber-600 transition-colors hover:bg-amber-50"
                               title="Review"
                             >
                               <MoreVertical size={14} />
                             </button>
                           )}
 
-                        {/* Edit */}
                         {(user.status === "APPROVED" ||
                           user.status === "DEACTIVATED") && (
                           <button
+                            type="button"
                             onClick={() => setEditingUser(user)}
-                            className="p-1.5 rounded-lg text-[#667085] hover:text-[#0B1736] hover:bg-[#F5F7FB] transition-colors"
+                            className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                             title="Edit"
                           >
                             <Pencil size={14} />
                           </button>
                         )}
 
-                        {/* Deactivate / Reactivate */}
                         {(user.status === "APPROVED" ||
                           user.status === "DEACTIVATED") && (
                           <button
+                            type="button"
                             onClick={() => handleToggleStatus(user)}
                             disabled={togglingId === user.id}
-                            className={`p-1.5 rounded-lg transition-colors
-                              ${
-                                user.status === "APPROVED"
-                                  ? "text-[#F79009] hover:bg-[#FFFBEB]"
-                                  : "text-[#475467] hover:text-[#12B76A] hover:bg-[#ECFDF5]"
-                              }
-                              disabled:opacity-40`}
+                            className={`rounded-xl p-2 transition-colors disabled:opacity-40 ${
+                              user.status === "APPROVED"
+                                ? "text-amber-600 hover:bg-amber-50"
+                                : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
+                            }`}
                             title={
                               user.status === "APPROVED"
                                 ? "Deactivate"
@@ -266,11 +264,11 @@ export function UserTable({
                           </button>
                         )}
 
-                        {/* Delete */}
                         {user.status !== "PENDING_APPROVAL" && (
                           <button
+                            type="button"
                             onClick={() => setDeletingUser(user)}
-                            className="p-1.5 rounded-lg text-[#98A2B3] hover:text-[#F04438] hover:bg-[#FEF2F2] transition-colors"
+                            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                             title="Delete"
                           >
                             <Trash2 size={14} />
@@ -283,154 +281,133 @@ export function UserTable({
               </tr>
             ))}
 
-            {/* Expanded row details — rendered separately for each user */}
             {users.map(
               (user) =>
                 expandedRow === user.id && (
-                  <tr
-                    key={`${user.id}-expanded`}
-                    className="bg-[#F9FAFC] border-b border-[#E4E7EC]"
-                  >
+                  <tr key={`${user.id}-expanded`} className="bg-slate-50">
                     <td colSpan={5} className="px-6 py-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs">
+                      <div className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 text-xs md:grid-cols-4">
                         <div>
-                          <p className="text-[#475467] font-medium mb-1">
-                            Phone
-                          </p>
-                          <p className="text-[#101828]">
-                            {user.phone || "—"}
-                          </p>
+                          <p className="mb-1 font-medium text-slate-500">Phone</p>
+                          <p className="text-slate-900">{user.phone || "N/A"}</p>
                         </div>
                         <div>
-                          <p className="text-[#475467] font-medium mb-1">
-                            NIC
-                          </p>
-                          <p className="text-[#101828]">{user.nic || "—"}</p>
+                          <p className="mb-1 font-medium text-slate-500">NIC</p>
+                          <p className="text-slate-900">{user.nic || "N/A"}</p>
                         </div>
 
-                        {/* Driver fields */}
                         {user.role === "DRIVER" && (
                           <>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 License No.
                               </p>
-                              <p className="text-[#101828]">
-                                {user.licenseNumber || "—"}
+                              <p className="text-slate-900">
+                                {user.licenseNumber || "N/A"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 License Expiry
                               </p>
-                              <p className="text-[#101828]">
-                                {user.licenseExpiryDate || "—"}
+                              <p className="text-slate-900">
+                                {user.licenseExpiryDate || "N/A"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 Experience
                               </p>
-                              <p className="text-[#101828]">
+                              <p className="text-slate-900">
                                 {user.experienceYears != null
                                   ? `${user.experienceYears} yrs`
-                                  : "—"}
+                                  : "N/A"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 Certifications
                               </p>
-                              <p className="text-[#101828]">
-                                {user.certifications || "—"}
+                              <p className="text-slate-900">
+                                {user.certifications || "N/A"}
                               </p>
                             </div>
                           </>
                         )}
 
-                        {/* Staff fields */}
                         {(user.role === "SYSTEM_USER" ||
                           user.role === "APPROVER" ||
                           user.role === "ADMIN") && (
                           <>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 Employee ID
                               </p>
-                              <p className="text-[#101828]">
-                                {user.employeeId || "—"}
+                              <p className="text-slate-900">
+                                {user.employeeId || "N/A"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 Department
                               </p>
-                              <p className="text-[#101828]">
-                                {user.department || "—"}
+                              <p className="text-slate-900">
+                                {user.department || "N/A"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 Office Location
                               </p>
-                              <p className="text-[#101828]">
-                                {user.officeLocation || "—"}
+                              <p className="text-slate-900">
+                                {user.officeLocation || "N/A"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 Designation
                               </p>
-                              <p className="text-[#101828]">
-                                {user.designation || "—"}
+                              <p className="text-slate-900">
+                                {user.designation || "N/A"}
                               </p>
                             </div>
                           </>
                         )}
 
-                        {/* Rejection reason */}
                         {user.rejectionReason && (
                           <div className="col-span-2 md:col-span-4">
-                            <p className="text-[#475467] font-medium mb-1">
+                            <p className="mb-1 font-medium text-slate-500">
                               Rejection Reason
                             </p>
-                            <p className="text-[#F04438]">
-                              {user.rejectionReason}
-                            </p>
+                            <p className="text-red-600">{user.rejectionReason}</p>
                           </div>
                         )}
 
-                        {/* Deletion info (for deleted page) */}
                         {showDeletedActions && user.deletedReason && (
-                          <div className="col-span-2 md:col-span-4 space-y-2">
+                          <div className="col-span-2 space-y-2 md:col-span-4">
                             <div>
-                              <p className="text-[#475467] font-medium mb-1">
+                              <p className="mb-1 font-medium text-slate-500">
                                 Deletion Reason
                               </p>
-                              <p className="text-[#F04438]">
-                                {user.deletedReason}
-                              </p>
+                              <p className="text-red-600">{user.deletedReason}</p>
                             </div>
                             {user.deletedBy && (
                               <div>
-                                <p className="text-[#475467] font-medium mb-1">
+                                <p className="mb-1 font-medium text-slate-500">
                                   Deleted By
                                 </p>
-                                <p className="text-[#101828]">
-                                  {user.deletedBy}
-                                </p>
+                                <p className="text-slate-900">{user.deletedBy}</p>
                               </div>
                             )}
                           </div>
                         )}
 
-                        {/* Audit info */}
                         {user.createdBy && (
                           <div>
-                            <p className="text-[#475467] font-medium mb-1">
+                            <p className="mb-1 font-medium text-slate-500">
                               Created By
                             </p>
-                            <p className="text-[#101828]">{user.createdBy}</p>
+                            <p className="text-slate-900">{user.createdBy}</p>
                           </div>
                         )}
                       </div>
@@ -442,7 +419,6 @@ export function UserTable({
         </table>
       </div>
 
-      {/* Review Dialog */}
       {reviewingUser && (
         <ReviewDialog
           user={reviewingUser}
@@ -451,7 +427,6 @@ export function UserTable({
         />
       )}
 
-      {/* Edit Dialog */}
       {editingUser && (
         <EditUserDialog
           user={editingUser}
@@ -460,7 +435,6 @@ export function UserTable({
         />
       )}
 
-      {/* Delete Dialog */}
       {deletingUser && (
         <DeleteUserDialog
           user={deletingUser}

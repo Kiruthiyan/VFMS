@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import {
   ChevronDown,
   ChevronUp,
-  Receipt,
   ExternalLink,
   Eye,
+  Receipt,
 } from "lucide-react";
+
 import type { FuelRecord } from "@/lib/api/fuel";
-import { FuelFlagBadge } from "./fuel-flag-badge";
-import { formatLKR, formatEfficiency } from "@/lib/fuel-utils";
+import { formatEfficiency, formatLKR } from "@/lib/fuel-utils";
 import { cn } from "@/lib/utils";
+
+import { FuelFlagBadge } from "./fuel-flag-badge";
 
 interface FuelRecordsTableProps {
   records: FuelRecord[];
@@ -31,8 +33,8 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
 
   if (records.length === 0) {
     return (
-      <div className="text-center py-14">
-        <p className="text-slate-600 text-sm">No fuel records found.</p>
+      <div className="py-14 text-center">
+        <p className="text-sm text-slate-600">No fuel records found.</p>
       </div>
     );
   }
@@ -41,7 +43,7 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b-2 border-slate-200 bg-slate-100">
+          <tr className="border-b border-slate-200 bg-slate-50">
             {[
               "Vehicle",
               "Driver",
@@ -51,78 +53,68 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
               "Efficiency",
               "Status",
               "",
-            ].map((h) => (
+            ].map((heading) => (
               <th
-                key={h}
-                className="text-left py-4 px-5 text-xs font-bold text-slate-900 uppercase tracking-widest"
+                key={heading}
+                className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500"
               >
-                {h}
+                {heading}
               </th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
           {records.map((record) => (
-            <>
+            <Fragment key={record.id}>
               <tr
-                key={record.id}
                 className={cn(
-                  "hover:bg-blue-50 transition-colors duration-200",
-                  record.flaggedForMisuse && "bg-red-50"
+                  "transition-colors duration-200 hover:bg-slate-50",
+                  record.flaggedForMisuse && "bg-rose-50/60"
                 )}
               >
-                {/* Vehicle */}
-                <td className="py-4 px-5">
-                  <p className="font-semibold text-slate-900">
+                <td className="px-5 py-4">
+                  <p className="font-semibold text-slate-950">
                     {record.vehiclePlate}
                   </p>
-                  <p className="text-xs text-slate-600 mt-1">
+                  <p className="mt-1 text-xs text-slate-500">
                     {record.vehicleMakeModel}
                   </p>
                 </td>
 
-                {/* Driver */}
-                <td className="py-4 px-5 text-slate-800 font-medium">
-                  {record.driverName ?? "—"}
+                <td className="px-5 py-4 font-medium text-slate-700">
+                  {record.driverName ?? "N/A"}
                 </td>
 
-                {/* Date */}
-                <td className="py-4 px-5 text-slate-800 font-medium">
+                <td className="px-5 py-4 font-medium text-slate-700">
                   {formatDate(record.fuelDate)}
                 </td>
 
-                {/* Quantity */}
-                <td className="py-4 px-5 text-slate-900 font-semibold">
+                <td className="px-5 py-4 font-semibold text-slate-950">
                   {Number(record.quantity).toFixed(2)} L
                 </td>
 
-                {/* Cost */}
-                <td className="py-3.5 px-4 text-slate-900">
+                <td className="px-5 py-4 text-slate-950">
                   {formatLKR(Number(record.totalCost))}
                 </td>
 
-                {/* Efficiency */}
-                <td className="py-3.5 px-4 text-slate-400">
+                <td className="px-5 py-4 text-slate-500">
                   {formatEfficiency(record.efficiencyKmPerLitre)}
                 </td>
 
-                {/* Flag */}
-                <td className="py-3.5 px-4">
+                <td className="px-5 py-4">
                   <FuelFlagBadge
                     flagged={record.flaggedForMisuse}
                     reason={record.flagReason}
                   />
                 </td>
 
-                {/* Expand */}
-                <td className="py-3.5 px-4">
+                <td className="px-5 py-4">
                   <button
+                    type="button"
                     onClick={() =>
-                      setExpandedId(
-                        expandedId === record.id ? null : record.id
-                      )
+                      setExpandedId(expandedId === record.id ? null : record.id)
                     }
-                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+                    className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                   >
                     {expandedId === record.id ? (
                       <ChevronUp size={14} />
@@ -133,60 +125,71 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
                 </td>
               </tr>
 
-              {/* Expanded detail */}
               {expandedId === record.id && (
-                <tr key={`${record.id}-detail`} className="bg-slate-100">
+                <tr className="bg-slate-50">
                   <td colSpan={8} className="px-4 py-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                    <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-xs md:grid-cols-4">
                       <div>
-                        <p className="text-slate-700 mb-1 font-medium">Cost / Litre</p>
+                        <p className="mb-1 font-medium text-slate-500">
+                          Cost / Litre
+                        </p>
                         <p className="text-slate-900">
                           LKR {Number(record.costPerLitre).toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-slate-700 mb-1 font-medium">Odometer</p>
+                        <p className="mb-1 font-medium text-slate-500">
+                          Odometer
+                        </p>
                         <p className="text-slate-900">
                           {record.odometerReading.toLocaleString()} km
                         </p>
                       </div>
                       <div>
-                        <p className="text-slate-700 mb-1 font-medium">Distance Since Last</p>
+                        <p className="mb-1 font-medium text-slate-500">
+                          Distance Since Last
+                        </p>
                         <p className="text-slate-900">
                           {record.distanceSinceLast != null
                             ? `${record.distanceSinceLast.toLocaleString()} km`
-                            : "—"}
+                            : "N/A"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-slate-700 mb-1 font-medium">Fuel Station</p>
+                        <p className="mb-1 font-medium text-slate-500">
+                          Fuel Station
+                        </p>
                         <p className="text-slate-900">
-                          {record.fuelStation ?? "—"}
+                          {record.fuelStation ?? "N/A"}
                         </p>
                       </div>
 
                       {record.notes && (
                         <div className="col-span-2 md:col-span-4">
-                          <p className="text-slate-700 mb-1 font-medium">Notes</p>
+                          <p className="mb-1 font-medium text-slate-500">
+                            Notes
+                          </p>
                           <p className="text-slate-900">{record.notes}</p>
                         </div>
                       )}
 
                       {record.flagReason && (
                         <div className="col-span-2 md:col-span-4">
-                          <p className="text-slate-700 mb-1 font-medium">Flag Reason</p>
+                          <p className="mb-1 font-medium text-slate-500">
+                            Flag Reason
+                          </p>
                           <p className="text-red-600">{record.flagReason}</p>
                         </div>
                       )}
 
                       {record.receiptUrl && (
                         <div>
-                          <p className="text-slate-500 mb-1">Receipt</p>
+                          <p className="mb-1 text-slate-500">Receipt</p>
                           <a
                             href={record.receiptUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300"
+                            className="inline-flex items-center gap-1 font-semibold text-amber-600 hover:text-amber-500"
                           >
                             <Receipt size={12} />
                             {record.receiptFileName ?? "View Receipt"}
@@ -196,14 +199,14 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
                       )}
 
                       <div>
-                        <p className="text-slate-500 mb-1">Recorded By</p>
-                        <p className="text-slate-300">{record.createdBy}</p>
+                        <p className="mb-1 text-slate-500">Recorded By</p>
+                        <p className="text-slate-700">{record.createdBy}</p>
                       </div>
 
-                      <div className="col-span-2 md:col-span-4 pt-2 border-t border-slate-700">
+                      <div className="col-span-2 border-t border-slate-200 pt-2 md:col-span-4">
                         <Link
                           href={`/admin/fuel/${record.id}`}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-xs transition-colors"
+                          className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                         >
                           <Eye size={14} />
                           View Full Details
@@ -213,7 +216,7 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
                   </td>
                 </tr>
               )}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>

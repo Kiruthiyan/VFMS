@@ -33,20 +33,18 @@ export default function PendingUsersPage() {
 
   return (
     <AdminShell>
-      <div className="mx-auto max-w-6xl space-y-6">
-
-        {/* Header Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
-          <div className="bg-[#0B1736] px-6 py-6 flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-5 bg-slate-950 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-[#F4B400] rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-[#0B1736]" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400">
+                <Clock className="h-6 w-6 text-slate-950" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">
+                <h1 className="text-2xl font-semibold tracking-tight text-white">
                   Pending Registrations
                 </h1>
-                <p className="text-sm text-[#FFFFFF] mt-1 opacity-90">
+                <p className="mt-1 text-sm text-slate-300">
                   {users.length} user{users.length !== 1 ? "s" : ""} awaiting approval
                 </p>
               </div>
@@ -55,10 +53,9 @@ export default function PendingUsersPage() {
             <button
               onClick={fetchPending}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium
-                         bg-[#F4B400] text-[#0B1736] rounded-lg
-                         hover:bg-[#FFC107] transition-colors disabled:opacity-50
-                         shadow-lg shadow-[0_0_20px_rgba(244,180,0,0.15)]"
+              className="flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold
+                         text-slate-950 transition-colors hover:bg-amber-300 disabled:opacity-50
+                         shadow-lg shadow-amber-500/20"
             >
               <RefreshCw
                 size={16}
@@ -72,12 +69,12 @@ export default function PendingUsersPage() {
         {/* Content */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <LoadingSpinner size={28} className="text-blue-950" />
+            <LoadingSpinner size={28} className="text-slate-950" />
           </div>
         ) : error ? (
           <FormMessage type="error" message={error} />
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <UserTable
               users={users}
               showReviewActions={true}

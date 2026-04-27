@@ -43,14 +43,13 @@ export default function FuelDashboardPage() {
 
   return (
     <AdminShell>
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="space-y-6">
           {/* Page Header */}
-          <div className="mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
+            <h1 className="mb-2 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">
               Fuel Management Dashboard
             </h1>
-            <p className="text-slate-600 text-sm font-medium">
+            <p className="text-sm font-medium text-slate-500">
               Monitor fuel consumption, costs, and fleet efficiency at a glance
             </p>
           </div>
@@ -59,8 +58,8 @@ export default function FuelDashboardPage() {
           {loading && (
             <div className="flex justify-center py-24">
               <div className="text-center">
-                <LoadingSpinner size={32} className="text-blue-600 mx-auto mb-4" />
-                <p className="text-slate-600 font-500">Loading dashboard data...</p>
+                <LoadingSpinner size={32} className="mx-auto mb-4 text-slate-950" />
+                <p className="text-sm font-medium text-slate-600">Loading dashboard data...</p>
               </div>
             </div>
           )}
@@ -76,14 +75,14 @@ export default function FuelDashboardPage() {
               {/* Key Performance Indicators */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
                 {/* Total Records KPI */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
-                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                <Card className="overflow-hidden hover:shadow-md">
+                  <CardHeader className="bg-slate-950 py-4 border-b-0">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
                         Total Records
                       </CardTitle>
-                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
-                        <Fuel size={18} className="text-blue-950" strokeWidth={2.5} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
+                          <Fuel size={18} className="text-slate-950" strokeWidth={2.5} />
                       </div>
                     </div>
                   </CardHeader>
@@ -94,32 +93,32 @@ export default function FuelDashboardPage() {
                 </Card>
 
                 {/* Total Spend KPI */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
-                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                <Card className="overflow-hidden hover:shadow-md">
+                  <CardHeader className="bg-slate-950 py-4 border-b-0">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
                         Total Spend
                       </CardTitle>
-                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
-                        <TrendingUp size={18} className="text-blue-950" strokeWidth={2.5} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
+                          <TrendingUp size={18} className="text-slate-950" strokeWidth={2.5} />
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">₹{(totalSpend / 1000).toFixed(1)}k</p>
+                    <p className="text-4xl font-bold text-slate-900">LKR {(totalSpend / 1000).toFixed(1)}k</p>
                     <p className="text-sm text-slate-600 mt-2 font-medium">Total fuel cost</p>
                   </CardContent>
                 </Card>
 
                 {/* Total Volume KPI */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
-                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                <Card className="overflow-hidden hover:shadow-md">
+                  <CardHeader className="bg-slate-950 py-4 border-b-0">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
                         Total Volume
                       </CardTitle>
-                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
-                        <Fuel size={18} className="text-blue-950" strokeWidth={2.5} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
+                          <Fuel size={18} className="text-slate-950" strokeWidth={2.5} />
                       </div>
                     </div>
                   </CardHeader>
@@ -130,19 +129,19 @@ export default function FuelDashboardPage() {
                 </Card>
 
                 {/* Avg Cost per Liter KPI */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow overflow-hidden">
-                  <CardHeader className="bg-blue-950 py-4 border-b-0">
+                <Card className="overflow-hidden hover:shadow-md">
+                  <CardHeader className="bg-slate-950 py-4 border-b-0">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
                         Avg Cost/L
                       </CardTitle>
-                      <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center">
-                        <TrendingUp size={18} className="text-blue-950" strokeWidth={2.5} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
+                          <TrendingUp size={18} className="text-slate-950" strokeWidth={2.5} />
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">₹{avgCostPerLiter}</p>
+                    <p className="text-4xl font-bold text-slate-900">LKR {avgCostPerLiter}</p>
                     <p className="text-sm text-slate-600 mt-2 font-medium">Cost per liter</p>
                   </CardContent>
                 </Card>
@@ -152,11 +151,11 @@ export default function FuelDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
                 {/* Fuel Entry Logs */}
                 <Link href="/admin/fuel/logs" className="group">
-                  <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-950 transition-all h-full cursor-pointer">
+                  <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-4">
-                        <div className="h-11 w-11 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                          <FileText size={22} className="text-blue-950" strokeWidth={1.5} />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
+                          <FileText size={22} className="text-slate-950" strokeWidth={1.5} />
                         </div>
                         <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded">VIEW</span>
                       </div>
@@ -168,13 +167,13 @@ export default function FuelDashboardPage() {
 
                 {/* Create New Entry */}
                 <Link href="/admin/fuel/create" className="group">
-                  <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-950 transition-all h-full cursor-pointer">
+                  <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-4">
-                        <div className="h-11 w-11 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                          <Plus size={22} className="text-blue-950" strokeWidth={2.5} />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
+                          <Plus size={22} className="text-slate-950" strokeWidth={2.5} />
                         </div>
-                        <span className="text-xs font-bold text-blue-950 bg-blue-100 px-2.5 py-1 rounded">NEW</span>
+                        <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">NEW</span>
                       </div>
                       <h3 className="font-bold text-slate-900 mb-1 text-sm">Create Fuel Entry</h3>
                       <p className="text-xs text-slate-600">Log a new fuel purchase for your vehicles</p>
@@ -184,11 +183,11 @@ export default function FuelDashboardPage() {
 
                 {/* Fuel Alerts */}
                 <Link href="/admin/fuel/alerts" className="group">
-                  <Card className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-950 transition-all h-full cursor-pointer">
+                  <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-4">
-                        <div className="h-11 w-11 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                          <AlertCircle size={22} className="text-blue-950" strokeWidth={1.5} />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
+                          <AlertCircle size={22} className="text-slate-950" strokeWidth={1.5} />
                         </div>
                         <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded">MONITOR</span>
                       </div>
@@ -202,8 +201,8 @@ export default function FuelDashboardPage() {
               {/* Fleet Summary Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Active Vehicles */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
-                  <CardHeader className="bg-blue-950 py-5 border-b border-slate-200">
+                <Card>
+                  <CardHeader className="bg-slate-950 py-5 border-b border-slate-200">
                     <CardTitle className="text-white font-bold text-base flex items-center gap-2">
                       <Fuel size={18} />
                       Fleet Overview
@@ -213,19 +212,19 @@ export default function FuelDashboardPage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
                         <span className="text-slate-700 text-sm font-medium">Active Vehicles</span>
-                        <span className="text-2xl font-bold text-blue-950">{vehicles.length}</span>
+                        <span className="text-2xl font-bold text-slate-950">{vehicles.length}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-700 text-sm font-medium">Active Drivers</span>
-                        <span className="text-2xl font-bold text-blue-950">{drivers.length}</span>
+                        <span className="text-2xl font-bold text-slate-950">{drivers.length}</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Quick Stats */}
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200">
-                  <CardHeader className="bg-blue-950 py-5 border-b border-slate-200">
+                <Card>
+                  <CardHeader className="bg-slate-950 py-5 border-b border-slate-200">
                     <CardTitle className="text-white font-bold text-base flex items-center gap-2">
                       <BarChart3 size={18} />
                       Quick Stats
@@ -235,14 +234,14 @@ export default function FuelDashboardPage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
                         <span className="text-slate-700 text-sm font-medium">Records per Vehicle</span>
-                        <span className="text-2xl font-bold text-blue-950">
+                        <span className="text-2xl font-bold text-slate-950">
                           {vehicles.length > 0 ? (records.length / vehicles.length).toFixed(1) : "0"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-700 text-sm font-medium">Avg Spend per Vehicle</span>
-                        <span className="text-lg font-bold text-blue-950">
-                          ₹{vehicles.length > 0 ? (totalSpend / vehicles.length).toFixed(0) : "0"}
+                        <span className="text-lg font-bold text-slate-950">
+                          LKR {vehicles.length > 0 ? (totalSpend / vehicles.length).toFixed(0) : "0"}
                         </span>
                       </div>
                     </div>
@@ -251,7 +250,6 @@ export default function FuelDashboardPage() {
               </div>
             </>
           )}
-        </div>
       </div>
     </AdminShell>
   );

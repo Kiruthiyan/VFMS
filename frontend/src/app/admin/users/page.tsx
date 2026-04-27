@@ -8,7 +8,6 @@ import {
   UserPlus,
   CheckCircle2,
   Clock,
-  XCircle,
   UserX,
   Trash2,
   ChevronLeft,
@@ -160,19 +159,18 @@ export default function AllUsersPage() {
 
   return (
     <AdminShell>
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
-          <div className="bg-[#0B1736] px-6 py-6 flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-5 bg-slate-950 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-[#F4B400] rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-[#0B1736]" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400">
+                <Users className="h-6 w-6 text-slate-950" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">
+                <h1 className="text-2xl font-semibold tracking-tight text-white">
                   User Management
                 </h1>
-                <p className="text-sm text-white mt-1 opacity-90">
+                <p className="mt-1 text-sm text-slate-300">
                   Manage all system users, create accounts, and review registrations
                 </p>
               </div>
@@ -182,9 +180,8 @@ export default function AllUsersPage() {
               <button
                 onClick={fetchAll}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                           bg-white/10 text-white rounded-lg border border-white/20
-                           hover:bg-white/20 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold
+                           text-white transition-colors hover:bg-white/15 disabled:opacity-50"
               >
                 <RefreshCw
                   size={16}
@@ -194,10 +191,8 @@ export default function AllUsersPage() {
               </button>
               <button
                 onClick={() => setShowCreateDialog(true)}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold
-                           bg-[#F4B400] text-[#0B1736] rounded-lg
-                           hover:bg-[#FFC107] transition-colors
-                           shadow-lg shadow-[0_0_20px_rgba(244,180,0,0.15)]"
+                className="flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-semibold
+                           text-slate-950 shadow-lg shadow-amber-500/20 transition-colors hover:bg-amber-300"
               >
                 <UserPlus size={16} />
                 Create User
@@ -208,15 +203,15 @@ export default function AllUsersPage() {
 
         {/* Summary Cards */}
         {counts && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             {SUMMARY_CARDS.map((card) => {
               const Icon = card.icon;
               const count = counts[card.key as keyof UserCounts] ?? 0;
               return (
                 <div
                   key={card.key}
-                  className={`${card.color} rounded-xl border border-[#E4E7EC] px-5 py-4
-                              shadow-sm hover:shadow-md transition-shadow`}
+                  className={`${card.color} rounded-2xl border border-slate-200 px-5 py-5
+                              shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div
@@ -226,7 +221,7 @@ export default function AllUsersPage() {
                     </div>
                   </div>
                   <p
-                    className={`text-2xl font-bold ${card.textColor} tracking-tight`}
+                    className={`text-3xl font-semibold ${card.textColor} tracking-tight`}
                   >
                     {count}
                   </p>
@@ -244,7 +239,8 @@ export default function AllUsersPage() {
         )}
 
         {/* Filters Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] p-6 space-y-4">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
             <div className="relative flex-1">
@@ -254,10 +250,10 @@ export default function AllUsersPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, email, or NIC..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#E4E7EC]
+                className="h-11 w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5
                            bg-white text-sm text-[#101828]
                            placeholder:text-[#667085] focus:outline-none
-                           focus:ring-2 focus:ring-[#0B1736]/30 focus:border-[#0B1736]
+                           focus:ring-2 focus:ring-amber-400 focus:border-amber-400
                            transition-colors"
               />
             </div>
@@ -268,12 +264,12 @@ export default function AllUsersPage() {
                 <button
                   key={opt.value}
                   onClick={() => setRoleFilter(opt.value)}
-                  className={`px-3 py-2 rounded-lg text-xs font-semibold
+                  className={`rounded-xl px-3 py-2 text-xs font-semibold
                               border transition-colors
                               ${
                                 roleFilter === opt.value
-                                  ? "bg-[#0B1736] text-white border-[#0B1736]"
-                                  : "bg-[#F9FAFC] text-[#475467] border-[#E4E7EC] hover:bg-[#F5F7FB] hover:border-[#0B1736]"
+                                  ? "bg-slate-950 text-white border-slate-950"
+                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
                               }`}
                 >
                   {opt.label}
@@ -288,12 +284,12 @@ export default function AllUsersPage() {
               <button
                 key={opt.value}
                 onClick={() => setStatusFilter(opt.value)}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold
+                className={`rounded-xl px-4 py-2 text-xs font-semibold
                             border transition-colors
                             ${
                               statusFilter === opt.value
-                                ? "bg-[#0B1736] text-white border-[#0B1736] shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)]"
-                                : "bg-[#F9FAFC] text-[#475467] border-[#E4E7EC] hover:bg-[#F5F7FB] hover:border-[#0B1736]"
+                                ? "bg-slate-950 text-white border-slate-950 shadow-lg shadow-slate-950/10"
+                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
                             }`}
               >
                 {opt.label}
@@ -303,13 +299,14 @@ export default function AllUsersPage() {
             {/* Link to deleted users */}
             <Link
               href="/admin/users/deleted"
-              className="px-4 py-2 rounded-lg text-xs font-semibold
+              className="ml-auto flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold
                          border border-red-200 bg-red-50 text-red-600
-                         hover:bg-red-100 transition-colors ml-auto flex items-center gap-1.5"
+                         hover:bg-red-100 transition-colors"
             >
               <Trash2 size={12} />
               View Deleted ({counts?.deleted ?? 0})
             </Link>
+          </div>
           </div>
         </div>
 
@@ -323,7 +320,7 @@ export default function AllUsersPage() {
           <FormMessage type="error" message={error} />
         ) : (
           <>
-            <div className="bg-white rounded-xl shadow-sm border border-[#E4E7EC] overflow-hidden">
+            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
               <UserTable
                 users={paginatedUsers}
                 showReviewActions={true}
@@ -334,7 +331,7 @@ export default function AllUsersPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-[#E4E7EC] px-6 py-3">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-6 py-3 shadow-sm">
                 <p className="text-xs text-[#667085]">
                   Showing{" "}
                   <span className="font-semibold text-[#101828]">
@@ -356,7 +353,7 @@ export default function AllUsersPage() {
                       setCurrentPage((prev) => Math.max(1, prev - 1))
                     }
                     disabled={currentPage === 1}
-                    className="p-2 rounded-lg border border-[#E4E7EC] hover:bg-[#F5F7FB]
+                    className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50
                                transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft size={14} />
@@ -366,12 +363,12 @@ export default function AllUsersPage() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded-lg text-xs font-semibold
+                        className={`h-8 w-8 rounded-xl text-xs font-semibold
                                     border transition-colors
                                     ${
                                       page === currentPage
-                                        ? "bg-[#0B1736] text-white border-[#0B1736]"
-                                        : "border-[#E4E7EC] text-[#475467] hover:bg-[#F5F7FB]"
+                                        ? "bg-slate-950 text-white border-slate-950"
+                                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
                                     }`}
                       >
                         {page}
@@ -385,7 +382,7 @@ export default function AllUsersPage() {
                       )
                     }
                     disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg border border-[#E4E7EC] hover:bg-[#F5F7FB]
+                    className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50
                                transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <ChevronRight size={14} />
