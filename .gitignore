@@ -38,3 +38,4 @@ build/
 # Local config with secrets
 src/main/resources/application.propertiesvfms-frontend/node_modules/
 vfms-frontend/.next/
+src/main/resources/application.properties
