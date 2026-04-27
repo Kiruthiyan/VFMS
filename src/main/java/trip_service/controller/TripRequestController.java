@@ -88,6 +88,21 @@ public class TripRequestController {
         return ResponseEntity.ok(service.getAvailableDrivers());
     }
 
+    @GetMapping("/all-drivers")
+    public ResponseEntity<List<DriverOptionDTO>> getAllDrivers() {
+        return ResponseEntity.ok(service.getAllDrivers());
+    }
+
+    @PatchMapping("/{id}/driver-accept")
+    public ResponseEntity<TripRequest> driverAcceptTrip(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.driverAcceptTrip(id));
+    }
+
+    @PatchMapping("/{id}/driver-reject")
+    public ResponseEntity<TripRequest> driverRejectTrip(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
+        return ResponseEntity.ok(service.driverRejectTrip(id, dto));
+    }
+
     @PatchMapping("/{id}/start")
     public ResponseEntity<TripRequest> startTrip(@PathVariable UUID id) {
         return ResponseEntity.ok(service.startTrip(id));

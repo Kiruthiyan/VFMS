@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
     Table, TableBody, TableCell,
     TableHead, TableHeader, TableRow,
@@ -12,10 +11,7 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
     DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    MoreHorizontal, Plus, Search,
-    Filter, MapPin, Calendar, Loader2
-} from "lucide-react";
+import { MoreHorizontal, Plus, MapPin, Calendar, Loader2, X, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/roleContext";
 import RoleSwitcher from "@/components/RoleSwitcher";
@@ -34,22 +30,33 @@ interface Trip {
     requesterId: string;
 }
 
-const statusStyles: Record<string, string> = {
-    NEW: "bg-slate-50 text-slate-700 border-slate-200 font-bold",
-    SUBMITTED: "bg-amber-50 text-amber-700 border-amber-200 font-bold",
-    APPROVED: "bg-green-50 text-green-700 border-green-200 font-bold",
-    REJECTED: "bg-red-50 text-red-700 border-red-200 font-bold",
-    ONGOING: "bg-purple-50 text-purple-700 border-purple-200 font-bold",
-    COMPLETED: "bg-blue-50 text-blue-700 border-blue-200 font-bold",
-    CANCELLED: "bg-slate-100 text-slate-500 border-slate-300 font-bold",
+const STATUS_OPTIONS = ["ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED"];
+
+const STATUS_STYLES: Record<string, string> = {
+    NEW:              "bg-slate-50 text-slate-700 border-slate-200 font-bold",
+    SUBMITTED:        "bg-amber-50 text-amber-700 border-amber-200 font-bold",
+    APPROVED:         "bg-green-50 text-green-700 border-green-200 font-bold",
+    DRIVER_CONFIRMED: "bg-teal-50 text-teal-700 border-teal-200 font-bold",
+    DRIVER_REJECTED:  "bg-orange-50 text-orange-700 border-orange-200 font-bold",
+    REJECTED:         "bg-red-50 text-red-700 border-red-200 font-bold",
+    ONGOING:          "bg-purple-50 text-purple-700 border-purple-200 font-bold",
+    COMPLETED:        "bg-blue-50 text-blue-700 border-blue-200 font-bold",
+    CANCELLED:        "bg-slate-100 text-slate-500 border-slate-300 font-bold",
 };
+
+const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleString("en-GB", {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+    });
 
 export default function TripsPage() {
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [showFilters, setShowFilters] = useState(false);
-    const [activeStatusFilter, setActiveStatusFilter] = useState("ALL");
+    const [searchDestination, setSearchDestination] = useState("");
+    const [searchPurpose, setSearchPurpose] = useState("");
+    const [statusFilter, setStatusFilter] = useState("ALL");
+    const [departureDateFilter, setDepartureDateFilter] = useState("");
     const router = useRouter();
     const { currentUser } = useRole();
 
@@ -76,70 +83,81 @@ export default function TripsPage() {
         }
     };
 
-    const filtered = trips.filter(t => {
-        const matchesSearch =
-            t.destination.toLowerCase().includes(search.toLowerCase()) ||
-            t.purpose.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = activeStatusFilter === "ALL" || t.status === activeStatusFilter;
-        return matchesSearch && matchesStatus;
+    const filteredTrips = trips.filter(t => {
+        const matchesDestination = searchDestination === "" ||
+            t.destination.toLowerCase().includes(searchDestination.toLowerCase());
+        const matchesPurpose = searchPurpose === "" ||
+            t.purpose.toLowerCase().includes(searchPurpose.toLowerCase());
+        const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
+        const matchesDate = departureDateFilter === "" ||
+            t.departureTime.startsWith(departureDateFilter);
+        return matchesDestination && matchesPurpose && matchesStatus && matchesDate;
     });
 
-    const formatDate = (dateStr: string) =>
-        new Date(dateStr).toLocaleString("en-GB", {
-            day: "2-digit", month: "short",
-            year: "numeric", hour: "2-digit", minute: "2-digit"
-        });
+    const uniqueDestinations = [...new Set(trips.map(t => t.destination))].sort();
+    const uniquePurposes = [...new Set(trips.map(t => t.purpose))].sort();
+
+    const isFiltersActive = searchDestination !== "" || searchPurpose !== "" ||
+        statusFilter !== "ALL" || departureDateFilter !== "";
+
+    const clearFilters = () => {
+        setSearchDestination("");
+        setSearchPurpose("");
+        setStatusFilter("ALL");
+        setDepartureDateFilter("");
+    };
 
     const getPageTitle = () => {
-        switch (currentUser.role) {
-            case "SYSTEM_USER": return "My Trip Requests";
-            case "STAFF": return "Trip Management";
-            case "DRIVER": return "My Assignments";
-            case "ADMIN": return "All Trips";
-        }
+        const titles: Record<string, string> = {
+            SYSTEM_USER: "My Trip Requests",
+            STAFF:       "Trip Management",
+            DRIVER:      "My Assignments",
+            ADMIN:       "All Trips",
+        };
+        return titles[currentUser.role] ?? "Trips";
     };
 
     const getStats = () => {
-        switch (currentUser.role) {
-            case "SYSTEM_USER":
-                return [
-                    { label: "Total", value: trips.length, color: "text-slate-900" },
-                    { label: "Pending", value: trips.filter(t => t.status === "SUBMITTED").length, color: "text-amber-600" },
-                    { label: "Approved", value: trips.filter(t => t.status === "APPROVED").length, color: "text-green-600" },
-                    { label: "Completed", value: trips.filter(t => t.status === "COMPLETED").length, color: "text-blue-600" },
-                ];
-            case "STAFF":
-                return [
-                    { label: "All Trips", value: trips.length, color: "text-slate-900" },
-                    { label: "Needs Review", value: trips.filter(t => t.status === "SUBMITTED").length, color: "text-amber-600" },
-                    { label: "Approved", value: trips.filter(t => t.status === "APPROVED").length, color: "text-green-600" },
-                    { label: "Ongoing", value: trips.filter(t => t.status === "ONGOING").length, color: "text-purple-600" },
-                ];
-            case "DRIVER":
-                return [
-                    { label: "Assigned", value: trips.length, color: "text-slate-900" },
-                    { label: "Upcoming", value: trips.filter(t => t.status === "APPROVED").length, color: "text-green-600" },
-                    { label: "Ongoing", value: trips.filter(t => t.status === "ONGOING").length, color: "text-purple-600" },
-                    { label: "Completed", value: trips.filter(t => t.status === "COMPLETED").length, color: "text-blue-600" },
-                ];
-            case "ADMIN":
-                return [
-                    { label: "Total", value: trips.length, color: "text-slate-900" },
-                    { label: "Submitted", value: trips.filter(t => t.status === "SUBMITTED").length, color: "text-amber-600" },
-                    { label: "Ongoing", value: trips.filter(t => t.status === "ONGOING").length, color: "text-purple-600" },
-                    { label: "Completed", value: trips.filter(t => t.status === "COMPLETED").length, color: "text-blue-600" },
-                ];
-        }
+        const base = [
+            { label: "Total", value: trips.length, color: "text-slate-900" },
+        ];
+        const byRole: Record<string, { label: string; value: number; color: string }[]> = {
+            SYSTEM_USER: [
+                { label: "Pending", value: trips.filter(t => t.status === "SUBMITTED").length, color: "text-amber-600" },
+                { label: "Approved", value: trips.filter(t => t.status === "APPROVED").length, color: "text-green-600" },
+                { label: "Completed", value: trips.filter(t => t.status === "COMPLETED").length, color: "text-blue-600" },
+            ],
+            STAFF: [
+                { label: "Needs Review", value: trips.filter(t => ["SUBMITTED", "DRIVER_REJECTED"].includes(t.status)).length, color: "text-amber-600" },
+                { label: "Approved", value: trips.filter(t => t.status === "APPROVED").length, color: "text-green-600" },
+                { label: "Ongoing", value: trips.filter(t => t.status === "ONGOING").length, color: "text-purple-600" },
+            ],
+            DRIVER: [
+                { label: "Awaiting Confirm", value: trips.filter(t => t.status === "APPROVED").length, color: "text-amber-600" },
+                { label: "Confirmed", value: trips.filter(t => t.status === "DRIVER_CONFIRMED").length, color: "text-teal-600" },
+                { label: "Ongoing", value: trips.filter(t => t.status === "ONGOING").length, color: "text-purple-600" },
+            ],
+            ADMIN: [
+                { label: "Submitted", value: trips.filter(t => t.status === "SUBMITTED").length, color: "text-amber-600" },
+                { label: "Ongoing", value: trips.filter(t => t.status === "ONGOING").length, color: "text-purple-600" },
+                { label: "Completed", value: trips.filter(t => t.status === "COMPLETED").length, color: "text-blue-600" },
+            ],
+        };
+        return [...base, ...(byRole[currentUser.role] ?? [])];
     };
 
-    return (
-        <div className="min-h-screen bg-slate-50 p-6 space-y-6">
+    const canCancelTrip = (tripStatus: string) =>
+        (currentUser.role === "SYSTEM_USER" || currentUser.role === "ADMIN") &&
+        !["COMPLETED", "CANCELLED", "REJECTED"].includes(tripStatus);
 
-            {/* Role Switcher — top right, doesn't block content */}
+    return (
+        <div className="min-h-screen bg-slate-50 p-6 space-y-4">
+
+            {/* Role Switcher — inline at top, no overlay */}
             <RoleSwitcher />
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pr-36">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900">
                         {getPageTitle()}
@@ -147,11 +165,11 @@ export default function TripsPage() {
                     <p className="text-slate-500 font-medium mt-1">
                         Logged in as <span className="font-bold text-blue-950">{currentUser.name}</span>
                         <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
-                            {currentUser.role}
+                            {currentUser.role.replace("_", " ")}
                         </span>
                     </p>
                 </div>
-                {(currentUser.role === "SYSTEM_USER" || currentUser.role === "ADMIN") && (
+                {currentUser.role === "SYSTEM_USER" && (
                     <Button
                         className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                         onClick={() => router.push("/trips/create")}
@@ -163,9 +181,9 @@ export default function TripsPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {getStats()?.map(stat => (
-                    <div key={stat.label} className="bg-white rounded-2xl border border-slate-200 p-6">
-                        <div className="text-slate-500 text-sm font-bold uppercase tracking-wide">
+                {getStats().map(stat => (
+                    <div key={stat.label} className="bg-white rounded-2xl border border-slate-200 p-5">
+                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wide">
                             {stat.label}
                         </div>
                         <div className={`text-3xl font-black mt-2 ${stat.color}`}>
@@ -175,72 +193,101 @@ export default function TripsPage() {
                 ))}
             </div>
 
-            {/* Search & Filter */}
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                        <Input
-                            placeholder="Search by destination or purpose..."
-                            className="pl-9 border-none bg-transparent focus-visible:ring-0"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <div className="h-6 w-px bg-slate-200" />
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                            showFilters || activeStatusFilter !== "ALL"
-                                ? "bg-blue-950 text-white"
-                                : "text-slate-600 hover:bg-slate-50"
-                        }`}
-                    >
-                        <Filter className="h-4 w-4" />
-                        Filter
-                        {activeStatusFilter !== "ALL" && (
-                            <span className="bg-amber-400 text-blue-950 text-[10px] font-black px-1.5 py-0.5 rounded-full">
-                                1
-                            </span>
-                        )}
-                    </button>
+            {/* Filter Section — only for STAFF and ADMIN */}
+            {["STAFF", "ADMIN"].includes(currentUser.role) && (
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Filter Trips
+                    </p>
+                    {isFiltersActive && (
+                        <button
+                            onClick={clearFilters}
+                            className="flex items-center gap-1 text-xs text-red-500 font-medium hover:text-red-700 transition-colors"
+                        >
+                            <X className="h-3 w-3" /> Clear all filters
+                        </button>
+                    )}
                 </div>
 
-                {/* Filter panel */}
-                {showFilters && (
-                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                            Filter by Status
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                            {["ALL", "NEW", "SUBMITTED", "APPROVED", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED"].map(status => (
+                {/* Search row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Destination</p>
+                        <div className="relative">
+                            <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <select
+                                value={searchDestination}
+                                onChange={e => setSearchDestination(e.target.value)}
+                                className="flex h-9 w-full appearance-none rounded-md border border-slate-200 bg-white pl-9 pr-8 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            >
+                                <option value="">All destinations</option>
+                                {uniqueDestinations.map(d => (
+                                    <option key={d} value={d}>{d}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Purpose</p>
+                        <div className="relative">
+                            <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <select
+                                value={searchPurpose}
+                                onChange={e => setSearchPurpose(e.target.value)}
+                                className="flex h-9 w-full appearance-none rounded-md border border-slate-200 bg-white px-3 pr-8 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            >
+                                <option value="">All purposes</option>
+                                {uniquePurposes.map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Status + Date row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status</p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {STATUS_OPTIONS.map(status => (
                                 <button
                                     key={status}
-                                    onClick={() => setActiveStatusFilter(status)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                                        activeStatusFilter === status
+                                    onClick={() => setStatusFilter(status)}
+                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                                        statusFilter === status
                                             ? "bg-blue-950 text-white border-blue-950"
                                             : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                                     }`}
                                 >
-                                    {status}
-                                    <span className="ml-1 opacity-60">
+                                    {status === "ALL" ? "ALL" : status.replace("_", " ")}
+                                    <span className="ml-1 opacity-50 text-[10px]">
                                         ({status === "ALL" ? trips.length : trips.filter(t => t.status === status).length})
                                     </span>
                                 </button>
                             ))}
                         </div>
-                        {activeStatusFilter !== "ALL" && (
-                            <button
-                                onClick={() => setActiveStatusFilter("ALL")}
-                                className="mt-3 text-xs text-red-500 font-medium hover:text-red-700"
-                            >
-                                Clear filter
-                            </button>
-                        )}
                     </div>
+                    <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Departure Date</p>
+                        <input
+                            type="date"
+                            value={departureDateFilter}
+                            onChange={e => setDepartureDateFilter(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        />
+                    </div>
+                </div>
+
+                {isFiltersActive && (
+                    <p className="text-xs text-slate-500">
+                        Showing <span className="font-bold text-slate-900">{filteredTrips.length}</span> of {trips.length} trips
+                    </p>
                 )}
             </div>
+            )}
 
             {/* Table */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -265,14 +312,14 @@ export default function TripsPage() {
                                     </div>
                                 </TableCell>
                             </TableRow>
-                        ) : filtered.length === 0 ? (
+                        ) : filteredTrips.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center text-slate-500">
-                                    No trips found.
+                                    No trips found matching your filters.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filtered.map((trip) => (
+                            filteredTrips.map(trip => (
                                 <TableRow
                                     key={trip.id}
                                     className="hover:bg-slate-50 transition-colors cursor-pointer"
@@ -293,61 +340,46 @@ export default function TripsPage() {
                                             {formatDate(trip.departureTime)}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-slate-700">
-                                        {trip.passengerCount}
-                                    </TableCell>
+                                    <TableCell className="text-slate-700">{trip.passengerCount}</TableCell>
                                     <TableCell>
-                                        <Badge
-                                            variant="outline"
-                                            className={statusStyles[trip.status] || ""}
-                                        >
-                                            {trip.status}
+                                        <Badge variant="outline" className={STATUS_STYLES[trip.status] ?? ""}>
+                                            {trip.status.replace("_", " ")}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell
-                                        className="text-right"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
+                                    <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                className="bg-white text-slate-900"
-                                            >
+                                            <DropdownMenuContent align="end" className="bg-white text-slate-900">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem
-                                                    onClick={() => router.push(`/trips/${trip.id}`)}
-                                                >
+                                                <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}`)}>
                                                     View details
                                                 </DropdownMenuItem>
                                                 {currentUser.role === "SYSTEM_USER" && trip.status === "NEW" && (
-                                                    <DropdownMenuItem
-                                                        onClick={() => router.push(`/trips/${trip.id}/edit`)}
-                                                    >
+                                                    <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}/edit`)}>
                                                         Edit trip
                                                     </DropdownMenuItem>
                                                 )}
-                                                {currentUser.role === "STAFF" && trip.status === "SUBMITTED" && (
-                                                    <DropdownMenuItem
-                                                        onClick={() => router.push(`/trips/${trip.id}/approve`)}
-                                                    >
-                                                        Review & Approve
+                                                {currentUser.role === "STAFF" &&
+                                                    ["SUBMITTED", "DRIVER_REJECTED"].includes(trip.status) && (
+                                                    <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}/approve`)}>
+                                                        Review & Assign
                                                     </DropdownMenuItem>
                                                 )}
-                                                <DropdownMenuSeparator />
-                                                {["SYSTEM_USER", "STAFF", "ADMIN"].includes(currentUser.role) &&
-                                                    !["COMPLETED", "CANCELLED", "REJECTED"].includes(trip.status) && (
+                                                {canCancelTrip(trip.status) && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             className="text-red-600"
                                                             onClick={() => router.push(`/trips/${trip.id}`)}
                                                         >
                                                             Cancel trip
                                                         </DropdownMenuItem>
-                                                    )}
+                                                    </>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
