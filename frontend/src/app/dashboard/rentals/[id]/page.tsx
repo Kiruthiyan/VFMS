@@ -290,13 +290,13 @@ export default function RentalDetailPage() {
                   <Button
                     onClick={() => router.push(`/dashboard/rentals/${id}/edit`)}
                     variant="outline"
-                    className="text-slate-700"
+                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                   >
                     <Edit className="h-4 w-4 mr-2" /> Edit
                   </Button>
                   <Button
                     onClick={handleConfirmReturn}
-                    className="bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" /> Confirm Return
                   </Button>
