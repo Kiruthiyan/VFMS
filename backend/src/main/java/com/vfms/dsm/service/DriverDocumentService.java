@@ -21,6 +21,7 @@ import java.util.UUID;
 public class DriverDocumentService {
     private final DriverDocumentRepository documentRepository;
     private final DriverService driverService;
+    private final DriverReadinessService readinessService;
 
     @Value("${app.upload.dir:uploads/documents}")
     private String uploadDir;
@@ -52,12 +53,16 @@ public class DriverDocumentService {
                 .fileSize(file.getSize())
                 .build();
 
-        return documentRepository.save(doc);
+            DriverDocument saved = documentRepository.save(doc);
+            if (entityType == DriverDocument.DocumentEntityType.LICENSE) {
+                readinessService.refreshForDriver(driverId);
+            }
+            return saved;
     }
 
     @Transactional(readOnly = true)
     public List<DriverDocument> getDocumentsByDriver(UUID driverId) {
-        return documentRepository.findByDriverId(driverId);
+        return documentRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
     }
 
     public void deleteDocument(Long id) throws IOException {
@@ -69,5 +74,8 @@ public class DriverDocumentService {
         Files.deleteIfExists(filePath);
 
         documentRepository.delete(doc);
+        if (doc.getEntityType() == DriverDocument.DocumentEntityType.LICENSE && doc.getDriver() != null) {
+            readinessService.refreshForDriver(doc.getDriver().getId());
+        }
     }
 }

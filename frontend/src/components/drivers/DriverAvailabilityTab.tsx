@@ -7,28 +7,18 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiFetch } from '@/lib/api';
 import { AvailabilityStatus, DriverAvailability } from '@/types';
 
-const AVAILABILITY_STATUSES: AvailabilityStatus[] = [
-  'AVAILABLE',
-  'ON_TRIP',
-  'ON_LEAVE',
-  'INACTIVE',
-];
+const AVAILABILITY_STATUSES: AvailabilityStatus[] = ['AVAILABLE', 'ON_TRIP', 'ON_LEAVE', 'INACTIVE'];
 
-export function DriverAvailabilityTab({
-  driverId,
-}: {
+type DriverAvailabilityTabProps = {
   driverId: string;
-}) {
+  onUpdated?: () => void | Promise<void>;
+};
+
+export function DriverAvailabilityTab({ driverId, onUpdated }: DriverAvailabilityTabProps) {
   const [availability, setAvailability] = useState<DriverAvailability | null>(null);
   const [newStatus, setNewStatus] = useState<AvailabilityStatus>('AVAILABLE');
   const [reason, setReason] = useState('');
@@ -40,7 +30,7 @@ export function DriverAvailabilityTab({
       .catch((e) => toast.error(e.message));
 
   useEffect(() => {
-    fetchAvailability();
+    void fetchAvailability();
   }, [driverId]);
 
   const updateStatus = async () => {
@@ -53,7 +43,8 @@ export function DriverAvailabilityTab({
         headers: { 'X-User-Id': 'ADMIN' },
       });
       toast.success('Updated');
-      fetchAvailability();
+      await fetchAvailability();
+      await onUpdated?.();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to update status');
     } finally {
@@ -72,17 +63,10 @@ export function DriverAvailabilityTab({
             <>
               <StatusBadge status={availability.status} />
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Clock
-                  className="h-3.5 w-3.5"
-                  style={{ color: 'hsl(var(--primary))' }}
-                />
+                <Clock className="h-3.5 w-3.5" style={{ color: 'hsl(var(--primary))' }} />
                 Updated {new Date(availability.updatedAt).toLocaleString()}
               </div>
-              {availability.reason && (
-                <p className="text-xs text-muted-foreground">
-                  Reason: {availability.reason}
-                </p>
-              )}
+              {availability.reason && <p className="text-xs text-muted-foreground">Reason: {availability.reason}</p>}
             </>
           ) : (
             <p className="text-sm text-muted-foreground">Loading...</p>
@@ -97,10 +81,7 @@ export function DriverAvailabilityTab({
         <CardContent className="space-y-3 px-4 pb-4 pt-3">
           <div>
             <Label className="text-xs text-muted-foreground">New Status</Label>
-            <Select
-              value={newStatus}
-              onValueChange={(v) => setNewStatus(v as AvailabilityStatus)}
-            >
+            <Select value={newStatus} onValueChange={(v) => setNewStatus(v as AvailabilityStatus)}>
               <SelectTrigger className="mt-1 h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>

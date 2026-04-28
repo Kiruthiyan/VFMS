@@ -41,7 +41,12 @@ public class DriverService {
         if (pageable == null) {
             throw new IllegalArgumentException("Pageable cannot be null");
         }
-        return driverRepository.findAll(pageable).map(driverMapper::toResponse);
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return driverRepository.findAll(sortedPageable).map(driverMapper::toResponse);
     }
 
     public DriverResponse updateDriver(UUID id, DriverRequest request) {

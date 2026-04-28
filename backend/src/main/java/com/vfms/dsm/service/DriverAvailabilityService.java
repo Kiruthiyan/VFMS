@@ -24,6 +24,7 @@ public class DriverAvailabilityService {
     private final DriverAvailabilityRepository availabilityRepository;
     private final DriverAvailabilityLogRepository logRepository;
     private final DriverRepository driverRepository;
+    private final DriverReadinessService readinessService;
 
     public DriverAvailability getAvailability(UUID driverId) {
         return availabilityRepository.findById(driverId).orElseGet(() -> {
@@ -54,11 +55,13 @@ public class DriverAvailabilityService {
         avail.setUpdatedAt(LocalDateTime.now());
         avail.setUpdatedBy(changedBy);
         avail.setReason(request.getReason());
-        return avail;
+        DriverAvailability saved = availabilityRepository.save(avail);
+        readinessService.refreshForDriver(driverId);
+        return saved;
     }
 
     public List<DriverAvailability> getByStatus(DriverAvailability.AvailabilityStatus status) {
-        return availabilityRepository.findByStatus(status);
+        return availabilityRepository.findByStatusOrderByUpdatedAtDesc(status);
     }
 
     public List<DriverAvailabilityLog> getAvailabilityHistory(UUID driverId) {

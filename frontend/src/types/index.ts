@@ -84,6 +84,7 @@ export interface DriverReadinessCache {
   allCertsValid: boolean;
   availabilityStatus: AvailabilityStatus;
   lastRefreshed: string;
+  ready?: boolean;
 }
 
 export type LeaveType = 'ANNUAL' | 'MEDICAL' | 'EMERGENCY' | 'UNPAID';

@@ -11,9 +11,9 @@ import java.util.UUID;
 
 public interface DriverLeaveRepository extends JpaRepository<DriverLeave, Long> {
 
-    List<DriverLeave> findByDriverId(UUID driverId);
+    List<DriverLeave> findByDriverIdOrderByCreatedAtDesc(UUID driverId);
 
-    List<DriverLeave> findByStatus(DriverLeave.LeaveStatus status);
+    List<DriverLeave> findByStatusOrderByCreatedAtDesc(DriverLeave.LeaveStatus status);
 
     @Query("SELECT l FROM DriverLeave l WHERE l.status = 'APPROVED' AND l.endDate = :today")
     List<DriverLeave> findLeavesEndingToday(@Param("today") LocalDate today);

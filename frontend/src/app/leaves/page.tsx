@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
 type Decision = 'APPROVED' | 'REJECTED';
 type LeaveType = 'ANNUAL' | 'MEDICAL' | 'EMERGENCY' | 'UNPAID';
@@ -29,6 +30,7 @@ export default function LeavesPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
+  const [requestError, setRequestError] = useState('');
 
   const fetchLeaves = async () => {
     try {
@@ -76,8 +78,11 @@ export default function LeavesPage() {
   };
 
   const requestLeave = async () => {
+    setRequestError('');
     if (!driverId || !startDate || !endDate) {
-      toast.error('Driver ID, start date and end date are required');
+      const message = 'Driver ID, start date and end date are required';
+      setRequestError(message);
+      toast.error(message);
       return;
     }
 
@@ -186,6 +191,8 @@ export default function LeavesPage() {
                     <Label className="text-xs text-muted-foreground">Reason</Label>
                     <Input value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 h-9 text-sm" />
                   </div>
+
+                  <FormErrorSummary messages={requestError ? [requestError] : []} />
 
                   <button
                     className="h-9 w-full rounded-md text-sm font-medium disabled:opacity-50"

@@ -43,7 +43,12 @@ public class StaffService {
 
     @Transactional(readOnly = true)
     public Page<StaffResponse> getAllStaff(@NonNull Pageable pageable) {
-        return staffRepository.findAll(pageable).map(this::toResponse);
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return staffRepository.findAll(sortedPageable).map(this::toResponse);
     }
 
     public StaffResponse updateStaff(@NonNull Long id, @NonNull StaffRequest request) {

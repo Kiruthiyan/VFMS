@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DriverCertificationRepository extends JpaRepository<DriverCertification, Long> {
-    List<DriverCertification> findByDriver_Id(UUID driverId);
+    List<DriverCertification> findByDriver_IdOrderByCreatedAtDesc(UUID driverId);
 
     List<DriverCertification> findByExpiryDateBeforeAndStatusNot(LocalDate date, DriverCertification.CertStatus status);
 

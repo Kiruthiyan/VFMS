@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 import { CheckCircle2, XCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,10 +19,14 @@ export default function EligibilityPage() {
   const [tripDate, setTripDate] = useState(new Date().toISOString().split('T')[0]);
   const [result, setResult] = useState<EligibilityCheckResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const check = async () => {
+    setErrorMessage('');
     if (!employeeId) {
-      toast.error('Enter driver employee ID');
+      const message = 'Enter driver employee ID';
+      setErrorMessage(message);
+      toast.error(message);
       return;
     }
 
@@ -94,6 +99,8 @@ export default function EligibilityPage() {
                   className="mt-1 h-9 text-sm"
                 />
               </div>
+
+              <FormErrorSummary messages={errorMessage ? [errorMessage] : []} />
 
               <button
                 onClick={check}

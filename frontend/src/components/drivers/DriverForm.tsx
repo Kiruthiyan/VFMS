@@ -1,34 +1,31 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { apiFetch, getErrorMessage } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 import { toast } from 'sonner';
 
 const hasMinDigits = (value: string, minDigits = 10) => value.replace(/\D/g, '').length >= minDigits;
 
-const driverSchema = z.object({
-  employeeId: z.string().min(1, 'Required'),
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
-  nic: z.string().min(1, 'Required'),
-  dateOfBirth: z.string().optional(),
-  phone: z.string().min(1, 'Required'),
-  licenseNumber: z.string().min(1, 'Required'),
-  licenseExpiryDate: z.string().min(1, 'Required'),
-  email: z.string().email().optional().or(z.literal('')),
-  address: z.string().optional(),
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional().or(z.literal('')),
-  department: z.string().optional(),
-  designation: z.string().optional(),
-  dateOfJoining: z.string().optional(),
-});
-
-type DriverFormData = z.infer<typeof driverSchema>;
+type DriverFormData = {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  nic: string;
+  dateOfBirth?: string;
+  phone: string;
+  licenseNumber: string;
+  licenseExpiryDate: string;
+  email?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  department?: string;
+  designation?: string;
+  dateOfJoining?: string;
+};
 
 type DriverFieldConfig = {
   label: string;
@@ -45,14 +42,16 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
     handleSubmit,
     setError,
     clearErrors,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<DriverFormData>({
-    resolver: zodResolver(driverSchema),
     defaultValues: {
       ...(driver || {}),
       emergencyContactPhone: driver?.emergencyContactPhone ?? '',
     },
   });
+
+  const requiredFields: Array<keyof DriverFormData> = ['employeeId', 'firstName', 'lastName', 'nic', 'phone', 'licenseNumber', 'licenseExpiryDate'];
 
   const normalizePayload = (data: DriverFormData) => {
     const emptyToNull = (value?: string) => {
@@ -81,6 +80,12 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
   };
 
   const onSubmit = async (data: DriverFormData) => {
+    const requiredFieldsAreValid = await validateRequiredFields(data);
+    if (!requiredFieldsAreValid) {
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     const applyServerErrors = (message: string) => {
       const fieldMap: Record<string, keyof DriverFormData> = {
         employeeid: 'employeeId',
@@ -207,6 +212,27 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
     { label: 'Date of Joining', name: 'dateOfJoining', type: 'date', placeholder: '', helperText: 'Optional date field' },
   ];
 
+  const formErrorMessages = Object.values(errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
+
+  const validateRequiredFields = async (data: DriverFormData) => {
+    clearErrors(requiredFields);
+
+    const missingFields = requiredFields.filter((field) => !String(data[field] ?? '').trim());
+
+    missingFields.forEach((field) => {
+      setError(field, {
+        type: 'manual',
+        message: 'Required',
+      });
+    });
+
+    await trigger(requiredFields);
+
+    return missingFields.length === 0;
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-md bg-white p-4">
       <p className="text-xs font-semibold text-black">Fields marked with * are required. Required date: License Expiry Date.</p>
@@ -290,6 +316,10 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
               {String(errors.emergencyContactPhone.message)}
             </p>
           )}
+        </div>
+
+        <div className="col-span-2">
+          <FormErrorSummary messages={formErrorMessages} className="pt-1" />
         </div>
       </div>
 

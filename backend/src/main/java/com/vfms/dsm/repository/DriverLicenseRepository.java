@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DriverLicenseRepository extends JpaRepository<DriverLicense, Long> {
-    List<DriverLicense> findByDriver_Id(UUID driverId);
+    List<DriverLicense> findByDriver_IdOrderByCreatedAtDesc(UUID driverId);
     List<DriverLicense> findByExpiryDateBeforeAndStatusNot(LocalDate date, DriverLicense.LicenseStatus status);
 
     @Query("SELECT l FROM DriverLicense l WHERE l.expiryDate BETWEEN :from AND :to AND l.status != 'EXPIRED'")

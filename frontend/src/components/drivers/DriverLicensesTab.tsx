@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Plus, Trash2, Star, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { DriverDocument } from '@/types';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
 type LicenseCategory = 'A' | 'B' | 'C' | 'CE' | 'D' | 'BE';
 type LicenseStatus = 'VALID' | 'EXPIRING_SOON' | 'EXPIRED';
@@ -61,6 +62,7 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<LicenseFormData>(emptyForm);
+  const [formError, setFormError] = useState('');
 
   const fetchLicenses = async () => {
     try {
@@ -87,9 +89,12 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFormError('');
 
     if (!form.licenseNumber || !form.issueDate || !form.expiryDate) {
-      toast.error('Please fill all required fields');
+      const message = 'Please fill all required fields';
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
@@ -210,6 +215,8 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
             />
             Primary License
           </label>
+
+            <FormErrorSummary messages={formError ? [formError] : []} />
 
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? 'Saving...' : 'Add License'}

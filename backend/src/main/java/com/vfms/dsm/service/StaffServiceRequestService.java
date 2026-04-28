@@ -26,11 +26,15 @@ public class StaffServiceRequestService {
     }
 
     public List<StaffServiceRequest> getRequestsByStaff(Long staffId) {
-        return requestRepository.findByStaffId(staffId);
+        return requestRepository.findByStaffIdOrderByCreatedAtDesc(staffId);
     }
 
     public List<StaffServiceRequest> getOpenRequests() {
-        return requestRepository.findByStatus(StaffServiceRequest.RequestStatus.OPEN);
+        return requestRepository.findByStatusOrderByCreatedAtDesc(StaffServiceRequest.RequestStatus.OPEN);
+    }
+
+    public List<Long> getVehicleIds() {
+        return requestRepository.findDistinctVehicleIds();
     }
 
     public StaffServiceRequest updateStatus(Long id, StaffServiceRequest.RequestStatus status) {

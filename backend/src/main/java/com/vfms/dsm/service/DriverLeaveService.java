@@ -60,12 +60,12 @@ public class DriverLeaveService {
 
     @Transactional(readOnly = true)
     public List<DriverLeave> getLeavesByDriver(UUID driverId) {
-        return leaveRepository.findByDriverId(driverId);
+        return leaveRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
     }
 
     @Transactional(readOnly = true)
     public List<DriverLeave> getPendingLeaves() {
-        return leaveRepository.findByStatus(DriverLeave.LeaveStatus.PENDING);
+        return leaveRepository.findByStatusOrderByCreatedAtDesc(DriverLeave.LeaveStatus.PENDING);
     }
 
     @Scheduled(cron = "0 0 7 * * *")

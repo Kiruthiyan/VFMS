@@ -2,8 +2,6 @@
 import { useState, useEffect, type ChangeEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { apiFetch } from '@/lib/api';
 import { Staff, PageResponse } from '@/types';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -16,11 +14,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Eye, Pencil, Plus, Search, Trash2, Users2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
 const hasMinDigits = (value: string, minDigits = 10) => value.replace(/\D/g, '').length >= minDigits;
 
-const staffSchema = z.object({ employeeId: z.string().min(1), firstName: z.string().min(1), lastName: z.string().min(1), email: z.string().email().optional().or(z.literal('')), phone: z.string().optional(), department: z.string().optional(), designation: z.string().optional(), role: z.enum(['SYSTEM_USER','APPROVER']), dateOfJoining: z.string().optional() });
-type StaffFormData = z.infer<typeof staffSchema>;
+type StaffFormData = {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  department?: string;
+  designation?: string;
+  role: 'SYSTEM_USER' | 'APPROVER';
+  dateOfJoining?: string;
+};
 
 export default function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -39,7 +47,7 @@ export default function StaffPage() {
     setError,
     clearErrors,
     formState: { errors, isSubmitting },
-  } = useForm<StaffFormData>({ resolver: zodResolver(staffSchema), defaultValues: { role: 'SYSTEM_USER' } });
+  } = useForm<StaffFormData>({ defaultValues: { role: 'SYSTEM_USER' } });
   const {
     register: editRegister,
     handleSubmit: handleEditSubmit,
@@ -48,7 +56,9 @@ export default function StaffPage() {
     setError: setEditError,
     clearErrors: clearEditErrors,
     formState: { errors: editErrors, isSubmitting: isEditSubmitting },
-  } = useForm<StaffFormData>({ resolver: zodResolver(staffSchema), defaultValues: { role: 'SYSTEM_USER' } });
+  } = useForm<StaffFormData>({ defaultValues: { role: 'SYSTEM_USER' } });
+
+  const requiredFields: Array<keyof StaffFormData> = ['employeeId', 'firstName', 'lastName', 'role'];
 
   const fetchStaff = () => apiFetch<PageResponse<Staff>>('/api/staff?size=50').then(d => setStaff(d.content)).catch(e => toast.error(e.message));
   useEffect(() => { fetchStaff(); }, []);
@@ -92,6 +102,13 @@ export default function StaffPage() {
 
   const onSubmit = async (data: StaffFormData) => {
     clearErrors();
+    const missingFields = requiredFields.filter((field) => !String(data[field] ?? '').trim());
+    missingFields.forEach((field) => setError(field, { type: 'manual', message: 'Required' }));
+    if (missingFields.length > 0) {
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     const phone = (data.phone || '').trim();
     if (phone && !hasMinDigits(phone)) {
       setError('phone', { type: 'manual', message: 'Phone number must have at least 10 digits' });
@@ -107,6 +124,13 @@ export default function StaffPage() {
     if (!activeStaff) return;
 
     clearEditErrors();
+    const missingFields = requiredFields.filter((field) => !String(data[field] ?? '').trim());
+    missingFields.forEach((field) => setEditError(field, { type: 'manual', message: 'Required' }));
+    if (missingFields.length > 0) {
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     const phone = (data.phone || '').trim();
     if (phone && !hasMinDigits(phone)) {
       setEditError('phone', { type: 'manual', message: 'Phone number must have at least 10 digits' });
@@ -147,8 +171,14 @@ export default function StaffPage() {
   };
 
   const filtered = staff.filter(s => `${s.firstName} ${s.lastName} ${s.employeeId}`.toLowerCase().includes(search.toLowerCase()));
+  const createFormErrorMessages = Object.values(errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
+  const editFormErrorMessages = Object.values(editErrors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
   return (
-    <div className="p-6 animate-fade-in">
+    <div className="p-6 space-y-4 animate-fade-in">
       <PageHeader icon={<Users2 className="w-5 h-5" />} title="Staff" subtitle="Manage staff members"
         action={
           <div className="flex items-center gap-2">
@@ -168,32 +198,62 @@ export default function StaffPage() {
                   <Plus className="w-4 h-4" />Add Staff
                 </button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg bg-white">
-                <DialogHeader><DialogTitle>New Staff Member</DialogTitle></DialogHeader>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs text-muted-foreground">Employee ID *</Label><Input {...register('employeeId')} className="mt-1 h-9 text-sm" /></div>
-                    <div><Label className="text-xs text-muted-foreground">Role *</Label>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-black dark:text-white">New Staff Member</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-md bg-white p-4">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Employee ID *</Label>
+                      <Input {...register('employeeId')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Role *</Label>
                       <Controller name="role" control={control} render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent><SelectItem value="SYSTEM_USER">System User</SelectItem><SelectItem value="APPROVER">Approver</SelectItem></SelectContent>
+                          <SelectTrigger className="h-9 text-sm text-black">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="SYSTEM_USER">System User</SelectItem>
+                            <SelectItem value="APPROVER">Approver</SelectItem>
+                          </SelectContent>
                         </Select>
                       )} />
                     </div>
-                    <div><Label className="text-xs text-muted-foreground">First Name *</Label><Input {...register('firstName')} className="mt-1 h-9 text-sm" /></div>
-                    <div><Label className="text-xs text-muted-foreground">Last Name *</Label><Input {...register('lastName')} className="mt-1 h-9 text-sm" /></div>
-                    <div><Label className="text-xs text-muted-foreground">Email</Label><Input type="email" {...register('email')} className="mt-1 h-9 text-sm" /></div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Phone</Label>
-                      <Input {...register('phone')} className="mt-1 h-9 text-sm" />
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">First Name *</Label>
+                      <Input {...register('firstName')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Last Name *</Label>
+                      <Input {...register('lastName')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Email</Label>
+                      <Input type="email" {...register('email')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Phone</Label>
+                      <Input {...register('phone')} className="h-9 text-sm text-black placeholder:text-slate-500" />
                       {errors.phone && <p className="mt-1 text-xs" style={{ color: 'hsl(var(--destructive))' }}>{String(errors.phone.message)}</p>}
                     </div>
-                    <div><Label className="text-xs text-muted-foreground">Department</Label><Input {...register('department')} className="mt-1 h-9 text-sm" /></div>
-                    <div><Label className="text-xs text-muted-foreground">Designation</Label><Input {...register('designation')} className="mt-1 h-9 text-sm" /></div>
-                    <div><Label className="text-xs text-muted-foreground">Date of Joining</Label><Input type="date" {...register('dateOfJoining')} className="mt-1 h-9 text-sm" /></div>
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Department</Label>
+                      <Input {...register('department')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Designation</Label>
+                      <Input {...register('designation')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-sm font-semibold text-black">Date of Joining</Label>
+                      <Input type="date" {...register('dateOfJoining')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+                    </div>
                   </div>
-                  <button type="submit" disabled={isSubmitting} className="w-full h-9 rounded-md text-sm font-medium disabled:opacity-50" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
+                  <FormErrorSummary messages={createFormErrorMessages} />
+                  <button type="submit" disabled={isSubmitting} className="h-9 w-full rounded-md text-sm font-medium transition-colors disabled:opacity-50" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
                     {isSubmitting ? 'Saving…' : 'Add Staff Member'}
                   </button>
                 </form>
@@ -203,13 +263,29 @@ export default function StaffPage() {
         }
       />
       <Card>
-        <CardHeader className="pb-3"><div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search staff…" className="pl-9" value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} /></div></CardHeader>
+        <CardHeader className="pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search staff…" className="pl-9" value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} />
+          </div>
+        </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader><TableRow className="hover:bg-transparent bg-muted/40">{['Employee ID','Name','Department','Role','Status','Actions'].map(h => <TableHead key={h} className="text-xs font-medium text-muted-foreground">{h}</TableHead>)}</TableRow></TableHeader>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent bg-muted/40">
+                {['Employee ID', 'Name', 'Department', 'Role', 'Status', 'Actions'].map((h) => (
+                  <TableHead key={h} className="text-xs font-medium text-muted-foreground">{h}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {filtered.map(s => (
-                <TableRow key={s.id} className="hover:bg-muted/20">
+                <TableRow
+                  key={s.id}
+                  className="transition-colors"
+                  onMouseEnter={(event) => (event.currentTarget.style.backgroundColor = 'hsl(42 100% 50% / 0.06)')}
+                  onMouseLeave={(event) => (event.currentTarget.style.backgroundColor = '')}
+                >
                   <TableCell className="font-mono text-xs text-muted-foreground">{s.employeeId}</TableCell>
                   <TableCell className="font-medium text-sm text-foreground">{s.firstName} {s.lastName}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{s.department || '—'}</TableCell>
@@ -217,15 +293,15 @@ export default function StaffPage() {
                   <TableCell><StatusBadge status={s.status} /></TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button type="button" variant="outline" size="sm" className="h-8 px-2" onClick={() => handleOpenView(s.id)}>
+                      <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs transition-all hover:shadow-sm" onClick={() => handleOpenView(s.id)}>
                         <Eye className="w-3.5 h-3.5" />
                         View
                       </Button>
-                      <Button type="button" variant="outline" size="sm" className="h-8 px-2" onClick={() => handleOpenEdit(s.id)}>
+                      <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs transition-all hover:shadow-sm" onClick={() => handleOpenEdit(s.id)}>
                         <Pencil className="w-3.5 h-3.5" />
                         Edit
                       </Button>
-                      <Button type="button" variant="destructive" size="sm" className="h-8 px-2" disabled={s.status === 'INACTIVE' || removingId === s.id} onClick={() => handleDeactivate(s)}>
+                      <Button type="button" variant="destructive" size="sm" className="h-8 px-2 text-xs transition-all hover:shadow-sm" disabled={s.status === 'INACTIVE' || removingId === s.id} onClick={() => handleDeactivate(s)}>
                         <Trash2 className="w-3.5 h-3.5" />
                         Remove
                       </Button>
@@ -242,7 +318,7 @@ export default function StaffPage() {
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="max-w-xl bg-white">
           <DialogHeader>
-            <DialogTitle>Staff Details</DialogTitle>
+            <DialogTitle className="text-black dark:text-white">Staff Details</DialogTitle>
           </DialogHeader>
           {loadingDetails && <p className="text-sm text-muted-foreground">Loading details...</p>}
           {!loadingDetails && activeStaff && (
@@ -264,32 +340,39 @@ export default function StaffPage() {
       </Dialog>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-lg bg-white">
-          <DialogHeader><DialogTitle>Edit Staff Member</DialogTitle></DialogHeader>
-          <form onSubmit={handleEditSubmit(onEditSubmit)} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs text-muted-foreground">Employee ID *</Label><Input {...editRegister('employeeId')} className="mt-1 h-9 text-sm" /></div>
-              <div><Label className="text-xs text-muted-foreground">Role *</Label>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-black dark:text-white">Edit Staff Member</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit(onEditSubmit)} className="space-y-4 rounded-md bg-white p-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <Label className="mb-1.5 block text-sm font-semibold text-black">Employee ID *</Label>
+                <Input {...editRegister('employeeId')} className="h-9 text-sm text-black placeholder:text-slate-500" />
+              </div>
+              <div>
+                <Label className="mb-1.5 block text-sm font-semibold text-black">Role *</Label>
                 <Controller name="role" control={editControl} render={({ field }) => (
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                    <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm text-black"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="SYSTEM_USER">System User</SelectItem><SelectItem value="APPROVER">Approver</SelectItem></SelectContent>
                   </Select>
                 )} />
               </div>
-              <div><Label className="text-xs text-muted-foreground">First Name *</Label><Input {...editRegister('firstName')} className="mt-1 h-9 text-sm" /></div>
-              <div><Label className="text-xs text-muted-foreground">Last Name *</Label><Input {...editRegister('lastName')} className="mt-1 h-9 text-sm" /></div>
-              <div><Label className="text-xs text-muted-foreground">Email</Label><Input type="email" {...editRegister('email')} className="mt-1 h-9 text-sm" /></div>
+              <div><Label className="mb-1.5 block text-sm font-semibold text-black">First Name *</Label><Input {...editRegister('firstName')} className="h-9 text-sm text-black placeholder:text-slate-500" /></div>
+              <div><Label className="mb-1.5 block text-sm font-semibold text-black">Last Name *</Label><Input {...editRegister('lastName')} className="h-9 text-sm text-black placeholder:text-slate-500" /></div>
+              <div><Label className="mb-1.5 block text-sm font-semibold text-black">Email</Label><Input type="email" {...editRegister('email')} className="h-9 text-sm text-black placeholder:text-slate-500" /></div>
               <div>
-                <Label className="text-xs text-muted-foreground">Phone</Label>
-                <Input {...editRegister('phone')} className="mt-1 h-9 text-sm" />
+                <Label className="mb-1.5 block text-sm font-semibold text-black">Phone</Label>
+                <Input {...editRegister('phone')} className="h-9 text-sm text-black placeholder:text-slate-500" />
                 {editErrors.phone && <p className="mt-1 text-xs" style={{ color: 'hsl(var(--destructive))' }}>{String(editErrors.phone.message)}</p>}
               </div>
-              <div><Label className="text-xs text-muted-foreground">Department</Label><Input {...editRegister('department')} className="mt-1 h-9 text-sm" /></div>
-              <div><Label className="text-xs text-muted-foreground">Designation</Label><Input {...editRegister('designation')} className="mt-1 h-9 text-sm" /></div>
-              <div><Label className="text-xs text-muted-foreground">Date of Joining</Label><Input type="date" {...editRegister('dateOfJoining')} className="mt-1 h-9 text-sm" /></div>
+              <div><Label className="mb-1.5 block text-sm font-semibold text-black">Department</Label><Input {...editRegister('department')} className="h-9 text-sm text-black placeholder:text-slate-500" /></div>
+              <div><Label className="mb-1.5 block text-sm font-semibold text-black">Designation</Label><Input {...editRegister('designation')} className="h-9 text-sm text-black placeholder:text-slate-500" /></div>
+              <div><Label className="mb-1.5 block text-sm font-semibold text-black">Date of Joining</Label><Input type="date" {...editRegister('dateOfJoining')} className="h-9 text-sm text-black placeholder:text-slate-500" /></div>
             </div>
-            <button type="submit" disabled={isEditSubmitting} className="w-full h-9 rounded-md text-sm font-medium disabled:opacity-50" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
+            <FormErrorSummary messages={editFormErrorMessages} />
+            <button type="submit" disabled={isEditSubmitting} className="h-9 w-full rounded-md text-sm font-medium transition-colors disabled:opacity-50" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
               {isEditSubmitting ? 'Saving…' : 'Save Changes'}
             </button>
           </form>
@@ -320,7 +403,7 @@ function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex items-center justify-between">
+    <div className="mb-5 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <div className="rounded-lg p-2" style={{ backgroundColor: 'hsl(42 100% 50% / 0.12)' }}>
           {icon}
