@@ -141,13 +141,6 @@ export default function ExportPage() {
         }
     };
 
-    const categoryReports = [
-        { id: 'maintenance', title: 'Maintenance Costs', description: 'Overall maintenance expenses and trends.', icon: Wrench, color: 'text-orange-600', bg: 'bg-orange-50' },
-        { id: 'fuel', title: 'Fuel Analysis', description: 'Overall fuel consumption and efficiency.', icon: Droplet, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { id: 'rental', title: 'Rental Activity', description: 'Monthly rental bookings and revenue.', icon: Calendar, color: 'text-pink-600', bg: 'bg-pink-50' },
-        { id: 'utilization', title: 'Fleet Utilization', description: 'Distance and active hours metrics.', icon: BarChart, color: 'text-green-600', bg: 'bg-green-50' },
-    ];
-
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-8">
             <div className="flex justify-between items-end">
@@ -157,7 +150,7 @@ export default function ExportPage() {
                 </div>
             </div>
 
-            {/* Date Filtering Section - RESTORED & PROMINENT */}
+            {/* Date Filtering Section */}
             <Card className="border-2 border-indigo-200 bg-white shadow-xl overflow-hidden">
                 <div className="bg-indigo-600 px-6 py-3 flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-white" />
@@ -228,24 +221,6 @@ export default function ExportPage() {
                         </Button>
                     </CardContent>
                 </Card>
-
-                {/* Date-Filtered Category Card Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                    {categoryReports.slice(0, 4).map(report => (
-                        <Card key={report.id} className="border-2 border-slate-100 hover:border-indigo-200 transition-all group">
-                            <CardContent className="p-4 flex flex-col items-center text-center space-y-3">
-                                <div className={`p-3 rounded-2xl ${report.bg} ${report.color} group-hover:scale-110 transition-transform`}>
-                                    <report.icon className="h-6 w-6" />
-                                </div>
-                                <h3 className="font-bold text-slate-800">{report.title}</h3>
-                                <div className="flex w-full gap-2 mt-auto">
-                                    <button onClick={() => handleExport(report.id, 'pdf')} className="flex-1 py-1.5 text-xs font-black bg-slate-900 text-white rounded-lg hover:bg-indigo-600 transition-colors">PDF</button>
-                                    <button onClick={() => handleExport(report.id, 'excel')} className="flex-1 py-1.5 text-xs font-black border-2 border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">EXCEL</button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
             </div>
 
             {/* Selection Row: Individual Entity Reports */}
