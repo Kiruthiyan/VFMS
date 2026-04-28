@@ -84,6 +84,9 @@ public class MaintenanceService {
         if (mr.getStatus() != MaintenanceStatus.SUBMITTED) {
             throw new IllegalStateException("Can only approve SUBMITTED requests");
         }
+        if (mr.getVehicle().getStatus() == VehicleStatus.RETIRED) {
+            throw new IllegalStateException("Cannot approve maintenance for a retired vehicle.");
+        }
 
         mr.setStatus(MaintenanceStatus.APPROVED);
         mr.setApprovedDate(LocalDateTime.now());
