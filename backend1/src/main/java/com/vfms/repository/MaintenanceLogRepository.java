@@ -9,5 +9,6 @@ import java.util.List;
 
 @Repository
 public interface MaintenanceLogRepository extends JpaRepository<MaintenanceLog, Long> {
+
     List<MaintenanceLog> findByMaintenanceDateBetween(LocalDate startDate, LocalDate endDate);
 }
