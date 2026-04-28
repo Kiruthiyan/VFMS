@@ -354,6 +354,7 @@ export default function MaintenanceDetailPage({
                     Submit for Approval
                   </Button>
                   <Button
+                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                     variant="outline"
                     onClick={() =>
                       router.push(`/dashboard/maintenance/${request.id}/edit`)

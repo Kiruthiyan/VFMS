@@ -226,6 +226,7 @@ export default function CreateRentalPage() {
                 </p>
                 <Input
                   type="number"
+                  min={0}
                   placeholder="e.g. 3000"
                   value={form.costPerDay || ""}
                   onChange={(e) => {
