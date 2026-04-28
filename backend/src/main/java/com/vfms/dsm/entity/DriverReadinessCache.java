@@ -57,4 +57,8 @@ public class DriverReadinessCache {
     @Builder.Default
     @Column(name = "last_refreshed")
     private LocalDateTime lastRefreshed = LocalDateTime.now();
+    
+    public boolean isReady() {
+        return Boolean.TRUE.equals(licenseValid);
+    }
 }

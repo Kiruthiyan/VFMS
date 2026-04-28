@@ -42,7 +42,7 @@ public class DriverEligibilityService {
             }
             }, () -> reasons.add("Availability record not found"));
 
-            boolean hasValidLicense = licenseRepository.findByDriver_Id(driverId).stream()
+            boolean hasValidLicense = licenseRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream()
                 .anyMatch(l -> l.getStatus() == DriverLicense.LicenseStatus.VALID);
             if (!hasValidLicense) {
                 reasons.add("No valid license found");

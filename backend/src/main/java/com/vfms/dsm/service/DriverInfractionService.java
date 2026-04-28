@@ -38,7 +38,7 @@ public class DriverInfractionService {
 
     @Transactional(readOnly = true)
     public List<DriverInfraction> getInfractionsByDriver(UUID driverId) {
-        return infractionRepository.findByDriverIdOrderByIncidentDateDesc(driverId);
+        return infractionRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
     }
 
     public DriverInfraction resolveInfraction(Long id) {

@@ -29,6 +29,11 @@ public class StaffServiceRequestController {
         return ResponseEntity.ok(requestService.getOpenRequests());
     }
 
+    @GetMapping("/service-requests/vehicle-ids")
+    public ResponseEntity<List<Long>> getVehicleIds() {
+        return ResponseEntity.ok(requestService.getVehicleIds());
+    }
+
     @PatchMapping("/service-requests/{id}/status")
     public ResponseEntity<StaffServiceRequest> updateStatus(
             @PathVariable Long id, @RequestParam StaffServiceRequest.RequestStatus status) {

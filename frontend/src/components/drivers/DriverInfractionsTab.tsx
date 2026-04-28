@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import type { ControllerRenderProps } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { apiFetch } from '@/lib/api';
 import { DriverInfraction } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -16,23 +14,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
-const infractionSchema = z.object({
-  infractionType: z.enum([
-    'TRAFFIC_VIOLATION',
-    'MINOR_ACCIDENT',
-    'MAJOR_ACCIDENT',
-    'NEAR_MISS',
-    'RECKLESS_DRIVING',
-    'OTHER',
-  ]),
-  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
-  incidentDate: z.string().min(1),
-  description: z.string().optional(),
-  penaltyNotes: z.string().optional(),
-});
-
-type InfractionFormData = z.infer<typeof infractionSchema>;
+type InfractionFormData = {
+  infractionType: 'TRAFFIC_VIOLATION' | 'MINOR_ACCIDENT' | 'MAJOR_ACCIDENT' | 'NEAR_MISS' | 'RECKLESS_DRIVING' | 'OTHER';
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  incidentDate: string;
+  description?: string;
+  penaltyNotes?: string;
+};
 
 export function DriverInfractionsTab({ driverId }: { driverId: string }) {
   const [infractions, setInfractions] = useState<DriverInfraction[]>([]);
@@ -43,10 +33,16 @@ export function DriverInfractionsTab({ driverId }: { driverId: string }) {
     control,
     register,
     reset,
-    formState: { isSubmitting },
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
   } = useForm<InfractionFormData>({
-    resolver: zodResolver(infractionSchema),
+    defaultValues: { infractionType: 'TRAFFIC_VIOLATION', severity: 'LOW' },
   });
+
+  const formErrorMessages = Object.values(errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
 
   const fetchInfractions = async () => {
     try {
@@ -62,6 +58,18 @@ export function DriverInfractionsTab({ driverId }: { driverId: string }) {
   }, [driverId]);
 
   const onSubmit = async (data: InfractionFormData) => {
+    clearErrors();
+    const missingFields: Array<keyof InfractionFormData> = [];
+    if (!String(data.infractionType || '').trim()) missingFields.push('infractionType');
+    if (!String(data.severity || '').trim()) missingFields.push('severity');
+    if (!String(data.incidentDate || '').trim()) missingFields.push('incidentDate');
+
+    missingFields.forEach((field) => setError(field, { type: 'manual', message: 'Required' }));
+    if (missingFields.length > 0) {
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     try {
       await apiFetch('/api/drivers/infractions', {
         method: 'POST',
@@ -177,6 +185,7 @@ export function DriverInfractionsTab({ driverId }: { driverId: string }) {
                 <Label className="text-xs text-muted-foreground">Penalty Notes</Label>
                 <Input {...register('penaltyNotes')} className="mt-1 h-9 text-sm" />
               </div>
+              <FormErrorSummary messages={formErrorMessages} />
               <button
                 type="submit"
                 disabled={isSubmitting}

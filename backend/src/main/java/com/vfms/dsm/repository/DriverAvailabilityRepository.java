@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DriverAvailabilityRepository extends JpaRepository<DriverAvailability, UUID> {
-    List<DriverAvailability> findByStatus(DriverAvailability.AvailabilityStatus status);
+    List<DriverAvailability> findByStatusOrderByUpdatedAtDesc(DriverAvailability.AvailabilityStatus status);
 }

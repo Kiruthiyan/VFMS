@@ -9,7 +9,9 @@ import java.util.UUID;
 
 public interface DriverReadinessCacheRepository extends JpaRepository<DriverReadinessCache, UUID> {
 
-    List<DriverReadinessCache> findByAvailabilityStatus(DriverAvailability.AvailabilityStatus status);
+    List<DriverReadinessCache> findByAvailabilityStatusOrderByLastRefreshedDesc(DriverAvailability.AvailabilityStatus status);
+
+    List<DriverReadinessCache> findAllByOrderByLastRefreshedDesc();
 
     List<DriverReadinessCache> findByLicenseValidAndAllCertsValid(Boolean licenseValid, Boolean allCertsValid);
 }

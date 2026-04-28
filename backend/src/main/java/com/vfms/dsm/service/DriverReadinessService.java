@@ -36,13 +36,13 @@ public class DriverReadinessService {
     }
 
     public List<DriverReadinessCache> getAvailableReadyDrivers() {
-        return cacheRepository.findByLicenseValidAndAllCertsValid(true, true).stream()
-                .filter(r -> r.getAvailabilityStatus() == DriverAvailability.AvailabilityStatus.AVAILABLE)
+                return cacheRepository.findAllByOrderByLastRefreshedDesc().stream()
+                                .filter(DriverReadinessCache::isReady)
                 .toList();
     }
 
         public List<DriverReadinessCache> getAllReadiness() {
-                return driverRepository.findAll().stream()
+                                return driverRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")).stream()
                                 .map(driver -> cacheRepository.findById(driver.getId()).orElseGet(() -> refreshForDriver(driver.getId())))
                                 .toList();
         }
@@ -56,10 +56,15 @@ public class DriverReadinessService {
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + driverId));
 
-        boolean licenseValid = licenseRepository.findByDriver_Id(driverId).stream()
-                .anyMatch(l -> l.getStatus() == DriverLicense.LicenseStatus.VALID);
+        DriverLicense latestLicense = licenseRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream()
+            .findFirst()
+            .orElse(null);
 
-        boolean certsValid = certRepository.findByDriver_Id(driverId).stream()
+        boolean licenseValid = latestLicense != null
+            && latestLicense.getStatus() != DriverLicense.LicenseStatus.EXPIRED
+            && !latestLicense.getExpiryDate().isBefore(java.time.LocalDate.now());
+
+        boolean certsValid = certRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream()
                 .noneMatch(c -> c.getStatus() == DriverCertification.CertStatus.EXPIRED);
 
         DriverAvailability.AvailabilityStatus status = availabilityRepository.findById(driverId)
@@ -77,10 +82,6 @@ public class DriverReadinessService {
                 cache.setAvailabilityStatus(status);
                 cache.setLastRefreshed(LocalDateTime.now());
 
-                if (cache.getDriverId() == null) {
-                        return cacheRepository.saveAndFlush(cache);
-                }
-
-                return cache;
+                return cacheRepository.saveAndFlush(cache);
     }
 }

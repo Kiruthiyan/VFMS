@@ -3,8 +3,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { apiFetch } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
@@ -16,16 +14,19 @@ import { Button } from '@/components/ui/button';
 import { Plus, Wrench, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageResponse, Staff } from '@/types';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
-const requestSchema = z.object({
-  staffId: z.coerce.number().min(1),
-  vehicleId: z.coerce.number().optional(),
-  requestType: z.enum(['FAULT_REPORT', 'SERVICE_REQUEST', 'INSPECTION_REQUEST']),
-  description: z.string().min(1),
-  urgency: z.enum(['LOW', 'MEDIUM', 'HIGH']),
-});
+type RequestFormData = {
+  staffId?: number;
+  vehicleId?: number;
+  requestType: 'FAULT_REPORT' | 'SERVICE_REQUEST' | 'INSPECTION_REQUEST';
+  description: string;
+  urgency: 'LOW' | 'MEDIUM' | 'HIGH';
+};
 
-type RequestFormData = z.infer<typeof requestSchema>;
+type VehicleOption = {
+  id: number;
+};
 
 interface ServiceRequest {
   id: number;
@@ -48,17 +49,25 @@ export default function ServiceRequestsPage() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [open, setOpen] = useState(false);
+  const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
+  const [vehicleLoadError, setVehicleLoadError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting },
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
   } = useForm<RequestFormData>({
-    resolver: zodResolver(requestSchema),
     defaultValues: { urgency: 'MEDIUM', requestType: 'FAULT_REPORT' },
   });
+
+  const formErrorMessages = Object.values(errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
 
   const fetchRequests = () =>
     apiFetch<ServiceRequest[]>('/api/staff/service-requests/open')
@@ -70,12 +79,45 @@ export default function ServiceRequestsPage() {
       .then((data) => setStaffList(data.content.filter((staff) => staff.status === 'ACTIVE')))
       .catch((e: Error) => toast.error(e.message));
 
+  const fetchVehicles = async () => {
+    setLoadingVehicles(true);
+    setVehicleLoadError(null);
+    try {
+      const data = await apiFetch<number[]>('/api/vehicles');
+      const uniqueIds = Array.from(new Set(data)).sort((a, b) => a - b).map((id) => ({ id }));
+      setVehicles(uniqueIds);
+      if (uniqueIds.length === 0) {
+        setVehicleLoadError('No vehicle IDs found in the database yet.');
+      }
+    } catch (error) {
+      console.error(error);
+      setVehicleLoadError('Failed to load vehicle IDs.');
+      toast.error('Failed to load vehicle IDs');
+      setVehicles([]);
+    } finally {
+      setLoadingVehicles(false);
+    }
+  };
+
   useEffect(() => {
     fetchRequests();
     fetchStaff();
+    void fetchVehicles();
   }, []);
 
   const onSubmit = async (data: RequestFormData) => {
+    clearErrors();
+    const missingFields: Array<keyof RequestFormData> = [];
+    if (!data.staffId) missingFields.push('staffId');
+    if (!String(data.requestType || '').trim()) missingFields.push('requestType');
+    if (!String(data.description || '').trim()) missingFields.push('description');
+
+    missingFields.forEach((field) => setError(field, { type: 'manual', message: 'Required' }));
+    if (missingFields.length > 0) {
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     try {
       await apiFetch('/api/staff/service-requests', {
         method: 'POST',
@@ -107,7 +149,7 @@ export default function ServiceRequestsPage() {
         subtitle="Vehicle fault & maintenance requests"
         action={
           <div className="flex items-center gap-2">
-            <Link href="/drivers" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors">
+            <Link href="/staff" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors">
               Back
             </Link>
 
@@ -156,8 +198,37 @@ export default function ServiceRequestsPage() {
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground">Vehicle ID</Label>
-                      <Input type="number" {...register('vehicleId')} className="mt-1 h-9 text-sm" />
+                      <Controller
+                        name="vehicleId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                            value={field.value ? String(field.value) : undefined}
+                            disabled={loadingVehicles}
+                          >
+                            <SelectTrigger className="mt-1 h-9 text-sm">
+                              <SelectValue placeholder={loadingVehicles ? 'Loading vehicle IDs...' : 'Select vehicle ID'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {vehicles.map((vehicle) => (
+                                <SelectItem key={vehicle.id} value={String(vehicle.id)}>
+                                  Vehicle #{vehicle.id}
+                                </SelectItem>
+                              ))}
+                              {!loadingVehicles && vehicles.length === 0 && (
+                                <SelectItem value="no-vehicles" disabled>
+                                  {vehicleLoadError || 'No vehicle IDs available'}
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
+                    {vehicleLoadError && vehicles.length === 0 && (
+                      <p className="col-span-2 text-xs text-muted-foreground">{vehicleLoadError}</p>
+                    )}
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Request Type *</Label>
@@ -205,6 +276,7 @@ export default function ServiceRequestsPage() {
                     <Label className="text-xs text-muted-foreground">Description *</Label>
                     <Input {...register('description')} className="mt-1 h-9 text-sm" />
                   </div>
+                  <FormErrorSummary messages={formErrorMessages} />
                   <button
                     type="submit"
                     disabled={isSubmitting}

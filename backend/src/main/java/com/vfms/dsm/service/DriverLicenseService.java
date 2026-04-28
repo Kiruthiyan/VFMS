@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class DriverLicenseService {
     private final DriverLicenseRepository licenseRepository;
     private final DriverService driverService;
+    private final DriverReadinessService readinessService;
 
     public DriverLicenseResponse addLicense(DriverLicenseRequest request) {
         Driver driver = driverService.findById(request.getDriverId());
@@ -27,12 +28,14 @@ public class DriverLicenseService {
             .expiryDate(request.getExpiryDate())
             .isPrimary(Boolean.TRUE.equals(request.getIsPrimary()))
             .build();
-        return toResponse(licenseRepository.save(license));
+        DriverLicense saved = licenseRepository.save(license);
+        readinessService.refreshForDriver(driver.getId());
+        return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public List<DriverLicenseResponse> getLicensesByDriver(UUID driverId) {
-        return licenseRepository.findByDriver_Id(driverId).stream().map(this::toResponse).collect(Collectors.toList());
+        return licenseRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     public DriverLicenseResponse updateLicense(Long id, DriverLicenseRequest request) {
@@ -44,11 +47,17 @@ public class DriverLicenseService {
         license.setIssueDate(request.getIssueDate());
         license.setExpiryDate(request.getExpiryDate());
         if (request.getIsPrimary() != null) license.setIsPrimary(request.getIsPrimary());
-        return toResponse(licenseRepository.save(license));
+        DriverLicense saved = licenseRepository.save(license);
+        readinessService.refreshForDriver(saved.getDriver().getId());
+        return toResponse(saved);
     }
 
     public void deleteLicense(Long id) {
-        licenseRepository.deleteById(id);
+        DriverLicense license = licenseRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("License not found: " + id));
+        UUID driverId = license.getDriver().getId();
+        licenseRepository.delete(license);
+        readinessService.refreshForDriver(driverId);
     }
 
     private DriverLicenseResponse toResponse(DriverLicense l) {

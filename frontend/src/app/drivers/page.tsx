@@ -2,6 +2,7 @@
 
 import { ChangeEvent, MouseEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Plus, Search, Eye, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
@@ -14,7 +15,72 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 
+type LicenseAlertLevel = 'VALID' | 'EXPIRING_SOON' | 'EXPIRED' | 'UNKNOWN';
+
+type LicenseAlertMeta = {
+  level: LicenseAlertLevel;
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+};
+
+function getDaysUntil(expiryDate: string): number | null {
+  if (!expiryDate) return null;
+
+  const parsed = new Date(`${expiryDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const expiryStart = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  return Math.floor((expiryStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function getLicenseAlertMeta(expiryDate: string): LicenseAlertMeta {
+  const daysUntil = getDaysUntil(expiryDate);
+  if (daysUntil === null) {
+    return {
+      level: 'UNKNOWN',
+      label: 'No expiry date',
+      bg: 'hsl(0 0% 96%)',
+      text: 'hsl(0 0% 45%)',
+      border: 'hsl(0 0% 80%)',
+    };
+  }
+
+  if (daysUntil < 0) {
+    return {
+      level: 'EXPIRED',
+      label: 'License expired',
+      bg: 'hsl(360 79% 95%)',
+      text: 'hsl(360 79% 30%)',
+      border: 'hsl(360 79% 75%)',
+    };
+  }
+
+  if (daysUntil <= 30) {
+    const suffix = daysUntil === 0 ? 'today' : `in ${daysUntil} day${daysUntil === 1 ? '' : 's'}`;
+    return {
+      level: 'EXPIRING_SOON',
+      label: `Expires ${suffix}`,
+      bg: 'hsl(42 97% 92%)',
+      text: 'hsl(28 88% 28%)',
+      border: 'hsl(36 95% 64%)',
+    };
+  }
+
+  return {
+    level: 'VALID',
+    label: 'Valid',
+    bg: 'hsl(145 63% 94%)',
+    text: 'hsl(145 63% 25%)',
+    border: 'hsl(145 63% 70%)',
+  };
+}
+
 export default function DriversPage() {
+  const router = useRouter();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -43,6 +109,9 @@ export default function DriversPage() {
     `${d.firstName} ${d.lastName} ${d.employeeId} ${d.nic}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const expiredCount = filtered.filter((driver) => getLicenseAlertMeta(driver.licenseExpiryDate).level === 'EXPIRED').length;
+  const expiringSoonCount = filtered.filter((driver) => getLicenseAlertMeta(driver.licenseExpiryDate).level === 'EXPIRING_SOON').length;
+
   return (
     <div className="p-6 animate-fade-in">
       <PageHeader
@@ -51,46 +120,6 @@ export default function DriversPage() {
         subtitle="Manage driver profiles"
         action={
           <div className="flex items-center gap-2">
-            <Link href="/drivers/readiness">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs"
-              >
-                Assignment Readiness
-              </Button>
-            </Link>
-
-            <Link href="/drivers/eligibility">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs"
-              >
-                Eligibility Check
-              </Button>
-            </Link>
-
-            <Link href="/leaves">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs"
-              >
-                Leave Requests
-              </Button>
-            </Link>
-
-            <Link href="/service-requests">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs"
-              >
-                Service Requests
-              </Button>
-            </Link>
-
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <button
@@ -120,6 +149,31 @@ export default function DriversPage() {
         }
       />
 
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Card>
+          <CardContent className="py-3">
+            <p className="text-xs text-muted-foreground">System Status</p>
+            <p className="mt-1 text-sm font-semibold text-foreground">License Monitoring</p>
+          </CardContent>
+        </Card>
+        <Card style={{ borderTopWidth: 3, borderTopStyle: 'solid', borderTopColor: 'hsl(360 79% 60%)' }}>
+          <CardContent className="py-3">
+            <p className="text-xs text-muted-foreground">Expired Licenses</p>
+            <p className="mt-1 text-lg font-semibold" style={{ color: 'hsl(360 79% 36%)' }}>
+              {expiredCount}
+            </p>
+          </CardContent>
+        </Card>
+        <Card style={{ borderTopWidth: 3, borderTopStyle: 'solid', borderTopColor: 'hsl(36 95% 54%)' }}>
+          <CardContent className="py-3">
+            <p className="text-xs text-muted-foreground">Expiring in 30 Days</p>
+            <p className="mt-1 text-lg font-semibold" style={{ color: 'hsl(31 92% 34%)' }}>
+              {expiringSoonCount}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader className="pb-3">
           <div className="relative">
@@ -142,7 +196,7 @@ export default function DriversPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent bg-muted/40">
-                    {['Employee ID', 'Name', 'NIC', 'Department', 'Status', ''].map((h) => (
+                    {['Employee ID', 'Name', 'NIC', 'Department', 'License Alert', 'Status', ''].map((h) => (
                       <TableHead key={h} className="text-xs font-medium text-muted-foreground">
                         {h}
                       </TableHead>
@@ -155,20 +209,38 @@ export default function DriversPage() {
                       key={d.id}
                       className="group"
                       style={{ cursor: 'pointer' }}
+                      onClick={() => router.push(`/drivers/${d.id}/overview`)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          router.push(`/drivers/${d.id}/overview`);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
                       onMouseEnter={(e: MouseEvent<HTMLTableRowElement>) => (e.currentTarget.style.backgroundColor = 'hsl(42 100% 50% / 0.06)')}
                       onMouseLeave={(e: MouseEvent<HTMLTableRowElement>) => (e.currentTarget.style.backgroundColor = '')}
                     >
-                      <TableCell className="font-mono text-xs text-muted-foreground">{d.employeeId}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        <Link href={`/drivers/${d.id}/overview`} onClick={(event) => event.stopPropagation()}>
+                          {d.employeeId}
+                        </Link>
+                      </TableCell>
                       <TableCell className="font-medium text-sm text-foreground">
-                        {d.firstName} {d.lastName}
+                        <Link href={`/drivers/${d.id}/overview`} onClick={(event) => event.stopPropagation()}>
+                          {d.firstName} {d.lastName}
+                        </Link>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{d.nic}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{d.department || '-'} </TableCell>
                       <TableCell>
+                        <LicenseAlertBadge expiryDate={d.licenseExpiryDate} />
+                      </TableCell>
+                      <TableCell>
                         <StatusBadge status={d.status} />
                       </TableCell>
                       <TableCell>
-                        <Link href={`/drivers/${d.id}`}>
+                        <Link href={`/drivers/${d.id}/overview`} onClick={(event) => event.stopPropagation()}>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -182,7 +254,7 @@ export default function DriversPage() {
                   ))}
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-16 text-sm">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-16 text-sm">
                         No drivers found
                       </TableCell>
                     </TableRow>
@@ -250,5 +322,22 @@ function PageHeader({
       </div>
       {action}
     </div>
+  );
+}
+
+function LicenseAlertBadge({ expiryDate }: { expiryDate: string }) {
+  const alert = getLicenseAlertMeta(expiryDate);
+
+  return (
+    <span
+      className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+      style={{
+        backgroundColor: alert.bg,
+        color: alert.text,
+        borderColor: alert.border,
+      }}
+    >
+      {alert.label}
+    </span>
   );
 }

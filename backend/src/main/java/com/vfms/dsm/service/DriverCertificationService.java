@@ -34,7 +34,7 @@ public class DriverCertificationService {
 
     @Transactional(readOnly = true)
     public List<DriverCertification> getCertificationsByDriver(UUID driverId) {
-        return certRepository.findByDriver_Id(driverId);
+        return certRepository.findByDriver_IdOrderByCreatedAtDesc(driverId);
     }
 
     public DriverCertification updateCertification(Long id, CertificationRequest request) {

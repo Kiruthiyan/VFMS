@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { apiFetch } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
@@ -14,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
 type CertificationType =
   | 'DEFENSIVE_DRIVING'
@@ -45,15 +44,13 @@ const certTypes: CertificationType[] = [
   'OTHER',
 ];
 
-const certSchema = z.object({
-  certType: z.enum(certTypes),
-  certName: z.string().min(1),
-  issuedBy: z.string().optional(),
-  issueDate: z.string().min(1),
-  expiryDate: z.string().optional(),
-});
-
-type CertFormData = z.infer<typeof certSchema>;
+type CertFormData = {
+  certType: CertificationType;
+  certName: string;
+  issuedBy?: string;
+  issueDate: string;
+  expiryDate?: string;
+};
 
 export function DriverCertificationsTab({ driverId }: { driverId: string }) {
   const [certs, setCerts] = useState<DriverCertification[]>([]);
@@ -64,10 +61,16 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting },
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
   } = useForm<CertFormData>({
-    resolver: zodResolver(certSchema),
+    defaultValues: { certType: 'DEFENSIVE_DRIVING' },
   });
+
+  const formErrorMessages = Object.values(errors)
+    .map((error) => error?.message)
+    .filter((message): message is string => Boolean(message));
 
   const fetchCerts = () =>
     apiFetch<DriverCertification[]>(`/api/drivers/${driverId}/certifications`)
@@ -82,6 +85,18 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
   }, [driverId]);
 
   const onSubmit = async (data: CertFormData) => {
+    clearErrors();
+    const missingFields: Array<keyof CertFormData> = [];
+    if (!String(data.certType || '').trim()) missingFields.push('certType');
+    if (!String(data.certName || '').trim()) missingFields.push('certName');
+    if (!String(data.issueDate || '').trim()) missingFields.push('issueDate');
+
+    missingFields.forEach((field) => setError(field, { type: 'manual', message: 'Required' }));
+    if (missingFields.length > 0) {
+      toast.error('Please fix the highlighted fields.');
+      return;
+    }
+
     try {
       await apiFetch(`/api/drivers/${driverId}/certifications`, {
         method: 'POST',
@@ -178,6 +193,7 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
                   <Input type="date" {...register('expiryDate')} className="mt-1 h-9 text-sm" />
                 </div>
               </div>
+              <FormErrorSummary messages={formErrorMessages} />
               <button
                 type="submit"
                 disabled={isSubmitting}
