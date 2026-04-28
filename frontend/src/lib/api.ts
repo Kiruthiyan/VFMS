@@ -10,22 +10,19 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor
-// NOTE: Token injection will be added by feature/auth-login (Kiruthiyan)
+// Keep the interceptor in place so auth headers can be added centrally when login is wired up.
 api.interceptors.request.use(
   (config) => {
-    // Auth token will be added here when feature/auth-login is merged
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// A shared 401 handler keeps the redirect behavior consistent across all API calls.
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Redirect to login — handled by middleware (feature/auth-rbac)
       if (typeof window !== "undefined") {
         window.location.href = "/auth/login";
       }
@@ -41,11 +38,13 @@ export async function apiFetch<T = unknown>(
   options?: RequestInit
 ): Promise<T> {
   try {
+    // Translate fetch-style options into the axios request shape used by the app.
     const method = options?.method ?? "GET";
     const headers = options?.headers as Record<string, string> | undefined;
 
     let data: unknown = undefined;
     if (options?.body) {
+      // Preserve JSON payloads when the caller passes a serialized request body.
       try {
         data = JSON.parse(options.body as string);
       } catch {
@@ -66,7 +65,7 @@ export async function apiFetch<T = unknown>(
   }
 }
 
-// Helper to extract error message from API response
+// Normalize axios and generic errors into a single message for toasts and inline validation.
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     return (

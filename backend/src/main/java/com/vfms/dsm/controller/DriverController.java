@@ -21,11 +21,13 @@ public class DriverController {
         return ResponseEntity.status(HttpStatus.CREATED).body(driverService.createDriver(request));
     }
 
+    // UUID path validation keeps malformed IDs from reaching the service layer.
     @GetMapping("/{id:[0-9a-fA-F\\-]{36}}")
     public ResponseEntity<DriverResponse> getDriver(@PathVariable UUID id) {
         return ResponseEntity.ok(driverService.getDriver(id));
     }
 
+    // The list endpoint uses simple paging params so the frontend can request predictable tables.
     @GetMapping
     public ResponseEntity<Page<DriverResponse>> getAllDrivers(
             @RequestParam(defaultValue = "0") int page,
@@ -39,6 +41,7 @@ public class DriverController {
         return ResponseEntity.ok(driverService.updateDriver(id, request));
     }
 
+    // Status-changing operations are modeled as PATCH requests because they update a single aspect of the resource.
     @PatchMapping("/{id:[0-9a-fA-F\\-]{36}}/deactivate")
     public ResponseEntity<Void> deactivateDriver(@PathVariable UUID id) {
         driverService.deactivateDriver(id);

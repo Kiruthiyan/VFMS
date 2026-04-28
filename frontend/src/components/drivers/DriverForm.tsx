@@ -51,9 +51,11 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
     },
   });
 
+  // Keep the required-field list in one place so client-side checks and server error handling stay aligned.
   const requiredFields: Array<keyof DriverFormData> = ['employeeId', 'firstName', 'lastName', 'nic', 'phone', 'licenseNumber', 'licenseExpiryDate'];
 
   const normalizePayload = (data: DriverFormData) => {
+    // Trim optional fields before sending them so the API receives either clean strings or null.
     const emptyToNull = (value?: string) => {
       if (typeof value !== 'string') return null;
       const trimmed = value.trim();
@@ -80,6 +82,7 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
   };
 
   const onSubmit = async (data: DriverFormData) => {
+    // Run a manual required-field pass first so the form can show all missing fields at once.
     const requiredFieldsAreValid = await validateRequiredFields(data);
     if (!requiredFieldsAreValid) {
       toast.error('Please fix the highlighted fields.');
@@ -87,6 +90,7 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
     }
 
     const applyServerErrors = (message: string) => {
+      // Server responses are normalized to a field map so inline errors land on the right input.
       const fieldMap: Record<string, keyof DriverFormData> = {
         employeeid: 'employeeId',
         firstname: 'firstName',
@@ -119,6 +123,7 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
       }
 
       const lower = message.toLowerCase();
+      // Fall back to substring matching when the backend returns a free-form validation message.
       if (lower.includes('employee id')) {
         setError('employeeId', { type: 'server', message });
         return true;
@@ -217,10 +222,12 @@ export function DriverForm({ onSuccess, driver }: { onSuccess: () => void; drive
     .filter((message): message is string => Boolean(message));
 
   const validateRequiredFields = async (data: DriverFormData) => {
+    // Reset the required-field errors before re-checking the current values.
     clearErrors(requiredFields);
 
     const missingFields = requiredFields.filter((field) => !String(data[field] ?? '').trim());
 
+    // Mark every missing field so the user can fix them in one pass.
     missingFields.forEach((field) => {
       setError(field, {
         type: 'manual',

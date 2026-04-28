@@ -20,6 +20,7 @@ public class DriverService {
     private final DriverMapper driverMapper;
 
     public DriverResponse createDriver(DriverRequest request) {
+        // Enforce uniqueness before mapping so the API returns a clear business-rule violation.
         if (driverRepository.existsByEmployeeId(request.getEmployeeId()))
             throw new DuplicateResourceException("Employee ID already exists");
         if (driverRepository.existsByNic(request.getNic()))
@@ -41,6 +42,7 @@ public class DriverService {
         if (pageable == null) {
             throw new IllegalArgumentException("Pageable cannot be null");
         }
+        // Fall back to newest-first ordering when the client does not supply an explicit sort.
         Pageable sortedPageable = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
@@ -51,6 +53,7 @@ public class DriverService {
 
     public DriverResponse updateDriver(UUID id, DriverRequest request) {
         Driver driver = findById(id);
+        // Apply incoming fields onto the managed entity, then persist the merged state.
         driverMapper.updateEntity(driver, request);
         if (driver == null) {
             throw new IllegalArgumentException("Failed to update driver entity");
@@ -60,12 +63,14 @@ public class DriverService {
 
     public void deactivateDriver(UUID id) {
         Driver driver = findById(id);
+        // Deactivation is modeled as a status change instead of deleting historical records.
         driver.setStatus(Driver.DriverStatus.INACTIVE);
         driverRepository.save(driver);
     }
 
     public void updateStatus(UUID id, Driver.DriverStatus status) {
         Driver driver = findById(id);
+        // This endpoint lets the UI switch a driver between allowed workflow states.
         driver.setStatus(status);
         driverRepository.save(driver);
     }
