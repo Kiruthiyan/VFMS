@@ -1,7 +1,7 @@
 package com.vfms.admin.dto;
 
 import com.vfms.common.enums.Role;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -14,10 +14,10 @@ import lombok.Data;
 @Data
 public class ReviewUserRequest {
 
-    @NotBlank(message = "Decision is required")
+    @NotNull(message = "Decision is required")
     private ReviewDecision decision;
 
-    // Optional — admin may adjust role during approval
+    // Optional - admin may adjust role during approval.
     private Role assignedRole;
 
     @Size(max = 500, message = "Rejection reason must not exceed 500 characters")

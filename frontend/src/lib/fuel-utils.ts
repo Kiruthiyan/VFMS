@@ -1,18 +1,23 @@
 import type { FuelRecord } from "@/lib/api/fuel";
 
 /**
- * Calculate average km/L for a list of records that already
- * have efficiencyKmPerLitre set.
+ * Calculate average km/L for records that already contain efficiency data.
  */
 export function calcAverageEfficiency(records: FuelRecord[]): number | null {
   const withEfficiency = records.filter(
-    (r) => r.efficiencyKmPerLitre !== null && r.efficiencyKmPerLitre! > 0
+    (record) =>
+      record.efficiencyKmPerLitre !== null && record.efficiencyKmPerLitre > 0
   );
-  if (withEfficiency.length === 0) return null;
+
+  if (withEfficiency.length === 0) {
+    return null;
+  }
+
   const total = withEfficiency.reduce(
-    (sum, r) => sum + r.efficiencyKmPerLitre!,
+    (sum, record) => sum + record.efficiencyKmPerLitre!,
     0
   );
+
   return Math.round((total / withEfficiency.length) * 100) / 100;
 }
 
@@ -20,21 +25,21 @@ export function calcAverageEfficiency(records: FuelRecord[]): number | null {
  * Total litres used across records.
  */
 export function calcTotalLitres(records: FuelRecord[]): number {
-  return records.reduce((sum, r) => sum + Number(r.quantity), 0);
+  return records.reduce((sum, record) => sum + Number(record.quantity), 0);
 }
 
 /**
  * Total cost across records.
  */
 export function calcTotalCost(records: FuelRecord[]): number {
-  return records.reduce((sum, r) => sum + Number(r.totalCost), 0);
+  return records.reduce((sum, record) => sum + Number(record.totalCost), 0);
 }
 
 /**
  * Count flagged records.
  */
 export function countFlagged(records: FuelRecord[]): number {
-  return records.filter((r) => r.flaggedForMisuse).length;
+  return records.filter((record) => record.flaggedForMisuse).length;
 }
 
 /**
@@ -52,7 +57,10 @@ export function formatLKR(amount: number): string {
  * Format km/L efficiency.
  */
 export function formatEfficiency(value: number | null): string {
-  if (value === null) return "—";
+  if (value === null) {
+    return "N/A";
+  }
+
   return `${value.toFixed(2)} km/L`;
 }
 
@@ -62,12 +70,17 @@ export function formatEfficiency(value: number | null): string {
 export function groupByVehicle(
   records: FuelRecord[]
 ): Record<string, FuelRecord[]> {
-  return records.reduce((acc, record) => {
-    const key = record.vehiclePlate;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(record);
-    return acc;
-  }, {} as Record<string, FuelRecord[]>);
+  return records.reduce(
+    (accumulator, record) => {
+      const key = record.vehiclePlate;
+      if (!accumulator[key]) {
+        accumulator[key] = [];
+      }
+      accumulator[key].push(record);
+      return accumulator;
+    },
+    {} as Record<string, FuelRecord[]>
+  );
 }
 
 /**
@@ -81,7 +94,7 @@ export function todayStr(): string {
  * Date 30 days ago as YYYY-MM-DD string.
  */
 export function thirtyDaysAgoStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 30);
-  return d.toISOString().split("T")[0];
+  const date = new Date();
+  date.setDate(date.getDate() - 30);
+  return date.toISOString().split("T")[0];
 }

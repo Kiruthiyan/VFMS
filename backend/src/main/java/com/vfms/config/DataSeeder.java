@@ -13,17 +13,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
- * Runs once on every startup. Creates the initial ADMIN account only when
- * no non-deleted admin already exists, preventing duplicate seeding.
+ * Creates the initial administrator account on startup only when:
+ * - admin seeding is enabled
+ * - no active admin account already exists
  *
- * Credentials are read from {@code vfms.admin.seed.*} properties so that
- * no values are hardcoded — override via environment variables:
- *   ADMIN_SEED_EMAIL, ADMIN_SEED_PASSWORD, etc.
+ * Seed values come from {@code vfms.admin.seed.*} properties, which can be
+ * overridden by environment variables for each deployment environment.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements ApplicationRunner {
+
+    private static final String SYSTEM_ACTOR = "system";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,16 +34,16 @@ public class DataSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         if (!adminSeedProperties.isEnabled()) {
-            log.info("[SEED] Admin seeding disabled — skipping.");
+            log.info("[SEED] Admin seeding disabled - skipping.");
             return;
         }
+
         seedAdminUser();
     }
 
     private void seedAdminUser() {
-        // Guard: skip if any non-deleted ADMIN already exists
         if (userRepository.existsByRoleAndDeletedAtIsNull(Role.ADMIN)) {
-            log.info("[SEED] Admin user already exists — skipping seed.");
+            log.info("[SEED] Admin user already exists - skipping seed.");
             return;
         }
 
@@ -56,14 +58,15 @@ public class DataSeeder implements ApplicationRunner {
                 .emailVerified(true)
                 .createdByAdmin(true)
                 .enabled(true)
-                // Require password change on first login for security
                 .passwordChangeRequired(true)
-                .createdBy("system")
+                .createdBy(SYSTEM_ACTOR)
                 .build();
 
         userRepository.save(admin);
 
-        log.info("[SEED] Default admin created — email: {}, password change required on first login.",
-                admin.getEmail());
+        log.info(
+                "[SEED] Default admin created - email: {}, password change required on first login.",
+                admin.getEmail()
+        );
     }
 }

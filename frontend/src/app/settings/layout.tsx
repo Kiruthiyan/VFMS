@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 import { useAuthStore } from "@/store/auth-store";
 
 export default function SettingsLayout({
@@ -11,17 +12,18 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const hydrated = useAuthStore((state) => state.hydrated);
   const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
 
-  const isLoading = accessToken === null && user === null;
+  const isLoading = !hydrated;
   const isAuthenticated = !!accessToken && !!user;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace("/auth/login");
+      router.replace(AUTH_ROUTES.LOGIN);
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (

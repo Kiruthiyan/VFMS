@@ -1,17 +1,20 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import type { UserRole, UserStatus } from "@/lib/auth";
+import { API_ENDPOINTS, AUTH_ROUTES } from "@/lib/constants/routes";
 import { useAuthStore } from "@/store/auth-store";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const REQUEST_TIMEOUT_MS = 15000;
+const DEFAULT_ERROR_MESSAGE = "Something went wrong";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000,
+  timeout: REQUEST_TIMEOUT_MS,
 });
 
 interface PersistedAuthState {
@@ -87,7 +90,9 @@ function resolveAccessToken(): string | null {
 
 function shouldSkipRefresh(config?: InternalAxiosRequestConfig): boolean {
   const url = config?.url ?? "";
-  return url.includes("/api/auth/login") || url.includes("/api/auth/refresh");
+  return (
+    url.includes(API_ENDPOINTS.LOGIN) || url.includes(API_ENDPOINTS.REFRESH_TOKEN)
+  );
 }
 
 function redirectToLogin(): void {
@@ -95,9 +100,9 @@ function redirectToLogin(): void {
 
   if (
     typeof window !== "undefined" &&
-    window.location.pathname !== "/auth/login"
+    window.location.pathname !== AUTH_ROUTES.LOGIN
   ) {
-    window.location.replace("/auth/login");
+    window.location.replace(AUTH_ROUTES.LOGIN);
   }
 }
 
@@ -111,13 +116,13 @@ async function refreshAccessToken(): Promise<string | null> {
 
   try {
     const response = await axios.post<ApiEnvelope<AuthRefreshResponse>>(
-      `${API_BASE_URL}/api/auth/refresh`,
+      `${API_BASE_URL}${API_ENDPOINTS.REFRESH_TOKEN}`,
       { refreshToken },
       {
         headers: {
           "Content-Type": "application/json",
         },
-        timeout: 15000,
+        timeout: REQUEST_TIMEOUT_MS,
       }
     );
 
@@ -190,7 +195,7 @@ export function getErrorMessage(error: unknown): string {
     return (
       (error.response?.data as { message?: string } | undefined)?.message ??
       error.message ??
-      "Something went wrong"
+      DEFAULT_ERROR_MESSAGE
     );
   }
 
@@ -198,5 +203,5 @@ export function getErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Something went wrong";
+  return DEFAULT_ERROR_MESSAGE;
 }

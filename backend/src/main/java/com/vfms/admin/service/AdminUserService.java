@@ -1,7 +1,12 @@
 package com.vfms.admin.service;
 
-import com.vfms.admin.dto.*;
 import com.vfms.admin.config.UserManagementProperties;
+import com.vfms.admin.dto.CreateUserRequest;
+import com.vfms.admin.dto.ReviewDecision;
+import com.vfms.admin.dto.ReviewUserRequest;
+import com.vfms.admin.dto.SoftDeleteRequest;
+import com.vfms.admin.dto.UpdateUserRequest;
+import com.vfms.admin.dto.UserSummaryResponse;
 import com.vfms.auth.service.EmailService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
@@ -19,8 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -32,25 +39,35 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
     private final UserManagementProperties userManagementProperties;
 
-    // ── CREATE USER (Admin) ──────────────────────────────────────────────
-
     @Transactional
     public UserSummaryResponse createUser(CreateUserRequest request) {
-        // Check duplicate email among active users
-        if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
+        String email = normalizeEmail(request.getEmail());
+        String phone = normalizeOptional(request.getPhone());
+
+        if (phone == null) {
+            throw new ValidationException("Validation failed", Map.of(
+                    "phone", "Phone number is required."
+            ));
+        }
+
+        if (userRepository.existsByEmailAndDeletedAtIsNull(email)) {
             throw new ValidationException(
                     "An active account with this email already exists.");
         }
 
-        // Generate temporary password
+        validateRoleSpecificFields(request.getRole(), request.getLicenseNumber(),
+                request.getLicenseExpiryDate(), request.getEmployeeId(),
+                request.getDepartment(), request.getOfficeLocation(),
+                request.getDesignation(), request.getApprovalLevel());
+
         String tempPassword = generateTempPassword();
 
         User user = User.builder()
-                .fullName(request.getFullName())
-                .email(request.getEmail())
+                .fullName(normalizeRequired(request.getFullName()))
+                .email(email)
                 .password(passwordEncoder.encode(tempPassword))
-                .phone(request.getPhone())
-                .nic(request.getNic())
+                .phone(phone)
+                .nic(normalizeRequired(request.getNic()).toUpperCase())
                 .role(request.getRole())
                 .status(UserStatus.APPROVED)
                 .emailVerified(true)
@@ -59,66 +76,51 @@ public class AdminUserService {
                 .createdBy(SecurityContextProvider.getCurrentUserEmail())
                 .build();
 
-        // Apply role-specific fields
-        applyRoleSpecificFields(user, request);
-
+        applyRoleSpecificCreateFields(user, request);
         userRepository.save(user);
 
         log.info("[ADMIN-CREATE] User created: {} ({}) as {}",
                 user.getFullName(), user.getEmail(), user.getRole());
 
-        // Send welcome email with temp password
         try {
             emailService.sendWelcomeEmail(
                     user.getEmail(),
                     user.getFullName(),
                     user.getRole().name().replace("_", " "),
                     tempPassword);
-        } catch (Exception e) {
+        } catch (Exception ex) {
             log.error("[ADMIN-CREATE] Failed to send welcome email to {}: {}",
-                    user.getEmail(), e.getMessage());
+                    user.getEmail(), ex.getMessage());
         }
 
         return toSummary(user);
     }
 
-    // ── GET ALL ACTIVE USERS ─────────────────────────────────────────────
-
     public List<UserSummaryResponse> getAllUsers() {
         return userRepository.findByDeletedAtIsNullOrderByCreatedAtDesc()
                 .stream()
                 .map(this::toSummary)
-                .collect(Collectors.toList());
+                .toList();
     }
-
-    // ── GET PENDING USERS ────────────────────────────────────────────────
 
     public List<UserSummaryResponse> getPendingUsers() {
         return userRepository
-                .findByStatusAndDeletedAtIsNullOrderByCreatedAtAsc(
-                        UserStatus.PENDING_APPROVAL)
+                .findByStatusAndDeletedAtIsNullOrderByCreatedAtAsc(UserStatus.PENDING_APPROVAL)
                 .stream()
                 .map(this::toSummary)
-                .collect(Collectors.toList());
+                .toList();
     }
-
-    // ── GET SINGLE USER ──────────────────────────────────────────────────
 
     public UserSummaryResponse getUserById(UUID userId) {
-        User user = findUser(userId);
-        return toSummary(user);
+        return toSummary(findUser(userId));
     }
-
-    // ── GET DELETED USERS (History) ──────────────────────────────────────
 
     public List<UserSummaryResponse> getDeletedUsers() {
         return userRepository.findByDeletedAtIsNotNullOrderByDeletedAtDesc()
                 .stream()
                 .map(this::toSummary)
-                .collect(Collectors.toList());
+                .toList();
     }
-
-    // ── GET USER COUNTS (for dashboard summary cards) ────────────────────
 
     public Map<String, Long> getUserCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
@@ -135,8 +137,6 @@ public class AdminUserService {
         return counts;
     }
 
-    // ── REVIEW (APPROVE / REJECT) ────────────────────────────────────────
-
     @Transactional
     public void reviewUser(UUID userId, ReviewUserRequest request) {
         User user = findUser(userId);
@@ -147,15 +147,13 @@ public class AdminUserService {
 
         if (user.getStatus() != UserStatus.PENDING_APPROVAL) {
             throw new ValidationException(
-                    "User is not in PENDING_APPROVAL status. "
-                    + "Current status: " + user.getStatus());
+                    "User is not in PENDING_APPROVAL status. Current status: " + user.getStatus());
         }
 
         if (request.getDecision() == ReviewDecision.APPROVE) {
-
-            if (request.getAssignedRole() != null
-                    && request.getAssignedRole() != user.getRole()) {
+            if (request.getAssignedRole() != null && request.getAssignedRole() != user.getRole()) {
                 user.setRole(request.getAssignedRole());
+                clearRoleSpecificFields(user);
             }
 
             user.setStatus(UserStatus.APPROVED);
@@ -167,30 +165,29 @@ public class AdminUserService {
                     user.getEmail(),
                     user.getFullName(),
                     user.getRole().name());
+            return;
+        }
 
-        } else if (request.getDecision() == ReviewDecision.REJECT) {
-
-            if (request.getRejectionReason() == null
-                    || request.getRejectionReason().isBlank()) {
+        if (request.getDecision() == ReviewDecision.REJECT) {
+            String rejectionReason = normalizeOptional(request.getRejectionReason());
+            if (rejectionReason == null) {
                 throw new ValidationException("Rejection reason is required");
             }
 
             user.setStatus(UserStatus.REJECTED);
-            user.setRejectionReason(request.getRejectionReason());
+            user.setRejectionReason(rejectionReason);
             user.setReviewedAt(LocalDateTime.now());
             userRepository.save(user);
 
             emailService.sendRejectionEmail(
                     user.getEmail(),
                     user.getFullName(),
-                    request.getRejectionReason());
-
-        } else {
-            throw new ValidationException("Decision must be APPROVE or REJECT");
+                    rejectionReason);
+            return;
         }
-    }
 
-    // ── SOFT DELETE ──────────────────────────────────────────────────────
+        throw new ValidationException("Decision must be APPROVE or REJECT");
+    }
 
     @Transactional
     public void softDeleteUser(UUID userId, SoftDeleteRequest request) {
@@ -200,7 +197,6 @@ public class AdminUserService {
             throw new ValidationException("User is already deleted.");
         }
 
-        // Preserve current status for potential restore
         user.setStatusBeforeDeletion(user.getStatus());
         user.setDeletedAt(LocalDateTime.now());
         user.setDeletedReason(request.getReason());
@@ -212,8 +208,6 @@ public class AdminUserService {
                 user.getFullName(), user.getEmail(), request.getReason());
     }
 
-    // ── RESTORE USER ─────────────────────────────────────────────────────
-
     @Transactional
     public void restoreUser(UUID userId) {
         User user = findUser(userId);
@@ -222,7 +216,6 @@ public class AdminUserService {
             throw new ValidationException("User is not deleted and cannot be restored.");
         }
 
-        // Restore to previous status
         UserStatus restoredStatus = user.getStatusBeforeDeletion() != null
                 ? user.getStatusBeforeDeletion()
                 : UserStatus.APPROVED;
@@ -239,8 +232,6 @@ public class AdminUserService {
                 user.getFullName(), user.getEmail(), restoredStatus);
     }
 
-    // ── DEACTIVATE / REACTIVATE ──────────────────────────────────────────
-
     @Transactional
     public void toggleUserStatus(UUID userId) {
         User user = findUser(userId);
@@ -255,94 +246,70 @@ public class AdminUserService {
             user.setStatus(UserStatus.APPROVED);
         } else {
             throw new ValidationException(
-                    "Only APPROVED or DEACTIVATED accounts can be toggled. "
-                    + "Current status: " + user.getStatus());
+                    "Only APPROVED or DEACTIVATED accounts can be toggled. Current status: "
+                            + user.getStatus());
         }
 
         userRepository.save(user);
     }
 
-    // ── UPDATE USER DETAILS ──────────────────────────────────────────────
-
     @Transactional
-    public UserSummaryResponse updateUser(UUID userId,
-                                          UpdateUserRequest request) {
+    public UserSummaryResponse updateUser(UUID userId, UpdateUserRequest request) {
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
             throw new ValidationException("Cannot edit a deleted user.");
         }
 
-        // Common fields
-        if (request.getFullName() != null && !request.getFullName().isBlank()) {
-            user.setFullName(request.getFullName());
+        Role targetRole = request.getRole() != null ? request.getRole() : user.getRole();
+        boolean roleChanged = targetRole != user.getRole();
+
+        if (request.getFullName() != null) {
+            user.setFullName(normalizeRequired(request.getFullName()));
         }
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            // Check duplicate among active users (exclude current user)
-            if (!request.getEmail().equals(user.getEmail())
-                    && userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
+
+        if (request.getEmail() != null) {
+            String normalizedEmail = normalizeEmail(request.getEmail());
+            if (!normalizedEmail.equals(user.getEmail())
+                    && userRepository.existsByEmailAndDeletedAtIsNull(normalizedEmail)) {
                 throw new ValidationException("An active account with this email already exists.");
             }
-            user.setEmail(request.getEmail());
-        }
-        if (request.getPhone() != null && !request.getPhone().isBlank()) {
-            user.setPhone(request.getPhone());
-        }
-        if (request.getNic() != null && !request.getNic().isBlank()) {
-            user.setNic(request.getNic());
+            user.setEmail(normalizedEmail);
         }
 
-        // Role change — admin can change any role
-        if (request.getRole() != null && request.getRole() != user.getRole()) {
-            user.setRole(request.getRole());
+        if (request.getPhone() != null) {
+            String phone = normalizeOptional(request.getPhone());
+            if (phone != null) {
+                user.setPhone(phone);
+            }
         }
 
-        // Driver fields
-        if (request.getLicenseNumber() != null) {
-            user.setLicenseNumber(request.getLicenseNumber());
-        }
-        if (request.getLicenseExpiryDate() != null
-                && !request.getLicenseExpiryDate().isBlank()) {
-            user.setLicenseExpiryDate(
-                    LocalDate.parse(request.getLicenseExpiryDate()));
-        }
-        if (request.getCertifications() != null) {
-            user.setCertifications(request.getCertifications());
-        }
-        if (request.getExperienceYears() != null) {
-            user.setExperienceYears(request.getExperienceYears());
+        if (request.getNic() != null) {
+            String nic = normalizeOptional(request.getNic());
+            if (nic != null) {
+                user.setNic(nic.toUpperCase());
+            }
         }
 
-        // Staff fields
-        if (request.getEmployeeId() != null) {
-            user.setEmployeeId(request.getEmployeeId());
+        if (roleChanged) {
+            user.setRole(targetRole);
+            clearRoleSpecificFields(user);
         }
-        if (request.getDepartment() != null && !request.getDepartment().isBlank()) {
-            user.setDepartment(request.getDepartment());
-        }
-        if (request.getOfficeLocation() != null
-                && !request.getOfficeLocation().isBlank()) {
-            user.setOfficeLocation(request.getOfficeLocation());
-        }
-        if (request.getDesignation() != null
-                && !request.getDesignation().isBlank()) {
-            user.setDesignation(request.getDesignation());
-        }
-        if (request.getApprovalLevel() != null
-                && !request.getApprovalLevel().isBlank()) {
-            user.setApprovalLevel(request.getApprovalLevel());
-        }
+
+        applyRoleSpecificUpdateFields(user, request, targetRole);
+        validateRoleSpecificFields(targetRole, user.getLicenseNumber(),
+                user.getLicenseExpiryDate() != null ? user.getLicenseExpiryDate().toString() : null,
+                user.getEmployeeId(), user.getDepartment(),
+                user.getOfficeLocation(), user.getDesignation(),
+                user.getApprovalLevel());
 
         userRepository.save(user);
         return toSummary(user);
     }
 
-    // ── HELPERS ──────────────────────────────────────────────────────────
-
     private User findUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() ->
-                new ResourceNotFoundException("User not found: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
     }
 
     private String generateTempPassword() {
@@ -353,33 +320,164 @@ public class AdminUserService {
             throw new ValidationException("Temporary password character set is not configured.");
         }
 
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(
-                    random.nextInt(chars.length())));
+        StringBuilder tempPassword = new StringBuilder(length);
+        for (int index = 0; index < length; index++) {
+            tempPassword.append(chars.charAt(random.nextInt(chars.length())));
         }
-        return sb.toString();
+        return tempPassword.toString();
     }
 
-    private void applyRoleSpecificFields(User user, CreateUserRequest request) {
+    private void applyRoleSpecificCreateFields(User user, CreateUserRequest request) {
+        clearRoleSpecificFields(user);
+
         if (request.getRole() == Role.DRIVER) {
-            user.setLicenseNumber(request.getLicenseNumber());
-            if (request.getLicenseExpiryDate() != null
-                    && !request.getLicenseExpiryDate().isBlank()) {
-                user.setLicenseExpiryDate(
-                        LocalDate.parse(request.getLicenseExpiryDate()));
-            }
-            user.setCertifications(request.getCertifications());
+            user.setLicenseNumber(normalizeOptional(request.getLicenseNumber()));
+            user.setLicenseExpiryDate(parseOptionalDate(request.getLicenseExpiryDate()));
+            user.setCertifications(normalizeOptional(request.getCertifications()));
             user.setExperienceYears(request.getExperienceYears());
-        } else {
-            user.setEmployeeId(request.getEmployeeId());
-            user.setDepartment(request.getDepartment());
-            user.setOfficeLocation(request.getOfficeLocation());
-            user.setDesignation(request.getDesignation());
-            if (request.getRole() == Role.APPROVER) {
-                user.setApprovalLevel(request.getApprovalLevel());
+            return;
+        }
+
+        user.setEmployeeId(normalizeOptional(request.getEmployeeId()));
+        user.setDepartment(normalizeOptional(request.getDepartment()));
+        user.setOfficeLocation(normalizeOptional(request.getOfficeLocation()));
+        user.setDesignation(normalizeOptional(request.getDesignation()));
+        if (request.getRole() == Role.APPROVER) {
+            user.setApprovalLevel(normalizeOptional(request.getApprovalLevel()));
+        }
+    }
+
+    private void applyRoleSpecificUpdateFields(User user, UpdateUserRequest request, Role targetRole) {
+        if (targetRole == Role.DRIVER) {
+            if (request.getLicenseNumber() != null) {
+                user.setLicenseNumber(normalizeOptional(request.getLicenseNumber()));
+            }
+            if (request.getLicenseExpiryDate() != null) {
+                user.setLicenseExpiryDate(parseOptionalDate(request.getLicenseExpiryDate()));
+            }
+            if (request.getCertifications() != null) {
+                user.setCertifications(normalizeOptional(request.getCertifications()));
+            }
+            if (request.getExperienceYears() != null) {
+                user.setExperienceYears(request.getExperienceYears());
+            }
+            return;
+        }
+
+        if (request.getEmployeeId() != null) {
+            user.setEmployeeId(normalizeOptional(request.getEmployeeId()));
+        }
+        if (request.getDepartment() != null) {
+            user.setDepartment(normalizeOptional(request.getDepartment()));
+        }
+        if (request.getOfficeLocation() != null) {
+            user.setOfficeLocation(normalizeOptional(request.getOfficeLocation()));
+        }
+        if (request.getDesignation() != null) {
+            user.setDesignation(normalizeOptional(request.getDesignation()));
+        }
+        if (targetRole == Role.APPROVER && request.getApprovalLevel() != null) {
+            user.setApprovalLevel(normalizeOptional(request.getApprovalLevel()));
+        }
+        if (targetRole != Role.APPROVER) {
+            user.setApprovalLevel(null);
+        }
+    }
+
+    private void clearRoleSpecificFields(User user) {
+        user.setLicenseNumber(null);
+        user.setLicenseExpiryDate(null);
+        user.setCertifications(null);
+        user.setExperienceYears(null);
+        user.setEmployeeId(null);
+        user.setDepartment(null);
+        user.setOfficeLocation(null);
+        user.setDesignation(null);
+        user.setApprovalLevel(null);
+    }
+
+    private void validateRoleSpecificFields(
+            Role role,
+            String licenseNumber,
+            String licenseExpiryDate,
+            String employeeId,
+            String department,
+            String officeLocation,
+            String designation,
+            String approvalLevel
+    ) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        if (role == Role.DRIVER) {
+            if (normalizeOptional(licenseNumber) == null) {
+                errors.put("licenseNumber", "License number is required for driver accounts.");
+            }
+
+            String expiryDate = normalizeOptional(licenseExpiryDate);
+            if (expiryDate == null) {
+                errors.put("licenseExpiryDate", "License expiry date is required for driver accounts.");
+            } else {
+                try {
+                    LocalDate parsedDate = LocalDate.parse(expiryDate);
+                    if (parsedDate.isBefore(LocalDate.now())) {
+                        errors.put("licenseExpiryDate",
+                                "License expiry date must be today or later.");
+                    }
+                } catch (Exception ex) {
+                    errors.put("licenseExpiryDate",
+                            "License expiry date must be a valid date.");
+                }
             }
         }
+
+        if (role == Role.SYSTEM_USER || role == Role.APPROVER) {
+            if (normalizeOptional(employeeId) == null) {
+                errors.put("employeeId", "Employee ID is required for staff accounts.");
+            }
+            if (normalizeOptional(department) == null) {
+                errors.put("department", "Department is required for staff accounts.");
+            }
+            if (normalizeOptional(officeLocation) == null) {
+                errors.put("officeLocation", "Office location is required for staff accounts.");
+            }
+            if (normalizeOptional(designation) == null) {
+                errors.put("designation", "Designation is required for staff accounts.");
+            }
+        }
+
+        if (role == Role.APPROVER && normalizeOptional(approvalLevel) == null) {
+            errors.put("approvalLevel", "Approval level is required for approver accounts.");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Validation failed", errors);
+        }
+    }
+
+    private LocalDate parseOptionalDate(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : LocalDate.parse(normalizedValue);
+    }
+
+    private String normalizeEmail(String email) {
+        return normalizeRequired(email).toLowerCase();
+    }
+
+    private String normalizeRequired(String value) {
+        String normalizedValue = normalizeOptional(value);
+        if (normalizedValue == null) {
+            throw new ValidationException("Validation failed");
+        }
+        return normalizedValue;
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private UserSummaryResponse toSummary(User user) {
