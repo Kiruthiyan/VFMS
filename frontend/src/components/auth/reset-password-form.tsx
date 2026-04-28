@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { getErrorMessage, resetPasswordApi } from "@/lib/api/auth";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
@@ -51,7 +52,7 @@ export function ResetPasswordForm() {
         description="This reset link is missing the required token. Please request a new password reset email."
       >
         <Button asChild className="w-full">
-          <Link href="/auth/forgot-password">Request a new reset link</Link>
+          <Link href={AUTH_ROUTES.FORGOT_PASSWORD}>Request a new reset link</Link>
         </Button>
       </AuthStatusPanel>
     );
@@ -65,7 +66,7 @@ export function ResetPasswordForm() {
         title="Password updated"
         description="Your password has been reset successfully. You can now sign in with your new credentials."
       >
-        <Button className="w-full" onClick={() => router.push("/auth/login")}>
+        <Button className="w-full" onClick={() => router.push(AUTH_ROUTES.LOGIN)}>
           Go to sign in
         </Button>
       </AuthStatusPanel>
@@ -141,7 +142,7 @@ export function ResetPasswordForm() {
 
       <div className="text-center">
         <Link
-          href="/auth/login"
+          href={AUTH_ROUTES.LOGIN}
           className="text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950"
         >
           Back to sign in

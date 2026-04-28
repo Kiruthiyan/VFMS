@@ -12,6 +12,7 @@ import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,12 +49,22 @@ class AdminUserServiceTest {
     @InjectMocks
     private AdminUserService adminUserService;
 
+    @BeforeEach
+    void setUp() {
+        UserManagementProperties.TempPassword tempPassword =
+                new UserManagementProperties.TempPassword();
+        tempPassword.setLength(10);
+        tempPassword.setChars("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%");
+        lenient().when(userManagementProperties.getTempPassword()).thenReturn(tempPassword);
+    }
+
     @Test
     @DisplayName("createUser should reject duplicate active email")
     void createUser_shouldRejectDuplicateEmail() {
         CreateUserRequest req = new CreateUserRequest();
         req.setFullName("Test User");
         req.setEmail("test@vfms.com");
+        req.setPhone("0771234567");
         req.setNic("123456789");
         req.setRole(Role.SYSTEM_USER);
 
@@ -176,6 +187,61 @@ class AdminUserServiceTest {
 
         assertThrows(ValidationException.class, () -> adminUserService.updateUser(id, req));
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("createUser should normalize email and NIC before saving")
+    void createUser_shouldNormalizeIdentityFields() {
+        CreateUserRequest req = new CreateUserRequest();
+        req.setFullName("Driver User");
+        req.setEmail(" DRIVER@VFMS.COM ");
+        req.setPhone("0771234567");
+        req.setNic("200012345678");
+        req.setRole(Role.DRIVER);
+        req.setLicenseNumber("DL123456");
+        req.setLicenseExpiryDate("2030-05-01");
+
+        when(userRepository.existsByEmailAndDeletedAtIsNull("driver@vfms.com"))
+                .thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed-temp-password");
+
+        adminUserService.createUser(req);
+
+        ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(savedUser.capture());
+        assertEquals("driver@vfms.com", savedUser.getValue().getEmail());
+        assertEquals("200012345678", savedUser.getValue().getNic());
+    }
+
+    @Test
+    @DisplayName("updateUser should clear stale driver fields when role changes to staff")
+    void updateUser_shouldClearDriverFieldsWhenRoleChanges() {
+        UUID id = UUID.randomUUID();
+        User user = baseApprovedUser(id);
+        user.setRole(Role.DRIVER);
+        user.setLicenseNumber("DL123456");
+        user.setLicenseExpiryDate(java.time.LocalDate.parse("2030-05-01"));
+        user.setCertifications("Hazmat");
+        user.setExperienceYears(8);
+
+        UpdateUserRequest req = new UpdateUserRequest();
+        req.setRole(Role.SYSTEM_USER);
+        req.setEmployeeId("EMP001");
+        req.setDepartment("Operations");
+        req.setOfficeLocation("Colombo");
+        req.setDesignation("Coordinator");
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
+        adminUserService.updateUser(id, req);
+
+        assertEquals(Role.SYSTEM_USER, user.getRole());
+        assertNull(user.getLicenseNumber());
+        assertNull(user.getLicenseExpiryDate());
+        assertNull(user.getCertifications());
+        assertNull(user.getExperienceYears());
+        assertEquals("EMP001", user.getEmployeeId());
+        assertEquals("Operations", user.getDepartment());
     }
 
     private static User basePendingUser(UUID id) {

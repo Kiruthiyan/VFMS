@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api, getErrorMessage } from "@/lib/api";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 import { useAuthStore } from "@/store/auth-store";
 
 describe("api", () => {
@@ -55,5 +56,9 @@ describe("api", () => {
     });
 
     expect(useAuthStore.getState().accessToken).toBe("token-123");
+  });
+
+  it("keeps auth route constants aligned with login defaults", () => {
+    expect(AUTH_ROUTES.LOGIN).toBe("/auth/login");
   });
 });

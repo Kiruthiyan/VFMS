@@ -5,20 +5,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * Binds {@code vfms.admin.seed.*} properties to control the one-time
- * default admin account that is created on first startup when no admin exists.
+ * Binds {@code vfms.admin.seed.*} properties for the optional first-run
+ * administrator bootstrap flow. Default fallback values are defined in
+ * {@code application.properties} so they stay centralized in one place.
  */
 @Data
 @Component
 @ConfigurationProperties(prefix = "vfms.admin.seed")
 public class AdminSeedProperties {
 
-    /** Whether the seed step runs at startup. Set to false after first deploy if desired. */
-    private boolean enabled = true;
-
-    private String email = "admin@vfms.local";
-    private String password = "Admin@1234";
-    private String fullName = "System Administrator";
-    private String phone = "0000000000";
-    private String nic = "000000000V";
+    private boolean enabled;
+    private String email;
+    private String password;
+    private String fullName;
+    private String phone;
+    private String nic;
 }

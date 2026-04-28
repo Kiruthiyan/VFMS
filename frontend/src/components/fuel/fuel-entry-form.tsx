@@ -14,6 +14,7 @@ import {
   createFuelRecordApi,
   getErrorMessage,
 } from "@/lib/api/fuel";
+import { todayStr } from "@/lib/fuel-utils";
 import {
   fuelEntrySchema,
   type FuelEntryFormValues,
@@ -63,7 +64,7 @@ export function FuelEntryForm({
   } = useForm<FuelEntryFormValues>({
     resolver: zodResolver(fuelEntrySchema),
     defaultValues: {
-      fuelDate: new Date().toISOString().split("T")[0],
+      fuelDate: todayStr(),
       driverId: driverId ?? "",
     },
   });
@@ -129,7 +130,7 @@ export function FuelEntryForm({
       }
 
       reset({
-        fuelDate: new Date().toISOString().split("T")[0],
+        fuelDate: todayStr(),
         driverId: driverId ?? "",
       });
       resetReceiptSelection();
@@ -430,7 +431,7 @@ export function FuelEntryForm({
           type="button"
           onClick={() => {
             reset({
-              fuelDate: new Date().toISOString().split("T")[0],
+              fuelDate: todayStr(),
               driverId: driverId ?? "",
             });
             resetReceiptSelection();

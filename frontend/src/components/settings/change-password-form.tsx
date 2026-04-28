@@ -11,10 +11,12 @@ import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from "@/lib/validators/auth/change-password-schema";
+import { DEFAULT_ROUTES, ROLE_DASHBOARDS } from "@/lib/constants/routes";
 import { changePasswordApi, getErrorMessage } from "@/lib/api/auth";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
+import { useAuthStore } from "@/store/auth-store";
 
 const inputClass =
   "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 " +
@@ -24,6 +26,7 @@ const inputClass =
 
 export function ChangePasswordForm() {
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -44,12 +47,18 @@ export function ChangePasswordForm() {
       await changePasswordApi(data);
       toast.success("Password changed successfully!");
       reset();
-      // Redirect to their own dashboard after short delay
-      setTimeout(() => router.back(), 1500);
+      const destination = user
+        ? ROLE_DASHBOARDS[user.role]
+        : DEFAULT_ROUTES.DEFAULT_DASHBOARD;
+      setTimeout(() => router.replace(destination), 1500);
     } catch (err) {
       setServerError(getErrorMessage(err));
     }
   };
+
+  const cancelDestination = user
+    ? ROLE_DASHBOARDS[user.role]
+    : DEFAULT_ROUTES.DEFAULT_DASHBOARD;
 
   return (
     <div className="max-w-xl">
@@ -170,7 +179,7 @@ export function ChangePasswordForm() {
           <div className="flex gap-3 pt-2">
             <Button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => router.replace(cancelDestination)}
               disabled={isSubmitting}
               variant="outline"
               className="flex-1"
