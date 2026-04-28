@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * PLACEHOLDER MIDDLEWARE — currently passes all requests through.
- * Kiruthiyan (feature/auth-rbac-protection) will add route protection here.
- * Other team members: do NOT modify this file on your feature branches.
+ * Middleware is intentionally pass-through for now.
+ * It exists to reserve the routing hook for future auth and role-based protection.
  */
 export function middleware(request: NextRequest) {
   return NextResponse.next();

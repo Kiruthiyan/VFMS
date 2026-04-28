@@ -1,5 +1,5 @@
-// Shared auth types — used across all modules
-// Auth functions (login, register, etc.) are in feature/auth-login (Kiruthiyan)
+// Shared auth types used by middleware, layouts, and role-aware navigation.
+// The actual login and registration flows live in the auth feature branch.
 
 export type UserRole = "ADMIN" | "APPROVER" | "SYSTEM_USER" | "DRIVER";
 
@@ -25,6 +25,7 @@ export const ROLE_REDIRECTS: Record<UserRole, string> = {
 
 export const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/signup"];
 
+// Public routes are checked with prefix matching so nested auth pages can stay accessible.
 export function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
