@@ -30,6 +30,10 @@ export default function EditVehiclePage({
           vehicleType: v.vehicleType,
           fuelType: v.fuelType,
           department: v.department,
+          color: v.color,
+          seatingCapacity: v.seatingCapacity,
+          insuranceExpiryDate: v.insuranceExpiryDate,
+          revenueLicenseExpiryDate: v.revenueLicenseExpiryDate,
         });
       } catch {
         toast.error("Failed to load vehicle");
