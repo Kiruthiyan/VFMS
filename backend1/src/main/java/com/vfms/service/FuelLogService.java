@@ -5,6 +5,7 @@ import com.vfms.repository.FuelLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -15,6 +16,23 @@ public class FuelLogService {
 
     public List<FuelLog> getAllLogs() {
         return repo.findAll();
+    }
+
+    public FuelLog createLog(FuelLog fuelLog) {
+        return repo.save(fuelLog);
+    }
+
+    public FuelLog updateLog(Long id, FuelLog updatedLog) {
+        updatedLog.setId(id);
+        return repo.save(updatedLog);
+    }
+
+    public void deleteLog(Long id) {
+        repo.deleteById(id);
+    }
+
+    public List<FuelLog> getLogsByDateRange(LocalDate startDate, LocalDate endDate) {
+        return repo.findByDateBetween(startDate, endDate);
     }
 
     public Double getTotalSpend() {

@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,25 +16,23 @@ public class ReportService {
 
     private final VehicleRepository vehicleRepository;
     private final DriverRepository driverRepository;
-    private final TripRepository tripRepository;
+    private final TripRequestRepository tripRequestRepository;
     private final MaintenanceLogRepository maintenanceLogRepository;
     private final FuelLogRepository fuelLogRepository;
 
     public DashboardStatsDTO getDashboardStats() {
         Double totalFuelCost = fuelLogRepository.getTotalFuelSpend();
         Double totalFuelQuantity = fuelLogRepository.getTotalFuelConsumption();
-        // Note: ReportService uses MaintenanceLogRepository for costs, while DashboardService used MaintenanceRequestRepository.
-        // I will stick to MaintenanceLogRepository for the reports page.
+
         List<MaintenanceLog> maintenanceLogs = maintenanceLogRepository.findAll();
         Double totalMaintenanceCost = maintenanceLogs.stream().mapToDouble(MaintenanceLog::getCost).sum();
-        
+
         Double totalDistance = vehicleRepository.getTotalFleetDistance();
         Long totalVehicles = vehicleRepository.count();
 
-        Double avgEfficiency = (totalDistance != null && totalFuelQuantity != null && totalFuelQuantity > 0) 
+        Double avgEfficiency = (totalDistance != null && totalFuelQuantity != null && totalFuelQuantity > 0)
                 ? totalDistance / totalFuelQuantity : 0.0;
 
-        // Simple monthly distribution for the chart (last 5 months)
         Map<String, Double> monthlyDistances = new LinkedHashMap<>();
         monthlyDistances.put("Jan", 4000.0);
         monthlyDistances.put("Feb", 3000.0);
@@ -55,8 +51,7 @@ public class ReportService {
     }
 
     public CostAnalysisDTO getCostAnalysis(LocalDate startDate, LocalDate endDate) {
-        List<MaintenanceLog> maintenanceLogs = maintenanceLogRepository.findByMaintenanceDateBetween(startDate,
-                endDate);
+        List<MaintenanceLog> maintenanceLogs = maintenanceLogRepository.findByMaintenanceDateBetween(startDate, endDate);
         List<FuelLog> fuelLogs = fuelLogRepository.findByDateBetween(startDate, endDate);
 
         Double totalMaintenanceCost = maintenanceLogs.stream().mapToDouble(MaintenanceLog::getCost).sum();
@@ -84,16 +79,16 @@ public class ReportService {
 
     public List<VehicleUtilizationDTO> getVehicleUtilization() {
         List<Vehicle> vehicles = vehicleRepository.findAll();
-        List<Trip> trips = tripRepository.findAll();
+        List<TripRequest> trips = tripRequestRepository.findAll();
         List<FuelLog> fuelLogs = fuelLogRepository.findAll();
 
         return vehicles.stream().map(vehicle -> {
-            List<Trip> vehicleTrips = trips.stream()
-                    .filter(t -> t.getVehicle() != null && t.getVehicle().getId().equals(vehicle.getId()))
+            List<TripRequest> vehicleTrips = trips.stream()
+                    .filter(t -> t.getVehicleId() != null && t.getVehicleId().equals(vehicle.getId()))
                     .collect(Collectors.toList());
 
             Double distance = vehicleTrips.stream()
-                    .mapToDouble(t -> t.getDistance() != null ? t.getDistance() : 0.0)
+                    .mapToDouble(t -> t.getDistanceKm() != null ? t.getDistanceKm() : 0.0)
                     .sum();
 
             Double fuel = fuelLogs.stream()
@@ -113,15 +108,16 @@ public class ReportService {
 
     public List<DriverPerformanceDTO> getDriverPerformance() {
         List<Driver> drivers = driverRepository.findAll();
-        List<Trip> trips = tripRepository.findAll();
+        List<TripRequest> trips = tripRequestRepository.findAll();
 
         return drivers.stream().map(driver -> {
-            List<Trip> driverTrips = trips.stream()
-                    .filter(t -> t.getDriver() != null && t.getDriver().getId().equals(driver.getId()))
+            List<TripRequest> driverTrips = trips.stream()
+                    .filter(t -> t.getAssignedDriverId() != null &&
+                            t.getAssignedDriverId().toString().equals(driver.getId().toString()))
                     .collect(Collectors.toList());
 
             Double distance = driverTrips.stream()
-                    .mapToDouble(t -> t.getDistance() != null ? t.getDistance() : 0.0)
+                    .mapToDouble(t -> t.getDistanceKm() != null ? t.getDistanceKm() : 0.0)
                     .sum();
 
             return DriverPerformanceDTO.builder()
@@ -135,19 +131,19 @@ public class ReportService {
     }
 
     public TripStatsDTO getTripStats() {
-        List<Trip> trips = tripRepository.findAll();
+        List<TripRequest> trips = tripRequestRepository.findAll();
+
         long total = trips.size();
-        long planned = trips.stream().filter(t -> "PLANNED".equalsIgnoreCase(t.getStatus())).count();
+        long pending = trips.stream().filter(t -> "PENDING".equalsIgnoreCase(t.getStatus())).count();
+        long approved = trips.stream().filter(t -> "APPROVED".equalsIgnoreCase(t.getStatus())).count();
+        long rejected = trips.stream().filter(t -> "REJECTED".equalsIgnoreCase(t.getStatus())).count();
         long active = trips.stream().filter(t -> "IN_PROGRESS".equalsIgnoreCase(t.getStatus())).count();
         long completed = trips.stream().filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus())).count();
-        
-        long approved = completed + active + planned;
-        long rejected = 0;
-        long cancelled = 0;
+        long cancelled = trips.stream().filter(t -> "CANCELLED".equalsIgnoreCase(t.getStatus())).count();
 
         return TripStatsDTO.builder()
                 .total(total)
-                .pending(planned)
+                .pending(pending)
                 .approved(approved)
                 .rejected(rejected)
                 .active(active)
