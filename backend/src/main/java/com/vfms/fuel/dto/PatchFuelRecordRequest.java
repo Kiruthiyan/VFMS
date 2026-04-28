@@ -16,7 +16,7 @@ import java.util.UUID;
 @Data
 public class PatchFuelRecordRequest {
 
-    private UUID vehicleId;
+    private String vehicleId;
 
     private UUID driverId;
 
@@ -40,8 +40,8 @@ public class PatchFuelRecordRequest {
     private String notes;
 
     // Explicit accessors (keeps builds resilient even if Lombok processing is misconfigured)
-    public UUID getVehicleId() { return vehicleId; }
-    public void setVehicleId(UUID vehicleId) { this.vehicleId = vehicleId; }
+    public String getVehicleId() { return vehicleId; }
+    public void setVehicleId(String vehicleId) { this.vehicleId = vehicleId; }
     public UUID getDriverId() { return driverId; }
     public void setDriverId(UUID driverId) { this.driverId = driverId; }
     public LocalDate getFuelDate() { return fuelDate; }

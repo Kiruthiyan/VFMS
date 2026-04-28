@@ -119,16 +119,65 @@
     border-color: hsl(var(--border));
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-family: Inter, var(--font-sans), system-ui, sans-serif;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(circle at top left, rgba(251, 191, 36, 0.08), transparent 22%),
+      linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(255, 180, 1, 0.24);
+    color: #0f172a;
   }
 }
 
 body {
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: var(--font-sans), system-ui, sans-serif;
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+  color: #0f172a;
+  font-family: Inter, var(--font-sans), system-ui, sans-serif;
+}
+
+.app-shell-background {
+  background:
+    radial-gradient(circle at top left, rgba(251, 191, 36, 0.08), transparent 18%),
+    linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+}
+
+.app-surface-card {
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 44px -24px rgba(15, 23, 42, 0.2);
+}
+
+.app-surface-soft {
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px -22px rgba(15, 23, 42, 0.18);
+}
+
+.app-topbar {
+  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.sidebar-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
 }
 
 /* ─── PROFESSIONAL AUTH ANIMATIONS ─────────────────────────────────────────── */

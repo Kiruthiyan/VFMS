@@ -1,25 +1,30 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
-import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, LogIn } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-import { loginSchema, type LoginFormValues } from '@/lib/validators/auth/login-schema';
-import { loginApi } from '@/lib/api/auth';
-import { useAuthStore } from '@/store/auth-store';
+import {
+  AuthField,
+  AuthInlineMessage,
+  AuthInput,
+  AuthStatusPanel,
+  PasswordField,
+} from '@/components/auth/auth-ui';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ROLE_DASHBOARDS, AUTH_ROUTES, DEFAULT_ROUTES } from '@/lib/constants/routes';
-import { ERROR_MESSAGES } from '@/lib/constants/error-messages';
+import { getErrorMessage, loginApi } from '@/lib/api/auth';
+import { AUTH_ROUTES, DEFAULT_ROUTES, ROLE_DASHBOARDS } from '@/lib/constants/routes';
+import { loginSchema, type LoginFormValues } from '@/lib/validators/auth/login-schema';
+import { useAuthStore } from '@/store/auth-store';
 
 export function LoginForm() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const [showPassword, setShowPassword] = useState(false);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -29,241 +34,115 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     setServerError(null);
+
     try {
       const response = await loginApi({
         email: data.email.trim().toLowerCase(),
         password: data.password,
       });
+
       setAuth(response);
       setIsSuccess(true);
-      setTimeout(() => {
-        router.replace(ROLE_DASHBOARDS[response.role] ?? DEFAULT_ROUTES.DEFAULT_DASHBOARD);
-      }, 1500);
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const apiMessage = (err.response?.data as { message?: string } | undefined)?.message;
 
-        if (status === 401) {
-          setServerError(ERROR_MESSAGES.INVALID_CREDENTIALS);
-        } else if (status === 403) {
-          setServerError(apiMessage ?? ERROR_MESSAGES.ACCOUNT_DISABLED);
-        } else if (status === 400) {
-          setServerError(apiMessage ?? ERROR_MESSAGES.EMAIL_NOT_VERIFIED);
-        } else {
-          setServerError(apiMessage ?? ERROR_MESSAGES.SOMETHING_WENT_WRONG);
-        }
-      } else {
-        setServerError(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
-      }
+      setTimeout(() => {
+        router.replace(
+          ROLE_DASHBOARDS[response.role] ?? DEFAULT_ROUTES.DEFAULT_DASHBOARD
+        );
+      }, 1200);
+    } catch (error: unknown) {
+      setServerError(getErrorMessage(error));
     }
   };
 
-  // Success State
   if (isSuccess) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-        className="text-center py-8"
-      >
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mx-auto mb-4"
-        >
-          <CheckCircle2 className="w-8 h-8 text-white" strokeWidth={1.5} />
-        </motion.div>
-        <h2 className="text-2xl font-black text-slate-900 mb-1">Welcome!</h2>
-        <p className="text-slate-600 text-sm font-medium">Redirecting...</p>
-      </motion.div>
+      <AuthStatusPanel
+        icon={CheckCircle2}
+        tone="success"
+        title="Welcome back"
+        description="Your account is ready. Redirecting you to the correct workspace now."
+      />
     );
   }
 
   return (
     <motion.form
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
       onSubmit={handleSubmit(onSubmit)}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
       className="space-y-5"
       noValidate
     >
-      {/* Server Error */}
-      <AnimatePresence>
-        {serverError && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200"
-          >
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" strokeWidth={2} />
-            <p className="font-medium text-red-700 text-sm">{serverError}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AuthInlineMessage type="error" message={serverError} />
 
-      {/* Email Field */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, type: 'spring', stiffness: 100, damping: 20 }}
-        className="space-y-2.5"
-      >
-        <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
-          Email Address
-        </label>
-        <motion.div
-          className="relative"
-          whileHover="hover"
-          initial="rest"
-          variants={{
-            rest: { scale: 1 },
-            hover: { scale: 1.01 }
-          }}
+      <div className="space-y-5">
+        <AuthField
+          htmlFor="email"
+          label="Email address"
+          error={errors.email?.message}
+          required
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/0 to-amber-500/0 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity" />
-          <input
+          <AuthInput
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
             autoFocus
-            aria-invalid={!!errors.email}
+            placeholder="you@example.com"
+            aria-invalid={Boolean(errors.email)}
+            disabled={isSubmitting}
             {...register('email')}
-            className="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
-                       focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 focus:bg-white focus:shadow-lg focus:shadow-amber-500/15
-                       hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
-                       disabled:opacity-50 placeholder:text-slate-400"
-            disabled={isSubmitting}
           />
-        </motion.div>
-        <AnimatePresence>
-          {errors.email && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, y: -4 }}
-              animate={{ opacity: 1, height: 'auto', y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -4 }}
-              className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200"
-            >
-              <AlertCircle size={14} className="text-red-600 mt-0.5 shrink-0" />
-              <p className="text-xs font-medium text-red-700">{errors.email.message}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+        </AuthField>
 
-      {/* Password Field */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 20 }}
-        className="space-y-2.5"
-      >
-        <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
-          Password
-        </label>
-        <motion.div
-          className="relative"
-          whileHover="hover"
-          initial="rest"
-          variants={{
-            rest: { scale: 1 },
-            hover: { scale: 1.01 }
-          }}
-        >
-          <input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            autoComplete="current-password"
-            placeholder="••••••••"
-            aria-invalid={!!errors.password}
-            {...register('password')}
-            className="w-full px-4 py-3.5 pr-12 text-sm rounded-xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white backdrop-blur-sm transition-all duration-300
-                       focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 focus:bg-white focus:shadow-lg focus:shadow-amber-500/15
-                       hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/5
-                       disabled:opacity-50 placeholder:text-slate-400"
-            disabled={isSubmitting}
-          />
-          <motion.button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-slate-500 hover:text-amber-600 transition-all duration-200"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-            disabled={isSubmitting}
-          >
-            {showPassword ? <EyeOff size={19} strokeWidth={2.2} /> : <Eye size={19} strokeWidth={2.2} />}
-          </motion.button>
-        </motion.div>
-        <AnimatePresence>
-          {errors.password && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, y: -4 }}
-              animate={{ opacity: 1, height: 'auto', y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -4 }}
-              className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200"
-            >
-              <AlertCircle size={14} className="text-red-600 mt-0.5 shrink-0" />
-              <p className="text-xs font-medium text-red-700">{errors.password.message}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* Submit Button */}
-      <motion.button
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, type: 'spring', stiffness: 100, damping: 20 }}
-        whileHover={{ scale: 1.02, boxShadow: '0 20px 25px -5px rgba(120, 113, 108, 0.3)' }}
-        whileTap={{ scale: 0.98 }}
-        type="submit"
-        disabled={isSubmitting}
-        className="relative w-full h-12 mt-8 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:via-slate-700 hover:to-slate-800 text-white rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-60 flex items-center justify-center gap-2.5 shadow-lg shadow-slate-900/25 overflow-hidden group"
-      >
-        {/* Shimmer effect on hover */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100"
-          initial={{ x: '-100%' }}
-          whileHover={{ x: '100%' }}
-          transition={{ duration: 0.6 }}
+        <PasswordField
+          id="password"
+          label="Password"
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          aria-invalid={Boolean(errors.password)}
+          error={errors.password?.message}
+          disabled={isSubmitting}
+          required
+          {...register('password')}
         />
-        <span className="relative flex items-center gap-2">
-          {isSubmitting ? (
-            <>
-              <LoadingSpinner size={16} />
-              <span>Signing in...</span>
-            </>
-          ) : (
-            'Sign In'
-          )}
-        </span>
-      </motion.button>
+      </div>
 
-      {/* Forgot Password Link */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="text-center text-xs text-slate-600 pt-3"
-      >
-        <a
+      <div className="flex items-center justify-end">
+        <Link
           href={AUTH_ROUTES.FORGOT_PASSWORD}
-          className="font-semibold text-slate-900 hover:text-amber-600 transition-colors duration-200 relative group"
+          className="text-sm font-semibold text-slate-700 transition-colors hover:text-amber-600"
         >
           Forgot password?
-          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-amber-500 to-amber-600 group-hover:w-full transition-all duration-300" />
-        </a>
-      </motion.p>
+        </Link>
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full"
+        size="lg"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <LoadingSpinner size={16} />
+            Signing in...
+          </>
+        ) : (
+          <>
+            <LogIn className="h-4 w-4" />
+            Sign in
+          </>
+        )}
+      </Button>
     </motion.form>
   );
 }

@@ -2,6 +2,7 @@ package com.vfms.fuel.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -13,8 +14,8 @@ import java.util.UUID;
 @Data
 public class CreateFuelRecordRequest {
 
-    @NotNull(message = "Vehicle ID is required")
-    private UUID vehicleId;
+    @NotBlank(message = "Vehicle ID is required")
+    private String vehicleId;
 
     private UUID driverId;
 

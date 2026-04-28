@@ -16,9 +16,10 @@ import Link from "next/link";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -327,31 +328,20 @@ export default function FuelAlertsPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex-1">
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">
-              Fuel Alerts & Anomalies
-            </h1>
-            <p className="mt-2 text-sm font-medium text-slate-500">
-              Automated detection of suspicious fuel usage patterns and
-              inconsistent records.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchAndAnalyze}
-            disabled={loading}
-            className="inline-flex h-fit items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCw
-              size={18}
-              strokeWidth={2.5}
-              className={loading ? "animate-spin" : ""}
-            />
-            <span>Refresh</span>
-          </button>
-        </div>
+        <PageHeader
+          title="Fuel Alerts"
+          description="Detect suspicious fuel activity and review anomalies using the same VFMS admin pattern."
+          icon={AlertTriangle}
+          actions={
+            <Button variant="outline" onClick={fetchAndAnalyze} disabled={loading}>
+              <RefreshCw
+                size={16}
+                className={loading ? "animate-spin" : ""}
+              />
+              Refresh
+            </Button>
+          }
+        />
 
         {loading && (
           <div className="flex justify-center py-24">
@@ -368,21 +358,17 @@ export default function FuelAlertsPage() {
           <>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
               <Card>
-                <CardHeader className="bg-slate-950 py-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-white">
-                      Total Alerts
-                    </CardTitle>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                      <AlertTriangle
-                        size={18}
-                        className="text-slate-950"
-                        strokeWidth={2.5}
-                      />
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Total Alerts
+                      </p>
+                    </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+                      <AlertTriangle size={18} className="text-amber-700" />
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pb-5 pt-6">
                   <p className="text-4xl font-bold text-slate-900">
                     {stats.total}
                   </p>
@@ -393,21 +379,17 @@ export default function FuelAlertsPage() {
               </Card>
 
               <Card>
-                <CardHeader className="bg-slate-950 py-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-white">
-                      Pending Review
-                    </CardTitle>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                      <Eye
-                        size={18}
-                        className="text-slate-950"
-                        strokeWidth={2.5}
-                      />
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Pending Review
+                      </p>
+                    </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                      <Eye size={18} className="text-blue-700" />
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pb-5 pt-6">
                   <p className="text-4xl font-bold text-slate-900">
                     {stats.pending}
                   </p>
@@ -418,21 +400,17 @@ export default function FuelAlertsPage() {
               </Card>
 
               <Card>
-                <CardHeader className="bg-slate-950 py-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-white">
-                      High Severity
-                    </CardTitle>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                      <AlertTriangle
-                        size={18}
-                        className="text-slate-950"
-                        strokeWidth={2.5}
-                      />
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        High Severity
+                      </p>
+                    </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
+                      <AlertTriangle size={18} className="text-red-700" />
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pb-5 pt-6">
                   <p className="text-4xl font-bold text-slate-900">
                     {stats.high}
                   </p>
@@ -481,12 +459,12 @@ export default function FuelAlertsPage() {
               </Card>
             ) : (
               <Card className="overflow-hidden">
-                <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
-                  <CardTitle className="text-base font-bold text-white">
-                    Alert Details ({filteredAlerts.length})
-                  </CardTitle>
-                </CardHeader>
                 <CardContent className="p-0">
+                  <div className="border-b border-slate-200 px-6 py-4">
+                    <CardTitle className="text-base font-semibold text-slate-950">
+                    Alert Details ({filteredAlerts.length})
+                    </CardTitle>
+                  </div>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>

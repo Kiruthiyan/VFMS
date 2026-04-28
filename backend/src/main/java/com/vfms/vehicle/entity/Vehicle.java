@@ -10,8 +10,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Entity
 @Table(name = "vehicles")
 @Getter
@@ -22,23 +20,23 @@ import java.util.UUID;
 public class Vehicle {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, name = "plate_number")
     private String plateNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "brand")
     private String make;
 
     @Column(nullable = false)
     private String model;
 
-    @Column(nullable = false, name = "vehicle_year")
+    @Column(nullable = false, name = "year")
     private Integer year;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, name = "vehicle_type")
     private VehicleType vehicleType;
 
     @Enumerated(EnumType.STRING)

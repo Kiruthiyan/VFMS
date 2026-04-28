@@ -53,22 +53,21 @@ export function ChangePasswordForm() {
 
   return (
     <div className="max-w-xl">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950">
-          <ShieldCheck className="h-5 w-5 text-amber-300" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Change Password
-          </h2>
-          <p className="text-sm text-slate-500">
-            Update your account password
-          </p>
-        </div>
-      </div>
-
       <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950">
+            <ShieldCheck className="h-5 w-5 text-amber-300" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">
+              Update credentials
+            </h2>
+            <p className="text-sm text-slate-500">
+              Enter your current password and set a new one.
+            </p>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {serverError && (
             <FormMessage type="error" message={serverError} />

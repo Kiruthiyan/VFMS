@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DisplayName("GlobalExceptionHandler Unit Tests")
@@ -22,6 +23,7 @@ class ExceptionHandlerTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
         assertEquals(401, response.getBody().getStatus());
         assertEquals("Invalid credentials", response.getBody().getMessage());
     }
@@ -34,8 +36,44 @@ class ExceptionHandlerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
         assertEquals(400, response.getBody().getStatus());
         assertEquals("Invalid input", response.getBody().getMessage());
+    }
+
+    @Test
+    @DisplayName("Should map authorization failures to 403")
+    void shouldMapAuthorizationFailuresTo403() {
+        ResponseEntity<ErrorResponse> response =
+                exceptionHandler.handleAuthorization(new AuthorizationException("Account pending approval"));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals(403, response.getBody().getStatus());
+        assertEquals("Account pending approval", response.getBody().getMessage());
+    }
+
+    @Test
+    @DisplayName("Should map conflicts to 409 with field errors")
+    void shouldMapConflictsTo409WithFieldErrors() {
+        ResponseEntity<ErrorResponse> response =
+                exceptionHandler.handleConflict(
+                        new ConflictException(
+                                "Duplicate account",
+                                java.util.Map.of("email", "An account already exists with this email address.")
+                        )
+                );
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals(409, response.getBody().getStatus());
+        assertEquals("Duplicate account", response.getBody().getMessage());
+        assertEquals(
+                "An account already exists with this email address.",
+                response.getBody().getErrors().get("email")
+        );
     }
 
     @Test
@@ -46,6 +84,7 @@ class ExceptionHandlerTest {
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
         assertEquals(404, response.getBody().getStatus());
         assertEquals("Missing resource", response.getBody().getMessage());
     }

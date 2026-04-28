@@ -6,6 +6,8 @@ import com.vfms.driver.entity.Driver;
 import com.vfms.driver.repository.DriverRepository;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
+import com.vfms.fuel.dto.FuelMetadataDriverProjection;
+import com.vfms.fuel.dto.FuelMetadataVehicleProjection;
 import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
@@ -22,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,7 +53,7 @@ class FuelServiceTest {
     @DisplayName("createFuelRecord should throw 404 when vehicle does not exist in repository")
     void createFuelRecord_shouldThrowWhenVehicleIsMissing() {
         CreateFuelRecordRequest req = baseCreateRequest();
-        when(vehicleRepository.findById(req.getVehicleId())).thenReturn(Optional.empty());
+        when(vehicleRepository.findById(Long.valueOf(req.getVehicleId()))).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> fuelService.createFuelRecord(req, null, userDetails));
@@ -63,7 +66,7 @@ class FuelServiceTest {
         CreateFuelRecordRequest req = baseCreateRequest();
 
         Vehicle vehicle = Vehicle.builder()
-                .id(req.getVehicleId())
+                .id(Long.valueOf(req.getVehicleId()))
                 .plateNumber("ABC-1234")
                 .make("Toyota")
                 .model("Camry")
@@ -72,7 +75,7 @@ class FuelServiceTest {
         Driver driver = Driver.builder().id(req.getDriverId()).fullName("Test Driver").build();
 
         when(userDetails.getUsername()).thenReturn("admin@vfms.com");
-        when(vehicleRepository.findById(req.getVehicleId())).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findById(Long.valueOf(req.getVehicleId()))).thenReturn(Optional.of(vehicle));
         when(driverRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
         when(fuelMisuseService.checkForMisuse(any())).thenReturn(null);
         when(fuelRecordRepository.save(any())).thenAnswer(inv -> {
@@ -99,7 +102,7 @@ class FuelServiceTest {
         UUID id = UUID.randomUUID();
         FuelRecord record = FuelRecord.builder()
                 .id(id)
-                .vehicle(Vehicle.builder().id(UUID.randomUUID()).plateNumber("A").make("M").model("X").build())
+                .vehicle(Vehicle.builder().id(101L).plateNumber("A").make("M").model("X").build())
                 .fuelDate(LocalDate.now())
                 .quantity(null)
                 .costPerLitre(null)
@@ -120,7 +123,7 @@ class FuelServiceTest {
         UUID id = UUID.randomUUID();
         FuelRecord record = FuelRecord.builder()
                 .id(id)
-                .vehicle(Vehicle.builder().id(UUID.randomUUID()).plateNumber("A").make("M").model("X").build())
+                .vehicle(Vehicle.builder().id(202L).plateNumber("A").make("M").model("X").build())
                 .fuelDate(LocalDate.now())
                 .quantity(BigDecimal.TEN)
                 .costPerLitre(BigDecimal.TEN)
@@ -152,10 +155,11 @@ class FuelServiceTest {
     void updateFuelRecord_shouldUpdateDriver() {
         UUID id = UUID.randomUUID();
         CreateFuelRecordRequest req = baseCreateRequest();
+        Long vehicleId = Long.valueOf(req.getVehicleId());
 
         FuelRecord record = FuelRecord.builder()
                 .id(id)
-                .vehicle(Vehicle.builder().id(req.getVehicleId()).plateNumber("A").make("M").model("X").build())
+                .vehicle(Vehicle.builder().id(vehicleId).plateNumber("A").make("M").model("X").build())
                 .fuelDate(LocalDate.now())
                 .quantity(BigDecimal.ONE)
                 .costPerLitre(BigDecimal.ONE)
@@ -165,7 +169,7 @@ class FuelServiceTest {
                 .build();
 
         Vehicle vehicle = Vehicle.builder()
-                .id(req.getVehicleId())
+                .id(vehicleId)
                 .plateNumber("A")
                 .make("M")
                 .model("X")
@@ -174,7 +178,7 @@ class FuelServiceTest {
         Driver driver = Driver.builder().id(req.getDriverId()).fullName("D").build();
 
         when(fuelRecordRepository.findById(id)).thenReturn(Optional.of(record));
-        when(vehicleRepository.findById(req.getVehicleId())).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
         when(driverRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
         when(fuelMisuseService.checkForMisuse(any())).thenReturn(null);
         when(fuelRecordRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -183,9 +187,66 @@ class FuelServiceTest {
         assertEquals(req.getDriverId(), resp.getDriverId());
     }
 
+    @Test
+    @DisplayName("createFuelRecord should reject non-numeric vehicle IDs")
+    void createFuelRecord_shouldRejectNonNumericVehicleId() {
+        CreateFuelRecordRequest req = baseCreateRequest();
+        req.setVehicleId("vehicle-abc");
+
+        ValidationException exception = assertThrows(
+                ValidationException.class,
+                () -> fuelService.createFuelRecord(req, null, userDetails)
+        );
+
+        assertEquals("Vehicle ID must be a valid numeric identifier.", exception.getMessage());
+        verify(vehicleRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("getFormMetadata should tolerate incomplete labels without throwing")
+    void getFormMetadata_shouldTolerateIncompleteLabels() {
+        Long firstVehicleId = 1L;
+        Long secondVehicleId = 2L;
+        UUID firstDriverId = UUID.randomUUID();
+        UUID secondDriverId = UUID.randomUUID();
+
+        FuelMetadataVehicleProjection vehicleWithMissingNames = fuelMetadataVehicle(
+                firstVehicleId,
+                "CAB-1234",
+                null,
+                ""
+        );
+        FuelMetadataVehicleProjection vehicleWithNoDisplayFields = fuelMetadataVehicle(
+                secondVehicleId,
+                "",
+                null,
+                null
+        );
+
+        FuelMetadataDriverProjection namedDriver = fuelMetadataDriver(firstDriverId, "Zara Driver");
+        FuelMetadataDriverProjection unnamedDriver = fuelMetadataDriver(secondDriverId, " ");
+
+        when(vehicleRepository.findFuelMetadataVehicles())
+                .thenReturn(List.of(vehicleWithNoDisplayFields, vehicleWithMissingNames));
+        when(driverRepository.findFuelMetadataDrivers())
+                .thenReturn(List.of(unnamedDriver, namedDriver));
+
+        var metadata = fuelService.getFormMetadata();
+
+        assertEquals(2, metadata.getVehicles().size());
+        assertEquals(String.valueOf(firstVehicleId), metadata.getVehicles().get(0).getId());
+        assertEquals("CAB-1234", metadata.getVehicles().get(0).getLabel());
+        assertEquals("Vehicle " + secondVehicleId, metadata.getVehicles().get(1).getLabel());
+
+        assertEquals(2, metadata.getDrivers().size());
+        assertEquals(String.valueOf(secondDriverId), metadata.getDrivers().get(0).getId());
+        assertEquals("Driver " + secondDriverId, metadata.getDrivers().get(0).getLabel());
+        assertEquals("Zara Driver", metadata.getDrivers().get(1).getLabel());
+    }
+
     private CreateFuelRecordRequest baseCreateRequest() {
         CreateFuelRecordRequest req = new CreateFuelRecordRequest();
-        req.setVehicleId(UUID.randomUUID());
+        req.setVehicleId("101");
         req.setDriverId(UUID.randomUUID());
         req.setFuelDate(LocalDate.now());
         req.setQuantity(new BigDecimal("10.00"));
@@ -194,6 +255,49 @@ class FuelServiceTest {
         req.setFuelStation("Station");
         req.setNotes("Notes");
         return req;
+    }
+
+    private FuelMetadataVehicleProjection fuelMetadataVehicle(
+            Long id,
+            String plateNumber,
+            String make,
+            String model
+    ) {
+        return new FuelMetadataVehicleProjection() {
+            @Override
+            public Long getId() {
+                return id;
+            }
+
+            @Override
+            public String getPlateNumber() {
+                return plateNumber;
+            }
+
+            @Override
+            public String getMake() {
+                return make;
+            }
+
+            @Override
+            public String getModel() {
+                return model;
+            }
+        };
+    }
+
+    private FuelMetadataDriverProjection fuelMetadataDriver(UUID id, String fullName) {
+        return new FuelMetadataDriverProjection() {
+            @Override
+            public UUID getId() {
+                return id;
+            }
+
+            @Override
+            public String getFullName() {
+                return fullName;
+            }
+        };
     }
 }
 

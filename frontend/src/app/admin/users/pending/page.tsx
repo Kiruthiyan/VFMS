@@ -8,6 +8,8 @@ import { UserTable } from "@/components/admin/users/user-table";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 
 export default function PendingUsersPage() {
   const [users, setUsers] = useState<UserSummary[]>([]);
@@ -34,39 +36,21 @@ export default function PendingUsersPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-5 bg-slate-950 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400">
-                <Clock className="h-6 w-6 text-slate-950" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-white">
-                  Pending Registrations
-                </h1>
-                <p className="mt-1 text-sm text-slate-300">
-                  {users.length} user{users.length !== 1 ? "s" : ""} awaiting approval
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={fetchPending}
-              disabled={loading}
-              className="flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold
-                         text-slate-950 transition-colors hover:bg-amber-300 disabled:opacity-50
-                         shadow-lg shadow-amber-500/20"
-            >
+        <PageHeader
+          title="Pending Registrations"
+          description={`${users.length} user${users.length !== 1 ? "s" : ""} awaiting approval and account review.`}
+          icon={Clock}
+          actions={
+            <Button variant="outline" onClick={fetchPending} disabled={loading}>
               <RefreshCw
                 size={16}
                 className={loading ? "animate-spin" : ""}
               />
               Refresh
-            </button>
-          </div>
-        </div>
+            </Button>
+          }
+        />
 
-        {/* Content */}
         {loading ? (
           <div className="flex justify-center py-20">
             <LoadingSpinner size={28} className="text-slate-950" />

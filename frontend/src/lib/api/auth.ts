@@ -2,6 +2,7 @@ import axios from "axios";
 
 import type { UserRole, UserStatus } from "@/lib/auth";
 import api, { getErrorMessage as apiGetErrorMessage } from "@/lib/api";
+import { ERROR_MESSAGES } from "@/lib/constants/error-messages";
 
 export interface AuthResponse {
   userId: string;
@@ -19,25 +20,53 @@ export interface ApiSuccessResponse {
   data?: unknown;
 }
 
+export interface AuthErrorResponse {
+  success?: boolean;
+  status?: number;
+  message?: string;
+  errors?: Record<string, string>;
+}
+
 interface ApiEnvelope<T> {
   success: boolean;
   message: string;
   data: T;
 }
 
+export type SelfRegistrationRole = Extract<UserRole, "DRIVER" | "SYSTEM_USER">;
+
 export interface SignupRequest {
   email: string;
   password: string;
+  confirmPassword: string;
   fullName: string;
   phone: string;
   nic: string;
-  role: UserRole;
+  requestedRole: SelfRegistrationRole;
   licenseNumber?: string;
   licenseExpiryDate?: string;
   employeeId?: string;
   department?: string;
   designation?: string;
   officeLocation?: string;
+}
+
+export class AuthApiError extends Error {
+  status?: number;
+  fieldErrors?: Record<string, string>;
+
+  constructor(
+    message: string,
+    options?: {
+      status?: number;
+      fieldErrors?: Record<string, string>;
+    }
+  ) {
+    super(message);
+    this.name = "AuthApiError";
+    this.status = options?.status;
+    this.fieldErrors = options?.fieldErrors;
+  }
 }
 
 export interface OTPVerificationRequest {
@@ -50,6 +79,121 @@ export interface OTPVerificationResponse extends ApiSuccessResponse {
     verified: boolean;
     token?: string;
   };
+}
+
+function normalizeFieldErrors(
+  errors: unknown
+): Record<string, string> | undefined {
+  if (!errors || typeof errors !== "object") {
+    return undefined;
+  }
+
+  const entries = Object.entries(errors).filter(
+    ([, value]) => typeof value === "string" && value.trim().length > 0
+  ) as Array<[string, string]>;
+
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  return Object.fromEntries(entries);
+}
+
+function mapFriendlyMessage(
+  status: number | undefined,
+  rawMessage: string | undefined,
+  fieldErrors?: Record<string, string>
+): string {
+  const firstFieldError = fieldErrors
+    ? Object.values(fieldErrors).find((message) => message.trim().length > 0)
+    : undefined;
+
+  const message = rawMessage?.trim();
+  const normalizedMessage = message?.toLowerCase() ?? "";
+
+  if (status === 401) {
+    return ERROR_MESSAGES.INVALID_CREDENTIALS;
+  }
+
+  if (
+    normalizedMessage.includes("already exists") ||
+    normalizedMessage.includes("duplicate")
+  ) {
+    return ERROR_MESSAGES.EMAIL_ALREADY_EXISTS;
+  }
+
+  if (normalizedMessage.includes("verify your email")) {
+    return ERROR_MESSAGES.EMAIL_NOT_VERIFIED;
+  }
+
+  if (normalizedMessage.includes("pending admin approval")) {
+    return ERROR_MESSAGES.ACCOUNT_PENDING;
+  }
+
+  if (
+    normalizedMessage.includes("deactivated") ||
+    normalizedMessage.includes("disabled")
+  ) {
+    return ERROR_MESSAGES.ACCOUNT_DISABLED;
+  }
+
+  if (message && message !== "Validation failed") {
+    return message;
+  }
+
+  if (firstFieldError) {
+    return firstFieldError;
+  }
+
+  if (status === 409) {
+    return ERROR_MESSAGES.EMAIL_ALREADY_EXISTS;
+  }
+
+  if (status === 403) {
+    return ERROR_MESSAGES.UNAUTHORIZED;
+  }
+
+  if (status === 400) {
+    return ERROR_MESSAGES.VALIDATION_ERROR;
+  }
+
+  return ERROR_MESSAGES.SOMETHING_WENT_WRONG;
+}
+
+function buildAuthApiError(
+  error: unknown,
+  fallbackMessage: string
+): AuthApiError {
+  if (axios.isAxiosError(error)) {
+    const response = error.response;
+    const data = response?.data as AuthErrorResponse | undefined;
+    const fieldErrors = normalizeFieldErrors(data?.errors);
+
+    return new AuthApiError(
+      mapFriendlyMessage(response?.status, data?.message, fieldErrors) ||
+        fallbackMessage,
+      {
+        status: response?.status,
+        fieldErrors,
+      }
+    );
+  }
+
+  if (error instanceof Error) {
+    return new AuthApiError(error.message || fallbackMessage);
+  }
+
+  return new AuthApiError(fallbackMessage);
+}
+
+export function getFieldErrors(
+  error: unknown
+): Record<string, string> | undefined {
+  if (error instanceof AuthApiError) {
+    return error.fieldErrors;
+  }
+
+  return undefined;
 }
 
 function unwrapResponse<T>(response: ApiEnvelope<T> | T): T {
@@ -90,11 +234,18 @@ export async function loginApi(data: {
   email: string;
   password: string;
 }): Promise<AuthResponse> {
-  const response = await api.post<ApiEnvelope<AuthResponse>>(
-    "/api/auth/login",
-    data
-  );
-  return unwrapResponse(response.data);
+  try {
+    const response = await api.post<ApiEnvelope<AuthResponse>>(
+      "/api/auth/login",
+      data
+    );
+    return unwrapResponse(response.data);
+  } catch (error) {
+    throw buildAuthApiError(
+      error,
+      "Invalid email or password. Please check your details and try again."
+    );
+  }
 }
 
 export async function sendOTPApi(email: string): Promise<ApiSuccessResponse> {
@@ -139,10 +290,11 @@ export async function signupApi(
     const sanitizedData: SignupRequest = {
       email: data.email.trim().toLowerCase(),
       password: data.password,
+      confirmPassword: data.confirmPassword,
       fullName: data.fullName.trim(),
       phone: data.phone.trim().replace(/\s/g, ""),
-      nic: data.nic.trim().replace(/\s/g, ""),
-      role: data.role,
+      nic: data.nic.trim().replace(/\s/g, "").toUpperCase(),
+      requestedRole: data.requestedRole,
       licenseNumber: data.licenseNumber?.trim().toUpperCase(),
       licenseExpiryDate: data.licenseExpiryDate?.trim(),
       employeeId: data.employeeId?.trim().toUpperCase(),
@@ -151,10 +303,25 @@ export async function signupApi(
       officeLocation: data.officeLocation?.trim(),
     };
 
-    const backendPayload = {
-      ...sanitizedData,
-      requestedRole: sanitizedData.role,
-      confirmPassword: sanitizedData.password,
+    const backendPayload: SignupRequest = {
+      email: sanitizedData.email,
+      password: sanitizedData.password,
+      confirmPassword: sanitizedData.confirmPassword,
+      fullName: sanitizedData.fullName,
+      phone: sanitizedData.phone,
+      nic: sanitizedData.nic,
+      requestedRole: sanitizedData.requestedRole,
+      ...(sanitizedData.requestedRole === "DRIVER"
+        ? {
+            licenseNumber: sanitizedData.licenseNumber,
+            licenseExpiryDate: sanitizedData.licenseExpiryDate,
+          }
+        : {
+            employeeId: sanitizedData.employeeId,
+            department: sanitizedData.department,
+            designation: sanitizedData.designation,
+            officeLocation: sanitizedData.officeLocation,
+          }),
     };
 
     const response = await api.post<ApiEnvelope<unknown>>(
@@ -163,14 +330,10 @@ export async function signupApi(
     );
     return unwrapSuccessResponse(response.data);
   } catch (error) {
-    const errorMessage = apiGetErrorMessage(error);
-    throw {
-      message:
-        errorMessage ||
-        "Registration failed. Please check all fields and try again.",
-      code: "SIGNUP_FAILED",
-      originalError: error,
-    };
+    throw buildAuthApiError(
+      error,
+      "Registration failed. Please check your details and try again."
+    );
   }
 }
 
@@ -241,5 +404,9 @@ export async function changePasswordApi(data: {
 }
 
 export function getErrorMessage(error: unknown): string {
+  if (error instanceof AuthApiError) {
+    return error.message;
+  }
+
   return apiGetErrorMessage(error);
 }

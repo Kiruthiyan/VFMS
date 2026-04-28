@@ -6,6 +6,8 @@ import com.vfms.driver.entity.Driver;
 import com.vfms.driver.repository.DriverRepository;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
+import com.vfms.fuel.dto.FuelMetadataDriverProjection;
+import com.vfms.fuel.dto.FuelMetadataVehicleProjection;
 import com.vfms.fuel.dto.FuelFormMetadataResponse;
 import com.vfms.fuel.dto.FuelLookupOptionResponse;
 import com.vfms.fuel.dto.FuelRecordResponse;
@@ -24,7 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -47,7 +51,8 @@ public class FuelService {
             CreateFuelRecordRequest request,
             MultipartFile receipt,
             UserDetails currentUser) {
-        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+        Long vehicleId = parseVehicleId(request.getVehicleId());
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Vehicle not found: " + request.getVehicleId()));
 
@@ -86,6 +91,7 @@ public class FuelService {
         return toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<FuelRecordResponse> getAllRecords() {
         return fuelRecordRepository.findAllByOrderByFuelDateDesc()
                 .stream()
@@ -93,6 +99,7 @@ public class FuelService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<FuelRecordResponse> getAllRecordsWithRealTimeData() {
         return fuelRecordRepository.findAllByOrderByFuelDateDesc()
                 .stream()
@@ -100,26 +107,30 @@ public class FuelService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public FuelRecordResponse getById(UUID id) {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
         return toResponse(record);
     }
 
+    @Transactional(readOnly = true)
     public FuelRecordResponse getFuelRecordWithRealTimeData(UUID id) {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
         return toResponseWithRealTimeData(record);
     }
 
-    public List<FuelRecordResponse> getByVehicle(UUID vehicleId) {
+    @Transactional(readOnly = true)
+    public List<FuelRecordResponse> getByVehicle(Long vehicleId) {
         return fuelRecordRepository.findByVehicleIdOrderByFuelDateDesc(vehicleId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
-    public List<FuelRecordResponse> getByVehicleWithRealTimeData(UUID vehicleId) {
+    @Transactional(readOnly = true)
+    public List<FuelRecordResponse> getByVehicleWithRealTimeData(Long vehicleId) {
         if (!vehicleRepository.existsById(vehicleId)) {
             throw new ResourceNotFoundException("Vehicle not found: " + vehicleId);
         }
@@ -130,6 +141,7 @@ public class FuelService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<FuelRecordResponse> getByDriver(UUID driverId) {
         return fuelRecordRepository.findByDriverIdOrderByFuelDateDesc(driverId)
                 .stream()
@@ -137,6 +149,7 @@ public class FuelService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<FuelRecordResponse> getFlaggedRecords() {
         return fuelRecordRepository.findAllFlaggedRecords()
                 .stream()
@@ -144,7 +157,8 @@ public class FuelService {
                 .collect(Collectors.toList());
     }
 
-    public List<FuelRecordResponse> getByDateRange(String from, String to, UUID vehicleId, UUID driverId) {
+    @Transactional(readOnly = true)
+    public List<FuelRecordResponse> getByDateRange(String from, String to, Long vehicleId, UUID driverId) {
         List<FuelRecord> records;
         if (vehicleId != null) {
             records = fuelRecordRepository.findByVehicleAndDateRange(vehicleId,
@@ -167,7 +181,8 @@ public class FuelService {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
 
-        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+        Long vehicleId = parseVehicleId(request.getVehicleId());
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Vehicle not found in database: " + request.getVehicleId()));
 
@@ -202,7 +217,8 @@ public class FuelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
 
         if (updates.getVehicleId() != null) {
-            Vehicle vehicle = vehicleRepository.findById(updates.getVehicleId())
+            Long vehicleId = parseVehicleId(updates.getVehicleId());
+            Vehicle vehicle = vehicleRepository.findById(vehicleId)
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Vehicle not found in database: " + updates.getVehicleId()));
             record.setVehicle(vehicle);
@@ -282,29 +298,74 @@ public class FuelService {
         return quantity.multiply(costPerLitre).setScale(2, RoundingMode.HALF_UP);
     }
 
+    @Transactional(readOnly = true)
     public FuelFormMetadataResponse getFormMetadata() {
-        List<FuelLookupOptionResponse> vehicles = vehicleRepository.findAll()
+        List<FuelLookupOptionResponse> vehicles = vehicleRepository.findFuelMetadataVehicles()
                 .stream()
                 .map(vehicle -> FuelLookupOptionResponse.builder()
-                        .id(vehicle.getId())
-                        .label(vehicle.getPlateNumber() + " - " + vehicle.getMake() + " " + vehicle.getModel())
+                        .id(String.valueOf(vehicle.getId()))
+                        .label(buildVehicleLookupLabel(vehicle))
                         .build())
-                .sorted((left, right) -> left.getLabel().compareToIgnoreCase(right.getLabel()))
+                .sorted(Comparator.comparing(
+                        FuelLookupOptionResponse::getLabel,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                ))
                 .toList();
 
-        List<FuelLookupOptionResponse> drivers = driverRepository.findAll()
+        List<FuelLookupOptionResponse> drivers = driverRepository.findFuelMetadataDrivers()
                 .stream()
                 .map(driver -> FuelLookupOptionResponse.builder()
-                        .id(driver.getId())
-                        .label(driver.getFullName())
+                        .id(String.valueOf(driver.getId()))
+                        .label(buildDriverLookupLabel(driver))
                         .build())
-                .sorted((left, right) -> left.getLabel().compareToIgnoreCase(right.getLabel()))
+                .sorted(Comparator.comparing(
+                        FuelLookupOptionResponse::getLabel,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                ))
                 .toList();
 
         return FuelFormMetadataResponse.builder()
                 .vehicles(vehicles)
                 .drivers(drivers)
                 .build();
+    }
+
+    private String buildVehicleLookupLabel(FuelMetadataVehicleProjection vehicle) {
+        String plateNumber = safeValue(vehicle.getPlateNumber());
+        String make = safeValue(vehicle.getMake());
+        String model = safeValue(vehicle.getModel());
+        String vehicleName = joinNonBlank(make, model);
+
+        if (!plateNumber.isBlank() && !vehicleName.isBlank()) {
+            return plateNumber + " - " + vehicleName;
+        }
+
+        if (!plateNumber.isBlank()) {
+            return plateNumber;
+        }
+
+        if (!vehicleName.isBlank()) {
+            return vehicleName;
+        }
+
+        return "Vehicle " + vehicle.getId();
+    }
+
+    private String buildDriverLookupLabel(FuelMetadataDriverProjection driver) {
+        String fullName = safeValue(driver.getFullName());
+        return fullName.isBlank() ? "Driver " + driver.getId() : fullName;
+    }
+
+    private String safeValue(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String joinNonBlank(String... values) {
+        return java.util.Arrays.stream(values)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.joining(" "));
     }
 
     private void reEvaluateMisuse(FuelRecord record) {
@@ -320,7 +381,7 @@ public class FuelService {
     FuelRecordResponse toResponse(FuelRecord record) {
         return FuelRecordResponse.builder()
                 .id(record.getId())
-                .vehicleId(record.getVehicle().getId())
+                .vehicleId(String.valueOf(record.getVehicle().getId()))
                 .vehiclePlate(record.getVehicle().getPlateNumber())
                 .vehicleMakeModel(record.getVehicle().getMake() + " " + record.getVehicle().getModel())
                 .driverId(record.getDriver() != null ? record.getDriver().getId() : null)
@@ -346,7 +407,7 @@ public class FuelService {
             VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(record.getVehicle().getId());
             return FuelRecordResponse.builder()
                     .id(record.getId())
-                    .vehicleId(record.getVehicle().getId())
+                    .vehicleId(String.valueOf(record.getVehicle().getId()))
                     .vehiclePlate(vehicleDetail.getPlateNumber())
                     .vehicleMakeModel(vehicleDetail.getMake() + " " + vehicleDetail.getModel())
                     .driverId(record.getDriver() != null ? record.getDriver().getId() : null)
@@ -389,5 +450,17 @@ public class FuelService {
         }
 
         return response;
+    }
+
+    private Long parseVehicleId(String rawVehicleId) {
+        if (rawVehicleId == null || rawVehicleId.trim().isEmpty()) {
+            throw new ValidationException("Vehicle ID is required.");
+        }
+
+        try {
+            return Long.valueOf(rawVehicleId.trim());
+        } catch (NumberFormatException ex) {
+            throw new ValidationException("Vehicle ID must be a valid numeric identifier.");
+        }
     }
 }

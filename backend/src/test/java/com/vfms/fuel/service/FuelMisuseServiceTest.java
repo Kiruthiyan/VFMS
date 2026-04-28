@@ -89,7 +89,7 @@ class FuelMisuseServiceTest {
     }
 
     private FuelRecord baseRecord(BigDecimal qty, double odo) {
-        Vehicle vehicle = Vehicle.builder().id(UUID.randomUUID()).build();
+        Vehicle vehicle = Vehicle.builder().id(1L).build();
         return FuelRecord.builder()
                 .id(UUID.randomUUID())
                 .vehicle(vehicle)

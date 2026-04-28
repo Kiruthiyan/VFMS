@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface FuelRecordRepository extends JpaRepository<FuelRecord, UUID> {
 
-    List<FuelRecord> findByVehicleIdOrderByFuelDateDesc(UUID vehicleId);
+    List<FuelRecord> findByVehicleIdOrderByFuelDateDesc(Long vehicleId);
 
     List<FuelRecord> findByDriverIdOrderByFuelDateDesc(UUID driverId);
 
@@ -20,7 +20,7 @@ public interface FuelRecordRepository extends JpaRepository<FuelRecord, UUID> {
     @Query("SELECT f FROM FuelRecord f WHERE f.vehicle.id = :vehicleId " +
            "AND f.fuelDate BETWEEN :from AND :to ORDER BY f.fuelDate ASC")
     List<FuelRecord> findByVehicleAndDateRange(
-            @Param("vehicleId") UUID vehicleId,
+            @Param("vehicleId") Long vehicleId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
 
@@ -39,12 +39,12 @@ public interface FuelRecordRepository extends JpaRepository<FuelRecord, UUID> {
 
     @Query("SELECT f FROM FuelRecord f WHERE f.vehicle.id = :vehicleId " +
            "ORDER BY f.fuelDate DESC, f.createdAt DESC")
-    List<FuelRecord> findLatestByVehicle(@Param("vehicleId") UUID vehicleId);
+    List<FuelRecord> findLatestByVehicle(@Param("vehicleId") Long vehicleId);
 
     @Query("SELECT COUNT(f) FROM FuelRecord f WHERE f.vehicle.id = :vehicleId " +
            "AND f.fuelDate = :date")
     long countByVehicleAndDate(
-            @Param("vehicleId") UUID vehicleId,
+            @Param("vehicleId") Long vehicleId,
             @Param("date") LocalDate date);
 
     List<FuelRecord> findByFlaggedForMisuseTrue();

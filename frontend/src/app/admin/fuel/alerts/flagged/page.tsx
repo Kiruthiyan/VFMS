@@ -7,9 +7,10 @@ import Link from "next/link";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -82,40 +83,28 @@ export default function FlaggedRecordsPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex-1">
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">
-              Flagged Fuel Records
-            </h1>
-            <p className="mt-2 text-sm font-medium text-slate-500">
-              Review records flagged for suspected misuse and clear them when
-              resolved.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/admin/fuel"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all hover:bg-slate-50"
-            >
-              <Link2 size={18} strokeWidth={2.5} />
-              <span>Dashboard</span>
-            </Link>
-            <button
-              type="button"
-              onClick={fetchAll}
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw
-                size={18}
-                strokeWidth={2.5}
-                className={loading ? "animate-spin" : ""}
-              />
-              <span>Refresh</span>
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          title="Flagged Fuel Records"
+          description="Review records flagged for suspected misuse and clear them once resolved."
+          icon={Flag}
+          actions={
+            <>
+              <Button asChild variant="outline">
+                <Link href="/admin/fuel">
+                  <Link2 size={16} />
+                  Dashboard
+                </Link>
+              </Button>
+              <Button variant="outline" onClick={fetchAll} disabled={loading}>
+                <RefreshCw
+                  size={16}
+                  className={loading ? "animate-spin" : ""}
+                />
+                Refresh
+              </Button>
+            </>
+          }
+        />
 
         {loading && (
           <div className="flex justify-center py-24">
@@ -131,17 +120,17 @@ export default function FlaggedRecordsPage() {
         {!loading && !error && (
           <>
             <Card>
-              <CardHeader className="bg-slate-950 py-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xs font-bold uppercase tracking-wider text-white">
-                    Flagged Records
-                  </CardTitle>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                    <Flag size={18} className="text-slate-950" strokeWidth={2.5} />
+              <CardContent className="p-5">
+                <div className="mb-4 flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      Flagged Records
+                    </p>
+                  </div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+                    <Flag size={18} className="text-amber-700" strokeWidth={2.5} />
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pb-5 pt-6">
                 <p className="text-4xl font-bold text-slate-900">
                   {records.length}
                 </p>
@@ -168,12 +157,12 @@ export default function FlaggedRecordsPage() {
               </Card>
             ) : (
               <Card className="overflow-hidden">
-                <CardHeader className="border-b border-slate-200 bg-slate-950 py-4">
-                  <CardTitle className="text-base font-bold text-white">
-                    All Flagged Records ({records.length})
-                  </CardTitle>
-                </CardHeader>
                 <CardContent className="p-0">
+                  <div className="border-b border-slate-200 px-6 py-4">
+                    <CardTitle className="text-base font-semibold text-slate-950">
+                    All Flagged Records ({records.length})
+                    </CardTitle>
+                  </div>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
