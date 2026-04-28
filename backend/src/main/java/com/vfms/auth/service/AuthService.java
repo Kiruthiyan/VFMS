@@ -11,6 +11,8 @@ import com.vfms.auth.repository.EmailVerificationTokenRepository;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.AuthenticationException;
+import com.vfms.common.exception.AuthorizationException;
+import com.vfms.common.exception.ConflictException;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.security.JwtService;
@@ -28,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -55,7 +60,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(email, request.getPassword())
             );
         } catch (DisabledException ex) {
-            throw new ValidationException("Your account is deactivated. Contact your administrator.");
+            throw new AuthorizationException("This account is deactivated. Please contact your administrator.");
         } catch (BadCredentialsException ex) {
             throw new AuthenticationException("Invalid email or password.");
         } catch (org.springframework.security.core.AuthenticationException ex) {
@@ -104,29 +109,36 @@ public class AuthService {
         String email = request.getEmail().trim().toLowerCase();
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new ValidationException("Passwords do not match");
+            throw new ValidationException(
+                    "Validation failed",
+                    Map.of("confirmPassword", "Passwords do not match.")
+            );
         }
 
         if (request.getRequestedRole() != Role.DRIVER
                 && request.getRequestedRole() != Role.SYSTEM_USER) {
             throw new ValidationException(
-                    "Self-registration is only allowed for Driver and System User roles");
+                    "Validation failed",
+                    Map.of("requestedRole", "Only Driver and Staff registrations are allowed.")
+            );
         }
 
         validateRoleSpecificFields(request);
 
-        userRepository.findByEmail(email).ifPresent(existing -> {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            User existing = existingUser.get();
             if (existing.getStatus() == UserStatus.REJECTED) {
                 resetUserForReRegistration(existing, request, email);
                 userRepository.save(existing);
                 sendVerificationEmail(existing);
                 return;
             }
-            throw new ValidationException("An account with this email already exists");
-        });
 
-        if (userRepository.existsByEmail(email)) {
-            return;
+            throw new ConflictException(
+                    "An account already exists with this email address.",
+                    Map.of("email", "An account already exists with this email address.")
+            );
         }
 
         User user = User.builder()
@@ -190,43 +202,99 @@ public class AuthService {
     }
 
     private void validateRoleSpecificFields(RegisterRequest request) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
         if (request.getRequestedRole() == Role.DRIVER) {
-            if (request.getLicenseNumber() == null || request.getLicenseNumber().isBlank()) {
-                throw new ValidationException(
-                        "License number is required for Driver registration");
+            String licenseNumber = normalizeOptional(request.getLicenseNumber());
+            if (licenseNumber == null) {
+                errors.put("licenseNumber", "Please enter the driver license number.");
             }
-            if (request.getLicenseExpiryDate() == null || request.getLicenseExpiryDate().isBlank()) {
-                throw new ValidationException(
-                        "License expiry date is required for Driver registration");
+
+            String licenseExpiryDate = normalizeOptional(request.getLicenseExpiryDate());
+            if (licenseExpiryDate == null) {
+                errors.put("licenseExpiryDate", "Please enter the driver license expiry date.");
+            } else {
+                try {
+                    LocalDate parsedDate = LocalDate.parse(licenseExpiryDate);
+                    if (parsedDate.isBefore(LocalDate.now())) {
+                        errors.put("licenseExpiryDate", "License expiry date must be today or later.");
+                    }
+                } catch (Exception ex) {
+                    errors.put("licenseExpiryDate", "Please enter a valid license expiry date.");
+                }
             }
         }
 
         if (request.getRequestedRole() == Role.SYSTEM_USER) {
-            if (request.getEmployeeId() == null || request.getEmployeeId().isBlank()) {
-                throw new ValidationException(
-                        "Employee ID is required for System User registration");
+            String employeeId = normalizeOptional(request.getEmployeeId());
+            if (employeeId == null) {
+                errors.put("employeeId", "Please enter the staff employee ID.");
             }
-            if (request.getDepartment() == null || request.getDepartment().isBlank()) {
-                throw new ValidationException(
-                        "Department is required for System User registration");
+
+            String department = normalizeOptional(request.getDepartment());
+            if (department == null) {
+                errors.put("department", "Please select or enter the staff department.");
+            } else if (department.length() < 2 || department.length() > 50) {
+                errors.put("department", "Department must be between 2 and 50 characters.");
             }
+
+            String designation = normalizeOptional(request.getDesignation());
+            if (designation == null) {
+                errors.put("designation", "Please enter the staff designation.");
+            } else if (designation.length() < 2 || designation.length() > 50) {
+                errors.put("designation", "Designation must be between 2 and 50 characters.");
+            }
+
+            String officeLocation = normalizeOptional(request.getOfficeLocation());
+            if (officeLocation == null) {
+                errors.put("officeLocation", "Please select or enter the staff office location.");
+            } else if (officeLocation.length() < 2 || officeLocation.length() > 100) {
+                errors.put("officeLocation", "Office location must be between 2 and 100 characters.");
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Validation failed", errors);
         }
     }
 
     private void applyRoleSpecificFields(User user, RegisterRequest request) {
+        clearRoleSpecificFields(user);
+
         if (request.getRequestedRole() == Role.DRIVER) {
-            user.setLicenseNumber(request.getLicenseNumber());
-            if (request.getLicenseExpiryDate() != null && !request.getLicenseExpiryDate().isBlank()) {
-                user.setLicenseExpiryDate(LocalDate.parse(request.getLicenseExpiryDate()));
+            user.setLicenseNumber(normalizeOptional(request.getLicenseNumber()));
+            String licenseExpiryDate = normalizeOptional(request.getLicenseExpiryDate());
+            if (licenseExpiryDate != null) {
+                user.setLicenseExpiryDate(LocalDate.parse(licenseExpiryDate));
             }
-            user.setCertifications(request.getCertifications());
+            user.setCertifications(normalizeOptional(request.getCertifications()));
             user.setExperienceYears(request.getExperienceYears());
         } else if (request.getRequestedRole() == Role.SYSTEM_USER) {
-            user.setEmployeeId(request.getEmployeeId());
-            user.setDepartment(request.getDepartment());
-            user.setOfficeLocation(request.getOfficeLocation());
-            user.setDesignation(request.getDesignation());
+            user.setEmployeeId(normalizeOptional(request.getEmployeeId()));
+            user.setDepartment(normalizeOptional(request.getDepartment()));
+            user.setOfficeLocation(normalizeOptional(request.getOfficeLocation()));
+            user.setDesignation(normalizeOptional(request.getDesignation()));
         }
+    }
+
+    private void clearRoleSpecificFields(User user) {
+        user.setLicenseNumber(null);
+        user.setLicenseExpiryDate(null);
+        user.setCertifications(null);
+        user.setExperienceYears(null);
+        user.setEmployeeId(null);
+        user.setDepartment(null);
+        user.setOfficeLocation(null);
+        user.setDesignation(null);
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private void resetUserForReRegistration(User user, RegisterRequest request, String email) {
@@ -248,13 +316,13 @@ public class AuthService {
             throw new ValidationException("Please verify your email before signing in.");
         }
         if (user.getStatus() == UserStatus.PENDING_APPROVAL) {
-            throw new ValidationException("Your account is pending admin approval.");
+            throw new AuthorizationException("Your account is pending admin approval.");
         }
         if (user.getStatus() == UserStatus.REJECTED) {
-            throw new ValidationException("Your registration was rejected. Please contact an administrator.");
+            throw new AuthorizationException("Your registration was rejected. Please contact an administrator.");
         }
         if (user.getStatus() == UserStatus.DEACTIVATED) {
-            throw new ValidationException("Your account is deactivated. Contact your administrator.");
+            throw new AuthorizationException("This account is deactivated. Please contact your administrator.");
         }
     }
 

@@ -1,19 +1,30 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { BarChart3, AlertCircle, FileText, TrendingUp, Fuel, Users, Plus } from "lucide-react";
-import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import {
-  getAllFuelRecordsApi,
-  getErrorMessage,
+  AlertCircle,
+  BarChart3,
+  Droplets,
+  FileText,
+  Fuel,
+  Plus,
+  TrendingUp,
+} from "lucide-react";
+import Link from "next/link";
+
+import { AdminShell } from "@/components/layout/admin-shell";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { FormMessage } from "@/components/ui/form-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
   extractUniqVehicles,
   extractUniqueDrivers,
+  getAllFuelRecordsApi,
+  getErrorMessage,
   type FuelRecord,
 } from "@/lib/api/fuel";
-import { AdminShell } from "@/components/layout/admin-shell";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { FormMessage } from "@/components/ui/form-message";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FuelDashboardPage() {
   const [records, setRecords] = useState<FuelRecord[]>([]);
@@ -24,7 +35,8 @@ export default function FuelDashboardPage() {
   const drivers = extractUniqueDrivers(records);
   const totalSpend = records.reduce((sum, r) => sum + (r.totalCost || 0), 0);
   const totalVolume = records.reduce((sum, r) => sum + (r.quantity || 0), 0);
-  const avgCostPerLiter = totalVolume > 0 ? (totalSpend / totalVolume).toFixed(2) : "0.00";
+  const avgCostPerLiter =
+    totalVolume > 0 ? (totalSpend / totalVolume).toFixed(2) : "0.00";
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -39,217 +51,261 @@ export default function FuelDashboardPage() {
     }
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  const statCards = [
+    {
+      label: "Total Records",
+      value: records.length.toString(),
+      detail: "Fuel entries tracked",
+      icon: Fuel,
+      iconBg: "bg-amber-100",
+      iconColor: "text-amber-700",
+    },
+    {
+      label: "Total Spend",
+      value: `LKR ${(totalSpend / 1000).toFixed(1)}k`,
+      detail: "Total fuel cost",
+      icon: TrendingUp,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-700",
+    },
+    {
+      label: "Total Volume",
+      value: `${totalVolume.toFixed(0)}L`,
+      detail: "Liters dispensed",
+      icon: Droplets,
+      iconBg: "bg-amber-100",
+      iconColor: "text-amber-700",
+    },
+    {
+      label: "Avg Cost/L",
+      value: `LKR ${avgCostPerLiter}`,
+      detail: "Cost per liter",
+      icon: BarChart3,
+      iconBg: "bg-slate-100",
+      iconColor: "text-slate-700",
+    },
+  ];
 
   return (
     <AdminShell>
       <div className="space-y-6">
-          {/* Page Header */}
-          <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
-            <h1 className="mb-2 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">
-              Fuel Management Dashboard
-            </h1>
-            <p className="text-sm font-medium text-slate-500">
-              Monitor fuel consumption, costs, and fleet efficiency at a glance
-            </p>
-          </div>
-
-          {/* Loading State */}
-          {loading && (
-            <div className="flex justify-center py-24">
-              <div className="text-center">
-                <LoadingSpinner size={32} className="mx-auto mb-4 text-slate-950" />
-                <p className="text-sm font-medium text-slate-600">Loading dashboard data...</p>
-              </div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && !loading && (
-            <FormMessage type="error" message={error} />
-          )}
-
-          {/* Dashboard Content */}
-          {!loading && !error && (
+        <PageHeader
+          title="Fuel Management"
+          description="Monitor fuel usage, operating cost, and fleet activity from one consistent workspace."
+          icon={Fuel}
+          actions={
             <>
-              {/* Key Performance Indicators */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-                {/* Total Records KPI */}
-                <Card className="overflow-hidden hover:shadow-md">
-                  <CardHeader className="bg-slate-950 py-4 border-b-0">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
-                        Total Records
-                      </CardTitle>
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                          <Fuel size={18} className="text-slate-950" strokeWidth={2.5} />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">{records.length}</p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">Fuel entries tracked</p>
-                  </CardContent>
-                </Card>
-
-                {/* Total Spend KPI */}
-                <Card className="overflow-hidden hover:shadow-md">
-                  <CardHeader className="bg-slate-950 py-4 border-b-0">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
-                        Total Spend
-                      </CardTitle>
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                          <TrendingUp size={18} className="text-slate-950" strokeWidth={2.5} />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">LKR {(totalSpend / 1000).toFixed(1)}k</p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">Total fuel cost</p>
-                  </CardContent>
-                </Card>
-
-                {/* Total Volume KPI */}
-                <Card className="overflow-hidden hover:shadow-md">
-                  <CardHeader className="bg-slate-950 py-4 border-b-0">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
-                        Total Volume
-                      </CardTitle>
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                          <Fuel size={18} className="text-slate-950" strokeWidth={2.5} />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">{totalVolume.toFixed(0)}L</p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">Liters dispensed</p>
-                  </CardContent>
-                </Card>
-
-                {/* Avg Cost per Liter KPI */}
-                <Card className="overflow-hidden hover:shadow-md">
-                  <CardHeader className="bg-slate-950 py-4 border-b-0">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs font-bold text-white tracking-wider uppercase">
-                        Avg Cost/L
-                      </CardTitle>
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400">
-                          <TrendingUp size={18} className="text-slate-950" strokeWidth={2.5} />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 pb-5">
-                    <p className="text-4xl font-bold text-slate-900">LKR {avgCostPerLiter}</p>
-                    <p className="text-sm text-slate-600 mt-2 font-medium">Cost per liter</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Quick Access Links */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-                {/* Fuel Entry Logs */}
-                <Link href="/admin/fuel/logs" className="group">
-                  <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
-                          <FileText size={22} className="text-slate-950" strokeWidth={1.5} />
-                        </div>
-                        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded">VIEW</span>
-                      </div>
-                      <h3 className="font-bold text-slate-900 mb-1 text-sm">Fuel Entry Logs</h3>
-                      <p className="text-xs text-slate-600">View and filter all fuel entry records with details</p>
-                    </CardContent>
-                  </Card>
+              <Button asChild variant="outline">
+                <Link href="/admin/fuel/logs">
+                  <FileText size={16} />
+                  View Logs
                 </Link>
-
-                {/* Create New Entry */}
-                <Link href="/admin/fuel/create" className="group">
-                  <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
-                          <Plus size={22} className="text-slate-950" strokeWidth={2.5} />
-                        </div>
-                        <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">NEW</span>
-                      </div>
-                      <h3 className="font-bold text-slate-900 mb-1 text-sm">Create Fuel Entry</h3>
-                      <p className="text-xs text-slate-600">Log a new fuel purchase for your vehicles</p>
-                    </CardContent>
-                  </Card>
+              </Button>
+              <Button asChild>
+                <Link href="/admin/fuel/create">
+                  <Plus size={16} />
+                  New Entry
                 </Link>
-
-                {/* Fuel Alerts */}
-                <Link href="/admin/fuel/alerts" className="group">
-                  <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
-                          <AlertCircle size={22} className="text-slate-950" strokeWidth={1.5} />
-                        </div>
-                        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded">MONITOR</span>
-                      </div>
-                      <h3 className="font-bold text-slate-900 mb-1 text-sm">Fuel Alerts</h3>
-                      <p className="text-xs text-slate-600">Monitor flagged records and suspicious patterns</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </div>
-
-              {/* Fleet Summary Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Active Vehicles */}
-                <Card>
-                  <CardHeader className="bg-slate-950 py-5 border-b border-slate-200">
-                    <CardTitle className="text-white font-bold text-base flex items-center gap-2">
-                      <Fuel size={18} />
-                      Fleet Overview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-                        <span className="text-slate-700 text-sm font-medium">Active Vehicles</span>
-                        <span className="text-2xl font-bold text-slate-950">{vehicles.length}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-700 text-sm font-medium">Active Drivers</span>
-                        <span className="text-2xl font-bold text-slate-950">{drivers.length}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Stats */}
-                <Card>
-                  <CardHeader className="bg-slate-950 py-5 border-b border-slate-200">
-                    <CardTitle className="text-white font-bold text-base flex items-center gap-2">
-                      <BarChart3 size={18} />
-                      Quick Stats
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-                        <span className="text-slate-700 text-sm font-medium">Records per Vehicle</span>
-                        <span className="text-2xl font-bold text-slate-950">
-                          {vehicles.length > 0 ? (records.length / vehicles.length).toFixed(1) : "0"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-700 text-sm font-medium">Avg Spend per Vehicle</span>
-                        <span className="text-lg font-bold text-slate-950">
-                          LKR {vehicles.length > 0 ? (totalSpend / vehicles.length).toFixed(0) : "0"}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              </Button>
             </>
-          )}
+          }
+        />
+
+        {loading && (
+          <div className="flex justify-center py-24">
+            <div className="text-center">
+              <LoadingSpinner size={32} className="mx-auto mb-4 text-slate-950" />
+              <p className="text-sm font-medium text-slate-600">
+                Loading dashboard data...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {error && !loading && <FormMessage type="error" message={error} />}
+
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {statCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <Card
+                    key={card.label}
+                    className="rounded-2xl shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <CardContent className="p-5">
+                      <div className="mb-4 flex items-start justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            {card.label}
+                          </p>
+                          <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                            {card.value}
+                          </p>
+                        </div>
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.iconBg}`}
+                        >
+                          <Icon
+                            size={18}
+                            className={card.iconColor}
+                            strokeWidth={2.2}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium text-slate-500">
+                        {card.detail}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <Link href="/admin/fuel/logs" className="group">
+                <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
+                  <CardContent className="pt-6">
+                    <div className="mb-4 flex items-start justify-between">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
+                        <FileText
+                          size={22}
+                          className="text-slate-950"
+                          strokeWidth={1.5}
+                        />
+                      </div>
+                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                        VIEW
+                      </span>
+                    </div>
+                    <h3 className="mb-1 text-sm font-bold text-slate-900">
+                      Fuel Entry Logs
+                    </h3>
+                    <p className="text-xs text-slate-600">
+                      View and filter all fuel entry records with details.
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link href="/admin/fuel/create" className="group">
+                <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
+                  <CardContent className="pt-6">
+                    <div className="mb-4 flex items-start justify-between">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
+                        <Plus
+                          size={22}
+                          className="text-slate-950"
+                          strokeWidth={2.5}
+                        />
+                      </div>
+                      <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                        NEW
+                      </span>
+                    </div>
+                    <h3 className="mb-1 text-sm font-bold text-slate-900">
+                      Create Fuel Entry
+                    </h3>
+                    <p className="text-xs text-slate-600">
+                      Log a new fuel purchase for your fleet.
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link href="/admin/fuel/alerts" className="group">
+                <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
+                  <CardContent className="pt-6">
+                    <div className="mb-4 flex items-start justify-between">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
+                        <AlertCircle
+                          size={22}
+                          className="text-slate-950"
+                          strokeWidth={1.5}
+                        />
+                      </div>
+                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                        MONITOR
+                      </span>
+                    </div>
+                    <h3 className="mb-1 text-sm font-bold text-slate-900">
+                      Fuel Alerts
+                    </h3>
+                    <p className="text-xs text-slate-600">
+                      Review flagged records and suspicious patterns.
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Card>
+                <CardContent className="p-6">
+                  <CardTitle className="mb-6 flex items-center gap-2 text-base font-semibold text-slate-950">
+                    <Fuel size={18} className="text-amber-700" />
+                    Fleet Overview
+                  </CardTitle>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                      <span className="text-sm font-medium text-slate-700">
+                        Active Vehicles
+                      </span>
+                      <span className="text-2xl font-bold text-slate-950">
+                        {vehicles.length}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">
+                        Active Drivers
+                      </span>
+                      <span className="text-2xl font-bold text-slate-950">
+                        {drivers.length}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <CardTitle className="mb-6 flex items-center gap-2 text-base font-semibold text-slate-950">
+                    <BarChart3 size={18} className="text-amber-700" />
+                    Quick Stats
+                  </CardTitle>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                      <span className="text-sm font-medium text-slate-700">
+                        Records per Vehicle
+                      </span>
+                      <span className="text-2xl font-bold text-slate-950">
+                        {vehicles.length > 0
+                          ? (records.length / vehicles.length).toFixed(1)
+                          : "0"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">
+                        Avg Spend per Vehicle
+                      </span>
+                      <span className="text-lg font-bold text-slate-950">
+                        LKR{" "}
+                        {vehicles.length > 0
+                          ? (totalSpend / vehicles.length).toFixed(0)
+                          : "0"}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
       </div>
     </AdminShell>
   );

@@ -44,10 +44,17 @@ export const adminNavigationSections: AdminNavSection[] = [
     items: [
       {
         href: "/admin/users",
-        label: "All Users",
+        label: "User Dashboard",
         icon: Users,
         exact: true,
-        description: "Search, manage, and create users",
+        description: "Overview, counts, and management shortcuts",
+      },
+      {
+        href: "/admin/users/all",
+        label: "All Users",
+        icon: ShieldCheck,
+        exact: true,
+        description: "Search, filter, and manage user accounts",
       },
       {
         href: "/admin/users/pending",
@@ -116,7 +123,7 @@ export const adminQuickLinks: AdminNavItem[] = [
   {
     href: "/admin/users",
     label: "User Management",
-    icon: ShieldCheck,
+    icon: Users,
     exact: true,
   },
   {
@@ -160,6 +167,22 @@ export function getAdminPageTitle(pathname: string): string {
   }
 
   return "Admin Panel";
+}
+
+export function getAdminPageDescription(pathname: string): string | null {
+  const matchedItem = allAdminNavItems.find((item) =>
+    isAdminNavItemActive(pathname, item)
+  );
+
+  if (matchedItem?.description) {
+    return matchedItem.description;
+  }
+
+  if (pathname.startsWith("/admin/fuel/")) {
+    return "Review record integrity, supporting evidence, and activity history.";
+  }
+
+  return null;
 }
 
 export function getAdminBreadcrumbs(pathname: string): string[] {

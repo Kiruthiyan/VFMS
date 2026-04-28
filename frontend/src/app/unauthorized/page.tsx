@@ -3,42 +3,36 @@ import Link from "next/link";
 import { ShieldX } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Unauthorized — VFMS",
+  title: "Unauthorized",
 };
 
 export default function UnauthorizedPage() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-      <div className="text-center space-y-6 max-w-md">
-        <div className="w-20 h-20 rounded-2xl bg-red-950/40 border border-red-800/40 flex items-center justify-center mx-auto">
-          <ShieldX className="w-10 h-10 text-red-400" />
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="max-w-md space-y-6 text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-red-50 text-red-600">
+          <ShieldX className="h-10 w-10" />
         </div>
 
         <div>
-          <h1 className="text-4xl font-black text-slate-100 mb-2">403</h1>
-          <h2 className="text-xl font-bold text-slate-300 mb-3">
-            Access Denied
-          </h2>
-          <p className="text-sm text-slate-500 leading-relaxed">
+          <h1 className="mb-2 text-4xl font-black tracking-tight text-slate-950">403</h1>
+          <h2 className="mb-3 text-xl font-bold text-slate-900">Access Denied</h2>
+          <p className="text-sm leading-7 text-slate-500">
             You do not have permission to access this page. Please contact
             your administrator if you believe this is an error.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/auth/login"
-            className="inline-flex items-center justify-center h-11 px-6
-                       rounded-xl bg-amber-500 text-slate-900 font-bold
-                       text-sm hover:bg-amber-400 transition-colors"
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-amber-400 px-6 text-sm font-bold text-slate-950 transition-colors hover:bg-amber-300"
           >
             Go to Login
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center justify-center h-11 px-6
-                       rounded-xl border border-slate-700 text-slate-300
-                       font-medium text-sm hover:bg-slate-800 transition-colors"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
           >
             Back to Home
           </Link>

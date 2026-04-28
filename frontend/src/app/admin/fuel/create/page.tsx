@@ -7,6 +7,8 @@ import Link from "next/link";
 
 import { AdminShell } from "@/components/layout/admin-shell";
 import { FuelEntryForm } from "@/components/fuel/fuel-entry-form";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -49,29 +51,26 @@ export default function CreateFuelEntryPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-          <div className="flex items-center gap-2 mb-8">
-            <Link
-              href="/admin/fuel"
-              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-900 text-xs font-medium transition-colors"
-            >
-              <ArrowLeft size={15} />
-              Fuel Management
-            </Link>
-            <span className="text-slate-400 text-xs">/</span>
-            <span className="text-slate-700 text-xs font-medium">Create Entry</span>
-          </div>
+        <PageHeader
+          title="Create Fuel Entry"
+          description="Record a new fuel purchase using the same structured VFMS workflow used across the admin workspace."
+          icon={Plus}
+          actions={
+            <Button asChild variant="outline">
+              <Link href="/admin/fuel">
+                <ArrowLeft size={16} />
+                Back to Fuel
+              </Link>
+            </Button>
+          }
+        />
 
-          <div className="mb-8">
-            <PageHeader
-              title="Create Fuel Entry"
-              description="Record a new fuel purchase for your vehicle fleet"
-              icon={Plus}
-            />
-          </div>
-
-          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-            <div className="bg-slate-950 px-8 py-5 border-b border-slate-200">
-              <h2 className="text-base font-bold text-white">Fuel Entry Details</h2>
+        <Card className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-0">
+            <div className="border-b border-slate-200 px-8 py-5">
+              <CardTitle className="text-base font-semibold text-slate-950">
+                Fuel Entry Details
+              </CardTitle>
             </div>
             <div className="p-8">
               {loading ? (
@@ -88,7 +87,8 @@ export default function CreateFuelEntryPage() {
                 />
               )}
             </div>
-          </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminShell>
   );

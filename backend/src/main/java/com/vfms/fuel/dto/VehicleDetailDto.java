@@ -1,13 +1,13 @@
 package com.vfms.fuel.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -41,9 +41,9 @@ public class VehicleDetailDto {
     
     // ── CORE IDENTIFICATION FIELDS ────────────────────────────────────────
     
-    /** Unique vehicle identifier (UUID) from Supabase vehicles table */
+    /** Unique vehicle identifier from the vehicles table */
     @JsonProperty("id")
-    private UUID id;
+    private Long id;
     
     /** Vehicle license plate number (e.g., "ABC-1234") - maps to plate_number column */
     @JsonProperty("plate_number")
@@ -51,8 +51,9 @@ public class VehicleDetailDto {
     
     // ── VEHICLE CHARACTERISTICS ──────────────────────────────────────────
     
-    /** Vehicle manufacturer (e.g., "Toyota", "Honda") - maps to make column */
+    /** Vehicle manufacturer (e.g., "Toyota", "Honda") - maps to brand/make column */
     @JsonProperty("make")
+    @JsonAlias("brand")
     private String make;
     
     /** Vehicle model (e.g., "Camry", "Accord") - maps to model column */

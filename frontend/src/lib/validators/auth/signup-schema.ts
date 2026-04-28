@@ -5,11 +5,11 @@ import * as z from 'zod';
 export const signupStep1Schema = z.object({
   email: z
     .string()
-    .min(1, 'Email is required')
-    .max(255, 'Email must be less than 255 characters')
+    .min(1, 'Email is required.')
+    .max(255, 'Email must be less than 255 characters.')
     .regex(
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      'Please enter a valid email address (example: name@company.com)'
+      'Please enter a valid email address.'
     ),
 });
 
@@ -21,8 +21,8 @@ export const signupStep2Schema = z.object({
   otp: z
     .string()
     .min(1, 'Please enter the verification code sent to your email.')
-    .max(6, 'Verification code must be 6 digits')
-    .regex(/^\d*$/, 'Verification code must contain only numbers'),
+    .max(6, 'Verification code must be 6 digits.')
+    .regex(/^\d*$/, 'Verification code must contain only numbers.'),
 });
 
 export type SignupStep2Values = z.infer<typeof signupStep2Schema>;
@@ -47,23 +47,23 @@ const validateSriLankanPhone = (phone: string) => {
 export const signupStep3Schema = z.object({
   fullName: z
     .string()
-    .min(2, 'Full name must be at least 2 characters')
-    .max(100, 'Full name must be less than 100 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Full name can only contain letters, spaces, hyphens, and apostrophes')
-    .min(1, 'Full name is required'),
+    .min(2, 'Full name must be at least 2 characters.')
+    .max(100, 'Full name must be less than 100 characters.')
+    .regex(/^[a-zA-Z\s'-]+$/, 'Please enter a valid full name.')
+    .min(1, 'Full name is required.'),
   phone: z
     .string()
-    .min(1, 'Phone number is required')
+    .min(1, 'Phone number is required.')
     .refine(
       (phone) => validateSriLankanPhone(phone),
-      'Please enter a valid Sri Lankan phone number (e.g., 077XXXXXXX or +94771234567)'
+      'Please enter a valid phone number.'
     ),
   nic: z
     .string()
-    .min(1, 'NIC number is required')
+    .min(1, 'NIC number is required.')
     .refine(
       (nic) => validateNIC(nic),
-      'Please enter a valid Sri Lankan NIC number (10 or 12 digits)'
+      'Please enter a valid NIC number.'
     ),
 });
 
@@ -73,91 +73,107 @@ export type SignupStep3Values = z.infer<typeof signupStep3Schema>;
 
 export const signupStep4Schema = z
   .object({
-    role: z.enum(['DRIVER', 'SYSTEM_USER']),
-    // Driver-specific fields
+    role: z.enum(['DRIVER', 'SYSTEM_USER'], {
+      message: 'Please select a role.',
+    }),
     licenseNumber: z.string().optional().default(''),
     licenseExpiryDate: z.string().optional().default(''),
-    // SYSTEM_USER (Staff) specific fields
     employeeId: z.string().optional().default(''),
     department: z.string().optional().default(''),
     designation: z.string().optional().default(''),
     officeLocation: z.string().optional().default(''),
   })
-  .refine(
-    (data) => {
-      if (data.role === 'DRIVER') {
-        return data.licenseNumber && data.licenseNumber.trim().length > 0;
+  .superRefine((data, ctx) => {
+    if (data.role === 'DRIVER') {
+      const licenseNumber = data.licenseNumber?.trim() ?? '';
+      const licenseExpiryDate = data.licenseExpiryDate?.trim() ?? '';
+
+      if (!licenseNumber) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please enter the driver license number.',
+          path: ['licenseNumber'],
+        });
+      } else if (!/^[A-Z0-9]{6,20}$/i.test(licenseNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please enter a valid license number.',
+          path: ['licenseNumber'],
+        });
       }
-      return true;
-    },
-    {
-      message: 'License number is required for drivers',
-      path: ['licenseNumber'],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.role === 'DRIVER') {
-        return data.licenseExpiryDate && data.licenseExpiryDate.trim().length > 0;
-      }
-      return true;
-    },
-    {
-      message: 'License expiry date is required for drivers',
-      path: ['licenseExpiryDate'],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.role === 'DRIVER' && data.licenseExpiryDate) {
-        const expiryDate = new Date(data.licenseExpiryDate);
+
+      if (!licenseExpiryDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please enter the driver license expiry date.',
+          path: ['licenseExpiryDate'],
+        });
+      } else {
+        const expiryDate = new Date(licenseExpiryDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return expiryDate >= today; // Must be today or in the future
+
+        if (Number.isNaN(expiryDate.getTime())) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Please enter a valid license expiry date.',
+            path: ['licenseExpiryDate'],
+          });
+        } else if (expiryDate < today) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'License expiry date must be today or later.',
+            path: ['licenseExpiryDate'],
+          });
+        }
       }
-      return true;
-    },
-    {
-      message: 'License expiry date must be in the future',
-      path: ['licenseExpiryDate'],
     }
-  )
-  .refine(
-    (data) => {
-      if (data.role === 'SYSTEM_USER') {
-        return data.employeeId && data.employeeId.trim().length > 0;
+
+    if (data.role === 'SYSTEM_USER') {
+      const employeeId = data.employeeId?.trim() ?? '';
+      const department = data.department?.trim() ?? '';
+      const designation = data.designation?.trim() ?? '';
+      const officeLocation = data.officeLocation?.trim() ?? '';
+
+      if (!employeeId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please enter the staff employee ID.',
+          path: ['employeeId'],
+        });
+      } else if (!/^[A-Z0-9]{3,20}$/i.test(employeeId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please enter a valid employee ID.',
+          path: ['employeeId'],
+        });
       }
-      return true;
-    },
-    {
-      message: 'Employee ID is required for staff members',
-      path: ['employeeId'],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.role === 'SYSTEM_USER') {
-        return data.department && data.department.trim().length > 0;
+
+      if (!department) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please select or enter the staff department.',
+          path: ['department'],
+        });
       }
-      return true;
-    },
-    {
-      message: 'Department is required for staff members',
-      path: ['department'],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.role === 'SYSTEM_USER') {
-        return data.designation && data.designation.trim().length > 0;
+
+      if (!designation) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please enter the staff designation.',
+          path: ['designation'],
+        });
       }
-      return true;
-    },
-    {
-      message: 'Designation is required for staff members',
-      path: ['designation'],
+
+      if (!officeLocation) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please select or enter the staff office location.',
+          path: ['officeLocation'],
+        });
+      }
     }
-  );
+  });
 
 export type SignupStep4Values = z.infer<typeof signupStep4Schema>;
 
@@ -167,17 +183,17 @@ export const signupStep5Schema = z
   .object({
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(128, 'Password must be less than 128 characters')
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter (A-Z)')
-      .regex(/[a-z]/, 'Password must contain at least one lowercase letter (a-z)')
-      .regex(/[0-9]/, 'Password must contain at least one number (0-9)')
-      .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least one special character')
-      .min(1, 'Password is required'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+      .min(8, 'Password must be at least 8 characters.')
+      .max(128, 'Password must be less than 128 characters.')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,128}$/,
+        'Password must include uppercase, lowercase, number, and special character.'
+      )
+      .min(1, 'Password is required.'),
+    confirmPassword: z.string().min(1, 'Please confirm your password.'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match. Please check and try again.',
+    message: 'Passwords do not match.',
     path: ['confirmPassword'],
   });
 

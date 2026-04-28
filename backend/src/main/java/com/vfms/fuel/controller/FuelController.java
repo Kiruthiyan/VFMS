@@ -75,18 +75,18 @@ public class FuelController {
     public ResponseEntity<List<FuelRecordResponse>> searchFuelRecords(
             @RequestParam String from,
             @RequestParam String to,
-            @RequestParam(required = false) UUID vehicleId,
+            @RequestParam(required = false) Long vehicleId,
             @RequestParam(required = false) UUID driverId) {
         return ResponseEntity.ok(fuelService.getByDateRange(from, to, vehicleId, driverId));
     }
 
     @GetMapping("/vehicle/{vehicleId}")
-    public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicle(@PathVariable UUID vehicleId) {
+    public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicle(@PathVariable Long vehicleId) {
         return ResponseEntity.ok(fuelService.getByVehicle(vehicleId));
     }
 
     @GetMapping("/vehicle/{vehicleId}/realtime")
-    public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicleRealTime(@PathVariable UUID vehicleId) {
+    public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicleRealTime(@PathVariable Long vehicleId) {
         return ResponseEntity.ok(fuelService.getByVehicleWithRealTimeData(vehicleId));
     }
 

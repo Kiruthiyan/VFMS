@@ -1,114 +1,98 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Users,
-  RefreshCw,
-  Search,
-  UserPlus,
+  ArrowRight,
   CheckCircle2,
   Clock,
-  UserX,
+  RefreshCw,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
+  UserPlus,
+  UserX,
+  Users,
 } from "lucide-react";
-import { getAllUsersApi, getUserCountsApi, getErrorMessage } from "@/lib/api/admin";
-import type { UserSummary, UserCounts } from "@/lib/api/admin";
-import type { UserStatus, UserRole } from "@/lib/auth";
-import { UserTable } from "@/components/admin/users/user-table";
-import { AdminShell } from "@/components/layout/admin-shell";
-import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { FormMessage } from "@/components/ui/form-message";
 import Link from "next/link";
 
-const ITEMS_PER_PAGE = 15;
-
-const STATUS_FILTER_OPTIONS: { label: string; value: UserStatus | "ALL" }[] = [
-  { label: "All", value: "ALL" },
-  { label: "Approved", value: "APPROVED" },
-  { label: "Pending", value: "PENDING_APPROVAL" },
-  { label: "Rejected", value: "REJECTED" },
-  { label: "Deactivated", value: "DEACTIVATED" },
-];
-
-const ROLE_FILTER_OPTIONS: { label: string; value: UserRole | "ALL" }[] = [
-  { label: "All Roles", value: "ALL" },
-  { label: "Admin", value: "ADMIN" },
-  { label: "Approver", value: "APPROVER" },
-  { label: "Staff", value: "SYSTEM_USER" },
-  { label: "Driver", value: "DRIVER" },
-];
+import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
+import { UserRoleBadge } from "@/components/admin/users/user-role-badge";
+import { UserStatusBadge } from "@/components/admin/users/user-status-badge";
+import { AdminShell } from "@/components/layout/admin-shell";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { FormMessage } from "@/components/ui/form-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { PageHeader } from "@/components/ui/page-header";
+import {
+  getAllUsersApi,
+  getErrorMessage,
+  getUserCountsApi,
+  type UserCounts,
+  type UserSummary,
+} from "@/lib/api/admin";
 
 const SUMMARY_CARDS = [
   {
     key: "total",
     label: "Total Users",
     icon: Users,
-    color: "bg-[#0B1736]",
-    textColor: "text-white",
-    iconBg: "bg-[#F4B400]",
-    iconColor: "text-[#0B1736]",
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-700",
   },
   {
     key: "approved",
     label: "Approved",
     icon: CheckCircle2,
-    color: "bg-white",
-    textColor: "text-[#101828]",
-    iconBg: "bg-[#ECFDF5]",
-    iconColor: "text-[#12B76A]",
+    iconBg: "bg-emerald-100",
+    iconColor: "text-emerald-700",
   },
   {
     key: "pending",
     label: "Pending",
     icon: Clock,
-    color: "bg-white",
-    textColor: "text-[#101828]",
-    iconBg: "bg-[#FFFBEB]",
-    iconColor: "text-[#F79009]",
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-700",
   },
   {
     key: "deactivated",
     label: "Deactivated",
     icon: UserX,
-    color: "bg-white",
-    textColor: "text-[#101828]",
-    iconBg: "bg-[#FEF2F2]",
-    iconColor: "text-[#F04438]",
+    iconBg: "bg-red-100",
+    iconColor: "text-red-700",
   },
   {
     key: "deleted",
     label: "Deleted",
     icon: Trash2,
-    color: "bg-white",
-    textColor: "text-[#101828]",
-    iconBg: "bg-[#F5F7FB]",
-    iconColor: "text-[#98A2B3]",
+    iconBg: "bg-slate-100",
+    iconColor: "text-slate-500",
   },
 ];
 
-export default function AllUsersPage() {
-  const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export default function UserManagementDashboardPage() {
+  const [users, setUsers] = useState<UserSummary[]>([]);
   const [counts, setCounts] = useState<UserCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
-  const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const fetchAll = useCallback(async () => {
+  const fetchDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
       const [usersData, countsData] = await Promise.all([
         getAllUsersApi(),
         getUserCountsApi(),
       ]);
-      setAllUsers(usersData);
+      setUsers(usersData);
       setCounts(countsData);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -118,287 +102,247 @@ export default function AllUsersPage() {
   }, []);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    fetchDashboard();
+  }, [fetchDashboard]);
 
-  // Filter + paginate
-  const filtered = useMemo(() => {
-    let result = allUsers;
-
-    if (statusFilter !== "ALL") {
-      result = result.filter((u) => u.status === statusFilter);
-    }
-
-    if (roleFilter !== "ALL") {
-      result = result.filter((u) => u.role === roleFilter);
-    }
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (u) =>
-          u.fullName.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
-          u.nic?.toLowerCase().includes(q)
-      );
-    }
-
-    return result;
-  }, [allUsers, statusFilter, roleFilter, search]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-  const paginatedUsers = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  const recentUsers = useMemo(
+    () =>
+      [...users]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, 5),
+    [users]
   );
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, roleFilter, search]);
+  const roleSummary = useMemo(() => {
+    const summary = {
+      ADMIN: 0,
+      APPROVER: 0,
+      SYSTEM_USER: 0,
+      DRIVER: 0,
+    };
+
+    users.forEach((user) => {
+      summary[user.role] += 1;
+    });
+
+    return [
+      { label: "Administrators", value: summary.ADMIN },
+      { label: "Approvers", value: summary.APPROVER },
+      { label: "Staff", value: summary.SYSTEM_USER },
+      { label: "Drivers", value: summary.DRIVER },
+    ];
+  }, [users]);
 
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-5 bg-slate-950 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400">
-                <Users className="h-6 w-6 text-slate-950" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-white">
-                  User Management
-                </h1>
-                <p className="mt-1 text-sm text-slate-300">
-                  Manage all system users, create accounts, and review registrations
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={fetchAll}
+        <PageHeader
+          title="User Management"
+          description="Use one organized workspace to review registrations, manage accounts, and monitor user access across VFMS."
+          icon={Users}
+          actions={
+            <>
+              <Button
+                variant="outline"
+                onClick={fetchDashboard}
                 disabled={loading}
-                className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold
-                           text-white transition-colors hover:bg-white/15 disabled:opacity-50"
               >
                 <RefreshCw
                   size={16}
                   className={loading ? "animate-spin" : ""}
                 />
                 Refresh
-              </button>
-              <button
-                onClick={() => setShowCreateDialog(true)}
-                className="flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-semibold
-                           text-slate-950 shadow-lg shadow-amber-500/20 transition-colors hover:bg-amber-300"
-              >
+              </Button>
+              <Button onClick={() => setShowCreateDialog(true)}>
                 <UserPlus size={16} />
                 Create User
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </>
+          }
+        />
 
-        {/* Summary Cards */}
-        {counts && (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-            {SUMMARY_CARDS.map((card) => {
-              const Icon = card.icon;
-              const count = counts[card.key as keyof UserCounts] ?? 0;
-              return (
-                <div
-                  key={card.key}
-                  className={`${card.color} rounded-2xl border border-slate-200 px-5 py-5
-                              shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div
-                      className={`h-9 w-9 ${card.iconBg} rounded-lg flex items-center justify-center`}
-                    >
-                      <Icon className={`w-4 h-4 ${card.iconColor}`} />
-                    </div>
-                  </div>
-                  <p
-                    className={`text-3xl font-semibold ${card.textColor} tracking-tight`}
-                  >
-                    {count}
-                  </p>
-                  <p
-                    className={`text-xs font-medium mt-0.5 ${
-                      card.key === "total" ? "text-white/70" : "text-[#667085]"
-                    }`}
-                  >
-                    {card.label}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Filters Card */}
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#667085]" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, email, or NIC..."
-                className="h-11 w-full rounded-xl border border-slate-200 pl-10 pr-4 py-2.5
-                           bg-white text-sm text-[#101828]
-                           placeholder:text-[#667085] focus:outline-none
-                           focus:ring-2 focus:ring-amber-400 focus:border-amber-400
-                           transition-colors"
-              />
-            </div>
-
-            {/* Role filter */}
-            <div className="flex flex-wrap gap-2">
-              {ROLE_FILTER_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setRoleFilter(opt.value)}
-                  className={`rounded-xl px-3 py-2 text-xs font-semibold
-                              border transition-colors
-                              ${
-                                roleFilter === opt.value
-                                  ? "bg-slate-950 text-white border-slate-950"
-                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
-                              }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Status filter pills */}
-          <div className="flex flex-wrap gap-2">
-            {STATUS_FILTER_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setStatusFilter(opt.value)}
-                className={`rounded-xl px-4 py-2 text-xs font-semibold
-                            border transition-colors
-                            ${
-                              statusFilter === opt.value
-                                ? "bg-slate-950 text-white border-slate-950 shadow-lg shadow-slate-950/10"
-                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
-                            }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-
-            {/* Link to deleted users */}
-            <Link
-              href="/admin/users/deleted"
-              className="ml-auto flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold
-                         border border-red-200 bg-red-50 text-red-600
-                         hover:bg-red-100 transition-colors"
-            >
-              <Trash2 size={12} />
-              View Deleted ({counts?.deleted ?? 0})
-            </Link>
-          </div>
-          </div>
-        </div>
-
-        {/* Content */}
         {loading ? (
-          <div className="flex flex-col items-center py-20 gap-3">
-            <LoadingSpinner size={28} className="text-[#0B1736]" />
-            <p className="text-sm text-[#667085]">Loading users...</p>
+          <div className="flex flex-col items-center gap-3 py-20">
+            <LoadingSpinner size={28} className="text-slate-950" />
+            <p className="text-sm text-slate-500">Loading user dashboard...</p>
           </div>
         ) : error ? (
           <FormMessage type="error" message={error} />
         ) : (
           <>
-            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-              <UserTable
-                users={paginatedUsers}
-                showReviewActions={true}
-                showDeletedActions={false}
-                onRefresh={fetchAll}
-              />
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-6 py-3 shadow-sm">
-                <p className="text-xs text-[#667085]">
-                  Showing{" "}
-                  <span className="font-semibold text-[#101828]">
-                    {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-semibold text-[#101828]">
-                    {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-[#101828]">
-                    {filtered.length}
-                  </span>{" "}
-                  users
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50
-                               transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`h-8 w-8 rounded-xl text-xs font-semibold
-                                    border transition-colors
-                                    ${
-                                      page === currentPage
-                                        ? "bg-slate-950 text-white border-slate-950"
-                                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                                    }`}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(totalPages, prev + 1)
-                      )
-                    }
-                    disabled={currentPage === totalPages}
-                    className="rounded-xl border border-slate-200 p-2 hover:bg-slate-50
-                               transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
+            {counts && (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                {SUMMARY_CARDS.map((card) => {
+                  const Icon = card.icon;
+                  const count = counts[card.key as keyof UserCounts] ?? 0;
+                  return (
+                    <Card
+                      key={card.key}
+                      className="rounded-2xl border-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <CardContent className="p-5">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div
+                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.iconBg}`}
+                          >
+                            <Icon className={`h-4 w-4 ${card.iconColor}`} />
+                          </div>
+                        </div>
+                        <p className="text-3xl font-semibold tracking-tight text-slate-950">
+                          {count}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
+                          {card.label}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
+
+            <div className="grid gap-5 lg:grid-cols-3">
+              <Link href="/admin/users/all" className="group">
+                <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+                  <CardContent className="p-6">
+                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-base font-semibold text-slate-950">
+                      All Users
+                    </CardTitle>
+                    <p className="mt-2 text-sm text-slate-500">
+                      Open the full user directory with search, role filters,
+                      status filters, and actions.
+                    </p>
+                    <div className="mt-5 flex items-center justify-between text-sm font-semibold text-slate-700">
+                      <span>{counts?.total ?? 0} total accounts</span>
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link href="/admin/users/pending" className="group">
+                <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+                  <CardContent className="p-6">
+                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-base font-semibold text-slate-950">
+                      Pending Users
+                    </CardTitle>
+                    <p className="mt-2 text-sm text-slate-500">
+                      Review registrations waiting for approval and complete
+                      role assignment decisions.
+                    </p>
+                    <div className="mt-5 flex items-center justify-between text-sm font-semibold text-slate-700">
+                      <span>{counts?.pending ?? 0} awaiting review</span>
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link href="/admin/users/deleted" className="group">
+                <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
+                  <CardContent className="p-6">
+                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                      <Trash2 className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-base font-semibold text-slate-950">
+                      Deleted Users
+                    </CardTitle>
+                    <p className="mt-2 text-sm text-slate-500">
+                      Access archived user records for audit, restore actions,
+                      and lifecycle tracking.
+                    </p>
+                    <div className="mt-5 flex items-center justify-between text-sm font-semibold text-slate-700">
+                      <span>{counts?.deleted ?? 0} archived records</span>
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.95fr)]">
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="border-b border-slate-200 px-6 py-4">
+                    <CardTitle className="text-base font-semibold text-slate-950">
+                      Recent Registrations
+                    </CardTitle>
+                  </div>
+
+                  {recentUsers.length === 0 ? (
+                    <div className="px-6 py-10 text-sm text-slate-500">
+                      No user records available yet.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-200">
+                      {recentUsers.map((user) => (
+                        <div
+                          key={user.id}
+                          className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-950">
+                              {user.fullName}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-slate-500">
+                              {user.email}
+                            </p>
+                            <p className="mt-2 text-xs text-slate-400">
+                              Registered {formatDate(user.createdAt)}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <UserRoleBadge role={user.role} />
+                            <UserStatusBadge status={user.status} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <CardTitle className="mb-6 text-base font-semibold text-slate-950">
+                    Role Distribution
+                  </CardTitle>
+                  <div className="space-y-4">
+                    {roleSummary.map((item) => (
+                      <div
+                        key={item.label}
+                        className="flex items-center justify-between border-b border-slate-200 pb-4 last:border-b-0 last:pb-0"
+                      >
+                        <span className="text-sm font-medium text-slate-700">
+                          {item.label}
+                        </span>
+                        <span className="text-xl font-semibold text-slate-950">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </>
         )}
       </div>
 
-      {/* Create User Dialog */}
       {showCreateDialog && (
         <CreateUserDialog
           onClose={() => setShowCreateDialog(false)}
-          onSuccess={fetchAll}
+          onSuccess={fetchDashboard}
         />
       )}
     </AdminShell>

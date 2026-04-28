@@ -12,7 +12,7 @@ import java.util.UUID;
 @Builder
 public class FuelRecordResponse {
     private UUID id;
-    private UUID vehicleId;
+    private String vehicleId;
     private String vehiclePlate;
     private String vehicleMakeModel;
     private UUID driverId;

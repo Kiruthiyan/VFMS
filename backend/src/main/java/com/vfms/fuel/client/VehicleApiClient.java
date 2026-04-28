@@ -10,7 +10,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -22,7 +21,7 @@ public class VehicleApiClient {
     @Value("${app.vehicle.api.base-url:http://localhost:8080/api/vehicles}")
     private String vehicleApiBaseUrl;
 
-    public VehicleDetailDto getVehicleById(UUID vehicleId) {
+    public VehicleDetailDto getVehicleById(Long vehicleId) {
         try {
             String url = vehicleApiBaseUrl + "/" + vehicleId;
             VehicleDetailDto vehicle = restTemplate.getForObject(url, VehicleDetailDto.class);
@@ -54,7 +53,7 @@ public class VehicleApiClient {
         }
     }
 
-    public boolean vehicleExists(UUID vehicleId) {
+    public boolean vehicleExists(Long vehicleId) {
         try {
             String url = vehicleApiBaseUrl + "/" + vehicleId;
             restTemplate.getForObject(url, VehicleDetailDto.class);
