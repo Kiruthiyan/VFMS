@@ -1,0 +1,286 @@
+package trip_service.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import trip_service.dto.CreateTripRequestDTO;
+import trip_service.entity.TripRequest;
+import trip_service.enums.TripStatus;
+import trip_service.repository.TripRequestRepository;
+import java.util.List;
+import java.util.UUID;
+import trip_service.dto.ApprovalDTO;
+import java.time.LocalDateTime;
+import trip_service.dto.VehicleOptionDTO;
+import trip_service.dto.DriverOptionDTO;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
+// Core business logic for managing the lifecycle of trip requests, including scheduling, approvals, and resource assignment.
+@Service
+@RequiredArgsConstructor
+public class TripRequestService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+    private final TripRequestRepository repository;
+
+    public TripRequest createTrip(CreateTripRequestDTO dto) {
+        // Validate that the trip spans a valid, logical time window
+        if (dto.getReturnTime().isBefore(dto.getDepartureTime()) ||
+                dto.getReturnTime().isEqual(dto.getDepartureTime())) {
+            throw new RuntimeException("Return time must be after departure time");
+        }
+        TripRequest trip = TripRequest.builder()
+                .requesterId(dto.getRequesterId())
+                .purpose(dto.getPurpose())
+                .destination(dto.getDestination())
+                .departureTime(dto.getDepartureTime())
+                .returnTime(dto.getReturnTime())
+                .passengerCount(dto.getPassengerCount())
+                .distanceKm(dto.getDistanceKm())
+                .status(TripStatus.NEW)
+                .build();
+        return repository.save(trip);
+    }
+
+    public List<TripRequest> getAllTrips() {
+        return repository.findAll();
+    }
+
+    public List<TripRequest> getTripsByStatus(TripStatus status) {
+        return repository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
+    // Using native SQL queries here to efficiently fetch lightweight DTOs directly from cross-domain tables
+    public List<VehicleOptionDTO> getAvailableVehicles() {
+        List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT id, brand, model, plate_number FROM vehicles WHERE status = 'AVAILABLE'"
+        ).getResultList();
+
+        return rows.stream().map(row -> new VehicleOptionDTO(
+                ((Number) row[0]).longValue(),
+                (String) row[1],
+                (String) row[2],
+                (String) row[3]
+        )).toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<DriverOptionDTO> getAvailableDrivers() {
+        List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT id::text, first_name, last_name, employee_id FROM drivers WHERE status = 'ACTIVE'"
+        ).getResultList();
+
+        return rows.stream().map(row -> new DriverOptionDTO(
+                (String) row[0],
+                (String) row[1],
+                (String) row[2],
+                (String) row[3]
+        )).toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<DriverOptionDTO> getAllDrivers() {
+        List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT id::text, first_name, last_name, employee_id FROM drivers ORDER BY first_name"
+        ).getResultList();
+
+        return rows.stream().map(row -> new DriverOptionDTO(
+                (String) row[0],
+                (String) row[1],
+                (String) row[2],
+                (String) row[3]
+        )).toList();
+    }
+
+    public TripRequest getTripById(UUID tripId) {
+        return findById(tripId);
+    }
+
+    public List<TripRequest> getTripsByRequester(UUID requesterId) {
+        return repository.findByRequesterIdOrderByCreatedAtDesc(requesterId);
+    }
+
+    private TripRequest findById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
+    }
+
+    // --- Trip Lifecycle Management ---
+
+    public TripRequest editTrip(UUID tripId, CreateTripRequestDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.NEW) {
+            throw new RuntimeException("Only NEW trips can be edited");
+        }
+        if (dto.getReturnTime().isBefore(dto.getDepartureTime()) ||
+                dto.getReturnTime().isEqual(dto.getDepartureTime())) {
+            throw new RuntimeException("Return time must be after departure time");
+        }
+        trip.setPurpose(dto.getPurpose());
+        trip.setDestination(dto.getDestination());
+        trip.setDepartureTime(dto.getDepartureTime());
+        trip.setReturnTime(dto.getReturnTime());
+        trip.setPassengerCount(dto.getPassengerCount());
+        trip.setDistanceKm(dto.getDistanceKm());
+        return repository.save(trip);
+    }
+
+    public TripRequest submitTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.NEW) {
+            throw new RuntimeException("Only NEW trips can be submitted");
+        }
+        trip.setStatus(TripStatus.SUBMITTED);
+        return repository.save(trip);
+    }
+
+    public TripRequest approveTrip(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        // Allows re-approval if a previously assigned driver rejected the trip
+        if (trip.getStatus() != TripStatus.SUBMITTED && trip.getStatus() != TripStatus.DRIVER_REJECTED) {
+            throw new RuntimeException("Only SUBMITTED or DRIVER_REJECTED trips can be approved");
+        }
+        trip.setStatus(TripStatus.APPROVED);
+        trip.setApproverId(dto.getApproverId());
+        trip.setApprovalNotes(dto.getNotes());
+        trip.setAssignedVehicleId(dto.getAssignedVehicleId());
+        trip.setAssignedDriverId(dto.getAssignedDriverId());
+        return repository.save(trip);
+    }
+
+    public TripRequest rejectTrip(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.SUBMITTED) {
+            throw new RuntimeException("Only SUBMITTED trips can be rejected");
+        }
+        trip.setStatus(TripStatus.REJECTED);
+        trip.setApproverId(dto.getApproverId());
+        trip.setApprovalNotes(dto.getNotes());
+        return repository.save(trip);
+    }
+
+    public TripRequest assignDriver(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.APPROVED) {
+            throw new RuntimeException("Only APPROVED trips can have a driver assigned");
+        }
+        // Prevent driver double-booking
+        List<TripRequest> conflicts = repository.findConflictingDriverBookings(
+                dto.getAssignedDriverId(),
+                trip.getDepartureTime(),
+                trip.getReturnTime());
+        if (!conflicts.isEmpty()) {
+            throw new RuntimeException("Driver is already assigned for this time slot");
+        }
+        trip.setAssignedDriverId(dto.getAssignedDriverId());
+        return repository.save(trip);
+    }
+
+    public TripRequest assignVehicle(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.APPROVED) {
+            throw new RuntimeException("Only APPROVED trips can have a vehicle assigned");
+        }
+        // Prevent vehicle double-booking
+        List<TripRequest> conflicts = repository.findConflictingVehicleBookings(
+                dto.getAssignedVehicleId(),
+                trip.getDepartureTime(),
+                trip.getReturnTime());
+        if (!conflicts.isEmpty()) {
+            throw new RuntimeException("Vehicle is already booked for this time slot");
+        }
+        trip.setAssignedVehicleId(dto.getAssignedVehicleId());
+        return repository.save(trip);
+    }
+
+    public TripRequest driverAcceptTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.APPROVED) {
+            throw new RuntimeException("Only APPROVED trips can be accepted by driver");
+        }
+        trip.setStatus(TripStatus.DRIVER_CONFIRMED);
+        return repository.save(trip);
+    }
+
+    public TripRequest driverRejectTrip(UUID tripId, ApprovalDTO dto) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.APPROVED) {
+            throw new RuntimeException("Only APPROVED trips can be rejected by driver");
+        }
+        // Clear assignment so administrative staff can cleanly reassign a different driver/vehicle
+        trip.setStatus(TripStatus.DRIVER_REJECTED);
+        trip.setApprovalNotes("Driver rejected: " + dto.getNotes());
+        trip.setAssignedDriverId(null);
+        trip.setAssignedVehicleId(null);
+        return repository.save(trip);
+    }
+
+    public TripRequest startTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.DRIVER_CONFIRMED) {
+            throw new RuntimeException("Only DRIVER_CONFIRMED trips can be started");
+        }
+        trip.setStatus(TripStatus.ONGOING);
+        trip.setStartTime(LocalDateTime.now());
+        return repository.save(trip);
+    }
+
+    public TripRequest completeTrip(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.ONGOING) {
+            throw new RuntimeException("Only ONGOING trips can be completed");
+        }
+        trip.setStatus(TripStatus.COMPLETED);
+        trip.setEndTime(LocalDateTime.now());
+        return repository.save(trip);
+    }
+
+    public TripRequest cancelTrip(UUID tripId, UUID cancelledBy, String reason) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() == TripStatus.COMPLETED ||
+                trip.getStatus() == TripStatus.CANCELLED) {
+            throw new RuntimeException("Cannot cancel a completed or already cancelled trip");
+        }
+        trip.setStatus(TripStatus.CANCELLED);
+        trip.setApprovalNotes(reason);
+        return repository.save(trip);
+    }
+
+    // --- Queries and Reporting ---
+
+    public List<TripRequest> getTripsByDriver(UUID driverId) {
+        return repository.findByAssignedDriverIdOrderByDepartureTimeAsc(driverId);
+    }
+
+    public List<TripRequest> getUpcomingTripsByDriver(UUID driverId) {
+        return repository.findByAssignedDriverIdAndStatusOrderByDepartureTimeAsc(
+                driverId, TripStatus.APPROVED);
+    }
+
+    public List<TripRequest> getRequesterTripHistory(UUID requesterId) {
+        return repository.findByRequesterIdOrderByCreatedAtDesc(requesterId);
+    }
+
+    public List<TripRequest> getRequesterActiveTrips(UUID requesterId) {
+        return repository.findByRequesterIdAndStatusInOrderByDepartureTimeAsc(
+                requesterId, List.of(TripStatus.NEW, TripStatus.SUBMITTED, TripStatus.APPROVED, TripStatus.ONGOING));
+    }
+
+    public List<TripRequest> getTripsForCalendar(int year, int month) {
+        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
+        LocalDateTime end = start.plusMonths(1).minusSeconds(1);
+        return repository.findByDepartureTimeBetweenOrderByDepartureTimeAsc(start, end);
+    }
+
+    public List<TripRequest> searchTrips(String destination, TripStatus status, UUID requesterId) {
+        // Fetches all records and performs in-memory filtering based on provided parameters
+        List<TripRequest> all = repository.findAll();
+        return all.stream()
+                .filter(t -> destination == null || t.getDestination().toLowerCase().contains(destination.toLowerCase()))
+                .filter(t -> status == null || t.getStatus() == status)
+                .filter(t -> requesterId == null || t.getRequesterId().equals(requesterId))
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .toList();
+    }
+}
