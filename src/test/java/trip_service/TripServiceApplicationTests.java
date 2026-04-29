@@ -1,5 +1,6 @@
 package trip_service;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +14,6 @@ import trip_service.enums.TripStatus;
 import trip_service.repository.TripRequestRepository;
 import trip_service.service.TripRequestService;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +28,9 @@ class TripServiceApplicationTests {
 
     @Mock
     private TripRequestRepository repository;
+
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private TripRequestService service;
@@ -59,7 +62,6 @@ class TripServiceApplicationTests {
 
     @Test
     void createTrip_ShouldSucceed_WhenValidData() {
-        // ARRANGE - prepare test data
         CreateTripRequestDTO dto = new CreateTripRequestDTO();
         dto.setRequesterId(requesterId);
         dto.setPurpose("Client meeting");
@@ -70,10 +72,8 @@ class TripServiceApplicationTests {
 
         when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
 
-        // ACT - call the method
         TripRequest result = service.createTrip(dto);
 
-        // ASSERT - check the result
         assertNotNull(result);
         assertEquals(TripStatus.NEW, result.getStatus());
         assertEquals("Colombo Fort", result.getDestination());
@@ -82,21 +82,36 @@ class TripServiceApplicationTests {
 
     @Test
     void createTrip_ShouldFail_WhenReturnTimeBeforeDepartureTime() {
-        // ARRANGE
         CreateTripRequestDTO dto = new CreateTripRequestDTO();
         dto.setRequesterId(requesterId);
         dto.setPurpose("Test trip");
         dto.setDestination("Kandy");
         dto.setDepartureTime(LocalDateTime.now().plusDays(2));
-        dto.setReturnTime(LocalDateTime.now().plusDays(1)); // return BEFORE departure
+        dto.setReturnTime(LocalDateTime.now().plusDays(1));
         dto.setPassengerCount(1);
 
-        // ACT & ASSERT - should throw exception
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.createTrip(dto));
 
         assertEquals("Return time must be after departure time", exception.getMessage());
-        verify(repository, never()).save(any()); // save should NOT be called
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void createTrip_ShouldFail_WhenReturnTimeEqualsDepartureTime() {
+        LocalDateTime sameTime = LocalDateTime.now().plusDays(1);
+        CreateTripRequestDTO dto = new CreateTripRequestDTO();
+        dto.setRequesterId(requesterId);
+        dto.setPurpose("Test trip");
+        dto.setDestination("Kandy");
+        dto.setDepartureTime(sameTime);
+        dto.setReturnTime(sameTime);
+        dto.setPassengerCount(1);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> service.createTrip(dto));
+
+        assertEquals("Return time must be after departure time", exception.getMessage());
     }
 
     // =============================================
@@ -105,26 +120,21 @@ class TripServiceApplicationTests {
 
     @Test
     void submitTrip_ShouldSucceed_WhenTripIsNew() {
-        // ARRANGE
         sampleTrip.setStatus(TripStatus.NEW);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
         when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
 
-        // ACT
         TripRequest result = service.submitTrip(tripId);
 
-        // ASSERT
         assertEquals(TripStatus.SUBMITTED, result.getStatus());
         verify(repository, times(1)).save(any(TripRequest.class));
     }
 
     @Test
     void submitTrip_ShouldFail_WhenTripIsAlreadySubmitted() {
-        // ARRANGE
         sampleTrip.setStatus(TripStatus.SUBMITTED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
 
-        // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.submitTrip(tripId));
 
@@ -134,10 +144,8 @@ class TripServiceApplicationTests {
 
     @Test
     void submitTrip_ShouldFail_WhenTripNotFound() {
-        // ARRANGE
         when(repository.findById(tripId)).thenReturn(Optional.empty());
 
-        // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.submitTrip(tripId));
 
@@ -150,13 +158,8 @@ class TripServiceApplicationTests {
 
     @Test
     void approveTrip_ShouldSucceed_WhenTripIsSubmitted() {
-        // ARRANGE
         sampleTrip.setStatus(TripStatus.SUBMITTED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
-        when(repository.findConflictingVehicleBookings(any(), any(), any()))
-                .thenReturn(List.of()); // no conflicts
-        when(repository.findConflictingDriverBookings(any(), any(), any()))
-                .thenReturn(List.of()); // no conflicts
         when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
 
         ApprovalDTO dto = new ApprovalDTO();
@@ -165,47 +168,43 @@ class TripServiceApplicationTests {
         dto.setAssignedDriverId(UUID.randomUUID());
         dto.setNotes("Approved");
 
-        // ACT
         TripRequest result = service.approveTrip(tripId, dto);
 
-        // ASSERT
         assertEquals(TripStatus.APPROVED, result.getStatus());
         verify(repository, times(1)).save(any(TripRequest.class));
     }
 
     @Test
-    void approveTrip_ShouldFail_WhenTripIsNotSubmitted() {
-        // ARRANGE
-        sampleTrip.setStatus(TripStatus.NEW); // not submitted
+    void approveTrip_ShouldSucceed_WhenTripIsDriverRejected() {
+        // Driver rejected means staff can re-approve with different driver/vehicle
+        sampleTrip.setStatus(TripStatus.DRIVER_REJECTED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
+        when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
 
         ApprovalDTO dto = new ApprovalDTO();
         dto.setApproverId(UUID.randomUUID());
+        dto.setAssignedVehicleId(2L);
+        dto.setAssignedDriverId(UUID.randomUUID());
+        dto.setNotes("Re-approved with new driver");
 
-        // ACT & ASSERT
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> service.approveTrip(tripId, dto));
+        TripRequest result = service.approveTrip(tripId, dto);
 
-        assertEquals("Only SUBMITTED trips can be approved", exception.getMessage());
+        assertEquals(TripStatus.APPROVED, result.getStatus());
     }
 
     @Test
-    void approveTrip_ShouldFail_WhenVehicleIsDoubleBooked() {
-        // ARRANGE
-        sampleTrip.setStatus(TripStatus.SUBMITTED);
+    void approveTrip_ShouldFail_WhenTripIsNew() {
+        sampleTrip.setStatus(TripStatus.NEW);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
-        when(repository.findConflictingVehicleBookings(any(), any(), any()))
-                .thenReturn(List.of(sampleTrip)); // conflict exists!
 
         ApprovalDTO dto = new ApprovalDTO();
         dto.setApproverId(UUID.randomUUID());
-        dto.setAssignedVehicleId(1L);
 
-        // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.approveTrip(tripId, dto));
 
-        assertEquals("Vehicle is already booked for this time slot", exception.getMessage());
+        assertEquals("Only SUBMITTED or DRIVER_REJECTED trips can be approved",
+                exception.getMessage());
     }
 
     // =============================================
@@ -213,8 +212,7 @@ class TripServiceApplicationTests {
     // =============================================
 
     @Test
-    void rejectTrip_ShouldSucceed_WhenReasonProvided() {
-        // ARRANGE
+    void rejectTrip_ShouldSucceed_WhenTripIsSubmitted() {
         sampleTrip.setStatus(TripStatus.SUBMITTED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
         when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
@@ -223,28 +221,65 @@ class TripServiceApplicationTests {
         dto.setApproverId(UUID.randomUUID());
         dto.setNotes("No vehicles available on this date");
 
-        // ACT
         TripRequest result = service.rejectTrip(tripId, dto);
 
-        // ASSERT
         assertEquals(TripStatus.REJECTED, result.getStatus());
     }
 
     @Test
-    void rejectTrip_ShouldFail_WhenNoReasonProvided() {
-        // ARRANGE
-        sampleTrip.setStatus(TripStatus.SUBMITTED);
+    void rejectTrip_ShouldFail_WhenTripIsNotSubmitted() {
+        sampleTrip.setStatus(TripStatus.NEW);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
 
         ApprovalDTO dto = new ApprovalDTO();
-        dto.setApproverId(UUID.randomUUID());
-        dto.setNotes(""); // empty reason
+        dto.setNotes("Some reason");
 
-        // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.rejectTrip(tripId, dto));
 
-        assertEquals("Rejection reason is required", exception.getMessage());
+        assertEquals("Only SUBMITTED trips can be rejected", exception.getMessage());
+    }
+
+    // =============================================
+    // DRIVER ACCEPT / REJECT TESTS
+    // =============================================
+
+    @Test
+    void driverAcceptTrip_ShouldSucceed_WhenTripIsApproved() {
+        sampleTrip.setStatus(TripStatus.APPROVED);
+        when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
+        when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
+
+        TripRequest result = service.driverAcceptTrip(tripId);
+
+        assertEquals(TripStatus.DRIVER_CONFIRMED, result.getStatus());
+    }
+
+    @Test
+    void driverAcceptTrip_ShouldFail_WhenTripIsNotApproved() {
+        sampleTrip.setStatus(TripStatus.SUBMITTED);
+        when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> service.driverAcceptTrip(tripId));
+
+        assertEquals("Only APPROVED trips can be accepted by driver", exception.getMessage());
+    }
+
+    @Test
+    void driverRejectTrip_ShouldSucceed_WhenTripIsApproved() {
+        sampleTrip.setStatus(TripStatus.APPROVED);
+        when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
+        when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
+
+        ApprovalDTO dto = new ApprovalDTO();
+        dto.setNotes("I am not available");
+
+        TripRequest result = service.driverRejectTrip(tripId, dto);
+
+        assertEquals(TripStatus.DRIVER_REJECTED, result.getStatus());
+        assertNull(result.getAssignedDriverId());
+        assertNull(result.getAssignedVehicleId());
     }
 
     // =============================================
@@ -252,30 +287,25 @@ class TripServiceApplicationTests {
     // =============================================
 
     @Test
-    void startTrip_ShouldSucceed_WhenTripIsApproved() {
-        // ARRANGE
-        sampleTrip.setStatus(TripStatus.APPROVED);
+    void startTrip_ShouldSucceed_WhenTripIsDriverConfirmed() {
+        sampleTrip.setStatus(TripStatus.DRIVER_CONFIRMED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
         when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
 
-        // ACT
         TripRequest result = service.startTrip(tripId);
 
-        // ASSERT
         assertEquals(TripStatus.ONGOING, result.getStatus());
     }
 
     @Test
-    void startTrip_ShouldFail_WhenTripIsNotApproved() {
-        // ARRANGE
-        sampleTrip.setStatus(TripStatus.SUBMITTED);
+    void startTrip_ShouldFail_WhenTripIsNotDriverConfirmed() {
+        sampleTrip.setStatus(TripStatus.APPROVED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
 
-        // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.startTrip(tripId));
 
-        assertEquals("Only APPROVED trips can be started", exception.getMessage());
+        assertEquals("Only DRIVER_CONFIRMED trips can be started", exception.getMessage());
     }
 
     // =============================================
@@ -284,25 +314,20 @@ class TripServiceApplicationTests {
 
     @Test
     void completeTrip_ShouldSucceed_WhenTripIsOngoing() {
-        // ARRANGE
         sampleTrip.setStatus(TripStatus.ONGOING);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
         when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
 
-        // ACT
         TripRequest result = service.completeTrip(tripId);
 
-        // ASSERT
         assertEquals(TripStatus.COMPLETED, result.getStatus());
     }
 
     @Test
     void completeTrip_ShouldFail_WhenTripIsNotOngoing() {
-        // ARRANGE
         sampleTrip.setStatus(TripStatus.APPROVED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
 
-        // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.completeTrip(tripId));
 
@@ -315,25 +340,32 @@ class TripServiceApplicationTests {
 
     @Test
     void cancelTrip_ShouldSucceed_WhenTripIsNotCompleted() {
-        // ARRANGE
         sampleTrip.setStatus(TripStatus.APPROVED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
         when(repository.save(any(TripRequest.class))).thenReturn(sampleTrip);
 
-        // ACT
         TripRequest result = service.cancelTrip(tripId, UUID.randomUUID(), "Emergency");
 
-        // ASSERT
         assertEquals(TripStatus.CANCELLED, result.getStatus());
     }
 
     @Test
     void cancelTrip_ShouldFail_WhenTripIsAlreadyCompleted() {
-        // ARRANGE
         sampleTrip.setStatus(TripStatus.COMPLETED);
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
 
-        // ACT & ASSERT
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> service.cancelTrip(tripId, UUID.randomUUID(), "Reason"));
+
+        assertEquals("Cannot cancel a completed or already cancelled trip",
+                exception.getMessage());
+    }
+
+    @Test
+    void cancelTrip_ShouldFail_WhenTripIsAlreadyCancelled() {
+        sampleTrip.setStatus(TripStatus.CANCELLED);
+        when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
+
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.cancelTrip(tripId, UUID.randomUUID(), "Reason"));
 
@@ -347,37 +379,29 @@ class TripServiceApplicationTests {
 
     @Test
     void getAllTrips_ShouldReturnAllTrips() {
-        // ARRANGE
         List<TripRequest> trips = List.of(sampleTrip);
         when(repository.findAll()).thenReturn(trips);
 
-        // ACT
         List<TripRequest> result = service.getAllTrips();
 
-        // ASSERT
         assertEquals(1, result.size());
         verify(repository, times(1)).findAll();
     }
 
     @Test
     void getTripById_ShouldReturnTrip_WhenExists() {
-        // ARRANGE
         when(repository.findById(tripId)).thenReturn(Optional.of(sampleTrip));
 
-        // ACT
         TripRequest result = service.getTripById(tripId);
 
-        // ASSERT
         assertNotNull(result);
         assertEquals(tripId, result.getId());
     }
 
     @Test
     void getTripById_ShouldThrowException_WhenNotFound() {
-        // ARRANGE
         when(repository.findById(tripId)).thenReturn(Optional.empty());
 
-        // ACT & ASSERT
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> service.getTripById(tripId));
 
