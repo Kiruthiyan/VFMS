@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldError, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, ChevronLeft, ChevronRight, Home, LogIn, Mail, Shield, UserRound, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { ZodError } from 'zod';
 
 import {
   AuthField,
@@ -113,6 +114,34 @@ function PasswordRequirement({
   );
 }
 
+const step4Resolver: Resolver<SignupStep4Values> = async (values, context, options) => {
+  try {
+    return await zodResolver(signupStep4Schema)(values, context, options);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const fieldErrors = error.issues.reduce<Record<string, FieldError>>((acc, issue) => {
+        const field = issue.path[0];
+
+        if (typeof field === 'string' && !acc[field]) {
+          acc[field] = {
+            type: issue.code,
+            message: issue.message,
+          };
+        }
+
+        return acc;
+      }, {});
+
+      return {
+        values: {},
+        errors: fieldErrors,
+      };
+    }
+
+    throw error;
+  }
+};
+
 export function SignupForm() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<SignupStep>(1);
@@ -147,7 +176,7 @@ export function SignupForm() {
   });
 
   const step4Form = useForm<SignupStep4Values>({
-    resolver: zodResolver(signupStep4Schema),
+    resolver: step4Resolver,
     defaultValues: {
       role: formData.step4?.role,
       licenseNumber: formData.step4?.licenseNumber ?? '',
@@ -296,6 +325,38 @@ export function SignupForm() {
       step2Form.setValue('otp', '');
     } catch (error: unknown) {
       setServerError(getErrorMessage(error) || 'Failed to send verification code. Please try again.');
+    }
+  };
+
+  const handleRoleSelection = (role: 'DRIVER' | 'SYSTEM_USER') => {
+    step4Form.setValue('role', role, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
+    });
+
+    step4Form.clearErrors([
+      'role',
+      'licenseNumber',
+      'licenseExpiryDate',
+      'employeeId',
+      'department',
+      'designation',
+      'officeLocation',
+    ]);
+
+    if (role === 'DRIVER') {
+      step4Form.setValue('employeeId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      step4Form.setValue('department', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      step4Form.setValue('designation', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      step4Form.setValue('officeLocation', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    } else {
+      step4Form.setValue('licenseNumber', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      step4Form.setValue('licenseExpiryDate', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    }
+
+    if (serverError) {
+      setServerError(null);
     }
   };
 
@@ -733,16 +794,10 @@ export function SignupForm() {
 
               return (
                 <button
-                  key={item.role}
-                  type="button"
-                  onClick={() =>
-                    step4Form.setValue('role', item.role, {
-                      shouldDirty: true,
-                      shouldTouch: true,
-                      shouldValidate: true,
-                    })
-                  }
-                  className={[
+	                  key={item.role}
+	                  type="button"
+	                  onClick={() => handleRoleSelection(item.role)}
+	                  className={[
                     'rounded-3xl border p-5 text-left transition-all',
                     isSelected
                       ? 'border-amber-300 bg-amber-50 shadow-sm'

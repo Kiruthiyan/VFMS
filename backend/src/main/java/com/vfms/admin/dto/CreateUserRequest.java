@@ -33,7 +33,7 @@ public class CreateUserRequest {
     private Role role;
 
     // Driver-specific fields
-    @Pattern(regexp = "^$|^[A-Z0-9]{8,20}$", message = "License number must be 8-20 alphanumeric characters")
+    @Pattern(regexp = "^$|(?i)^[A-Z0-9]{8,20}$", message = "License number must be 8-20 alphanumeric characters")
     private String licenseNumber;
 
     @Pattern(regexp = "^$|^\\d{4}-\\d{2}-\\d{2}$", message = "License expiry date must be in YYYY-MM-DD format")
@@ -47,7 +47,7 @@ public class CreateUserRequest {
     private Integer experienceYears;
 
     // Staff / Approver fields
-    @Pattern(regexp = "^$|^[A-Z0-9]{5,10}$", message = "Employee ID must be 5-10 alphanumeric characters")
+    @Pattern(regexp = "^$|(?i)^[A-Z0-9]{5,10}$", message = "Employee ID must be 5-10 alphanumeric characters")
     private String employeeId;
 
     @Size(max = 100, message = "Department must not exceed 100 characters")

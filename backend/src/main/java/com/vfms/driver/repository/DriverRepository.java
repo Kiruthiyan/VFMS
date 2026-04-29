@@ -15,6 +15,10 @@ public interface DriverRepository extends JpaRepository<Driver, UUID> {
     @Query("""
             select d.id as id, d.fullName as fullName
             from Driver d
+            where d.status in (
+                com.vfms.common.enums.DriverStatus.ACTIVE,
+                com.vfms.common.enums.DriverStatus.AVAILABLE
+            )
             """)
     List<FuelMetadataDriverProjection> findFuelMetadataDrivers();
 }

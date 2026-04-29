@@ -331,14 +331,14 @@ public class AdminUserService {
         clearRoleSpecificFields(user);
 
         if (request.getRole() == Role.DRIVER) {
-            user.setLicenseNumber(normalizeOptional(request.getLicenseNumber()));
+            user.setLicenseNumber(normalizeIdentifier(request.getLicenseNumber()));
             user.setLicenseExpiryDate(parseOptionalDate(request.getLicenseExpiryDate()));
             user.setCertifications(normalizeOptional(request.getCertifications()));
             user.setExperienceYears(request.getExperienceYears());
             return;
         }
 
-        user.setEmployeeId(normalizeOptional(request.getEmployeeId()));
+        user.setEmployeeId(normalizeIdentifier(request.getEmployeeId()));
         user.setDepartment(normalizeOptional(request.getDepartment()));
         user.setOfficeLocation(normalizeOptional(request.getOfficeLocation()));
         user.setDesignation(normalizeOptional(request.getDesignation()));
@@ -350,7 +350,7 @@ public class AdminUserService {
     private void applyRoleSpecificUpdateFields(User user, UpdateUserRequest request, Role targetRole) {
         if (targetRole == Role.DRIVER) {
             if (request.getLicenseNumber() != null) {
-                user.setLicenseNumber(normalizeOptional(request.getLicenseNumber()));
+                user.setLicenseNumber(normalizeIdentifier(request.getLicenseNumber()));
             }
             if (request.getLicenseExpiryDate() != null) {
                 user.setLicenseExpiryDate(parseOptionalDate(request.getLicenseExpiryDate()));
@@ -365,7 +365,7 @@ public class AdminUserService {
         }
 
         if (request.getEmployeeId() != null) {
-            user.setEmployeeId(normalizeOptional(request.getEmployeeId()));
+            user.setEmployeeId(normalizeIdentifier(request.getEmployeeId()));
         }
         if (request.getDepartment() != null) {
             user.setDepartment(normalizeOptional(request.getDepartment()));
@@ -430,7 +430,7 @@ public class AdminUserService {
             }
         }
 
-        if (role == Role.SYSTEM_USER || role == Role.APPROVER) {
+        if (role == Role.SYSTEM_USER) {
             if (normalizeOptional(employeeId) == null) {
                 errors.put("employeeId", "Employee ID is required for staff accounts.");
             }
@@ -445,10 +445,6 @@ public class AdminUserService {
             }
         }
 
-        if (role == Role.APPROVER && normalizeOptional(approvalLevel) == null) {
-            errors.put("approvalLevel", "Approval level is required for approver accounts.");
-        }
-
         if (!errors.isEmpty()) {
             throw new ValidationException("Validation failed", errors);
         }
@@ -461,6 +457,11 @@ public class AdminUserService {
 
     private String normalizeEmail(String email) {
         return normalizeRequired(email).toLowerCase();
+    }
+
+    private String normalizeIdentifier(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.toUpperCase();
     }
 
     private String normalizeRequired(String value) {
