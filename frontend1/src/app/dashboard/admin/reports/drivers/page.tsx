@@ -179,7 +179,7 @@ export default function DriverAnalyticsOverview() {
                 ].map((link) => (
                     <Link 
                         key={link.href}
-                        href={`/dashboard${link.href}`}
+                        href={`/dashboard/admin${link.href}`}
                         className="px-3 py-2 bg-white border border-slate-100 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all text-center shadow-sm"
                     >
                         {link.label}
