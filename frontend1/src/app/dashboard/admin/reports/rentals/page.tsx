@@ -83,14 +83,6 @@ export default function RentalAnalyticsPage() {
         }
     };
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            maximumFractionDigits: 0
-        }).format(amount);
-    };
-
     const filteredRentals = rentals.filter(r => 
         (r.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (r.licensePlate || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -123,7 +115,7 @@ export default function RentalAnalyticsPage() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-indigo-100 text-sm font-medium">Total Expense</p>
-                                <h3 className="text-2xl font-bold mt-1">{formatCurrency(totalExpenses)}</h3>
+                                <h3 className="text-2xl font-bold mt-1">${totalExpenses.toLocaleString()}</h3>
                             </div>
                             <div className="p-2 bg-white/10 rounded-lg">
                                 <DollarSign className="w-5 h-5 text-white" />
@@ -141,7 +133,7 @@ export default function RentalAnalyticsPage() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-slate-500 text-sm font-medium">Avg. Daily Rate</p>
-                                <h3 className="text-2xl font-bold mt-1 text-slate-900">{formatCurrency(avgDailyRate)}</h3>
+                                <h3 className="text-2xl font-bold mt-1 text-slate-900">${avgDailyRate.toFixed(2)}</h3>
                             </div>
                             <div className="p-2 bg-slate-50 rounded-lg">
                                 <Clock className="w-5 h-5 text-indigo-600" />
@@ -309,7 +301,7 @@ export default function RentalAnalyticsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-slate-500">{rental.vendorId}</td>
                                         <td className="px-6 py-4 text-right">
-                                            <span className="font-bold text-slate-900">{formatCurrency(rental.totalCost)}</span>
+                                            <span className="font-bold text-slate-900">${rental.totalCost}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <Badge className={
