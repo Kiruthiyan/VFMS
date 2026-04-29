@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch, getErrorMessage } from '@/lib/api';
-import { Driver, DriverLeave, PageResponse } from '@/types';
+import { DriverLeave } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,24 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
 type Decision = 'APPROVED' | 'REJECTED';
-type LeaveType = 'ANNUAL' | 'MEDICAL' | 'EMERGENCY' | 'UNPAID';
 
 export default function LeavesPage() {
   const [leaves, setLeaves] = useState<DriverLeave[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [approvalStatus, setApprovalStatus] = useState<Decision>('APPROVED');
   const [approvalNotes, setApprovalNotes] = useState('');
-  const [requestOpen, setRequestOpen] = useState(false);
-  const [requestSubmitting, setRequestSubmitting] = useState(false);
-  const [driverId, setDriverId] = useState('');
-  const [leaveType, setLeaveType] = useState<LeaveType>('ANNUAL');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [reason, setReason] = useState('');
-  const [requestError, setRequestError] = useState('');
 
   const fetchLeaves = async () => {
     try {
@@ -41,18 +30,8 @@ export default function LeavesPage() {
     }
   };
 
-  const fetchDrivers = async () => {
-    try {
-      const data = await apiFetch<PageResponse<Driver>>('/api/drivers?page=0&size=500');
-      setDrivers(data.content);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
-    }
-  };
-
   useEffect(() => {
     fetchLeaves();
-    fetchDrivers();
   }, []);
 
   const processLeave = async (id: number) => {
@@ -77,43 +56,6 @@ export default function LeavesPage() {
     }
   };
 
-  const requestLeave = async () => {
-    setRequestError('');
-    if (!driverId || !startDate || !endDate) {
-      const message = 'Driver ID, start date and end date are required';
-      setRequestError(message);
-      toast.error(message);
-      return;
-    }
-
-    try {
-      setRequestSubmitting(true);
-      await apiFetch('/api/drivers/leaves', {
-        method: 'POST',
-        body: JSON.stringify({
-          driverId,
-          leaveType,
-          startDate,
-          endDate,
-          reason,
-        }),
-      });
-
-      toast.success('Leave request submitted');
-      setRequestOpen(false);
-      setDriverId('');
-      setLeaveType('ANNUAL');
-      setStartDate('');
-      setEndDate('');
-      setReason('');
-      fetchLeaves();
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
-    } finally {
-      setRequestSubmitting(false);
-    }
-  };
-
   return (
     <div className="p-6 animate-fade-in">
       <PageHeader
@@ -125,89 +67,6 @@ export default function LeavesPage() {
             <Link href="/drivers" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors">
               Back
             </Link>
-
-            <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
-              <DialogTrigger asChild>
-                <button
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium"
-                  style={{
-                    backgroundColor: 'hsl(var(--primary))',
-                    color: 'hsl(var(--primary-foreground))',
-                  }}
-                >
-                  New Leave Request
-                </button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Submit Driver Leave Request</DialogTitle>
-                </DialogHeader>
-
-                <div className="space-y-3 pt-1">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Driver</Label>
-                    <Select value={driverId} onValueChange={setDriverId}>
-                      <SelectTrigger className="mt-1 h-9 text-sm">
-                        <SelectValue placeholder="Select driver" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {drivers.map((driver) => (
-                          <SelectItem key={driver.id} value={driver.id}>
-                            {driver.firstName} {driver.lastName} · {driver.employeeId}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Leave Type</Label>
-                    <Select value={leaveType} onValueChange={(value) => setLeaveType(value as LeaveType)}>
-                      <SelectTrigger className="mt-1 h-9 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['ANNUAL', 'MEDICAL', 'EMERGENCY', 'UNPAID'].map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Start Date</Label>
-                      <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1 h-9 text-sm" />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">End Date</Label>
-                      <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1 h-9 text-sm" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Reason</Label>
-                    <Input value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 h-9 text-sm" />
-                  </div>
-
-                  <FormErrorSummary messages={requestError ? [requestError] : []} />
-
-                  <button
-                    className="h-9 w-full rounded-md text-sm font-medium disabled:opacity-50"
-                    style={{
-                      backgroundColor: 'hsl(var(--primary))',
-                      color: 'hsl(var(--primary-foreground))',
-                    }}
-                    disabled={requestSubmitting}
-                    onClick={requestLeave}
-                  >
-                    {requestSubmitting ? 'Submitting...' : 'Submit Request'}
-                  </button>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         }
       />

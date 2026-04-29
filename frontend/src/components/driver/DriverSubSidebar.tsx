@@ -44,8 +44,8 @@ const profileSections = [
   { key: 'documents', label: 'Documents' },
   { key: 'availability', label: 'Availability' },
   { key: 'infractions', label: 'Infractions' },
-  { key: 'performance', label: 'Performance' },
   { key: 'qualification', label: 'Qualification' },
+  { key: 'trips', label: 'Trips' },
 ] as const;
 
 const moduleRoutes = [

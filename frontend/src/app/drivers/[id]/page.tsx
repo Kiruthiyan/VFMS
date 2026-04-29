@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Pencil, Trash2, UserRound } from 'lucide-react';
 import { apiFetch, getErrorMessage } from '@/lib/api';
-import { Driver } from '@/types';
+import { Driver, DriverDocument } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -16,19 +16,28 @@ import { DriverCertificationsTab } from '@/components/drivers/DriverCertificatio
 import { DriverDocumentsTab } from '@/components/drivers/DriverDocumentsTab';
 import { DriverAvailabilityTab } from '@/components/drivers/DriverAvailabilityTab';
 import { DriverInfractionsTab } from '@/components/drivers/DriverInfractionsTab';
-import { DriverPerformanceTab } from '@/components/drivers/DriverPerformanceTab';
 import { DriverQualificationTab } from '@/components/drivers/DriverQualificationTab';
+import { DriverTripsTab } from '@/components/drivers/DriverTripsTab';
+import { DriverLeaveRequestDialog } from '@/components/drivers/DriverLeaveRequestDialog';
+import { DriverServiceRequestDialog } from '@/components/drivers/DriverServiceRequestDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DriverQuickList } from '@/components/driver/DriverQuickList';
 import { toast } from 'sonner';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export default function DriverDetailsPage() {
 	const router = useRouter();
 	const params = useParams<{ id: string }>();
 	const searchParams = useSearchParams();
 	const id = params?.id;
-	const initialTab = searchParams.get('tab') || 'overview';
+	const requestedTab = searchParams.get('tab') || 'overview';
+	const initialTab = ['overview', 'licenses', 'certifications', 'documents', 'availability', 'infractions', 'qualification', 'trips'].includes(requestedTab)
+		? requestedTab
+		: 'overview';
 
 	const [driver, setDriver] = useState<Driver | null>(null);
+	const [profilePicture, setProfilePicture] = useState<DriverDocument | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [editOpen, setEditOpen] = useState(false);
@@ -46,6 +55,15 @@ export default function DriverDetailsPage() {
 			setError(null);
 			const data = await apiFetch<Driver>(`/api/drivers/${id}`);
 			setDriver(data);
+			
+			// Fetch profile picture
+			try {
+				const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${id}/profile-picture`);
+				setProfilePicture(profilePic);
+			} catch (e) {
+				// Profile picture not found is not an error, just means no profile picture uploaded yet
+				setProfilePicture(null);
+			}
 		} catch (e) {
 			setError(getErrorMessage(e));
 		} finally {
@@ -82,11 +100,18 @@ export default function DriverDetailsPage() {
 						<UserRound className="w-5 h-5" style={{ color: 'hsl(var(--primary-foreground))' }} />
 					</div>
 					<div>
-						<h1 className="text-xl font-semibold text-foreground">Driver Profile</h1>
-						<p className="text-sm text-muted-foreground">Driver details view</p>
+						<h1 className="text-xl font-semibold text-foreground">
+							Driver Profile {driver && !loading && `- ${driver.firstName} ${driver.lastName}`}
+						</h1>
+						<p className="text-sm text-muted-foreground">
+							{driver && !loading ? `${driver.employeeId} • ${driver.department || 'N/A'}` : 'Driver details view'}
+						</p>
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
+					{driver && !loading && !error && <DriverLeaveRequestDialog driverId={id} />}
+					{driver && !loading && !error && <DriverServiceRequestDialog driverId={id} />}
+
 					{driver && !loading && !error && (
 						<Dialog open={editOpen} onOpenChange={setEditOpen}>
 							<DialogTrigger asChild>
@@ -134,87 +159,128 @@ export default function DriverDetailsPage() {
 				</div>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-base">Driver Monitoring</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{loading && <p className="text-sm text-muted-foreground">Loading driver...</p>}
+			<div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+				<div className="min-w-0 flex-1">
+					<Card>
+						<CardHeader>
+							<CardTitle className="text-base">Driver Monitoring</CardTitle>
+						</CardHeader>
+						<CardContent>
+							{loading && <p className="text-sm text-muted-foreground">Loading driver...</p>}
 
-					{!loading && error && (
-						<p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
-							{error}
-						</p>
-					)}
+							{!loading && error && (
+								<p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
+									{error}
+								</p>
+							)}
 
-					{!loading && !error && driver && id && (
-						<Tabs defaultValue={initialTab} className="w-full">
-							<TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
-								<TabsTrigger value="overview">Overview</TabsTrigger>
-								<TabsTrigger value="licenses">Licenses</TabsTrigger>
-								<TabsTrigger value="certifications">Certs</TabsTrigger>
-								<TabsTrigger value="documents">Documents</TabsTrigger>
-								<TabsTrigger value="availability">Availability</TabsTrigger>
-								<TabsTrigger value="infractions">Infractions</TabsTrigger>
-								<TabsTrigger value="performance">Performance</TabsTrigger>
-								<TabsTrigger value="qualification">Qualification</TabsTrigger>
-							</TabsList>
+							{!loading && !error && driver && id && (
+								<Tabs defaultValue={initialTab} className="w-full">
+														<div className="w-full overflow-x-auto">
+															<TabsList className="flex gap-2 w-max whitespace-nowrap px-2">
+																<TabsTrigger value="overview" className="px-4 py-2 rounded-md inline-flex">Overview</TabsTrigger>
+																<TabsTrigger value="licenses" className="px-4 py-2 rounded-md inline-flex">Licenses</TabsTrigger>
+																<TabsTrigger value="certifications" className="px-4 py-2 rounded-md inline-flex">Certs</TabsTrigger>
+																<TabsTrigger value="documents" className="px-4 py-2 rounded-md inline-flex">Documents</TabsTrigger>
+																<TabsTrigger value="availability" className="px-4 py-2 rounded-md inline-flex">Availability</TabsTrigger>
+																<TabsTrigger value="infractions" className="px-4 py-2 rounded-md inline-flex">Infractions</TabsTrigger>
+																<TabsTrigger value="qualification" className="px-4 py-2 rounded-md inline-flex">Qualification</TabsTrigger>
+																<TabsTrigger value="trips" className="px-4 py-2 rounded-md inline-flex">Trips</TabsTrigger>
+															</TabsList>
+														</div>
 
-							<TabsContent value="overview">
-								<div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-									<Detail label="Employee ID" value={driver.employeeId} />
-									<Detail label="NIC" value={driver.nic} />
-									<Detail label="First Name" value={driver.firstName} />
-									<Detail label="Last Name" value={driver.lastName} />
-									<Detail label="Phone" value={driver.phone} />
-									<Detail label="License Number" value={driver.licenseNumber} />
-									<Detail label="License Expiry Date" value={driver.licenseExpiryDate} />
-									<Detail label="Date of Birth" value={driver.dateOfBirth} />
-									<Detail label="Date of Joining" value={driver.dateOfJoining} />
-									<Detail label="Department" value={driver.department} />
-									<Detail label="Designation" value={driver.designation} />
-									<Detail label="Email" value={driver.email} />
-									<Detail label="Address" value={driver.address} className="md:col-span-2" />
-									<Detail label="Emergency Contact Name" value={driver.emergencyContactName} />
-									<Detail label="Emergency Contact Phone" value={driver.emergencyContactPhone} />
-									<div className="space-y-1">
-										<p className="text-xs font-medium text-muted-foreground">Status</p>
-										<StatusBadge status={driver.status} />
-									</div>
-								</div>
-							</TabsContent>
+									<TabsContent value="overview">
+										<div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
+											{profilePicture && (
+												<div className="md:col-span-1 flex flex-col items-center">
+													<div className="mb-3 h-32 w-32 overflow-hidden rounded-lg bg-muted flex items-center justify-center">
+														<img
+															src={`${API_BASE}${profilePicture.fileUrl}`}
+															alt="Driver Profile Picture"
+															className="h-full w-full object-cover"
+															onError={(e) => {
+																(e.target as HTMLImageElement).style.display = 'none';
+															}}
+														/>
+													</div>
+													<p className="text-center text-xs font-medium text-muted-foreground">{driver.firstName} {driver.lastName}</p>
+												</div>
+											)}
+											<div className={profilePicture ? 'md:col-span-2' : 'md:col-span-3'}>
+												<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+													<Detail label="Employee ID" value={driver.employeeId} />
+													<Detail label="NIC" value={driver.nic} />
+													<Detail label="First Name" value={driver.firstName} />
+													<Detail label="Last Name" value={driver.lastName} />
+													<Detail label="Phone" value={driver.phone} />
+													<Detail label="License Number" value={driver.licenseNumber} />
+													<Detail label="License Expiry Date" value={driver.licenseExpiryDate} />
+													<Detail label="Date of Birth" value={driver.dateOfBirth} />
+													<Detail label="Date of Joining" value={driver.dateOfJoining} />
+													<Detail label="Department" value={driver.department} />
+													<Detail label="Designation" value={driver.designation} />
+													<Detail label="Email" value={driver.email} />
+													<div className="md:col-span-2">
+														<Detail label="Address" value={driver.address} className="md:col-span-2" />
+													</div>
+													<Detail label="Emergency Contact Name" value={driver.emergencyContactName} />
+													<Detail label="Emergency Contact Phone" value={driver.emergencyContactPhone} />
+													<div className="space-y-1">
+														<p className="text-xs font-medium text-muted-foreground">Status</p>
+														<StatusBadge status={driver.status} />
+													</div>
+												</div>
+											</div>
+										</div>
+									</TabsContent>
 
-							<TabsContent value="licenses">
-								<DriverLicensesTab driverId={id} />
-							</TabsContent>
+									<TabsContent value="licenses">
+										<DriverLicensesTab driverId={id} />
+									</TabsContent>
 
-							<TabsContent value="certifications">
-								<DriverCertificationsTab driverId={id} />
-							</TabsContent>
+									<TabsContent value="certifications">
+										<DriverCertificationsTab driverId={id} />
+									</TabsContent>
 
-							<TabsContent value="documents">
-								<DriverDocumentsTab driverId={id} />
-							</TabsContent>
+									<TabsContent value="documents">
+										<DriverDocumentsTab 
+											driverId={id} 
+											onProfilePictureUpload={async () => {
+												try {
+													const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${id}/profile-picture`);
+													setProfilePicture(profilePic);
+												} catch (e) {
+													setProfilePicture(null);
+												}
+											}}
+										/>
+									</TabsContent>
 
-							<TabsContent value="availability">
-								<DriverAvailabilityTab driverId={id} />
-							</TabsContent>
+									<TabsContent value="availability">
+										<DriverAvailabilityTab driverId={id} />
+									</TabsContent>
 
-							<TabsContent value="infractions">
-								<DriverInfractionsTab driverId={id} />
-							</TabsContent>
+									<TabsContent value="infractions">
+										<DriverInfractionsTab driverId={id} />
+									</TabsContent>
 
-							<TabsContent value="performance">
-								<DriverPerformanceTab driverId={id} />
-							</TabsContent>
+									<TabsContent value="qualification">
+										<DriverQualificationTab driverId={id} />
+									</TabsContent>
 
-							<TabsContent value="qualification">
-								<DriverQualificationTab driverId={id} />
-							</TabsContent>
-						</Tabs>
-					)}
-				</CardContent>
-			</Card>
+									<TabsContent value="trips">
+										<DriverTripsTab driverId={id} />
+									</TabsContent>
+								</Tabs>
+							)}
+						</CardContent>
+					</Card>
+				</div>
+
+				{driver && !loading && !error && id && (
+					<DriverQuickList activeDriverId={id} />
+				)}
+			</div>
 		</div>
 	);
 }

@@ -65,6 +65,13 @@ public class DriverDocumentService {
         return documentRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
     }
 
+    @Transactional(readOnly = true)
+    public DriverDocument getProfilePicture(UUID driverId) {
+        List<DriverDocument> profiles = documentRepository
+                .findByDriverIdAndEntityTypeOrderByCreatedAtDesc(driverId, DriverDocument.DocumentEntityType.PROFILE);
+        return profiles.isEmpty() ? null : profiles.get(0);
+    }
+
     public void deleteDocument(Long id) throws IOException {
         DriverDocument doc = documentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + id));

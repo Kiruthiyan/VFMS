@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-export function DriverDocumentsTab({ driverId }: { driverId: string }) {
+export function DriverDocumentsTab({ driverId, onProfilePictureUpload }: { driverId: string; onProfilePictureUpload?: () => void }) {
   const [documents, setDocuments] = useState<DriverDocument[]>([]);
   const [entityType, setEntityType] = useState<DriverDocument['entityType']>('OTHER');
   const [uploading, setUploading] = useState(false);
@@ -44,6 +44,7 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
 
       setUploading(true);
       const token = localStorage.getItem('token');
+      const isProfileUpload = entityType === 'PROFILE';
 
       try {
         for (const file of validFiles) {
@@ -67,13 +68,18 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
         }
 
         fetchDocuments();
+        
+        // Trigger profile picture refresh if uploading a profile picture
+        if (isProfileUpload && onProfilePictureUpload) {
+          onProfilePictureUpload();
+        }
       } catch (e: unknown) {
         toast.error(e instanceof Error ? e.message : 'Upload failed');
       } finally {
         setUploading(false);
       }
     },
-    [driverId, entityType, fetchDocuments]
+    [driverId, entityType, fetchDocuments, onProfilePictureUpload]
   );
 
   const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
