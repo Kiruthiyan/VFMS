@@ -21,8 +21,10 @@ public class DatabaseMigrationRunner {
     }
 
     private void updateTripStatusConstraint() {
+        // SQL query to remove the existing constraint (if it exists) so we can replace it cleanly
         String dropConstraint = "ALTER TABLE trip_requests DROP CONSTRAINT IF EXISTS trip_requests_status_check";
 
+        // SQL query to define the new constraint with the complete, allowed list of trip statuses
         String addConstraint = """
                 ALTER TABLE trip_requests ADD CONSTRAINT trip_requests_status_check
                 CHECK (status IN (
@@ -32,6 +34,7 @@ public class DatabaseMigrationRunner {
                 ))
                 """;
 
+        // Use try-with-resources to automatically close the Connection and Statement, preventing database connection leaks
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
 

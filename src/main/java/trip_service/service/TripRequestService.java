@@ -15,6 +15,7 @@ import trip_service.dto.DriverOptionDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+// Core business logic for managing the lifecycle of trip requests, including scheduling, approvals, and resource assignment.
 @Service
 @RequiredArgsConstructor
 public class TripRequestService {
@@ -24,6 +25,7 @@ public class TripRequestService {
     private final TripRequestRepository repository;
 
     public TripRequest createTrip(CreateTripRequestDTO dto) {
+        // Validate that the trip spans a valid, logical time window
         if (dto.getReturnTime().isBefore(dto.getDepartureTime()) ||
                 dto.getReturnTime().isEqual(dto.getDepartureTime())) {
             throw new RuntimeException("Return time must be after departure time");
@@ -49,6 +51,7 @@ public class TripRequestService {
         return repository.findByStatusOrderByCreatedAtDesc(status);
     }
 
+    // Using native SQL queries here to efficiently fetch lightweight DTOs directly from cross-domain tables
     public List<VehicleOptionDTO> getAvailableVehicles() {
         List<Object[]> rows = entityManager.createNativeQuery(
                 "SELECT id, brand, model, plate_number FROM vehicles WHERE status = 'AVAILABLE'"
@@ -103,6 +106,8 @@ public class TripRequestService {
                 .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
     }
 
+    // --- Trip Lifecycle Management ---
+
     public TripRequest editTrip(UUID tripId, CreateTripRequestDTO dto) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.NEW) {
@@ -132,6 +137,7 @@ public class TripRequestService {
 
     public TripRequest approveTrip(UUID tripId, ApprovalDTO dto) {
         TripRequest trip = findById(tripId);
+        // Allows re-approval if a previously assigned driver rejected the trip
         if (trip.getStatus() != TripStatus.SUBMITTED && trip.getStatus() != TripStatus.DRIVER_REJECTED) {
             throw new RuntimeException("Only SUBMITTED or DRIVER_REJECTED trips can be approved");
         }
@@ -159,6 +165,7 @@ public class TripRequestService {
         if (trip.getStatus() != TripStatus.APPROVED) {
             throw new RuntimeException("Only APPROVED trips can have a driver assigned");
         }
+        // Prevent driver double-booking
         List<TripRequest> conflicts = repository.findConflictingDriverBookings(
                 dto.getAssignedDriverId(),
                 trip.getDepartureTime(),
@@ -175,6 +182,7 @@ public class TripRequestService {
         if (trip.getStatus() != TripStatus.APPROVED) {
             throw new RuntimeException("Only APPROVED trips can have a vehicle assigned");
         }
+        // Prevent vehicle double-booking
         List<TripRequest> conflicts = repository.findConflictingVehicleBookings(
                 dto.getAssignedVehicleId(),
                 trip.getDepartureTime(),
@@ -200,7 +208,7 @@ public class TripRequestService {
         if (trip.getStatus() != TripStatus.APPROVED) {
             throw new RuntimeException("Only APPROVED trips can be rejected by driver");
         }
-        // Clear assignment so staff can reassign a different driver/vehicle
+        // Clear assignment so administrative staff can cleanly reassign a different driver/vehicle
         trip.setStatus(TripStatus.DRIVER_REJECTED);
         trip.setApprovalNotes("Driver rejected: " + dto.getNotes());
         trip.setAssignedDriverId(null);
@@ -239,6 +247,8 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
+    // --- Queries and Reporting ---
+
     public List<TripRequest> getTripsByDriver(UUID driverId) {
         return repository.findByAssignedDriverIdOrderByDepartureTimeAsc(driverId);
     }
@@ -264,6 +274,7 @@ public class TripRequestService {
     }
 
     public List<TripRequest> searchTrips(String destination, TripStatus status, UUID requesterId) {
+        // Fetches all records and performs in-memory filtering based on provided parameters
         List<TripRequest> all = repository.findAll();
         return all.stream()
                 .filter(t -> destination == null || t.getDestination().toLowerCase().contains(destination.toLowerCase()))

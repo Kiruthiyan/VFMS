@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+// Core domain entity mapped to the "trip_requests" database table
 @Entity
 @Table(name = "trip_requests")
 @Data
@@ -28,6 +29,7 @@ public class TripRequest {
     @Column(name = "requester_id", nullable = false)
     private UUID requesterId;
 
+    // Requested trip parameters
     @Column(name = "purpose", nullable = false, length = 500)
     private String purpose;
 
@@ -46,10 +48,12 @@ public class TripRequest {
     @Column(name = "distance_km", precision = 10, scale = 2)
     private BigDecimal distanceKm;
 
+    // Tracks the current lifecycle state of the trip
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private TripStatus status = TripStatus.NEW;
 
+    // Resource and administrative assignments (typically populated post-approval)
     @Column(name = "vehicle_id")
     private Long assignedVehicleId;
 
@@ -62,12 +66,14 @@ public class TripRequest {
     @Column(name = "approval_notes", columnDefinition = "TEXT")
     private String approvalNotes;
 
+    // Actual trip execution times (distinct from requested departure/return times)
     @Column(name = "start_time")
     private LocalDateTime startTime;
 
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
+    // Automatic audit timestamps managed by Hibernate
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
