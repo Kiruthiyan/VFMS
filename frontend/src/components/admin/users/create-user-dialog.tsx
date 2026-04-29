@@ -6,7 +6,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import type { CreateUserRequest } from "@/lib/api/admin";
-import { createUserApi, getErrorMessage } from "@/lib/api/admin";
+import { createUserApi, getErrorMessage, getFieldErrors } from "@/lib/api/admin";
 import { ROLE_LABELS } from "@/lib/auth";
 import type { UserRole } from "@/lib/auth";
 import { FormMessage } from "@/components/ui/form-message";
@@ -37,6 +37,8 @@ export function CreateUserDialog({
     register,
     handleSubmit,
     control,
+    setError,
+    clearErrors,
     formState: { isSubmitting, errors },
   } = useForm<CreateUserRequest>({
     defaultValues: {
@@ -52,6 +54,7 @@ export function CreateUserDialog({
 
   const onSubmit = async (data: CreateUserRequest) => {
     setServerError(null);
+    clearErrors();
 
     try {
       await createUserApi(data);
@@ -61,6 +64,17 @@ export function CreateUserDialog({
       onSuccess();
       onClose();
     } catch (err) {
+      const fieldErrors = getFieldErrors(err);
+
+      if (fieldErrors) {
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof CreateUserRequest, {
+            type: "server",
+            message,
+          });
+        });
+      }
+
       setServerError(getErrorMessage(err));
     }
   };
@@ -137,16 +151,21 @@ export function CreateUserDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Phone</label>
-              <input
+	            <div>
+	              <label className={labelClass}>Phone</label>
+	              <input
                 type="tel"
                 placeholder="07XXXXXXXX"
                 {...register("phone")}
-                disabled={isSubmitting}
-                className={inputClass}
-              />
-            </div>
+	                disabled={isSubmitting}
+	                className={inputClass}
+	              />
+                {errors.phone && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.phone.message}
+                  </p>
+                )}
+	            </div>
             <div>
               <label className={labelClass}>NIC *</label>
               <input
@@ -185,25 +204,35 @@ export function CreateUserDialog({
                 Driver Details
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>License No.</label>
-                  <input
+	                <div>
+	                  <label className={labelClass}>License No.</label>
+	                  <input
                     type="text"
                     placeholder="License number"
                     {...register("licenseNumber")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>License Expiry</label>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.licenseNumber && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.licenseNumber.message}
+                        </p>
+                      )}
+	                </div>
+	                <div>
+	                  <label className={labelClass}>License Expiry</label>
                   <input
                     type="date"
                     {...register("licenseExpiryDate")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.licenseExpiryDate && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.licenseExpiryDate.message}
+                        </p>
+                      )}
+	                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -232,68 +261,75 @@ export function CreateUserDialog({
           )}
 
           {(selectedRole === "SYSTEM_USER" ||
-            selectedRole === "APPROVER" ||
             selectedRole === "ADMIN") && (
             <div className="space-y-3 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
                 Staff Details
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>Employee ID</label>
-                  <input
+	                <div>
+	                  <label className={labelClass}>Employee ID</label>
+	                  <input
                     type="text"
                     placeholder="EMP-XXX"
                     {...register("employeeId")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Department</label>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.employeeId && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.employeeId.message}
+                        </p>
+                      )}
+	                </div>
+	                <div>
+	                  <label className={labelClass}>Department</label>
                   <input
                     type="text"
                     placeholder="Department"
                     {...register("department")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.department && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.department.message}
+                        </p>
+                      )}
+	                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>Designation</label>
-                  <input
+	                <div>
+	                  <label className={labelClass}>Designation</label>
+	                  <input
                     type="text"
                     placeholder="Designation"
                     {...register("designation")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Office Location</label>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.designation && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.designation.message}
+                        </p>
+                      )}
+	                </div>
+	                <div>
+	                  <label className={labelClass}>Office Location</label>
                   <input
                     type="text"
                     placeholder="Office location"
                     {...register("officeLocation")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              {selectedRole === "APPROVER" && (
-                <div>
-                  <label className={labelClass}>Approval Level</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Level 1"
-                    {...register("approvalLevel")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-              )}
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.officeLocation && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.officeLocation.message}
+                        </p>
+                      )}
+	                </div>
+	              </div>
             </div>
           )}
 

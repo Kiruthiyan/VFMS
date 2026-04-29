@@ -2,6 +2,8 @@ package com.vfms.fuel.service;
 
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.common.enums.DriverStatus;
+import com.vfms.common.enums.VehicleStatus;
 import com.vfms.driver.entity.Driver;
 import com.vfms.driver.repository.DriverRepository;
 import com.vfms.fuel.client.VehicleApiClient;
@@ -55,11 +57,13 @@ public class FuelService {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Vehicle not found: " + request.getVehicleId()));
+        validateVehicleEligibility(vehicle);
 
         Driver driver = null;
         if (request.getDriverId() != null) {
             driver = driverRepository.findById(request.getDriverId())
                     .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + request.getDriverId()));
+            validateDriverEligibility(driver);
         }
 
         FuelRecord record = FuelRecord.builder()
@@ -185,11 +189,13 @@ public class FuelService {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Vehicle not found in database: " + request.getVehicleId()));
+        validateVehicleEligibility(vehicle);
 
         Driver driver = null;
         if (request.getDriverId() != null) {
             driver = driverRepository.findById(request.getDriverId())
                     .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + request.getDriverId()));
+            validateDriverEligibility(driver);
         }
 
         record.setVehicle(vehicle);
@@ -221,12 +227,14 @@ public class FuelService {
             Vehicle vehicle = vehicleRepository.findById(vehicleId)
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Vehicle not found in database: " + updates.getVehicleId()));
+            validateVehicleEligibility(vehicle);
             record.setVehicle(vehicle);
         }
 
         if (updates.getDriverId() != null) {
             Driver driver = driverRepository.findById(updates.getDriverId())
                     .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + updates.getDriverId()));
+            validateDriverEligibility(driver);
             record.setDriver(driver);
         }
 
@@ -375,6 +383,23 @@ public class FuelService {
         if (reason != null) {
             record.setFlaggedForMisuse(true);
             record.setFlagReason(reason);
+        }
+    }
+
+    private void validateVehicleEligibility(Vehicle vehicle) {
+        if (Boolean.FALSE.equals(vehicle.getActive())) {
+            throw new ValidationException("Only active vehicles can be used for fuel entries.");
+        }
+
+        if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
+            throw new ValidationException("Only available vehicles can be used for fuel entries.");
+        }
+    }
+
+    private void validateDriverEligibility(Driver driver) {
+        DriverStatus status = driver.getStatus();
+        if (status != DriverStatus.ACTIVE && status != DriverStatus.AVAILABLE) {
+            throw new ValidationException("Only active drivers can be assigned to fuel entries.");
         }
     }
 

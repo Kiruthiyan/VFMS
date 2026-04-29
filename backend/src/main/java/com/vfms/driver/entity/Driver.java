@@ -38,7 +38,7 @@ public class Driver {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private DriverStatus status = DriverStatus.AVAILABLE;
+    private DriverStatus status = DriverStatus.ACTIVE;
 
     @Column(name = "joining_date")
     private LocalDate joiningDate;

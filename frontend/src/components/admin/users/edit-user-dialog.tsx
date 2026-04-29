@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import {
   getErrorMessage,
+  getFieldErrors,
   updateUserApi,
   type UpdateUserRequest,
   type UserSummary,
@@ -43,7 +44,9 @@ export function EditUserDialog({
     register,
     handleSubmit,
     control,
-    formState: { isSubmitting },
+    setError,
+    clearErrors,
+    formState: { isSubmitting, errors },
   } = useForm<UpdateUserRequest>({
     defaultValues: {
       fullName: user.fullName ?? "",
@@ -67,6 +70,7 @@ export function EditUserDialog({
 
   const onSubmit = async (data: UpdateUserRequest) => {
     setServerError(null);
+    clearErrors();
 
     try {
       const updated = await updateUserApi(user.id, data);
@@ -74,6 +78,17 @@ export function EditUserDialog({
       onSuccess(updated);
       onClose();
     } catch (err) {
+      const fieldErrors = getFieldErrors(err);
+
+      if (fieldErrors) {
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof UpdateUserRequest, {
+            type: "server",
+            message,
+          });
+        });
+      }
+
       setServerError(getErrorMessage(err));
     }
   };
@@ -130,24 +145,34 @@ export function EditUserDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Phone</label>
-              <input
+	            <div>
+	              <label className={labelClass}>Phone</label>
+	              <input
                 type="tel"
                 {...register("phone")}
-                disabled={isSubmitting}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>NIC</label>
+	                disabled={isSubmitting}
+	                className={inputClass}
+	              />
+                  {errors.phone && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.phone.message}
+                    </p>
+                  )}
+	            </div>
+	            <div>
+	              <label className={labelClass}>NIC</label>
               <input
                 type="text"
                 {...register("nic")}
-                disabled={isSubmitting}
-                className={inputClass}
-              />
-            </div>
+	                disabled={isSubmitting}
+	                className={inputClass}
+	              />
+                  {errors.nic && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.nic.message}
+                    </p>
+                  )}
+	            </div>
           </div>
 
           <div>
@@ -171,24 +196,34 @@ export function EditUserDialog({
                 Driver Details
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>License No.</label>
-                  <input
+	                <div>
+	                  <label className={labelClass}>License No.</label>
+	                  <input
                     type="text"
                     {...register("licenseNumber")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>License Expiry</label>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.licenseNumber && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.licenseNumber.message}
+                        </p>
+                      )}
+	                </div>
+	                <div>
+	                  <label className={labelClass}>License Expiry</label>
                   <input
                     type="date"
                     {...register("licenseExpiryDate")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.licenseExpiryDate && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.licenseExpiryDate.message}
+                        </p>
+                      )}
+	                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -215,64 +250,71 @@ export function EditUserDialog({
           )}
 
           {(selectedRole === "SYSTEM_USER" ||
-            selectedRole === "APPROVER" ||
             selectedRole === "ADMIN") && (
             <div className="space-y-3 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
                 Staff Details
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>Employee ID</label>
-                  <input
+	                <div>
+	                  <label className={labelClass}>Employee ID</label>
+	                  <input
                     type="text"
                     {...register("employeeId")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Department</label>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.employeeId && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.employeeId.message}
+                        </p>
+                      )}
+	                </div>
+	                <div>
+	                  <label className={labelClass}>Department</label>
                   <input
                     type="text"
                     {...register("department")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.department && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.department.message}
+                        </p>
+                      )}
+	                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>Designation</label>
-                  <input
+	                <div>
+	                  <label className={labelClass}>Designation</label>
+	                  <input
                     type="text"
                     {...register("designation")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Office Location</label>
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.designation && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.designation.message}
+                        </p>
+                      )}
+	                </div>
+	                <div>
+	                  <label className={labelClass}>Office Location</label>
                   <input
                     type="text"
                     {...register("officeLocation")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              {selectedRole === "APPROVER" && (
-                <div>
-                  <label className={labelClass}>Approval Level</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Level 1"
-                    {...register("approvalLevel")}
-                    disabled={isSubmitting}
-                    className={inputClass}
-                  />
-                </div>
-              )}
+	                    disabled={isSubmitting}
+	                    className={inputClass}
+	                  />
+                      {errors.officeLocation && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.officeLocation.message}
+                        </p>
+                      )}
+	                </div>
+	              </div>
             </div>
           )}
 

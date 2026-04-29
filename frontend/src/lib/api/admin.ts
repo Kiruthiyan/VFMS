@@ -1,4 +1,6 @@
-import api, { getErrorMessage } from "@/lib/api";
+import axios from "axios";
+
+import api, { getErrorMessage as apiGetErrorMessage } from "@/lib/api";
 import type { UserRole, UserStatus } from "@/lib/auth";
 
 export interface UserSummary {
@@ -85,11 +87,116 @@ export interface UserCounts {
   deleted: number;
 }
 
+interface AdminErrorResponse {
+  status?: number;
+  message?: string;
+  errors?: Record<string, string>;
+}
+
+export class AdminApiError extends Error {
+  status?: number;
+  fieldErrors?: Record<string, string>;
+
+  constructor(
+    message: string,
+    options?: {
+      status?: number;
+      fieldErrors?: Record<string, string>;
+    }
+  ) {
+    super(message);
+    this.name = "AdminApiError";
+    this.status = options?.status;
+    this.fieldErrors = options?.fieldErrors;
+  }
+}
+
+function normalizeFieldErrors(
+  errors: unknown
+): Record<string, string> | undefined {
+  if (!errors || typeof errors !== "object") {
+    return undefined;
+  }
+
+  const entries = Object.entries(errors).filter(
+    ([, value]) => typeof value === "string" && value.trim().length > 0
+  ) as Array<[string, string]>;
+
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  return Object.fromEntries(entries);
+}
+
+function buildAdminApiError(
+  error: unknown,
+  fallbackMessage: string
+): AdminApiError {
+  if (axios.isAxiosError(error)) {
+    const response = error.response;
+    const data = response?.data as AdminErrorResponse | undefined;
+    const fieldErrors = normalizeFieldErrors(data?.errors);
+    const firstFieldError = fieldErrors
+      ? Object.values(fieldErrors).find((message) => message.trim().length > 0)
+      : undefined;
+    const message =
+      data?.message?.trim() &&
+      data.message.trim() !== "Validation failed"
+        ? data.message.trim()
+        : firstFieldError || fallbackMessage;
+
+    return new AdminApiError(message, {
+      status: response?.status,
+      fieldErrors,
+    });
+  }
+
+  if (error instanceof Error) {
+    return new AdminApiError(error.message || fallbackMessage);
+  }
+
+  return new AdminApiError(fallbackMessage);
+}
+
+export function getFieldErrors(
+  error: unknown
+): Record<string, string> | undefined {
+  if (error instanceof AdminApiError) {
+    return error.fieldErrors;
+  }
+
+  return undefined;
+}
+
 export async function createUserApi(
   data: CreateUserRequest
 ): Promise<UserSummary> {
-  const response = await api.post<UserSummary>("/api/admin/users", data);
-  return response.data;
+  try {
+    const payload: CreateUserRequest = {
+      ...data,
+      email: data.email.trim().toLowerCase(),
+      fullName: data.fullName.trim(),
+      phone: data.phone?.trim(),
+      nic: data.nic.trim().toUpperCase(),
+      licenseNumber: data.licenseNumber?.trim().toUpperCase(),
+      licenseExpiryDate: data.licenseExpiryDate?.trim(),
+      certifications: data.certifications?.trim(),
+      employeeId: data.employeeId?.trim().toUpperCase(),
+      department: data.department?.trim(),
+      officeLocation: data.officeLocation?.trim(),
+      designation: data.designation?.trim(),
+      approvalLevel: data.approvalLevel?.trim(),
+    };
+
+    const response = await api.post<UserSummary>("/api/admin/users", payload);
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to create user. Please check the form and try again."
+    );
+  }
 }
 
 export async function getAllUsersApi(): Promise<UserSummary[]> {
@@ -121,51 +228,108 @@ export async function reviewUserApi(
   userId: string,
   data: ReviewUserRequest
 ): Promise<{ message: string }> {
-  const response = await api.post<{ success: boolean; message: string }>(
-    `/api/admin/users/${userId}/review`,
-    data
-  );
-  return response.data;
+  try {
+    const response = await api.post<{ success: boolean; message: string }>(
+      `/api/admin/users/${userId}/review`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to review user. Please try again."
+    );
+  }
 }
 
 export async function softDeleteUserApi(
   userId: string,
   data: SoftDeleteRequest
 ): Promise<{ message: string }> {
-  const response = await api.patch<{ success: boolean; message: string }>(
-    `/api/admin/users/${userId}/soft-delete`,
-    data
-  );
-  return response.data;
+  try {
+    const response = await api.patch<{ success: boolean; message: string }>(
+      `/api/admin/users/${userId}/soft-delete`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to delete user. Please try again."
+    );
+  }
 }
 
 export async function restoreUserApi(
   userId: string
 ): Promise<{ message: string }> {
-  const response = await api.post<{ success: boolean; message: string }>(
-    `/api/admin/users/${userId}/restore`
-  );
-  return response.data;
+  try {
+    const response = await api.post<{ success: boolean; message: string }>(
+      `/api/admin/users/${userId}/restore`
+    );
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to restore user. Please try again."
+    );
+  }
 }
 
 export async function toggleUserStatusApi(
   userId: string
 ): Promise<{ message: string }> {
-  const response = await api.patch<{ success: boolean; message: string }>(
-    `/api/admin/users/${userId}/toggle-status`
-  );
-  return response.data;
+  try {
+    const response = await api.patch<{ success: boolean; message: string }>(
+      `/api/admin/users/${userId}/toggle-status`
+    );
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to update user status. Please try again."
+    );
+  }
 }
 
 export async function updateUserApi(
   userId: string,
   data: UpdateUserRequest
 ): Promise<UserSummary> {
-  const response = await api.put<UserSummary>(
-    `/api/admin/users/${userId}`,
-    data
-  );
-  return response.data;
+  try {
+    const payload: UpdateUserRequest = {
+      ...data,
+      fullName: data.fullName?.trim(),
+      email: data.email?.trim().toLowerCase(),
+      phone: data.phone?.trim(),
+      nic: data.nic?.trim().toUpperCase(),
+      licenseNumber: data.licenseNumber?.trim().toUpperCase(),
+      licenseExpiryDate: data.licenseExpiryDate?.trim(),
+      certifications: data.certifications?.trim(),
+      employeeId: data.employeeId?.trim().toUpperCase(),
+      department: data.department?.trim(),
+      officeLocation: data.officeLocation?.trim(),
+      designation: data.designation?.trim(),
+      approvalLevel: data.approvalLevel?.trim(),
+    };
+
+    const response = await api.put<UserSummary>(
+      `/api/admin/users/${userId}`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to update user. Please check the form and try again."
+    );
+  }
 }
 
-export { getErrorMessage };
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof AdminApiError) {
+    return error.message;
+  }
+
+  return apiGetErrorMessage(error);
+}

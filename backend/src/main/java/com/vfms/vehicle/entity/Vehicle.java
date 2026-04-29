@@ -44,6 +44,10 @@ public class Vehicle {
     @Builder.Default
     private VehicleStatus status = VehicleStatus.AVAILABLE;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
     @Column(precision = 5, scale = 2)
     private BigDecimal fuelLevel;
 
