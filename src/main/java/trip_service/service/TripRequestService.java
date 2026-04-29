@@ -228,13 +228,14 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
-    public TripRequest cancelTrip(UUID tripId) {
+    public TripRequest cancelTrip(UUID tripId, UUID cancelledBy, String reason) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() == TripStatus.COMPLETED ||
                 trip.getStatus() == TripStatus.CANCELLED) {
             throw new RuntimeException("Cannot cancel a completed or already cancelled trip");
         }
         trip.setStatus(TripStatus.CANCELLED);
+        trip.setApprovalNotes(reason);
         return repository.save(trip);
     }
 
