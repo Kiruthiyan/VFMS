@@ -129,22 +129,25 @@ export interface DriverInfraction {
   updatedAt?: string;
 }
 
-export interface DriverPerformanceScore {
-  id: number;
-  periodYear: number;
-  periodMonth: number;
-  tripCompletionRate: number;
-  fuelEfficiencyRatio: number;
-  infractionDeduction: number;
-  feedbackScore: number;
-  compositeScore: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 export interface EligibilityCheckResponse {
   driverId: string;
   vehicleCategory: string;
   eligible: boolean;
   reasons: string[];
+}
+
+export type TripStatus = 'SCHEDULED' | 'DRIVER_CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface TripRequest {
+  id: number;
+  driverId: string;
+  departureTime: string;
+  completionTime?: string;
+  status: TripStatus;
+  origin?: string;
+  destination?: string;
+  vehicleId?: number;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

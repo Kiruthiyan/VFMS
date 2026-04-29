@@ -33,6 +33,15 @@ public class DriverDocumentController {
         return ResponseEntity.ok(documentService.getDocumentsByDriver(driverId));
     }
 
+    @GetMapping("/{driverId}/profile-picture")
+    public ResponseEntity<DriverDocument> getProfilePicture(@PathVariable UUID driverId) {
+        DriverDocument profilePic = documentService.getProfilePicture(driverId);
+        if (profilePic == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(profilePic);
+    }
+
     @DeleteMapping("/documents/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) throws IOException {
         documentService.deleteDocument(id);

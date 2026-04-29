@@ -11,6 +11,7 @@ import com.vfms.dsm.repository.DriverCertificationRepository;
 import com.vfms.dsm.repository.DriverLicenseRepository;
 import com.vfms.dsm.repository.DriverReadinessCacheRepository;
 import com.vfms.dsm.repository.DriverRepository;
+import com.vfms.dsm.repository.TripRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class DriverReadinessService {
     private final DriverLicenseRepository licenseRepository;
     private final DriverCertificationRepository certRepository;
     private final DriverAvailabilityRepository availabilityRepository;
+    private final TripRequestRepository tripRequestRepository;
 
     public DriverReadinessCache getReadiness(UUID driverId) {
         return cacheRepository.findById(driverId).orElseGet(() -> refreshForDriver(driverId));
@@ -67,21 +69,41 @@ public class DriverReadinessService {
         boolean certsValid = certRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream()
                 .noneMatch(c -> c.getStatus() == DriverCertification.CertStatus.EXPIRED);
 
-        DriverAvailability.AvailabilityStatus status = availabilityRepository.findById(driverId)
+        // Check for active trips from trip_requests table
+        DriverAvailability.AvailabilityStatus status = determineAvailabilityStatus(driverId);
+
+        DriverReadinessCache cache = cacheRepository.findById(driverId).orElseGet(() -> {
+                DriverReadinessCache newCache = new DriverReadinessCache();
+                newCache.setDriver(driver);
+                return newCache;
+        });
+
+        cache.setLicenseValid(licenseValid);
+        cache.setAllCertsValid(certsValid);
+        cache.setAvailabilityStatus(status);
+        cache.setLastRefreshed(LocalDateTime.now());
+
+        return cacheRepository.saveAndFlush(cache);
+    }
+
+    /**
+     * Determine driver availability status by checking:
+     * 1. Active trips from trip_requests table (has priority)
+     * 2. Status from driver_availability table (fallback)
+     */
+    private DriverAvailability.AvailabilityStatus determineAvailabilityStatus(UUID driverId) {
+        LocalDateTime now = LocalDateTime.now();
+        
+        // Check if driver has an active trip (departed but not completed)
+        boolean hasActiveTrip = tripRequestRepository.findActiveTrip(driverId, now).isPresent();
+        
+        if (hasActiveTrip) {
+            return DriverAvailability.AvailabilityStatus.ON_TRIP;
+        }
+        
+        // Fall back to manually set availability status
+        return availabilityRepository.findById(driverId)
                 .map(DriverAvailability::getStatus)
                 .orElse(DriverAvailability.AvailabilityStatus.AVAILABLE);
-
-                DriverReadinessCache cache = cacheRepository.findById(driverId).orElseGet(() -> {
-                        DriverReadinessCache newCache = new DriverReadinessCache();
-                        newCache.setDriver(driver);
-                        return newCache;
-                });
-
-                cache.setLicenseValid(licenseValid);
-                cache.setAllCertsValid(certsValid);
-                cache.setAvailabilityStatus(status);
-                cache.setLastRefreshed(LocalDateTime.now());
-
-                return cacheRepository.saveAndFlush(cache);
     }
 }
