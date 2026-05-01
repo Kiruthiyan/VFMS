@@ -5,6 +5,7 @@ import com.vfms.auth.dto.LoginRequest;
 import com.vfms.auth.dto.RefreshTokenRequest;
 import com.vfms.auth.dto.RegisterRequest;
 import com.vfms.auth.dto.ResendVerificationRequest;
+import com.vfms.auth.dto.StaffVerificationRequest;
 import com.vfms.auth.entity.EmailVerificationToken;
 import com.vfms.auth.entity.RefreshToken;
 import com.vfms.auth.repository.EmailVerificationTokenRepository;
@@ -15,6 +16,8 @@ import com.vfms.common.exception.AuthorizationException;
 import com.vfms.common.exception.ConflictException;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.employee.entity.EmployeeRegistryRecord;
+import com.vfms.employee.repository.EmployeeRegistryRepository;
 import com.vfms.security.JwtService;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
@@ -28,8 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +44,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final EmailVerificationTokenRepository verificationTokenRepository;
+    private final EmployeeRegistryRepository employeeRegistryRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -104,9 +108,51 @@ public class AuthService {
         return buildAuthResponse(user, null, null);
     }
 
+    /**
+     * Confirms that the first-step company email belongs to an active staff
+     * record before the registration form reveals additional steps.
+     */
+    @Transactional(readOnly = true)
+    public void verifyStaffEmailEligibility(String email) {
+        String normalizedEmail = normalizeEmail(email);
+        EmployeeRegistryRecord staffRecord = findRegistryRecordByEmail(normalizedEmail);
+
+        if (!staffRecord.isActive()) {
+            throw new ValidationException(
+                    "Staff record inactive",
+                    Map.of(
+                            "email",
+                            "This company staff record is currently inactive. Please contact the system administrator for assistance."
+                    )
+            );
+        }
+    }
+
+    /**
+     * Re-validates the personal details entered during signup before the user
+     * can proceed to password setup.
+     */
+    @Transactional(readOnly = true)
+    public void verifyStaffRegistrationDetails(StaffVerificationRequest request) {
+        validateStaffRegistration(
+                request.getFullName(),
+                request.getEmail(),
+                request.getPhone(),
+                request.getNic(),
+                request.getEmployeeId()
+        );
+    }
+
+    /**
+     * Creates a self-service account only for verified company staff candidates.
+     * Matching the signup payload against the employee registry prevents unverified
+     * external users from creating staff accounts with arbitrary details.
+     */
     @Transactional
     public void register(RegisterRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
+        String email = normalizeEmail(request.getEmail());
+        String phone = normalizePhone(request.getPhone());
+        String nic = normalizeNic(request.getNic());
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new ValidationException(
@@ -115,21 +161,30 @@ public class AuthService {
             );
         }
 
-        if (request.getRequestedRole() != Role.DRIVER
-                && request.getRequestedRole() != Role.SYSTEM_USER) {
+        if (request.getRequestedRole() != Role.SYSTEM_USER) {
             throw new ValidationException(
                     "Validation failed",
-                    Map.of("requestedRole", "Only Driver and Staff registrations are allowed.")
+                    Map.of(
+                            "requestedRole",
+                            "Public registration is available only for company staff. Driver, approver, and administrator accounts must be created by an administrator."
+                    )
             );
         }
 
-        validateRoleSpecificFields(request);
+        EmployeeRegistryRecord verifiedStaffRecord =
+                validateStaffRegistration(
+                        request.getFullName(),
+                        email,
+                        phone,
+                        nic,
+                        request.getEmployeeId()
+                );
 
         Optional<User> existingUser = userRepository.findByEmail(email);
         if (existingUser.isPresent()) {
             User existing = existingUser.get();
             if (existing.getStatus() == UserStatus.REJECTED) {
-                resetUserForReRegistration(existing, request, email);
+                resetUserForReRegistration(existing, request, verifiedStaffRecord, email, phone, nic);
                 userRepository.save(existing);
                 sendVerificationEmail(existing);
                 return;
@@ -137,28 +192,28 @@ public class AuthService {
 
             throw new ConflictException(
                     "An account already exists with this email address.",
-                    Map.of("email", "An account already exists with this email address.")
+                    Map.of("email", "An account already exists with this email address. Please sign in or contact your administrator if you need help.")
             );
         }
 
         User user = User.builder()
-                .fullName(request.getFullName().trim())
+                .fullName(verifiedStaffRecord.getFullName())
                 .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
-                .phone(request.getPhone().trim())
-                .nic(request.getNic().trim())
-                .role(request.getRequestedRole())
+                .phone(phone)
+                .nic(nic)
+                .role(Role.SYSTEM_USER)
                 .status(UserStatus.EMAIL_UNVERIFIED)
                 .emailVerified(false)
                 .build();
 
-        applyRoleSpecificFields(user, request);
+        applyVerifiedStaffFields(user, verifiedStaffRecord);
         userRepository.save(user);
         sendVerificationEmail(user);
     }
 
     @Transactional
-    public void verifyEmail(String token) {
+    public UserStatus verifyEmail(String token) {
         EmailVerificationToken verificationToken =
                 verificationTokenRepository.findByToken(token)
                         .orElseThrow(() -> new ResourceNotFoundException("Invalid verification link"));
@@ -170,9 +225,13 @@ public class AuthService {
 
         User user = verificationToken.getUser();
         user.setEmailVerified(true);
-        user.setStatus(UserStatus.PENDING_APPROVAL);
+        UserStatus nextStatus = user.getRole() == Role.SYSTEM_USER
+                ? UserStatus.APPROVED
+                : UserStatus.PENDING_APPROVAL;
+        user.setStatus(nextStatus);
         userRepository.save(user);
         verificationTokenRepository.deleteByUser(user);
+        return nextStatus;
     }
 
     @Transactional
@@ -201,80 +260,110 @@ public class AuthService {
         emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), token);
     }
 
-    private void validateRoleSpecificFields(RegisterRequest request) {
+    /**
+     * Validates self-registration details against the verified staff registry.
+     * The registry remains the trusted source of truth for employee identity,
+     * while the users table only stores application accounts.
+     */
+    private EmployeeRegistryRecord validateStaffRegistration(
+            String fullName,
+            String email,
+            String phone,
+            String nic,
+            String employeeIdValue
+    ) {
         Map<String, String> errors = new LinkedHashMap<>();
+        String normalizedEmail = normalizeEmail(email);
+        String normalizedPhone = normalizePhone(phone);
+        String normalizedNic = normalizeNic(nic);
+        String employeeId = normalizeIdentifier(employeeIdValue);
+        if (employeeId == null) {
+            errors.put("employeeId", "Enter your employee ID exactly as it appears in the company staff registry.");
+        }
 
-        if (request.getRequestedRole() == Role.DRIVER) {
-            String licenseNumber = normalizeOptional(request.getLicenseNumber());
-            if (licenseNumber == null) {
-                errors.put("licenseNumber", "Please enter the driver license number.");
+        EmployeeRegistryRecord staffRecord = null;
+        if (employeeId != null) {
+            List<EmployeeRegistryRecord> staffRecords =
+                    employeeRegistryRepository.findAllByEmployeeIdIgnoreCase(employeeId);
+
+            if (staffRecords.isEmpty()) {
+                errors.put("employeeId", "We could not find a verified company staff record for this employee ID. Check the ID and try again, or contact your administrator.");
+            } else if (staffRecords.size() > 1) {
+                errors.put("employeeId", "Multiple company staff records were found for this employee ID. Please contact the system administrator for assistance.");
+            } else {
+                staffRecord = staffRecords.get(0);
             }
 
-            String licenseExpiryDate = normalizeOptional(request.getLicenseExpiryDate());
-            if (licenseExpiryDate == null) {
-                errors.put("licenseExpiryDate", "Please enter the driver license expiry date.");
-            } else {
-                try {
-                    LocalDate parsedDate = LocalDate.parse(licenseExpiryDate);
-                    if (parsedDate.isBefore(LocalDate.now())) {
-                        errors.put("licenseExpiryDate", "License expiry date must be today or later.");
-                    }
-                } catch (Exception ex) {
-                    errors.put("licenseExpiryDate", "Please enter a valid license expiry date.");
+            if (staffRecord != null && !staffRecord.isActive()) {
+                errors.put("employeeId", "This staff record is currently inactive. Please contact your administrator for assistance.");
+            } else if (staffRecord != null) {
+                if (!staffRecord.getEmail().equalsIgnoreCase(normalizedEmail)) {
+                    errors.put("email", "The email address does not match the verified company staff record for this employee ID.");
+                }
+                if (!normalizeFullName(staffRecord.getFullName()).equals(normalizeFullName(fullName))) {
+                    errors.put("fullName", "The full name does not match the verified company staff record for this employee ID.");
+                }
+                if (!normalizeNic(staffRecord.getNic()).equals(normalizedNic)) {
+                    errors.put("nic", "The NIC number does not match the verified company staff record for this employee ID.");
+                }
+                if (!normalizePhone(staffRecord.getPhone()).equals(normalizedPhone)) {
+                    errors.put("phone", "The phone number does not match the verified company staff record for this employee ID.");
                 }
             }
         }
 
-        if (request.getRequestedRole() == Role.SYSTEM_USER) {
-            String employeeId = normalizeOptional(request.getEmployeeId());
-            if (employeeId == null) {
-                errors.put("employeeId", "Please enter the staff employee ID.");
-            }
-
-            String department = normalizeOptional(request.getDepartment());
-            if (department == null) {
-                errors.put("department", "Please select or enter the staff department.");
-            } else if (department.length() < 2 || department.length() > 50) {
-                errors.put("department", "Department must be between 2 and 50 characters.");
-            }
-
-            String designation = normalizeOptional(request.getDesignation());
-            if (designation == null) {
-                errors.put("designation", "Please enter the staff designation.");
-            } else if (designation.length() < 2 || designation.length() > 50) {
-                errors.put("designation", "Designation must be between 2 and 50 characters.");
-            }
-
-            String officeLocation = normalizeOptional(request.getOfficeLocation());
-            if (officeLocation == null) {
-                errors.put("officeLocation", "Please select or enter the staff office location.");
-            } else if (officeLocation.length() < 2 || officeLocation.length() > 100) {
-                errors.put("officeLocation", "Office location must be between 2 and 100 characters.");
-            }
-        }
-
         if (!errors.isEmpty()) {
-            throw new ValidationException("Validation failed", errors);
+            String employeeIdError = errors.get("employeeId");
+            String message;
+            if (errors.size() == 1 && employeeIdError != null) {
+                message = employeeIdError.contains("inactive")
+                        ? "Staff record inactive"
+                        : "Staff record not found";
+            } else {
+                message = "Staff verification failed";
+            }
+            throw new ValidationException(message, errors);
         }
+
+        return staffRecord;
     }
 
-    private void applyRoleSpecificFields(User user, RegisterRequest request) {
-        clearRoleSpecificFields(user);
+    private EmployeeRegistryRecord findRegistryRecordByEmail(String email) {
+        List<EmployeeRegistryRecord> staffRecords = employeeRegistryRepository.findAllByEmailIgnoreCase(email);
 
-        if (request.getRequestedRole() == Role.DRIVER) {
-            user.setLicenseNumber(normalizeOptional(request.getLicenseNumber()));
-            String licenseExpiryDate = normalizeOptional(request.getLicenseExpiryDate());
-            if (licenseExpiryDate != null) {
-                user.setLicenseExpiryDate(LocalDate.parse(licenseExpiryDate));
-            }
-            user.setCertifications(normalizeOptional(request.getCertifications()));
-            user.setExperienceYears(request.getExperienceYears());
-        } else if (request.getRequestedRole() == Role.SYSTEM_USER) {
-            user.setEmployeeId(normalizeOptional(request.getEmployeeId()));
-            user.setDepartment(normalizeOptional(request.getDepartment()));
-            user.setOfficeLocation(normalizeOptional(request.getOfficeLocation()));
-            user.setDesignation(normalizeOptional(request.getDesignation()));
+        if (staffRecords.isEmpty()) {
+            throw new ValidationException(
+                    "Staff record not found",
+                    Map.of(
+                            "email",
+                            "This email address is not registered in the company staff registry. Please use your official company email address or contact the system administrator."
+                    )
+            );
         }
+
+        if (staffRecords.size() > 1) {
+            throw new ValidationException(
+                    "Staff verification failed",
+                    Map.of(
+                            "email",
+                            "Multiple company staff records were found for this email address. Please contact the system administrator for assistance."
+                    )
+            );
+        }
+
+        return staffRecords.get(0);
+    }
+
+    /**
+     * Copies staff profile fields from the verified registry record so approved
+     * staff accounts inherit department and office details from company records.
+     */
+    private void applyVerifiedStaffFields(User user, EmployeeRegistryRecord staffRecord) {
+        clearRoleSpecificFields(user);
+        user.setEmployeeId(staffRecord.getEmployeeId());
+        user.setDepartment(staffRecord.getDepartment());
+        user.setOfficeLocation(staffRecord.getOfficeLocation());
+        user.setDesignation(staffRecord.getDesignation());
     }
 
     private void clearRoleSpecificFields(User user) {
@@ -297,20 +386,57 @@ public class AuthService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    private void resetUserForReRegistration(User user, RegisterRequest request, String email) {
-        user.setFullName(request.getFullName().trim());
+    private String normalizeEmail(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.toLowerCase();
+    }
+
+    private String normalizeIdentifier(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.toUpperCase();
+    }
+
+    private String normalizeFullName(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.replaceAll("\\s+", " ").toLowerCase();
+    }
+
+    private String normalizeNic(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.replaceAll("\\s+", "").toUpperCase();
+    }
+
+    private String normalizePhone(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.replaceAll("\\s+", "");
+    }
+
+    private void resetUserForReRegistration(
+            User user,
+            RegisterRequest request,
+            EmployeeRegistryRecord staffRecord,
+            String email,
+            String phone,
+            String nic
+    ) {
+        user.setFullName(staffRecord.getFullName());
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setPhone(request.getPhone().trim());
-        user.setNic(request.getNic().trim());
-        user.setRole(request.getRequestedRole());
+        user.setPhone(phone);
+        user.setNic(nic);
+        user.setRole(Role.SYSTEM_USER);
         user.setStatus(UserStatus.EMAIL_UNVERIFIED);
         user.setEmailVerified(false);
         user.setRejectionReason(null);
         user.setReviewedAt(null);
-        applyRoleSpecificFields(user, request);
+        applyVerifiedStaffFields(user, staffRecord);
     }
 
+    /**
+     * Applies the business status rules that sit on top of raw password validation.
+     * A correct password is not enough if the account is still unverified, pending
+     * review, rejected, or deactivated.
+     */
     private void validateLoginStatus(User user) {
         if (!user.isEmailVerified() || user.getStatus() == UserStatus.EMAIL_UNVERIFIED) {
             throw new ValidationException("Please verify your email before signing in.");

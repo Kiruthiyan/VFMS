@@ -56,6 +56,10 @@ function formatDateTime(dateStr: string | null): string {
   });
 }
 
+function hasValue(value: string | null | undefined): boolean {
+  return typeof value === "string" ? value.trim().length > 0 : Boolean(value);
+}
+
 export function UserTable({
   users,
   showReviewActions = false,
@@ -111,7 +115,7 @@ export function UserTable({
         <p className="mt-1 text-xs text-slate-400">
           {showDeletedActions
             ? "No deleted users in history."
-            : "Try adjusting your filters or create a new user."}
+            : "Try adjusting your filters or create a new account."}
         </p>
       </div>
     );
@@ -337,7 +341,11 @@ export function UserTable({
 
                         {(user.role === "SYSTEM_USER" ||
                           user.role === "APPROVER" ||
-                          user.role === "ADMIN") && (
+                          user.role === "ADMIN") &&
+                          (hasValue(user.employeeId) ||
+                            hasValue(user.department) ||
+                            hasValue(user.officeLocation) ||
+                            hasValue(user.designation)) && (
                           <>
                             <div>
                               <p className="mb-1 font-medium text-slate-500">
@@ -374,6 +382,17 @@ export function UserTable({
                           </>
                         )}
 
+                        {user.role === "APPROVER" && hasValue(user.approvalLevel) && (
+                          <div>
+                            <p className="mb-1 font-medium text-slate-500">
+                              Approval Level
+                            </p>
+                            <p className="text-slate-900">
+                              {user.approvalLevel}
+                            </p>
+                          </div>
+                        )}
+
                         {user.rejectionReason && (
                           <div className="col-span-2 md:col-span-4">
                             <p className="mb-1 font-medium text-slate-500">
@@ -408,6 +427,17 @@ export function UserTable({
                               Created By
                             </p>
                             <p className="text-slate-900">{user.createdBy}</p>
+                          </div>
+                        )}
+
+                        {user.passwordChangeRequired && (
+                          <div>
+                            <p className="mb-1 font-medium text-slate-500">
+                              Password Update
+                            </p>
+                            <p className="text-slate-900">
+                              User must change the temporary password
+                            </p>
                           </div>
                         )}
                       </div>

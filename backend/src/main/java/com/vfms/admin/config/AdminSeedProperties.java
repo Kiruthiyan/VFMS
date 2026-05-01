@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Binds {@code vfms.admin.seed.*} properties for the optional first-run
- * administrator bootstrap flow. Default fallback values are defined in
- * {@code application.properties} so they stay centralized in one place.
+ * administrator bootstrap flow. The seed is intentionally environment-driven
+ * so committed source code does not carry default administrator credentials.
  */
 @Data
 @Component

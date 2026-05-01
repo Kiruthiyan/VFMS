@@ -5,9 +5,9 @@ export const ERROR_MESSAGES = {
     "This account is deactivated. Please contact your administrator.",
   EMAIL_NOT_VERIFIED: "Please verify your email before signing in.",
   ACCOUNT_PENDING:
-    "Your account is pending admin approval.",
-  PASSWORD_MISMATCH: "Passwords do not match.",
-  PASSWORDS_DO_NOT_MATCH: "Passwords do not match.",
+    "Your account is awaiting administrator approval.",
+  PASSWORD_MISMATCH: "The passwords do not match. Please re-enter them carefully.",
+  PASSWORDS_DO_NOT_MATCH: "The passwords do not match. Please re-enter them carefully.",
   NEW_PASSWORD_SAME:
     "New password must be different from your current password.",
   NEW_PASSWORD_SAME_AS_OLD:
@@ -19,11 +19,12 @@ export const ERROR_MESSAGES = {
   INVALID_PASSWORD:
     "Password must include uppercase, lowercase, number, and special character.",
   PASSWORD_TOO_SHORT: "Password must be at least 8 characters.",
-  EMAIL_ALREADY_EXISTS: "An account already exists with this email address.",
-  INVALID_EMAIL_FORMAT: "Please enter a valid email address.",
-  INVALID_EMAIL: "Please enter a valid email address.",
-  INVALID_PHONE_FORMAT: "Please enter a valid phone number.",
-  INVALID_NIC_FORMAT: "Please enter a valid NIC number.",
+  EMAIL_ALREADY_EXISTS: "An account already exists for this email address.",
+  INVALID_EMAIL_FORMAT: "Enter a valid email address in the format name@example.com.",
+  INVALID_EMAIL: "Enter a valid email address in the format name@example.com.",
+  INVALID_PHONE_FORMAT: "Enter a valid Sri Lankan mobile number, for example 0771234567.",
+  INVALID_NIC_FORMAT:
+    "Enter a valid NIC in either 12-digit format or 9 digits followed by V or X.",
   VERIFICATION_LINK_EXPIRED:
     "Verification link has expired. Please request a new one.",
   INVALID_VERIFICATION_TOKEN: "Invalid or expired verification link.",
@@ -39,15 +40,15 @@ export const ERROR_MESSAGES = {
     "Password reset link has expired. Please request a new one.",
   INVALID_RESET_TOKEN:
     "Invalid or expired reset link. Please request a new one.",
-  SOMETHING_WENT_WRONG: "Something went wrong. Please try again later.",
+  SOMETHING_WENT_WRONG: "Something went wrong. Please try again in a moment.",
   UNKNOWN_ERROR: "Something went wrong. Please try again.",
-  NETWORK_ERROR: "Network error. Please check your connection.",
-  SERVER_ERROR: "Server error. Please try again later.",
-  FORM_SUBMISSION_FAILED: "Unable to submit form. Please try again.",
+  NETWORK_ERROR: "We could not connect to the server. Please check your connection and try again.",
+  SERVER_ERROR: "The server could not complete your request right now. Please try again later.",
+  FORM_SUBMISSION_FAILED: "We could not submit your form. Please review your details and try again.",
   UNAUTHENTICATED: "Please log in to continue.",
   UNAUTHORIZED: "You do not have permission to access this resource.",
   TOKEN_EXPIRED: "Your session has expired. Please log in again.",
-  VALIDATION_ERROR: "Please review the highlighted fields and try again.",
+  VALIDATION_ERROR: "Please review the highlighted information and try again.",
   USER_NOT_FOUND: "User not found.",
   USER_DEACTIVATED: "This account has been deactivated.",
   USER_NOT_APPROVED: "Your account is pending approval.",
@@ -55,9 +56,9 @@ export const ERROR_MESSAGES = {
   PASSWORD_CHANGED_SUCCESS: "Password changed successfully!",
   EMAIL_VERIFIED_SUCCESS: "Email verified successfully!",
   ACCOUNT_CREATED_SUCCESS:
-    "Account created successfully! Please verify your email.",
+    "Your account has been created. Please verify your email to continue.",
   SUCCESS_LOGIN: "Logged in successfully.",
-  SUCCESS_SIGNUP: "Account created successfully. Please verify your email.",
+  SUCCESS_SIGNUP: "Your registration has been submitted successfully. Please verify your email.",
   SUCCESS_EMAIL_VERIFIED: "Email verified successfully.",
   SUCCESS_PASSWORD_RESET: "Password reset successfully.",
   SUCCESS_PASSWORD_CHANGED: "Password changed successfully.",

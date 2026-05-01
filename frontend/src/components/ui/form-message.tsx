@@ -6,28 +6,35 @@ interface FormMessageProps {
   type: "error" | "success" | "info";
   message: string;
   className?: string;
+  title?: string;
 }
 
 const styles = {
   error: {
-    bg: "bg-red-950/40",
-    border: "border-red-800/40",
-    icon: "text-red-400",
-    text: "text-red-300",
+    bg: "bg-red-50",
+    border: "border-red-200",
+    icon: "text-red-600",
+    text: "text-red-700",
+    title: "text-red-900",
+    defaultTitle: "Please review the highlighted information",
     Icon: AlertCircle,
   },
   success: {
-    bg: "bg-green-950/40",
-    border: "border-green-800/40",
-    icon: "text-green-400",
-    text: "text-green-300",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    icon: "text-emerald-600",
+    text: "text-emerald-700",
+    title: "text-emerald-900",
+    defaultTitle: "Success",
     Icon: CheckCircle2,
   },
   info: {
-    bg: "bg-blue-950/40",
-    border: "border-blue-800/40",
-    icon: "text-blue-400",
-    text: "text-blue-300",
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    icon: "text-blue-600",
+    text: "text-blue-700",
+    title: "text-blue-900",
+    defaultTitle: "Information",
     Icon: Info,
   },
 } as const;
@@ -36,6 +43,7 @@ export function FormMessage({
   type,
   message,
   className,
+  title,
 }: FormMessageProps) {
   const style = styles[type];
   const Icon = style.Icon;
@@ -50,7 +58,12 @@ export function FormMessage({
       )}
     >
       <Icon size={18} className={cn("mt-0.5 shrink-0", style.icon)} />
-      <p className={cn("text-sm", style.text)}>{message}</p>
+      <div className="space-y-1">
+        <p className={cn("text-sm font-semibold", style.title)}>
+          {title ?? style.defaultTitle}
+        </p>
+        <p className={cn("text-sm leading-6", style.text)}>{message}</p>
+      </div>
     </div>
   );
 }

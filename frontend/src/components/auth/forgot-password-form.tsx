@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, CheckCircle2, Mail } from "lucide-react";
+import { CheckCircle2, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 
 import {
@@ -57,26 +56,17 @@ export function ForgotPasswordForm() {
         title="Check your email"
         description={`If an account exists for ${submittedEmail}, password reset instructions have been sent.`}
       >
-        <div className="space-y-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              setSubmitted(false);
-              setSubmittedEmail("");
-            }}
-          >
-            Try another email
-          </Button>
-          <Link
-            href="/auth/login"
-            className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to sign in
-          </Link>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={() => {
+            setSubmitted(false);
+            setSubmittedEmail("");
+          }}
+        >
+          Try another email
+        </Button>
       </AuthStatusPanel>
     );
   }
@@ -123,16 +113,6 @@ export function ForgotPasswordForm() {
           </>
         )}
       </Button>
-
-      <div className="text-center">
-        <Link
-          href="/auth/login"
-          className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to sign in
-        </Link>
-      </div>
     </motion.form>
   );
 }

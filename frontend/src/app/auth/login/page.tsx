@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
+import { AuthPageFooter } from "@/components/auth/auth-page-footer";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { LoginForm } from "@/components/forms/login-form";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -14,19 +15,14 @@ export default function LoginPage() {
     <AuthShell
       title="Welcome back"
       description="Sign in to continue to VFMS."
-      actionHref="/auth/signup"
-      actionLabel="Create Account"
       panelWidth="compact"
       footer={
-        <p className="text-center text-xs text-slate-500">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/auth/signup"
-            className="font-semibold text-slate-900 transition-colors hover:text-amber-600"
-          >
-            Sign up here
-          </Link>
-        </p>
+        <AuthPageFooter
+          prompt="Need a new account?"
+          actionLabel="Create one"
+          actionHref={AUTH_ROUTES.SIGNUP}
+          supportingText="Registration is available only for verified company staff members."
+        />
       }
     >
       <LoginForm />

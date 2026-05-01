@@ -51,6 +51,17 @@ export interface CreateUserRequest {
   approvalLevel?: string;
 }
 
+export interface VerifiedStaffProfile {
+  employeeId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  nic: string;
+  department: string;
+  designation: string;
+  officeLocation: string;
+}
+
 export interface ReviewUserRequest {
   decision: "APPROVE" | "REJECT";
   assignedRole?: UserRole;
@@ -199,13 +210,34 @@ export async function createUserApi(
   }
 }
 
-export async function getAllUsersApi(): Promise<UserSummary[]> {
-  const response = await api.get<UserSummary[]>("/api/admin/users");
-  return response.data;
+export async function getVerifiedStaffProfileApi(
+  employeeId: string,
+  options?: {
+    excludeUserId?: string;
+  }
+): Promise<VerifiedStaffProfile> {
+  try {
+    const searchParams = new URLSearchParams();
+    if (options?.excludeUserId) {
+      searchParams.set("excludeUserId", options.excludeUserId);
+    }
+
+    const response = await api.get<VerifiedStaffProfile>(
+      `/api/admin/users/staff-directory/${encodeURIComponent(employeeId.trim().toUpperCase())}${
+        searchParams.toString() ? `?${searchParams.toString()}` : ""
+      }`
+    );
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to load verified staff details. Please check the employee ID and try again."
+    );
+  }
 }
 
-export async function getPendingUsersApi(): Promise<UserSummary[]> {
-  const response = await api.get<UserSummary[]>("/api/admin/users/pending");
+export async function getAllUsersApi(): Promise<UserSummary[]> {
+  const response = await api.get<UserSummary[]>("/api/admin/users");
   return response.data;
 }
 

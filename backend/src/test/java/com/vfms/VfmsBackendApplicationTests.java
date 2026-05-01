@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * without errors.  If any bean configuration, dependency injection, or
  * property binding is broken this test will fail, giving early feedback.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.sql.init.mode=never")
 @ActiveProfiles("dev")
 class VfmsBackendApplicationTests {
 

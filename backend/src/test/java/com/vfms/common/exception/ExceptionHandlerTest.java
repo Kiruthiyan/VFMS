@@ -3,8 +3,12 @@ package com.vfms.common.exception;
 import com.vfms.common.dto.ErrorResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -87,5 +91,47 @@ class ExceptionHandlerTest {
         assertFalse(response.getBody().isSuccess());
         assertEquals(404, response.getBody().getStatus());
         assertEquals("Missing resource", response.getBody().getMessage());
+    }
+
+    @Test
+    @DisplayName("Should map bean validation failures to 400 with field errors")
+    void shouldMapBeanValidationFailuresTo400WithFieldErrors() throws NoSuchMethodException {
+        BeanPropertyBindingResult bindingResult =
+                new BeanPropertyBindingResult(new TestPayload(), "testPayload");
+        bindingResult.addError(new FieldError(
+                "testPayload",
+                "email",
+                "Please enter a valid email address."
+        ));
+
+        MethodArgumentNotValidException exception = new MethodArgumentNotValidException(
+                new MethodParameter(
+                        TestController.class.getDeclaredMethod("handle", TestPayload.class),
+                        0
+                ),
+                bindingResult
+        );
+
+        ResponseEntity<ErrorResponse> response =
+                exceptionHandler.handleMethodArgumentNotValid(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals(400, response.getBody().getStatus());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        assertEquals(
+                "Please enter a valid email address.",
+                response.getBody().getErrors().get("email")
+        );
+    }
+
+    private static final class TestController {
+        @SuppressWarnings("unused")
+        void handle(TestPayload payload) {
+        }
+    }
+
+    private static final class TestPayload {
     }
 }

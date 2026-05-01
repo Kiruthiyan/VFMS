@@ -33,7 +33,7 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
-export type SelfRegistrationRole = Extract<UserRole, "DRIVER" | "SYSTEM_USER">;
+export type SelfRegistrationRole = Extract<UserRole, "SYSTEM_USER">;
 
 export interface SignupRequest {
   email: string;
@@ -43,12 +43,19 @@ export interface SignupRequest {
   phone: string;
   nic: string;
   requestedRole: SelfRegistrationRole;
-  licenseNumber?: string;
-  licenseExpiryDate?: string;
   employeeId?: string;
-  department?: string;
-  designation?: string;
-  officeLocation?: string;
+}
+
+export interface StaffEmailCheckRequest {
+  email: string;
+}
+
+export interface StaffVerificationRequest {
+  email: string;
+  fullName: string;
+  phone: string;
+  nic: string;
+  employeeId: string;
 }
 
 export class AuthApiError extends Error {
@@ -126,7 +133,10 @@ function mapFriendlyMessage(
     return ERROR_MESSAGES.EMAIL_NOT_VERIFIED;
   }
 
-  if (normalizedMessage.includes("pending admin approval")) {
+  if (
+    normalizedMessage.includes("pending admin approval") ||
+    normalizedMessage.includes("pending approval")
+  ) {
     return ERROR_MESSAGES.ACCOUNT_PENDING;
   }
 
@@ -295,12 +305,7 @@ export async function signupApi(
       phone: data.phone.trim().replace(/\s/g, ""),
       nic: data.nic.trim().replace(/\s/g, "").toUpperCase(),
       requestedRole: data.requestedRole,
-      licenseNumber: data.licenseNumber?.trim().toUpperCase(),
-      licenseExpiryDate: data.licenseExpiryDate?.trim(),
       employeeId: data.employeeId?.trim().toUpperCase(),
-      department: data.department?.trim(),
-      designation: data.designation?.trim(),
-      officeLocation: data.officeLocation?.trim(),
     };
 
     const backendPayload: SignupRequest = {
@@ -311,17 +316,7 @@ export async function signupApi(
       phone: sanitizedData.phone,
       nic: sanitizedData.nic,
       requestedRole: sanitizedData.requestedRole,
-      ...(sanitizedData.requestedRole === "DRIVER"
-        ? {
-            licenseNumber: sanitizedData.licenseNumber,
-            licenseExpiryDate: sanitizedData.licenseExpiryDate,
-          }
-        : {
-            employeeId: sanitizedData.employeeId,
-            department: sanitizedData.department,
-            designation: sanitizedData.designation,
-            officeLocation: sanitizedData.officeLocation,
-          }),
+      employeeId: sanitizedData.employeeId,
     };
 
     const response = await api.post<ApiEnvelope<unknown>>(
@@ -333,6 +328,48 @@ export async function signupApi(
     throw buildAuthApiError(
       error,
       "Registration failed. Please check your details and try again."
+    );
+  }
+}
+
+export async function verifyStaffEmailApi(
+  data: StaffEmailCheckRequest
+): Promise<ApiSuccessResponse> {
+  try {
+    const response = await api.post<ApiEnvelope<unknown>>(
+      "/api/auth/staff/email-check",
+      {
+        email: data.email.trim().toLowerCase(),
+      }
+    );
+    return unwrapSuccessResponse(response.data);
+  } catch (error) {
+    throw buildAuthApiError(
+      error,
+      "We could not verify your company email address. Please try again."
+    );
+  }
+}
+
+export async function verifyStaffDetailsApi(
+  data: StaffVerificationRequest
+): Promise<ApiSuccessResponse> {
+  try {
+    const response = await api.post<ApiEnvelope<unknown>>(
+      "/api/auth/staff/verify",
+      {
+        email: data.email.trim().toLowerCase(),
+        fullName: data.fullName.trim(),
+        phone: data.phone.trim().replace(/\s/g, ""),
+        nic: data.nic.trim().replace(/\s/g, "").toUpperCase(),
+        employeeId: data.employeeId.trim().toUpperCase(),
+      }
+    );
+    return unwrapSuccessResponse(response.data);
+  } catch (error) {
+    throw buildAuthApiError(
+      error,
+      "We could not verify your staff details. Please review the information and try again."
     );
   }
 }

@@ -10,6 +10,8 @@ import com.vfms.auth.service.EmailService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.employee.entity.EmployeeRegistryRecord;
+import com.vfms.employee.repository.EmployeeRegistryRepository;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +48,9 @@ class AdminUserServiceTest {
     @Mock
     private UserManagementProperties userManagementProperties;
 
+    @Mock
+    private EmployeeRegistryRepository employeeRegistryRepository;
+
     @InjectMocks
     private AdminUserService adminUserService;
 
@@ -65,8 +70,10 @@ class AdminUserServiceTest {
         req.setFullName("Test User");
         req.setEmail("test@vfms.com");
         req.setPhone("0771234567");
-        req.setNic("123456789");
-        req.setRole(Role.SYSTEM_USER);
+        req.setNic("200012345678");
+        req.setRole(Role.DRIVER);
+        req.setLicenseNumber("DL123456");
+        req.setLicenseExpiryDate("2030-05-01");
 
         when(userRepository.existsByEmailAndDeletedAtIsNull(req.getEmail())).thenReturn(true);
 
@@ -177,6 +184,7 @@ class AdminUserServiceTest {
     void updateUser_shouldRejectDuplicateEmail() {
         UUID id = UUID.randomUUID();
         User user = baseApprovedUser(id);
+        user.setRole(Role.DRIVER);
         user.setEmail("old@vfms.com");
 
         UpdateUserRequest req = new UpdateUserRequest();
@@ -232,6 +240,21 @@ class AdminUserServiceTest {
         req.setDesignation("Coordinator");
 
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(employeeRegistryRepository.findByEmployeeIdIgnoreCase("EMP001")).thenReturn(Optional.of(
+                EmployeeRegistryRecord.builder()
+                        .employeeId("EMP001")
+                        .email("staff@vfms.com")
+                        .fullName("Staff User")
+                        .phone("0771234567")
+                        .nic("200012345678")
+                        .department("Operations")
+                        .designation("Coordinator")
+                        .officeLocation("Colombo")
+                        .active(true)
+                        .build()
+        ));
+        when(userRepository.existsByEmployeeIdAndDeletedAtIsNullAndIdNot("EMP001", id)).thenReturn(false);
+        when(userRepository.existsByEmailAndDeletedAtIsNullAndIdNot("staff@vfms.com", id)).thenReturn(false);
 
         adminUserService.updateUser(id, req);
 
@@ -249,7 +272,7 @@ class AdminUserServiceTest {
                 .id(id)
                 .fullName("Test User")
                 .email("test@vfms.com")
-                .nic("123456789")
+                .nic("200012345678")
                 .role(Role.SYSTEM_USER)
                 .status(UserStatus.PENDING_APPROVAL)
                 .build();
@@ -260,7 +283,7 @@ class AdminUserServiceTest {
                 .id(id)
                 .fullName("Approved User")
                 .email("approved@vfms.com")
-                .nic("123456789")
+                .nic("200012345678")
                 .role(Role.SYSTEM_USER)
                 .status(UserStatus.APPROVED)
                 .build();

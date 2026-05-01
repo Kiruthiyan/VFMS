@@ -6,6 +6,7 @@ import com.vfms.admin.dto.ReviewUserRequest;
 import com.vfms.admin.dto.SoftDeleteRequest;
 import com.vfms.admin.dto.UpdateUserRequest;
 import com.vfms.admin.dto.UserSummaryResponse;
+import com.vfms.admin.dto.VerifiedStaffProfileResponse;
 import com.vfms.admin.service.AdminUserService;
 import com.vfms.common.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -59,6 +61,14 @@ public class AdminUserController {
     @GetMapping("/counts")
     public ResponseEntity<Map<String, Long>> getUserCounts() {
         return ResponseEntity.ok(adminUserService.getUserCounts());
+    }
+
+    @GetMapping("/staff-directory/{employeeId}")
+    public ResponseEntity<VerifiedStaffProfileResponse> getVerifiedStaffProfile(
+            @PathVariable String employeeId,
+            @RequestParam(required = false) UUID excludeUserId) {
+        return ResponseEntity.ok(
+                adminUserService.getVerifiedStaffProfile(employeeId, excludeUserId));
     }
 
     @GetMapping("/{userId}")

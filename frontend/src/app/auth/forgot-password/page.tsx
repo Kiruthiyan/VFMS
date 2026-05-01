@@ -1,7 +1,7 @@
-import Link from "next/link";
-
+import { AuthPageFooter } from "@/components/auth/auth-page-footer";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import { AuthShell } from "@/components/layout/auth-shell";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 export const metadata = {
   title: "Forgot Password",
@@ -13,16 +13,14 @@ export default function ForgotPasswordPage() {
     <AuthShell
       title="Reset your password"
       description="Enter your email and we will send recovery instructions."
-      actionHref="/auth/login"
-      actionLabel="Sign In"
       panelWidth="compact"
       footer={
-        <p className="text-center text-xs text-slate-500">
-          Remembered your password?{" "}
-          <Link href="/auth/login" className="font-semibold text-slate-900 hover:text-amber-600">
-            Go back to sign in
-          </Link>
-        </p>
+        <AuthPageFooter
+          prompt="Remembered your password?"
+          actionLabel="Return to sign in"
+          actionHref={AUTH_ROUTES.LOGIN}
+          supportingText="Password recovery links are delivered only to registered account email addresses."
+        />
       }
     >
       <ForgotPasswordForm />

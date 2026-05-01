@@ -2,12 +2,16 @@ package com.vfms.auth.service;
 
 import com.vfms.auth.dto.LoginRequest;
 import com.vfms.auth.dto.RegisterRequest;
-import com.vfms.auth.repository.EmailVerificationTokenRepository;
+import com.vfms.auth.dto.StaffVerificationRequest;
+import com.vfms.auth.entity.EmailVerificationToken;
 import com.vfms.auth.entity.RefreshToken;
+import com.vfms.auth.repository.EmailVerificationTokenRepository;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.AuthenticationException;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.employee.entity.EmployeeRegistryRecord;
+import com.vfms.employee.repository.EmployeeRegistryRepository;
 import com.vfms.security.JwtService;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
@@ -21,7 +25,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDate;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,12 +34,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AuthService Unit Tests")
+@DisplayName("AuthService")
 class AuthServiceTest {
 
     @Mock
@@ -42,6 +48,9 @@ class AuthServiceTest {
 
     @Mock
     private EmailVerificationTokenRepository verificationTokenRepository;
+
+    @Mock
+    private EmployeeRegistryRepository employeeRegistryRepository;
 
     @Mock
     private EmailService emailService;
@@ -62,8 +71,8 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    @DisplayName("Should login successfully with valid credentials")
-    void shouldLoginSuccessfullyWithValidCredentials() {
+    @DisplayName("logs in approved users with valid credentials")
+    void logsInApprovedUsersWithValidCredentials() {
         LoginRequest request = new LoginRequest();
         request.setEmail("user@example.com");
         request.setPassword("Secure@123");
@@ -77,7 +86,7 @@ class AuthServiceTest {
                 .status(UserStatus.APPROVED)
                 .emailVerified(true)
                 .phone("0771234567")
-                .nic("123456789")
+                .nic("200012345678")
                 .build();
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
@@ -92,8 +101,8 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw AuthenticationException when authenticated user cannot be loaded")
-    void shouldThrowAuthenticationExceptionWhenAuthenticatedUserCannotBeLoaded() {
+    @DisplayName("rejects login when no account exists for the email")
+    void rejectsLoginWhenNoAccountExistsForTheEmail() {
         LoginRequest request = new LoginRequest();
         request.setEmail("missing@example.com");
         request.setPassword("Secure@123");
@@ -104,27 +113,154 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Should reject registration when passwords do not match")
-    void shouldRejectRegistrationWhenPasswordsDoNotMatch() {
-        RegisterRequest request = new RegisterRequest();
-        request.setFullName("Test User");
-        request.setEmail("new@example.com");
-        request.setPhone("0771234567");
-        request.setNic("123456789");
-        request.setPassword("Secure@123");
+    @DisplayName("rejects registration when passwords do not match")
+    void rejectsRegistrationWhenPasswordsDoNotMatch() {
+        RegisterRequest request = buildRegisterRequest();
         request.setConfirmPassword("Mismatch@123");
-        request.setRequestedRole(Role.SYSTEM_USER);
-        request.setEmployeeId("EMP001");
-        request.setDepartment("Operations");
-        request.setOfficeLocation("HQ");
-        request.setDesignation("Coordinator");
 
-        assertThrows(ValidationException.class, () -> authService.register(request));
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> authService.register(request));
+
+        assertEquals("Passwords do not match.", exception.getErrors().get("confirmPassword"));
     }
 
     @Test
-    @DisplayName("Should reject staff registration without office location")
-    void shouldRejectStaffRegistrationWithoutOfficeLocation() {
+    @DisplayName("rejects public self-registration for non-staff roles")
+    void rejectsPublicSelfRegistrationForNonStaffRoles() {
+        RegisterRequest request = buildRegisterRequest();
+        request.setRequestedRole(Role.DRIVER);
+
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> authService.register(request));
+
+        assertEquals(
+                "Public registration is available only for company staff. Driver, approver, and administrator accounts must be created by an administrator.",
+                exception.getErrors().get("requestedRole")
+        );
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("rejects staff email step when no registry record matches")
+    void rejectsStaffEmailStepWhenNoRegistryRecordMatches() {
+        when(employeeRegistryRepository.findAllByEmailIgnoreCase("staff@example.com"))
+                .thenReturn(List.of());
+
+        ValidationException exception = assertThrows(
+                ValidationException.class,
+                () -> authService.verifyStaffEmailEligibility("staff@example.com")
+        );
+
+        assertEquals("Staff record not found", exception.getMessage());
+        assertEquals(
+                "This email address is not registered in the company staff registry. Please use your official company email address or contact the system administrator.",
+                exception.getErrors().get("email")
+        );
+    }
+
+    @Test
+    @DisplayName("rejects staff verification when registry details do not match")
+    void rejectsStaffVerificationWhenRegistryDetailsDoNotMatch() {
+        StaffVerificationRequest request = new StaffVerificationRequest();
+        request.setEmail("staff@example.com");
+        request.setFullName("Staff User");
+        request.setPhone("0771234567");
+        request.setNic("200012345678");
+        request.setEmployeeId("EMP001");
+
+        when(employeeRegistryRepository.findAllByEmployeeIdIgnoreCase("EMP001")).thenReturn(
+                List.of(
+                        EmployeeRegistryRecord.builder()
+                                .employeeId("EMP001")
+                                .email("staff@example.com")
+                                .phone("0719999999")
+                                .nic("200012345678")
+                                .fullName("Staff User")
+                                .department("Operations")
+                                .designation("Coordinator")
+                                .officeLocation("Head Office")
+                                .active(true)
+                                .build()
+                )
+        );
+
+        ValidationException exception = assertThrows(
+                ValidationException.class,
+                () -> authService.verifyStaffRegistrationDetails(request)
+        );
+
+        assertEquals("Staff verification failed", exception.getMessage());
+        assertEquals(
+                "The phone number does not match the verified company staff record for this employee ID.",
+                exception.getErrors().get("phone")
+        );
+    }
+
+    @Test
+    @DisplayName("registers verified staff and copies registry-backed fields")
+    void registersVerifiedStaffAndCopiesRegistryBackedFields() {
+        RegisterRequest request = buildRegisterRequest();
+        request.setFullName("Registry Staff");
+
+        when(employeeRegistryRepository.findAllByEmployeeIdIgnoreCase("EMP001")).thenReturn(
+                List.of(
+                        EmployeeRegistryRecord.builder()
+                                .employeeId("EMP001")
+                                .email("staff@example.com")
+                                .phone("0771234567")
+                                .nic("200012345678")
+                                .fullName("Registry Staff")
+                                .department("Operations")
+                                .designation("Coordinator")
+                                .officeLocation("Head Office")
+                                .active(true)
+                                .build()
+                )
+        );
+        when(passwordEncoder.encode("Secure@123")).thenReturn("encoded-password");
+        when(userRepository.findByEmail("staff@example.com")).thenReturn(Optional.empty());
+
+        authService.register(request);
+
+        verify(userRepository).save(argThat(user ->
+                user.getRole() == Role.SYSTEM_USER
+                        && "Registry Staff".equals(user.getFullName())
+                        && "EMP001".equals(user.getEmployeeId())
+                        && "Operations".equals(user.getDepartment())
+                        && "Coordinator".equals(user.getDesignation())
+                        && "Head Office".equals(user.getOfficeLocation())
+                        && user.getStatus() == UserStatus.EMAIL_UNVERIFIED
+        ));
+        verify(emailService).sendVerificationEmail(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("auto-approves verified company staff after email confirmation")
+    void autoApprovesVerifiedCompanyStaffAfterEmailConfirmation() {
+        User user = User.builder()
+                .email("staff@example.com")
+                .role(Role.SYSTEM_USER)
+                .status(UserStatus.EMAIL_UNVERIFIED)
+                .emailVerified(false)
+                .build();
+        EmailVerificationToken token = EmailVerificationToken.builder()
+                .token("token-123")
+                .user(user)
+                .expiryDate(Instant.now().plusSeconds(3600))
+                .build();
+
+        when(verificationTokenRepository.findByToken("token-123")).thenReturn(Optional.of(token));
+
+        UserStatus status = authService.verifyEmail("token-123");
+
+        assertEquals(UserStatus.APPROVED, status);
+        assertTrue(user.isEmailVerified());
+        assertEquals(UserStatus.APPROVED, user.getStatus());
+        verify(userRepository).save(user);
+        verify(verificationTokenRepository).deleteByUser(user);
+    }
+
+    private RegisterRequest buildRegisterRequest() {
         RegisterRequest request = new RegisterRequest();
         request.setFullName("Staff User");
         request.setEmail("staff@example.com");
@@ -134,70 +270,6 @@ class AuthServiceTest {
         request.setConfirmPassword("Secure@123");
         request.setRequestedRole(Role.SYSTEM_USER);
         request.setEmployeeId("EMP001");
-        request.setDepartment("Operations");
-        request.setDesignation("Coordinator");
-        request.setOfficeLocation("");
-
-        ValidationException exception =
-                assertThrows(ValidationException.class, () -> authService.register(request));
-
-        assertEquals("Validation failed", exception.getMessage());
-        assertEquals(
-                "Please select or enter the staff office location.",
-                exception.getErrors().get("officeLocation")
-        );
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    @DisplayName("Should allow driver registration without staff-only office location")
-    void shouldAllowDriverRegistrationWithoutStaffOnlyOfficeLocation() {
-        RegisterRequest request = new RegisterRequest();
-        request.setFullName("Driver User");
-        request.setEmail("driver@example.com");
-        request.setPhone("0771234567");
-        request.setNic("200012345678");
-        request.setPassword("Secure@123");
-        request.setConfirmPassword("Secure@123");
-        request.setRequestedRole(Role.DRIVER);
-        request.setLicenseNumber("B123456");
-        request.setLicenseExpiryDate(LocalDate.now().plusDays(30).toString());
-        request.setOfficeLocation("");
-
-        when(passwordEncoder.encode("Secure@123")).thenReturn("encoded-password");
-        when(userRepository.findByEmail("driver@example.com")).thenReturn(Optional.empty());
-
-        authService.register(request);
-
-        verify(userRepository).save(any(User.class));
-        verify(emailService).sendVerificationEmail(any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("Should throw conflict when email already exists")
-    void shouldThrowConflictWhenEmailAlreadyExists() {
-        RegisterRequest request = new RegisterRequest();
-        request.setFullName("Driver User");
-        request.setEmail("driver@example.com");
-        request.setPhone("0771234567");
-        request.setNic("200012345678");
-        request.setPassword("Secure@123");
-        request.setConfirmPassword("Secure@123");
-        request.setRequestedRole(Role.DRIVER);
-        request.setLicenseNumber("B123456");
-        request.setLicenseExpiryDate(LocalDate.now().plusDays(30).toString());
-
-        User existingUser = User.builder()
-                .email("driver@example.com")
-                .status(UserStatus.APPROVED)
-                .build();
-
-        when(userRepository.findByEmail("driver@example.com")).thenReturn(Optional.of(existingUser));
-
-        com.vfms.common.exception.ConflictException exception =
-                assertThrows(com.vfms.common.exception.ConflictException.class, () -> authService.register(request));
-
-        assertEquals("An account already exists with this email address.", exception.getMessage());
-        assertTrue(exception.getErrors().containsKey("email"));
+        return request;
     }
 }

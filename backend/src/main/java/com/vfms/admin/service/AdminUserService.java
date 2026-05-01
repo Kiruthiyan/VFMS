@@ -7,11 +7,14 @@ import com.vfms.admin.dto.ReviewUserRequest;
 import com.vfms.admin.dto.SoftDeleteRequest;
 import com.vfms.admin.dto.UpdateUserRequest;
 import com.vfms.admin.dto.UserSummaryResponse;
+import com.vfms.admin.dto.VerifiedStaffProfileResponse;
 import com.vfms.auth.service.EmailService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.employee.entity.EmployeeRegistryRecord;
+import com.vfms.employee.repository.EmployeeRegistryRepository;
 import com.vfms.security.SecurityContextProvider;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
@@ -29,6 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Coordinates administrator-managed account provisioning, review, recovery,
+ * and lifecycle changes for VFMS users.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -38,11 +45,28 @@ public class AdminUserService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final UserManagementProperties userManagementProperties;
+    private final EmployeeRegistryRepository employeeRegistryRepository;
 
     @Transactional
     public UserSummaryResponse createUser(CreateUserRequest request) {
-        String email = normalizeEmail(request.getEmail());
-        String phone = normalizeOptional(request.getPhone());
+        EmployeeRegistryRecord verifiedStaffRecord = null;
+        if (request.getRole() == Role.SYSTEM_USER) {
+            verifiedStaffRecord = findVerifiedStaffRecordForProvisioning(
+                    request.getEmployeeId(), null);
+        }
+
+        String email = verifiedStaffRecord != null
+                ? verifiedStaffRecord.getEmail()
+                : normalizeEmail(request.getEmail());
+        String phone = verifiedStaffRecord != null
+                ? normalizePhone(verifiedStaffRecord.getPhone())
+                : normalizeOptional(request.getPhone());
+        String fullName = verifiedStaffRecord != null
+                ? normalizeRequired(verifiedStaffRecord.getFullName())
+                : normalizeRequired(request.getFullName());
+        String nic = verifiedStaffRecord != null
+                ? normalizeNic(verifiedStaffRecord.getNic())
+                : normalizeRequired(request.getNic()).toUpperCase();
 
         if (phone == null) {
             throw new ValidationException("Validation failed", Map.of(
@@ -63,11 +87,11 @@ public class AdminUserService {
         String tempPassword = generateTempPassword();
 
         User user = User.builder()
-                .fullName(normalizeRequired(request.getFullName()))
+                .fullName(fullName)
                 .email(email)
                 .password(passwordEncoder.encode(tempPassword))
                 .phone(phone)
-                .nic(normalizeRequired(request.getNic()).toUpperCase())
+                .nic(nic)
                 .role(request.getRole())
                 .status(UserStatus.APPROVED)
                 .emailVerified(true)
@@ -76,7 +100,11 @@ public class AdminUserService {
                 .createdBy(SecurityContextProvider.getCurrentUserEmail())
                 .build();
 
-        applyRoleSpecificCreateFields(user, request);
+        if (verifiedStaffRecord != null) {
+            applyVerifiedStaffFields(user, verifiedStaffRecord);
+        } else {
+            applyRoleSpecificCreateFields(user, request);
+        }
         userRepository.save(user);
 
         log.info("[ADMIN-CREATE] User created: {} ({}) as {}",
@@ -94,6 +122,15 @@ public class AdminUserService {
         }
 
         return toSummary(user);
+    }
+
+    public VerifiedStaffProfileResponse getVerifiedStaffProfile(
+            String employeeId,
+            UUID excludeUserId
+    ) {
+        EmployeeRegistryRecord staffRecord = findVerifiedStaffRecordForProvisioning(
+                employeeId, excludeUserId);
+        return toVerifiedStaffProfile(staffRecord);
     }
 
     public List<UserSummaryResponse> getAllUsers() {
@@ -197,6 +234,8 @@ public class AdminUserService {
             throw new ValidationException("User is already deleted.");
         }
 
+        // Preserve the previous lifecycle state so an administrator can restore the
+        // account without losing whether it was approved or deactivated beforehand.
         user.setStatusBeforeDeletion(user.getStatus());
         user.setDeletedAt(LocalDateTime.now());
         user.setDeletedReason(request.getReason());
@@ -263,12 +302,21 @@ public class AdminUserService {
 
         Role targetRole = request.getRole() != null ? request.getRole() : user.getRole();
         boolean roleChanged = targetRole != user.getRole();
+        EmployeeRegistryRecord verifiedStaffRecord = null;
 
-        if (request.getFullName() != null) {
+        if (targetRole == Role.SYSTEM_USER) {
+            String staffEmployeeId = request.getEmployeeId() != null
+                    ? request.getEmployeeId()
+                    : user.getEmployeeId();
+            verifiedStaffRecord = findVerifiedStaffRecordForProvisioning(
+                    staffEmployeeId, user.getId());
+        }
+
+        if (verifiedStaffRecord == null && request.getFullName() != null) {
             user.setFullName(normalizeRequired(request.getFullName()));
         }
 
-        if (request.getEmail() != null) {
+        if (verifiedStaffRecord == null && request.getEmail() != null) {
             String normalizedEmail = normalizeEmail(request.getEmail());
             if (!normalizedEmail.equals(user.getEmail())
                     && userRepository.existsByEmailAndDeletedAtIsNull(normalizedEmail)) {
@@ -277,14 +325,14 @@ public class AdminUserService {
             user.setEmail(normalizedEmail);
         }
 
-        if (request.getPhone() != null) {
+        if (verifiedStaffRecord == null && request.getPhone() != null) {
             String phone = normalizeOptional(request.getPhone());
             if (phone != null) {
                 user.setPhone(phone);
             }
         }
 
-        if (request.getNic() != null) {
+        if (verifiedStaffRecord == null && request.getNic() != null) {
             String nic = normalizeOptional(request.getNic());
             if (nic != null) {
                 user.setNic(nic.toUpperCase());
@@ -296,7 +344,16 @@ public class AdminUserService {
             clearRoleSpecificFields(user);
         }
 
-        applyRoleSpecificUpdateFields(user, request, targetRole);
+        if (verifiedStaffRecord != null) {
+            user.setFullName(normalizeRequired(verifiedStaffRecord.getFullName()));
+            user.setEmail(verifiedStaffRecord.getEmail());
+            user.setPhone(normalizePhone(verifiedStaffRecord.getPhone()));
+            user.setNic(normalizeNic(verifiedStaffRecord.getNic()));
+            applyVerifiedStaffFields(user, verifiedStaffRecord);
+        } else {
+            applyRoleSpecificUpdateFields(user, request, targetRole);
+        }
+
         validateRoleSpecificFields(targetRole, user.getLicenseNumber(),
                 user.getLicenseExpiryDate() != null ? user.getLicenseExpiryDate().toString() : null,
                 user.getEmployeeId(), user.getDepartment(),
@@ -345,6 +402,18 @@ public class AdminUserService {
         if (request.getRole() == Role.APPROVER) {
             user.setApprovalLevel(normalizeOptional(request.getApprovalLevel()));
         }
+    }
+
+    /**
+     * Uses the verified employee registry as the source of truth for staff accounts
+     * so administrators do not retype identity data or create duplicate staff users.
+     */
+    private void applyVerifiedStaffFields(User user, EmployeeRegistryRecord staffRecord) {
+        clearRoleSpecificFields(user);
+        user.setEmployeeId(staffRecord.getEmployeeId());
+        user.setDepartment(staffRecord.getDepartment());
+        user.setOfficeLocation(staffRecord.getOfficeLocation());
+        user.setDesignation(staffRecord.getDesignation());
     }
 
     private void applyRoleSpecificUpdateFields(User user, UpdateUserRequest request, Role targetRole) {
@@ -396,6 +465,10 @@ public class AdminUserService {
         user.setApprovalLevel(null);
     }
 
+    /**
+     * Validates role-specific fields before creating or updating a user.
+     * This prevents incomplete driver or staff profiles from being approved.
+     */
     private void validateRoleSpecificFields(
             Role role,
             String licenseNumber,
@@ -434,15 +507,6 @@ public class AdminUserService {
             if (normalizeOptional(employeeId) == null) {
                 errors.put("employeeId", "Employee ID is required for staff accounts.");
             }
-            if (normalizeOptional(department) == null) {
-                errors.put("department", "Department is required for staff accounts.");
-            }
-            if (normalizeOptional(officeLocation) == null) {
-                errors.put("officeLocation", "Office location is required for staff accounts.");
-            }
-            if (normalizeOptional(designation) == null) {
-                errors.put("designation", "Designation is required for staff accounts.");
-            }
         }
 
         if (!errors.isEmpty()) {
@@ -464,6 +528,16 @@ public class AdminUserService {
         return normalizedValue == null ? null : normalizedValue.toUpperCase();
     }
 
+    private String normalizeNic(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.replaceAll("\\s+", "").toUpperCase();
+    }
+
+    private String normalizePhone(String value) {
+        String normalizedValue = normalizeOptional(value);
+        return normalizedValue == null ? null : normalizedValue.replaceAll("\\s+", "");
+    }
+
     private String normalizeRequired(String value) {
         String normalizedValue = normalizeOptional(value);
         if (normalizedValue == null) {
@@ -479,6 +553,69 @@ public class AdminUserService {
 
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * Loads a verified staff record and blocks duplicate VFMS accounts for the
+     * same employee identity before a staff account is created or reassigned.
+     */
+    private EmployeeRegistryRecord findVerifiedStaffRecordForProvisioning(
+            String employeeId,
+            UUID excludeUserId
+    ) {
+        String normalizedEmployeeId = normalizeIdentifier(employeeId);
+        if (normalizedEmployeeId == null) {
+            throw new ValidationException("Validation failed", Map.of(
+                    "employeeId", "Employee ID is required for staff accounts."
+            ));
+        }
+
+        EmployeeRegistryRecord staffRecord = employeeRegistryRepository
+                .findByEmployeeIdIgnoreCase(normalizedEmployeeId)
+                .orElseThrow(() -> new ValidationException("Validation failed", Map.of(
+                        "employeeId", "No verified company staff record was found for this employee ID."
+                )));
+
+        if (!staffRecord.isActive()) {
+            throw new ValidationException("Validation failed", Map.of(
+                    "employeeId", "This company staff record is inactive. Please contact an administrator."
+            ));
+        }
+
+        boolean duplicateEmployeeId = excludeUserId == null
+                ? userRepository.existsByEmployeeIdAndDeletedAtIsNull(staffRecord.getEmployeeId())
+                : userRepository.existsByEmployeeIdAndDeletedAtIsNullAndIdNot(
+                        staffRecord.getEmployeeId(), excludeUserId);
+        if (duplicateEmployeeId) {
+            throw new ValidationException("Validation failed", Map.of(
+                    "employeeId", "A user account already exists for this staff member."
+            ));
+        }
+
+        boolean duplicateEmail = excludeUserId == null
+                ? userRepository.existsByEmailAndDeletedAtIsNull(staffRecord.getEmail())
+                : userRepository.existsByEmailAndDeletedAtIsNullAndIdNot(
+                        staffRecord.getEmail(), excludeUserId);
+        if (duplicateEmail) {
+            throw new ValidationException("Validation failed", Map.of(
+                    "email", "An active account with this staff email already exists."
+            ));
+        }
+
+        return staffRecord;
+    }
+
+    private VerifiedStaffProfileResponse toVerifiedStaffProfile(EmployeeRegistryRecord staffRecord) {
+        return VerifiedStaffProfileResponse.builder()
+                .employeeId(staffRecord.getEmployeeId())
+                .fullName(staffRecord.getFullName())
+                .email(staffRecord.getEmail())
+                .phone(normalizePhone(staffRecord.getPhone()))
+                .nic(normalizeNic(staffRecord.getNic()))
+                .department(staffRecord.getDepartment())
+                .designation(staffRecord.getDesignation())
+                .officeLocation(staffRecord.getOfficeLocation())
+                .build();
     }
 
     private UserSummaryResponse toSummary(User user) {

@@ -181,16 +181,13 @@ export function VerifyEmailCard() {
         icon={CheckCircle2}
         tone="success"
         title="Email verified"
-        description="Your email address has been confirmed successfully. Your account will remain pending until an administrator approves access."
+        description="Your email address has been confirmed successfully. Your verified company staff account is now approved and ready to sign in."
       >
         <div className="space-y-3">
           <AuthInlineMessage
             type="info"
-            message="You will be able to sign in after admin approval is complete."
+            message="You can sign in now using the password you created during registration."
           />
-          <Button asChild className="w-full">
-            <Link href={AUTH_ROUTES.LOGIN}>Back to sign in</Link>
-          </Button>
         </div>
       </AuthStatusPanel>
     );
