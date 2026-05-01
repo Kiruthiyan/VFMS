@@ -6,13 +6,12 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
-  Clock3,
   Droplets,
   RefreshCw,
   Users,
 } from "lucide-react";
 
-import { getErrorMessage, getPendingUsersApi, getUserCountsApi, type UserCounts, type UserSummary } from "@/lib/api/admin";
+import { getErrorMessage, getUserCountsApi, type UserCounts } from "@/lib/api/admin";
 import { getAllFuelRecordsApi, type FuelRecord } from "@/lib/api/fuel";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { FormMessage } from "@/components/ui/form-message";
@@ -20,25 +19,13 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface DashboardSnapshot {
   counts: UserCounts | null;
-  pendingUsers: UserSummary[];
   fuelRecords: FuelRecord[];
 }
 
 const DEFAULT_SNAPSHOT: DashboardSnapshot = {
   counts: null,
-  pendingUsers: [],
   fuelRecords: [],
 };
-
-function formatDateTime(dateValue: string): string {
-  return new Date(dateValue).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function formatShortDate(dateValue: string): string {
   return new Date(dateValue).toLocaleDateString("en-US", {
@@ -58,15 +45,13 @@ export default function AdminDashboardPage() {
     setError(null);
 
     try {
-      const [counts, pendingUsers, fuelRecords] = await Promise.all([
+      const [counts, fuelRecords] = await Promise.all([
         getUserCountsApi(),
-        getPendingUsersApi(),
         getAllFuelRecordsApi(),
       ]);
 
       setSnapshot({
         counts,
-        pendingUsers,
         fuelRecords,
       });
     } catch (err) {
@@ -102,14 +87,6 @@ export default function AdminDashboardPage() {
         icon: CheckCircle2,
         accent: "bg-white text-slate-950",
         iconAccent: "bg-emerald-50 text-emerald-600",
-      },
-      {
-        title: "Pending Users",
-        value: counts?.pending ?? 0,
-        subtitle: "Registrations waiting for admin review",
-        icon: Clock3,
-        accent: "bg-white text-slate-950",
-        iconAccent: "bg-amber-50 text-amber-600",
       },
       {
         title: "Fuel Entries",
@@ -225,63 +202,7 @@ export default function AdminDashboardPage() {
               })}
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[1.2fr,0.8fr]">
-              <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-5 flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-950">
-                      Pending approvals
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      New registrations that need an admin decision.
-                    </p>
-                  </div>
-                  <Link
-                    href="/admin/users/pending"
-                    className="text-sm font-semibold text-slate-950 transition-colors hover:text-amber-600"
-                  >
-                    View all
-                  </Link>
-                </div>
-
-                {snapshot.pendingUsers.length === 0 ? (
-                  <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
-                    <p className="text-sm font-medium text-slate-600">
-                      No pending registrations right now.
-                    </p>
-                    <p className="mt-1 text-sm text-slate-400">
-                      New signup requests will appear here automatically.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {snapshot.pendingUsers.slice(0, 5).map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex flex-col gap-3 rounded-3xl border border-slate-200 px-4 py-4 transition-colors hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-slate-950">
-                            {user.fullName}
-                          </p>
-                          <p className="truncate text-sm text-slate-500">
-                            {user.email}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3 text-sm">
-                          <span className="rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-700">
-                            {user.role.replace("_", " ")}
-                          </span>
-                          <span className="text-slate-400">
-                            {formatDateTime(user.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </article>
-
+            <section className="grid gap-6 xl:grid-cols-1">
               <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-4">
                   <div>
@@ -364,7 +285,7 @@ export default function AdminDashboardPage() {
                   User Management
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Create user accounts, review registrations, update roles, and manage account status.
+                  Create user accounts, update roles, and manage account status.
                 </p>
               </Link>
               <Link

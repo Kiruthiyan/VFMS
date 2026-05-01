@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Applies configurable heuristics that help identify suspicious or inconsistent
+ * fuel entries before they are stored or updated.
+ */
 @Service
 @RequiredArgsConstructor
 public class FuelMisuseService {
@@ -21,6 +25,10 @@ public class FuelMisuseService {
     @Value("${fuel.misuse.max-entries-per-day:3}")
     private int maxEntriesPerDay;
 
+    /**
+     * Applies configurable misuse heuristics before a fuel record is saved.
+     * Thresholds stay in configuration so policy changes do not require code edits.
+     */
     public String checkForMisuse(FuelRecord record) {
         if (record.getQuantity().compareTo(BigDecimal.valueOf(maxLitresPerEntry)) > 0) {
             return "Quantity exceeds maximum allowed per entry (" + maxLitresPerEntry

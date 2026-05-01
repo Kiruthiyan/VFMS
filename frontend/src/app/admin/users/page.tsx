@@ -4,16 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
-  Clock,
   RefreshCw,
+  ShieldAlert,
   Trash2,
+  ShieldCheck,
   UserPlus,
   UserX,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 
-import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
 import { UserRoleBadge } from "@/components/admin/users/user-role-badge";
 import { UserStatusBadge } from "@/components/admin/users/user-status-badge";
 import { AdminShell } from "@/components/layout/admin-shell";
@@ -33,35 +33,28 @@ import {
 const SUMMARY_CARDS = [
   {
     key: "total",
-    label: "Total Users",
+    label: "Total Accounts",
     icon: Users,
     iconBg: "bg-amber-100",
     iconColor: "text-amber-700",
   },
   {
-    key: "approved",
-    label: "Approved",
+    key: "staff",
+    label: "Staff",
     icon: CheckCircle2,
     iconBg: "bg-emerald-100",
     iconColor: "text-emerald-700",
   },
   {
-    key: "pending",
-    label: "Pending",
-    icon: Clock,
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-700",
-  },
-  {
-    key: "deactivated",
-    label: "Deactivated",
+    key: "drivers",
+    label: "Drivers",
     icon: UserX,
     iconBg: "bg-red-100",
     iconColor: "text-red-700",
   },
   {
     key: "deleted",
-    label: "Deleted",
+    label: "Archived",
     icon: Trash2,
     iconBg: "bg-slate-100",
     iconColor: "text-slate-500",
@@ -81,7 +74,6 @@ export default function UserManagementDashboardPage() {
   const [counts, setCounts] = useState<UserCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
@@ -136,12 +128,32 @@ export default function UserManagementDashboardPage() {
     ];
   }, [users]);
 
+  const summaryValues = useMemo(
+    () => ({
+      total: counts?.total ?? users.length,
+      staff: users.filter((user) => user.role === "SYSTEM_USER").length,
+      drivers: users.filter((user) => user.role === "DRIVER").length,
+      deleted: counts?.deleted ?? 0,
+    }),
+    [counts, users]
+  );
+
+  const lifecycleSummary = useMemo(
+    () => [
+      { label: "Approved", value: counts?.approved ?? 0 },
+      { label: "Rejected", value: counts?.rejected ?? 0 },
+      { label: "Deactivated", value: counts?.deactivated ?? 0 },
+      { label: "Pending", value: counts?.pending ?? 0 },
+    ],
+    [counts]
+  );
+
   return (
     <AdminShell>
       <div className="space-y-6">
         <PageHeader
           title="User Management"
-          description="Use one organized workspace to review registrations, manage accounts, and monitor user access across VFMS."
+          description="Manage account creation, access control, and user lifecycle decisions from one enterprise-ready workspace."
           icon={Users}
           actions={
             <>
@@ -156,9 +168,11 @@ export default function UserManagementDashboardPage() {
                 />
                 Refresh
               </Button>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <UserPlus size={16} />
-                Create User
+              <Button asChild>
+                <Link href="/admin/users/create">
+                  <UserPlus size={16} />
+                  Create User
+                </Link>
               </Button>
             </>
           }
@@ -174,10 +188,11 @@ export default function UserManagementDashboardPage() {
         ) : (
           <>
             {counts && (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {SUMMARY_CARDS.map((card) => {
                   const Icon = card.icon;
-                  const count = counts[card.key as keyof UserCounts] ?? 0;
+                  const count =
+                    summaryValues[card.key as keyof typeof summaryValues] ?? 0;
                   return (
                     <Card
                       key={card.key}
@@ -204,6 +219,22 @@ export default function UserManagementDashboardPage() {
               </div>
             )}
 
+            <div className="rounded-[28px] border border-amber-200 bg-amber-50 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-white text-amber-700">
+                  <ShieldAlert className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">
+                    Onboarding Standard
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-700">
+                    Staff self-registration is registry-matched and email-verified. Driver, approver, and administrator accounts remain admin-controlled.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-5 lg:grid-cols-3">
               <Link href="/admin/users/all" className="group">
                 <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
@@ -226,21 +257,20 @@ export default function UserManagementDashboardPage() {
                 </Card>
               </Link>
 
-              <Link href="/admin/users/pending" className="group">
+              <Link href="/admin/users/create" className="group">
                 <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
                   <CardContent className="p-6">
-                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-                      <Clock className="h-5 w-5" />
+                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                      <UserPlus className="h-5 w-5" />
                     </div>
                     <CardTitle className="text-base font-semibold text-slate-950">
-                      Pending Users
+                      Create User
                     </CardTitle>
                     <p className="mt-2 text-sm text-slate-500">
-                      Review registrations waiting for approval and complete
-                      role assignment decisions.
+                      Provision new driver, staff, approver, or administrator accounts with the correct role details from the start.
                     </p>
                     <div className="mt-5 flex items-center justify-between text-sm font-semibold text-slate-700">
-                      <span>{counts?.pending ?? 0} awaiting review</span>
+                      <span>Admin-controlled onboarding</span>
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </div>
                   </CardContent>
@@ -269,12 +299,12 @@ export default function UserManagementDashboardPage() {
               </Link>
             </div>
 
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.95fr)]">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="border-b border-slate-200 px-6 py-4">
                     <CardTitle className="text-base font-semibold text-slate-950">
-                      Recent Registrations
+                      Recent Accounts
                     </CardTitle>
                   </div>
 
@@ -315,7 +345,7 @@ export default function UserManagementDashboardPage() {
               <Card>
                 <CardContent className="p-6">
                   <CardTitle className="mb-6 text-base font-semibold text-slate-950">
-                    Role Distribution
+                    Access Overview
                   </CardTitle>
                   <div className="space-y-4">
                     {roleSummary.map((item) => (
@@ -332,6 +362,41 @@ export default function UserManagementDashboardPage() {
                       </div>
                     ))}
                   </div>
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Lifecycle Status
+                    </p>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      {lifecycleSummary.map((item) => (
+                        <div
+                          key={item.label}
+                          className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            {item.label}
+                          </p>
+                          <p className="mt-2 text-2xl font-semibold text-slate-950">
+                            {item.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-xl bg-slate-950 text-amber-300">
+                        <ShieldCheck className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950">
+                          Access governance
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          Review role distribution regularly so high-privilege accounts stay limited to the correct users.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -339,12 +404,6 @@ export default function UserManagementDashboardPage() {
         )}
       </div>
 
-      {showCreateDialog && (
-        <CreateUserDialog
-          onClose={() => setShowCreateDialog(false)}
-          onSuccess={fetchDashboard}
-        />
-      )}
     </AdminShell>
   );
 }

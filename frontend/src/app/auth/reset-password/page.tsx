@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 
+import { AuthPageFooter } from "@/components/auth/auth-page-footer";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { AuthShell } from "@/components/layout/auth-shell";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
   title: "Reset Password",
@@ -24,16 +25,14 @@ export default function ResetPasswordPage() {
     <AuthShell
       title="Set a new password"
       description="Choose a strong password for your account."
-      actionHref="/auth/login"
-      actionLabel="Sign In"
       panelWidth="compact"
       footer={
-        <p className="text-center text-xs text-slate-500">
-          Need a new reset link?{" "}
-          <Link href="/auth/forgot-password" className="font-semibold text-slate-900 hover:text-amber-600">
-            Request one here
-          </Link>
-        </p>
+        <AuthPageFooter
+          prompt="Need a new reset link?"
+          actionLabel="Request another one"
+          actionHref={AUTH_ROUTES.FORGOT_PASSWORD}
+          supportingText="For security, reset links expire automatically after a limited time."
+        />
       }
     >
       <Suspense fallback={<ResetFallback />}>

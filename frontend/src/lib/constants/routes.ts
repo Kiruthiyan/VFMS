@@ -51,7 +51,6 @@ export const API_ENDPOINTS = {
   VERIFY_OTP: "/api/auth/verify-otp",
   GET_CURRENT_USER: "/api/user/me",
   CHANGE_PASSWORD: "/api/user/change-password",
-  GET_PENDING_USERS: "/api/admin/users/pending",
   APPROVE_USER: "/api/admin/users/{userId}/review",
   REJECT_USER: "/api/admin/users/{userId}/review",
 } as const;

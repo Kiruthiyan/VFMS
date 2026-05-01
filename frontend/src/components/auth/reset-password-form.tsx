@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, CheckCircle2, KeyRound } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -24,7 +24,6 @@ import {
 } from "@/lib/validators/auth/reset-password-schema";
 
 export function ResetPasswordForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -65,11 +64,7 @@ export function ResetPasswordForm() {
         tone="success"
         title="Password updated"
         description="Your password has been reset successfully. You can now sign in with your new credentials."
-      >
-        <Button className="w-full" onClick={() => router.push(AUTH_ROUTES.LOGIN)}>
-          Go to sign in
-        </Button>
-      </AuthStatusPanel>
+      />
     );
   }
 
@@ -139,15 +134,6 @@ export function ResetPasswordForm() {
           </>
         )}
       </Button>
-
-      <div className="text-center">
-        <Link
-          href={AUTH_ROUTES.LOGIN}
-          className="text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950"
-        >
-          Back to sign in
-        </Link>
-      </div>
     </motion.form>
   );
 }

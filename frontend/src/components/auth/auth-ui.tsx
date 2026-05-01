@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eye, EyeOff, type LucideIcon } from "lucide-react";
+import { Check, Eye, EyeOff, type LucideIcon } from "lucide-react";
 
 import { FormMessage } from "@/components/ui/form-message";
 import { cn } from "@/lib/utils";
@@ -62,19 +62,28 @@ export function AuthField({
   children,
 }: AuthFieldProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <label
         htmlFor={htmlFor}
-        className="block text-sm font-semibold text-slate-700"
+        className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-700"
       >
-        {label}
-        {required ? <span className="ml-1 text-red-500">*</span> : null}
+        <span>
+          {label}
+          {required ? <span className="ml-1 text-red-500">*</span> : null}
+        </span>
+        {required ? (
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Required
+          </span>
+        ) : null}
       </label>
       {children}
       {error ? (
-        <p className="text-xs font-medium text-red-600">{error}</p>
+        <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium leading-5 text-red-700">
+          {error}
+        </p>
       ) : hint ? (
-        <p className="text-xs text-slate-500">{hint}</p>
+        <p className="text-xs leading-5 text-slate-500">{hint}</p>
       ) : null}
     </div>
   );
@@ -168,18 +177,27 @@ interface AuthInlineMessageProps {
   type: "error" | "success" | "info";
   message: string | null;
   className?: string;
+  title?: string;
 }
 
 export function AuthInlineMessage({
   type,
   message,
   className,
+  title,
 }: AuthInlineMessageProps) {
   if (!message) {
     return null;
   }
 
-  return <FormMessage type={type} message={message} className={className} />;
+  return (
+    <FormMessage
+      type={type}
+      title={title}
+      message={message}
+      className={className}
+    />
+  );
 }
 
 interface AuthStatusPanelProps {
@@ -251,14 +269,14 @@ export function AuthStepIndicator({
   currentStep,
 }: AuthStepIndicatorProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
       <div className="h-2 overflow-hidden rounded-full bg-slate-200">
         <div
           className="h-full rounded-full bg-amber-400 transition-all duration-300"
           style={{ width: `${(currentStep / steps.length) * 100}%` }}
         />
       </div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-2">
         {steps.map((step) => {
           const isActive = step.number === currentStep;
           const isComplete = step.number < currentStep;
@@ -267,7 +285,7 @@ export function AuthStepIndicator({
             <div key={step.number} className="space-y-2">
               <div
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-2xl border text-xs font-bold transition-all",
+                  "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold transition-all",
                   isActive &&
                     "border-amber-300 bg-amber-100 text-amber-900 shadow-sm",
                   isComplete &&
@@ -277,7 +295,7 @@ export function AuthStepIndicator({
                     "border-slate-200 bg-white text-slate-400"
                 )}
               >
-                {step.number}
+                {isComplete ? <Check className="h-4 w-4" /> : step.number}
               </div>
               <p
                 className={cn(

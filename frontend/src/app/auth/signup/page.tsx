@@ -1,26 +1,26 @@
 'use client';
 
 import { Suspense } from 'react';
-import Link from 'next/link';
 
+import { AuthPageFooter } from '@/components/auth/auth-page-footer';
 import { SignupForm } from '@/components/forms/signup-form';
 import { AuthShell } from '@/components/layout/auth-shell';
+import { AUTH_ROUTES } from '@/lib/constants/routes';
 
 function SignupContent() {
   return (
     <AuthShell
-      title="Create your account"
-      description="Register to access the VFMS platform."
-      actionHref="/auth/login"
-      actionLabel="Sign In"
-      panelWidth="wide"
+      eyebrow="Verified staff registration"
+      title="Create Your VFMS Account"
+      description="Register with your verified company staff details."
+      panelWidth="standard"
       footer={
-        <p className="text-center text-xs text-slate-500">
-          Already have an account?{' '}
-          <Link href="/auth/login" className="font-semibold text-slate-900 hover:text-amber-600">
-            Sign in
-          </Link>
-        </p>
+        <AuthPageFooter
+          prompt="Already have an account?"
+          actionLabel="Sign in"
+          actionHref={AUTH_ROUTES.LOGIN}
+          supportingText="Verified company staff can sign in after email confirmation and approval."
+        />
       }
     >
       <SignupForm />

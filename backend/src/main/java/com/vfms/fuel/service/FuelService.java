@@ -34,6 +34,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Handles fuel record persistence, lookup metadata, and misuse re-evaluation
+ * for the fuel management module.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -302,6 +306,10 @@ public class FuelService {
         fuelRecordRepository.deleteById(id);
     }
 
+    /**
+     * Recalculates total cost on every create/update path so the persisted amount
+     * always matches the submitted quantity and price per litre.
+     */
     private BigDecimal calculateTotalCost(BigDecimal quantity, BigDecimal costPerLitre) {
         return quantity.multiply(costPerLitre).setScale(2, RoundingMode.HALF_UP);
     }
@@ -376,6 +384,10 @@ public class FuelService {
                 .collect(Collectors.joining(" "));
     }
 
+    /**
+     * Re-runs misuse checks after every create or update so manual edits cannot
+     * leave the flag state out of sync with the current fuel record values.
+     */
     private void reEvaluateMisuse(FuelRecord record) {
         record.setFlaggedForMisuse(false);
         record.setFlagReason(null);

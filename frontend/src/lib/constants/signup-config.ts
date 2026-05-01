@@ -1,58 +1,45 @@
 export const SIGNUP_CONFIG = {
-  TOTAL_STEPS: 5,
+  TOTAL_STEPS: 4,
   STEPS: [
     {
       number: 1,
-      title: "Email Verification",
-      description: "Enter your email to begin account creation",
+      title: "Email Address",
+      description: "Enter your company email to begin account creation",
       fields: ["email"],
     },
     {
       number: 2,
-      title: "Confirm Identity",
-      description: "Verify your email with the code we sent",
-      fields: ["otp"],
-    },
-    {
-      number: 3,
       title: "Personal Details",
       description: "Tell us more about yourself",
       fields: ["fullName", "phone", "nic"],
     },
     {
-      number: 4,
-      title: "Role and Qualifications",
-      description: "Select your role and provide any required details",
+      number: 3,
+      title: "Staff Verification",
+      description: "Confirm your company staff identity with your employee ID",
       fields: [
         "role",
-        "licenseNumber",
-        "licenseExpiryDate",
         "employeeId",
-        "department",
-        "designation",
-        "officeLocation",
       ],
     },
     {
-      number: 5,
+      number: 4,
       title: "Security Setup",
       description: "Create a secure password for your account",
       fields: ["password", "confirmPassword"],
     },
   ],
   STEP_TITLES: {
-    1: "Email Verification",
-    2: "Confirm Identity",
-    3: "Personal Details",
-    4: "Role and Qualifications",
-    5: "Security Setup",
+    1: "Email Address",
+    2: "Personal Details",
+    3: "Staff Verification",
+    4: "Security Setup",
   },
   STEP_DESCRIPTIONS: {
-    1: "Enter your email to begin account creation",
-    2: "Verify your email with the code we sent",
-    3: "Tell us more about yourself",
-    4: "Select your role and provide any required details",
-    5: "Create a secure password for your account",
+    1: "Enter your company email to begin account creation",
+    2: "Tell us more about yourself",
+    3: "Confirm your company staff identity with your employee ID",
+    4: "Create a secure password for your account",
   },
   PASSWORD_REQUIREMENTS: [
     { label: "At least 8 characters", key: "length", regex: /.{8,}/ },
@@ -84,13 +71,12 @@ export function validatePasswordComplexity(password: string): {
   };
 }
 
-export const AVAILABLE_SIGNUP_ROLES = ["DRIVER", "SYSTEM_USER"] as const;
+export const AVAILABLE_SIGNUP_ROLES = ["SYSTEM_USER"] as const;
 
 export type SignupRole = (typeof AVAILABLE_SIGNUP_ROLES)[number];
 
 export const ROLE_SPECIFIC_FIELDS: Record<SignupRole, string[]> = {
-  DRIVER: ["licenseNumber", "licenseExpiryDate"],
-  SYSTEM_USER: ["employeeId", "department", "designation", "officeLocation"],
+  SYSTEM_USER: ["employeeId"],
 };
 
 export const FIELD_VALIDATION = {
@@ -103,7 +89,7 @@ export const FIELD_VALIDATION = {
     message: "License expiry date must be in YYYY-MM-DD format",
   },
   employeeId: {
-    pattern: /^[A-Z0-9]{3,20}$/,
+    pattern: /^[A-Z0-9]{5,10}$/,
     message: "Invalid employee ID format",
   },
   nic: {
@@ -119,7 +105,7 @@ export const FIELD_VALIDATION = {
 export const SIGNUP_ERROR_MESSAGES = {
   EMAIL_ALREADY_REGISTERED:
     "This email is already registered. Try logging in instead.",
-  INVALID_ROLE: "Invalid role selected. Please choose Driver or System User.",
+  INVALID_ROLE: "Only company staff can self-register.",
   MISSING_REQUIRED_FIELDS: "Please fill in all required fields.",
   PASSWORD_MISMATCH: "Passwords do not match.",
   WEAK_PASSWORD: "Password does not meet complexity requirements.",

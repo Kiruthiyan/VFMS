@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 
+import { AuthPageFooter } from "@/components/auth/auth-page-footer";
 import { VerifyEmailCard } from "@/components/auth/verify-email-card";
 import { AuthShell } from "@/components/layout/auth-shell";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
   title: "Verify Email",
@@ -24,19 +25,14 @@ export default function VerifyEmailPage() {
     <AuthShell
       title="Verify your email"
       description="Enter the verification code or follow the email instructions."
-      actionHref="/auth/login"
-      actionLabel="Sign In"
       panelWidth="compact"
       footer={
-        <p className="text-center text-xs text-slate-500">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/auth/signup"
-            className="font-semibold text-slate-900 transition-colors hover:text-amber-600"
-          >
-            Create one
-          </Link>
-        </p>
+        <AuthPageFooter
+          prompt="Need to register first?"
+          actionLabel="Create your account"
+          actionHref={AUTH_ROUTES.SIGNUP}
+          supportingText="Only verified company staff can complete registration and platform access."
+        />
       }
     >
       <Suspense fallback={<VerifyEmailFallback />}>

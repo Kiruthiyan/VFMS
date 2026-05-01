@@ -24,6 +24,14 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   DRIVER: "Driver",
 };
 
+// Keeps admin-managed role options centralized so create/edit dialogs stay aligned.
+export const ADMIN_MANAGED_ROLE_OPTIONS: UserRole[] = [
+  "ADMIN",
+  "APPROVER",
+  "SYSTEM_USER",
+  "DRIVER",
+];
+
 export const ROLE_REDIRECTS: Record<UserRole, string> = {
   ADMIN: "/dashboards/admin",
   APPROVER: "/dashboards/approver",

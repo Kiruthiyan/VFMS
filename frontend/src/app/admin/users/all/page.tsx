@@ -7,7 +7,6 @@ import {
   RefreshCw,
   Search,
   SlidersHorizontal,
-  Trash2,
   UserPlus,
   Users,
   X,
@@ -15,7 +14,6 @@ import {
 import Link from "next/link";
 
 import type { UserRole, UserStatus } from "@/lib/auth";
-import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
 import { UserTable } from "@/components/admin/users/user-table";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { Button } from "@/components/ui/button";
@@ -27,15 +25,15 @@ import {
   getAllUsersApi,
   getErrorMessage,
   getUserCountsApi,
+  type UserCounts,
   type UserSummary,
 } from "@/lib/api/admin";
 
 const ITEMS_PER_PAGE = 15;
 
-const STATUS_FILTER_OPTIONS: { label: string; value: UserStatus | "ALL" }[] = [
+const BASE_STATUS_FILTER_OPTIONS: { label: string; value: UserStatus | "ALL" }[] = [
   { label: "All", value: "ALL" },
   { label: "Approved", value: "APPROVED" },
-  { label: "Pending", value: "PENDING_APPROVAL" },
   { label: "Rejected", value: "REJECTED" },
   { label: "Deactivated", value: "DEACTIVATED" },
 ];
@@ -50,14 +48,13 @@ const ROLE_FILTER_OPTIONS: { label: string; value: UserRole | "ALL" }[] = [
 
 export default function AllUsersPage() {
   const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
-  const [deletedCount, setDeletedCount] = useState(0);
+  const [counts, setCounts] = useState<UserCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -69,7 +66,7 @@ export default function AllUsersPage() {
         getUserCountsApi(),
       ]);
       setAllUsers(usersData);
-      setDeletedCount(countsData.deleted ?? 0);
+      setCounts(countsData);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -98,7 +95,8 @@ export default function AllUsersPage() {
         (user) =>
           user.fullName.toLowerCase().includes(query) ||
           user.email.toLowerCase().includes(query) ||
-          user.nic?.toLowerCase().includes(query)
+          user.nic?.toLowerCase().includes(query) ||
+          user.employeeId?.toLowerCase().includes(query)
       );
     }
 
@@ -110,28 +108,41 @@ export default function AllUsersPage() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+  const hasPendingUsers = useMemo(
+    () => allUsers.some((user) => user.status === "PENDING_APPROVAL"),
+    [allUsers]
+  );
+  const statusFilterOptions = useMemo(() => {
+    if (!hasPendingUsers) {
+      return BASE_STATUS_FILTER_OPTIONS;
+    }
+
+    return [
+      BASE_STATUS_FILTER_OPTIONS[0],
+      BASE_STATUS_FILTER_OPTIONS[1],
+      { label: "Pending", value: "PENDING_APPROVAL" as const },
+      ...BASE_STATUS_FILTER_OPTIONS.slice(2),
+    ];
+  }, [hasPendingUsers]);
   const hasActiveFilters =
     statusFilter !== "ALL" || roleFilter !== "ALL" || search.trim().length > 0;
-  const filteredSummary = useMemo(
-    () => ({
-      approved: filtered.filter((user) => user.status === "APPROVED").length,
-      pending: filtered.filter((user) => user.status === "PENDING_APPROVAL")
-        .length,
-      adminCreated: filtered.filter((user) => user.createdByAdmin).length,
-    }),
-    [filtered]
-  );
 
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, roleFilter, search]);
+
+  useEffect(() => {
+    if (!hasPendingUsers && statusFilter === "PENDING_APPROVAL") {
+      setStatusFilter("ALL");
+    }
+  }, [hasPendingUsers, statusFilter]);
 
   return (
     <AdminShell>
       <div className="space-y-6">
         <PageHeader
           title="All Users"
-          description="Run search, triage approvals, and handle account actions from one streamlined directory built for faster admin work."
+          description="Search, filter, and manage every VFMS account from one company-standard directory."
           icon={Users}
           actions={
             <>
@@ -145,82 +156,18 @@ export default function AllUsersPage() {
                 />
                 Refresh
               </Button>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <UserPlus size={16} />
-                Create User
+              <Button asChild>
+                <Link href="/admin/users/create">
+                  <UserPlus size={16} />
+                  Create User
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/admin/users/deleted">Deleted Users</Link>
               </Button>
             </>
           }
         />
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="rounded-[28px] border-slate-200 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Visible Users
-              </p>
-              <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                {filtered.length}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                {hasActiveFilters
-                  ? `Filtered from ${allUsers.length} total accounts`
-                  : "Live directory across approved, pending, and deactivated users"}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[28px] border-slate-200 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Approved
-              </p>
-              <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                {filteredSummary.approved}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                Active accounts currently ready to use the system
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[28px] border-slate-200 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Pending Review
-              </p>
-              <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                {filteredSummary.pending}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                Accounts still waiting for approval decisions
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[28px] border-slate-200 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Admin Created
-              </p>
-              <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                {filteredSummary.adminCreated}
-              </p>
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <p className="text-sm text-slate-500">
-                  Staff accounts created directly by administrators
-                </p>
-                <Link
-                  href="/admin/users/deleted"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
-                >
-                  <Trash2 size={12} />
-                  Deleted {deletedCount}
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-start lg:justify-between">
@@ -234,7 +181,19 @@ export default function AllUsersPage() {
               </h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
                 Combine search, role, and status filters to focus the table on
-                the accounts that need attention now.
+                the accounts that need attention now, including search by
+                employee ID.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <p className="font-semibold text-slate-950">
+                {filtered.length} account{filtered.length === 1 ? "" : "s"} shown
+              </p>
+              <p className="mt-1">
+                {hasActiveFilters
+                  ? `Filtered from ${allUsers.length} total user records.`
+                  : "Showing the complete active user directory."}
               </p>
             </div>
 
@@ -260,7 +219,7 @@ export default function AllUsersPage() {
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, email, or NIC..."
+                placeholder="Search by name, email, NIC, or employee ID..."
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-amber-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
             </div>
@@ -293,7 +252,7 @@ export default function AllUsersPage() {
                   Filter By Status
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {STATUS_FILTER_OPTIONS.map((option) => (
+                  {statusFilterOptions.map((option) => (
                     <button
                       key={option.value}
                       type="button"
@@ -329,9 +288,10 @@ export default function AllUsersPage() {
                     User Directory
                   </CardTitle>
                   <p className="mt-1 text-sm text-slate-500">
-                    Showing {filtered.length} matching account
-                    {filtered.length === 1 ? "" : "s"} across the current
-                    filters.
+                    Review user records, role assignments, and lifecycle status in one place.
+                    {counts?.pending
+                      ? ` ${counts.pending} legacy pending record${counts.pending === 1 ? "" : "s"} still require a decision.`
+                      : " No pending review records remain in the current workflow."}
                   </p>
                 </div>
                 <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
@@ -412,12 +372,6 @@ export default function AllUsersPage() {
         )}
       </div>
 
-      {showCreateDialog && (
-        <CreateUserDialog
-          onClose={() => setShowCreateDialog(false)}
-          onSuccess={fetchAll}
-        />
-      )}
     </AdminShell>
   );
 }

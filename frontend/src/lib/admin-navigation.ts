@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   BarChart3,
   Droplets,
-  FileClock,
   FileText,
   Flag,
   LayoutDashboard,
@@ -55,13 +54,6 @@ export const adminNavigationSections: AdminNavSection[] = [
         icon: ShieldCheck,
         exact: true,
         description: "Search, filter, and manage user accounts",
-      },
-      {
-        href: "/admin/users/pending",
-        label: "Pending Users",
-        icon: FileClock,
-        exact: true,
-        description: "Review registrations waiting for approval",
       },
       {
         href: "/admin/users/deleted",
@@ -154,6 +146,10 @@ export function isAdminNavItemActive(
 }
 
 export function getAdminPageTitle(pathname: string): string {
+  if (pathname === "/admin/users/create") {
+    return "Create User";
+  }
+
   const matchedItem = allAdminNavItems.find((item) =>
     isAdminNavItemActive(pathname, item)
   );
@@ -170,6 +166,10 @@ export function getAdminPageTitle(pathname: string): string {
 }
 
 export function getAdminPageDescription(pathname: string): string | null {
+  if (pathname === "/admin/users/create") {
+    return "Provision a new staff, driver, approver, or administrator account with the correct access profile.";
+  }
+
   const matchedItem = allAdminNavItems.find((item) =>
     isAdminNavItemActive(pathname, item)
   );
@@ -186,6 +186,10 @@ export function getAdminPageDescription(pathname: string): string | null {
 }
 
 export function getAdminBreadcrumbs(pathname: string): string[] {
+  if (pathname === "/admin/users/create") {
+    return ["Admin", "User Management", "Create User"];
+  }
+
   const breadcrumbs = ["Admin"];
   const matchedItem = allAdminNavItems.find((item) =>
     isAdminNavItemActive(pathname, item)

@@ -41,7 +41,8 @@ describe("auth api", () => {
         data: {
           message: "Validation failed",
           errors: {
-            officeLocation: "Please select or enter the staff office location.",
+            employeeId:
+              "No verified company staff record was found for this employee ID.",
           },
         },
       },
@@ -57,40 +58,33 @@ describe("auth api", () => {
         nic: "200012345678",
         requestedRole: "SYSTEM_USER",
         employeeId: "EMP001",
-        department: "Operations",
-        designation: "Coordinator",
-        officeLocation: "",
       });
     } catch (error) {
       expect(getFieldErrors(error)).toEqual({
-        officeLocation: "Please select or enter the staff office location.",
+        employeeId:
+          "No verified company staff record was found for this employee ID.",
       });
       expect(error).toMatchObject({
-        message: "Please select or enter the staff office location.",
+        message: "No verified company staff record was found for this employee ID.",
         status: 400,
       });
     }
   });
 
-  it("sends only driver-relevant fields for driver signup", async () => {
+  it("sends only staff verification fields for public signup", async () => {
     const postSpy = vi.spyOn(api, "post").mockResolvedValue({
       data: { success: true, message: "ok", data: null },
     });
 
     const request: SignupRequest = {
-      email: "driver@example.com",
+      email: "staff@example.com",
       password: "Secure@123",
       confirmPassword: "Secure@123",
-      fullName: "Driver User",
+      fullName: "Staff User",
       phone: "0771234567",
       nic: "200012345678",
-      requestedRole: "DRIVER",
-      licenseNumber: "B123456",
-      licenseExpiryDate: "2030-05-01",
+      requestedRole: "SYSTEM_USER",
       employeeId: "EMP001",
-      department: "Operations",
-      designation: "Coordinator",
-      officeLocation: "Colombo",
     };
 
     await signupApi(request);
@@ -98,16 +92,15 @@ describe("auth api", () => {
     expect(postSpy).toHaveBeenCalledWith(
       "/api/auth/register",
       expect.objectContaining({
-        email: "driver@example.com",
-        requestedRole: "DRIVER",
-        licenseNumber: "B123456",
-        licenseExpiryDate: "2030-05-01",
+        email: "staff@example.com",
+        requestedRole: "SYSTEM_USER",
+        employeeId: "EMP001",
       })
     );
 
     const payload = postSpy.mock.calls[0]?.[1] as Record<string, unknown>;
     expect(payload).not.toHaveProperty("role");
-    expect(payload).not.toHaveProperty("officeLocation");
-    expect(payload).not.toHaveProperty("department");
+    expect(payload).not.toHaveProperty("licenseNumber");
+    expect(payload).not.toHaveProperty("licenseExpiryDate");
   });
 });
