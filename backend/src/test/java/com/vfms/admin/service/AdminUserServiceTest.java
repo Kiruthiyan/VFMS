@@ -211,7 +211,7 @@ class AdminUserServiceTest {
 
         when(userRepository.existsByEmailAndDeletedAtIsNull("driver@vfms.com"))
                 .thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("hashed-temp-password");
+        when(passwordEncoder.encode(anyString())).thenReturn("fake-test-secret-only");
 
         adminUserService.createUser(req);
 
