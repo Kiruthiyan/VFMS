@@ -80,7 +80,7 @@ export default function SlidingAuthPage({ initialMode = "login" }: SlidingAuthPa
         try {
             // API call to Spring Boot Backend
             const response = await api.post("/auth/authenticate", data);
-            const authData = response.data;
+            const authData = response.data?.data || response.data;
 
             // Store JWT and User data
             authService.setAuth(authData);

@@ -106,6 +106,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return status != null && status;
+        // Legacy rows may have null status; treat them as active unless explicitly disabled.
+        return status == null || status;
     }
 }
