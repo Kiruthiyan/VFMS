@@ -6,6 +6,7 @@
 .env
 .env.*
 !.env.example
+*.local.env
 
 # Maven / Java build output
 target/
@@ -27,6 +28,9 @@ test_results_*.txt
 *.lock.db
 data/
 uploads/
+src/main/resources/application-local.properties
+src/main/resources/application-*.local.properties
+src/main/resources/application-secrets.properties
 
 # IDE files
 .idea/
