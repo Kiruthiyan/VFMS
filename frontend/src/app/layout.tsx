@@ -6,10 +6,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "VFMS",
-    template: "%s | VFMS",
+    default: "FleetPro",
+    template: "%s | FleetPro",
   },
-  description: "Vehicle Fuel Management System",
+  description: "FleetPro - Company Vehicle Fleet Management System",
 };
 
 export default function RootLayout({

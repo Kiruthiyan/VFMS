@@ -2,26 +2,16 @@
 
 import { Suspense } from 'react';
 
-import { AuthPageFooter } from '@/components/auth/auth-page-footer';
 import { SignupForm } from '@/components/forms/signup-form';
 import { AuthShell } from '@/components/layout/auth-shell';
-import { AUTH_ROUTES } from '@/lib/constants/routes';
 
 function SignupContent() {
   return (
     <AuthShell
       eyebrow="Verified staff registration"
-      title="Create Your VFMS Account"
-      description="Register with your verified company staff details."
-      panelWidth="standard"
-      footer={
-        <AuthPageFooter
-          prompt="Already have an account?"
-          actionLabel="Sign in"
-          actionHref={AUTH_ROUTES.LOGIN}
-          supportingText="Verified company staff can sign in after email confirmation and approval."
-        />
-      }
+      title="Create your FleetPro account"
+      description="Register using your verified company staff information."
+      panelWidth="compact"
     >
       <SignupForm />
     </AuthShell>

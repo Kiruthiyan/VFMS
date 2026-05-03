@@ -5,20 +5,20 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import {
   AuthField,
+  AuthFormLinks,
   AuthInlineMessage,
   AuthInput,
-  AuthStatusPanel,
   PasswordField,
 } from '@/components/auth/auth-ui';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { getErrorMessage, loginApi } from '@/lib/api/auth';
-import { AUTH_ROUTES, DEFAULT_ROUTES, ROLE_DASHBOARDS } from '@/lib/constants/routes';
+import { AUTH_ROUTES, DEFAULT_ROUTES, PUBLIC_ROUTES, ROLE_DASHBOARDS } from '@/lib/constants/routes';
 import { loginSchema, type LoginFormValues } from '@/lib/validators/auth/login-schema';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -26,7 +26,6 @@ export function LoginForm() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     register,
@@ -50,28 +49,13 @@ export function LoginForm() {
       });
 
       setAuth(response);
-      setIsSuccess(true);
-
-      setTimeout(() => {
-        router.replace(
-          ROLE_DASHBOARDS[response.role] ?? DEFAULT_ROUTES.DEFAULT_DASHBOARD
-        );
-      }, 1200);
+      router.replace(
+        ROLE_DASHBOARDS[response.role] ?? DEFAULT_ROUTES.DEFAULT_DASHBOARD
+      );
     } catch (error: unknown) {
       setServerError(getErrorMessage(error));
     }
   };
-
-  if (isSuccess) {
-    return (
-      <AuthStatusPanel
-        icon={CheckCircle2}
-        tone="success"
-        title="Welcome back"
-        description="Your account is ready. Redirecting you to the correct workspace now."
-      />
-    );
-  }
 
   return (
     <motion.form
@@ -79,12 +63,12 @@ export function LoginForm() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-5"
+      className="space-y-4"
       noValidate
     >
       <AuthInlineMessage type="error" message={serverError} />
 
-      <div className="space-y-5">
+      <div className="space-y-4">
         <AuthField
           htmlFor="email"
           label="Email address"
@@ -128,7 +112,6 @@ export function LoginForm() {
       <Button
         type="submit"
         className="w-full"
-        size="lg"
         disabled={isSubmitting}
       >
         {isSubmitting ? (
@@ -143,6 +126,13 @@ export function LoginForm() {
           </>
         )}
       </Button>
+
+      <AuthFormLinks
+        prompt="Need a new account?"
+        actionLabel="Sign up"
+        actionHref={AUTH_ROUTES.SIGNUP}
+        homeHref={PUBLIC_ROUTES.HOME}
+      />
     </motion.form>
   );
 }

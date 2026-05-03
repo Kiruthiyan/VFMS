@@ -9,6 +9,7 @@ import {
   LockKeyhole,
   ShieldCheck,
   Trash2,
+  UserPlus,
   Users,
 } from "lucide-react";
 
@@ -54,6 +55,13 @@ export const adminNavigationSections: AdminNavSection[] = [
         icon: ShieldCheck,
         exact: true,
         description: "Search, filter, and manage user accounts",
+      },
+      {
+        href: "/admin/users/create",
+        label: "Create User",
+        icon: UserPlus,
+        exact: true,
+        description: "Provision a new user account with the correct role details",
       },
       {
         href: "/admin/users/deleted",
