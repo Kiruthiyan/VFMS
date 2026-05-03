@@ -93,12 +93,16 @@ e:\SoftWare Project\VFMS\
     ```bash
     cd backend
     ```
-2.  Configure Database:
-    Open `src/main/resources/application.properties` and update your PostgreSQL credentials:
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/vfms_db
-    spring.datasource.username=your_username
-    spring.datasource.password=your_password
+2.  Configure environment variables:
+    Use `backend/.env.example` as the source of required keys, then provide the values through your shell, IDE run configuration, or other local environment management tooling.
+    ```powershell
+    $env:DB_URL="<set-locally>"
+    $env:DB_USERNAME="<set-locally>"
+    $env:DB_PASSWORD="<set-locally>"
+    $env:JWT_SECRET="<set-locally>"
+    $env:MAIL_USERNAME="<set-locally>"
+    $env:MAIL_PASSWORD="<set-locally>"
+    $env:CORS_ALLOWED_ORIGINS="http://localhost:3000"
     ```
 3.  Run the application:
     ```bash
