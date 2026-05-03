@@ -27,7 +27,7 @@ export default function DriverDashboardPage() {
         {summaryCards.map((card) => (
           <article
             key={card.title}
-            className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm"
+            className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm transition-transform hover:-translate-y-0.5"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -56,7 +56,10 @@ export default function DriverDashboardPage() {
               <CalendarClock className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-xl font-bold text-slate-950">Driver-focused structure</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Workspace Focus
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-slate-950">Driver-focused structure</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 The driver workspace now matches the same enterprise system used elsewhere, with a calmer shell and cleaner content surfaces for future task flows.
               </p>

@@ -10,10 +10,10 @@ import { ZodError } from 'zod';
 
 import {
   AuthField,
+  AuthFormLinks,
   AuthInlineMessage,
   AuthInput,
   AuthSectionHeader,
-  AuthStepIndicator,
   AuthStatusPanel,
   PasswordField,
 } from '@/components/auth/auth-ui';
@@ -51,13 +51,6 @@ interface SignupAlert {
   title?: string;
   message: string;
 }
-
-const SIGNUP_STEPS: Array<{ number: SignupStep; title: string }> = [
-  { number: 1, title: 'Company Email' },
-  { number: 2, title: 'Personal Details' },
-  { number: 3, title: 'Staff Verification' },
-  { number: 4, title: 'Password Setup' },
-];
 
 const SIGNUP_ERROR_COPY = {
   staffNotFound: {
@@ -205,7 +198,6 @@ export function SignupForm() {
   const [formData, setFormData] = useState<Partial<SignupFormData>>({});
   const [serverAlert, setServerAlert] = useState<SignupAlert | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
 
   const step1Form = useForm<SignupStep1Values>({
     resolver: step1Resolver,
@@ -302,14 +294,12 @@ export function SignupForm() {
 
   const handleStep1Submit = async (data: SignupStep1Values) => {
     setServerAlert(null);
-    setEmailVerified(false);
     const email = data.email.trim().toLowerCase();
     step1Form.clearErrors();
 
     try {
       await verifyStaffEmailApi({ email });
       setFormData((prev) => ({ ...prev, step1: { email } }));
-      setEmailVerified(true);
       setCurrentStep(2);
     } catch (error: unknown) {
       const fieldErrors = getFieldErrors(error);
@@ -407,24 +397,14 @@ export function SignupForm() {
       <AuthStatusPanel
         icon={CheckCircle2}
         tone="success"
-        title="Registration Submitted"
-        description="Check your company email to verify your account."
+        title="Check your company email"
+        description="Your registration has been submitted. Verify your email to activate your FleetPro account."
       />
     );
   }
 
   return (
-    <div className="space-y-5">
-      <AuthStepIndicator steps={SIGNUP_STEPS} currentStep={currentStep} />
-
-     
-      <AuthInlineMessage
-        type="success"
-        title="Email verified"
-        message={emailVerified && currentStep > 1 ? 'Company email confirmed.' : null}
-        className="shadow-sm"
-      />
-
+    <div className="space-y-2">
       <AuthInlineMessage
         type="error"
         title={serverAlert?.title}
@@ -439,20 +419,19 @@ export function SignupForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
           onSubmit={step1Form.handleSubmit(handleStep1Submit)}
-          className="space-y-6"
+          className="space-y-3"
           noValidate
         >
           <AuthSectionHeader
             eyebrow="Step 1 of 4"
             title="Company Email"
-            description="Enter your official company email to continue."
+            description="Enter your company email."
           />
 
           <AuthField
             htmlFor="email"
             label="Company Email Address"
             error={step1Form.formState.errors.email?.message}
-            hint="Use the email listed in your company staff registry."
             required
           >
             <AuthInput
@@ -482,6 +461,13 @@ export function SignupForm() {
               'Continue'
             )}
           </Button>
+
+          <AuthFormLinks
+            prompt="Already have an account?"
+            actionLabel="Sign in"
+            actionHref={AUTH_ROUTES.LOGIN}
+            homeHref={PUBLIC_ROUTES.HOME}
+          />
         </motion.form>
       ) : null}
 
@@ -492,21 +478,20 @@ export function SignupForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
           onSubmit={step3Form.handleSubmit(handleStep3Submit)}
-          className="space-y-6"
+          className="space-y-3"
           noValidate
         >
           <AuthSectionHeader
             eyebrow="Step 2 of 4"
             title="Personal Details"
-            description="Enter your details as recorded in the staff registry."
+            description="Enter the details in your staff profile."
           />
 
-          <div className="grid gap-5">
+          <div className="grid gap-2.5">
             <AuthField
               htmlFor="fullName"
               label="Full name"
               error={step3Form.formState.errors.fullName?.message}
-              hint="Use the name shown in official company records."
               required
             >
               <AuthInput
@@ -519,12 +504,11 @@ export function SignupForm() {
               />
             </AuthField>
 
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-2.5 md:grid-cols-2">
               <AuthField
                 htmlFor="phone"
                 label="Phone number"
                 error={step3Form.formState.errors.phone?.message}
-                hint="Use your active staff phone number."
                 required
               >
                 <AuthInput
@@ -540,7 +524,6 @@ export function SignupForm() {
                 htmlFor="nic"
                 label="NIC number"
                 error={step3Form.formState.errors.nic?.message}
-                hint="Use the NIC registered in staff records."
                 required
               >
                 <AuthInput
@@ -563,6 +546,13 @@ export function SignupForm() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+
+          <AuthFormLinks
+            prompt="Already have an account?"
+            actionLabel="Sign in"
+            actionHref={AUTH_ROUTES.LOGIN}
+            homeHref={PUBLIC_ROUTES.HOME}
+          />
         </motion.form>
       ) : null}
 
@@ -573,20 +563,19 @@ export function SignupForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
           onSubmit={step4Form.handleSubmit(handleStep4Submit)}
-          className="space-y-6"
+           className="space-y-3"
           noValidate
         >
           <AuthSectionHeader
             eyebrow="Step 3 of 4"
             title="Staff Verification"
-            description="Confirm your staff identity using your Employee ID."
+            description="Confirm your staff identity."
           />
 
           <AuthField
             htmlFor="employeeId"
             label="Employee ID"
             error={step4Form.formState.errors.employeeId?.message}
-            hint="Must match an active staff registry record."
             required
           >
             <AuthInput
@@ -617,84 +606,123 @@ export function SignupForm() {
               )}
             </Button>
           </div>
+
+          <AuthFormLinks
+            prompt="Already have an account?"
+            actionLabel="Sign in"
+            actionHref={AUTH_ROUTES.LOGIN}
+            homeHref={PUBLIC_ROUTES.HOME}
+          />
         </motion.form>
       ) : null}
 
       {currentStep === 4 ? (
-        <motion.form
-          key="step4"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          onSubmit={step5Form.handleSubmit(handleStep5Submit)}
-          className="space-y-6"
-          noValidate
-        >
-          <AuthSectionHeader
-            eyebrow="Step 4 of 4"
-            title="Password Setup"
-            description="Create a secure password for your VFMS account."
+  <motion.form
+    key="step4"
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.25 }}
+    onSubmit={step5Form.handleSubmit(handleStep5Submit)}
+    className="space-y-2 lg:flex lg:min-h-[360px] lg:flex-col"
+    noValidate
+  >
+    <AuthSectionHeader
+      eyebrow="Step 4 of 4"
+      title="Password Setup"
+      description="Create a secure password."
+    />
+
+    <div className="space-y-2 lg:sidebar-scrollbar-hidden lg:max-h-[210px] lg:flex-1 lg:overflow-y-auto lg:pr-1">
+      <PasswordField
+        id="password"
+        label="Create Password"
+        placeholder="Create a strong password"
+        autoFocus
+        autoComplete="new-password"
+        error={step5Form.formState.errors.password?.message}
+        disabled={step5Form.formState.isSubmitting}
+        required
+        {...step5Form.register('password')}
+      />
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          Password requirements
+        </p>
+
+        <div className="mt-1 grid gap-1 sm:grid-cols-2">
+          <PasswordRequirement
+            satisfied={passwordChecks.length}
+            label="At least 8 characters"
           />
+          <PasswordRequirement
+            satisfied={passwordChecks.uppercase}
+            label="One uppercase letter"
+          />
+          <PasswordRequirement
+            satisfied={passwordChecks.lowercase}
+            label="One lowercase letter"
+          />
+          <PasswordRequirement
+            satisfied={passwordChecks.number}
+            label="One number"
+          />
+          <PasswordRequirement
+            satisfied={passwordChecks.special}
+            label="One special character"
+          />
+        </div>
+      </div>
 
-          <div className="space-y-5">
-            <PasswordField
-              id="password"
-              label="Create Password"
-              placeholder="Create a strong password"
-              autoFocus
-              autoComplete="new-password"
-              error={step5Form.formState.errors.password?.message}
-              hint="Use a password that is unique to your VFMS account."
-              disabled={step5Form.formState.isSubmitting}
-              required
-              {...step5Form.register('password')}
-            />
+      <PasswordField
+        id="confirmPassword"
+        label="Confirm Password"
+        placeholder="Re-enter your password"
+        autoComplete="new-password"
+        error={step5Form.formState.errors.confirmPassword?.message}
+        disabled={step5Form.formState.isSubmitting}
+        required
+        {...step5Form.register('confirmPassword')}
+      />
+    </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Password requirements
-              </p>
-              <div className="mt-3 space-y-2">
-                <PasswordRequirement satisfied={passwordChecks.length} label="At least 8 characters" />
-                <PasswordRequirement satisfied={passwordChecks.uppercase} label="One uppercase letter" />
-                <PasswordRequirement satisfied={passwordChecks.lowercase} label="One lowercase letter" />
-                <PasswordRequirement satisfied={passwordChecks.number} label="One number" />
-                <PasswordRequirement satisfied={passwordChecks.special} label="One special character" />
-              </div>
-            </div>
+    <div className="space-y-2 pt-0">
+      <div className="flex gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={handlePreviousStep}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </Button>
 
-            <PasswordField
-              id="confirmPassword"
-              label="Confirm Password"
-              placeholder="Re-enter your password"
-              autoComplete="new-password"
-              error={step5Form.formState.errors.confirmPassword?.message}
-              hint="Enter the same password again to confirm it."
-              disabled={step5Form.formState.isSubmitting}
-              required
-              {...step5Form.register('confirmPassword')}
-            />
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={step5Form.formState.isSubmitting}
+        >
+          {step5Form.formState.isSubmitting ? (
+            <>
+              <LoadingSpinner size={16} />
+              Creating Account...
+            </>
+          ) : (
+            'Create Account'
+          )}
+        </Button>
+      </div>
 
-          </div>
-
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" className="flex-1" onClick={handlePreviousStep}>
-              <ChevronLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <Button type="submit" className="flex-1" disabled={step5Form.formState.isSubmitting}>
-              {step5Form.formState.isSubmitting ? (
-                <>
-                  <LoadingSpinner size={16} />
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account'
-              )}
-            </Button>
-          </div>
-        </motion.form>
-      ) : null}
+      <AuthFormLinks
+        prompt="Already have an account?"
+        actionLabel="Sign in"
+        actionHref={AUTH_ROUTES.LOGIN}
+        homeHref={PUBLIC_ROUTES.HOME}
+      />
+    </div>
+  </motion.form>
+) : null}
     </div>
   );
 }

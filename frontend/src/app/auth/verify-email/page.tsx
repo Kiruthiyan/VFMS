@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { AuthPageFooter } from "@/components/auth/auth-page-footer";
 import { VerifyEmailCard } from "@/components/auth/verify-email-card";
 import { AuthShell } from "@/components/layout/auth-shell";
-import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
   title: "Verify Email",
@@ -24,16 +22,8 @@ export default function VerifyEmailPage() {
   return (
     <AuthShell
       title="Verify your email"
-      description="Enter the verification code or follow the email instructions."
+      description="Confirm your company email so FleetPro can finish your account setup securely."
       panelWidth="compact"
-      footer={
-        <AuthPageFooter
-          prompt="Need to register first?"
-          actionLabel="Create your account"
-          actionHref={AUTH_ROUTES.SIGNUP}
-          supportingText="Only verified company staff can complete registration and platform access."
-        />
-      }
     >
       <Suspense fallback={<VerifyEmailFallback />}>
         <VerifyEmailCard />

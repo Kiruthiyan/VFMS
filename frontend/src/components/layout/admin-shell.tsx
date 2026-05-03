@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Menu, Shield, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
+import { FleetProLogo } from "@/components/branding/fleetpro-logo";
 import { logoutApi } from "@/lib/api/auth";
 import {
   adminNavigationSections,
-  getAdminBreadcrumbs,
   isAdminNavItemActive,
 } from "@/lib/admin-navigation";
 import { AUTH_ROUTES } from "@/lib/constants/routes";
@@ -25,9 +25,7 @@ export function AdminShell({ children }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
-  const user = useAuthStore((state) => state.user);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const breadcrumbs = getAdminBreadcrumbs(pathname).join(" / ");
 
   const handleLogout = async () => {
     try {
@@ -44,15 +42,15 @@ export function AdminShell({ children }: AdminShellProps) {
   const SidebarContent = (
     <div className="flex h-full flex-col">
       <div className="border-b border-white/10 px-5 py-5">
-        <Link href="/dashboards/admin" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20">
-            <Shield className="h-4 w-4" />
-          </div>
+        <Link href="/dashboards/admin" className="space-y-3">
+          <FleetProLogo theme="dark" size="sm" />
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-              VFMS
+              Administrative workspace
             </p>
-            <h1 className="text-base font-semibold text-white">Admin Panel</h1>
+            <h1 className="text-sm leading-6 text-slate-300">
+              Manage users, fuel activity, and platform controls from one place.
+            </h1>
           </div>
         </Link>
       </div>
@@ -150,41 +148,16 @@ export function AdminShell({ children }: AdminShellProps) {
       </aside>
 
       <div className="lg:pl-64 xl:pl-[17rem]">
-        <header className="app-topbar sticky top-0 z-30">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-            <div className="flex min-w-0 items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileOpen(true)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-50 lg:hidden"
-              >
-                <Menu className="h-4 w-4" />
-              </button>
-
-              <div className="min-w-0">
-                <p className="truncate text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                  {breadcrumbs}
-                </p>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">
-                    Admin Workspace
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="hidden shrink-0 items-center gap-3 sm:flex">
-              <div className="app-surface-soft rounded-3xl px-4 py-2.5">
-                <p className="text-sm font-bold text-slate-950">
-                  {user?.fullName ?? "Administrator"}
-                </p>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  {user?.role?.replace("_", " ") ?? "Admin"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </header>
+        <div className="px-4 pt-4 sm:px-6 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open admin menu"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        </div>
 
         <main className="px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl space-y-6">{children}</div>

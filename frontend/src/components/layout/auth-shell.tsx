@@ -1,53 +1,52 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+
+import { FleetProLogo } from "@/components/branding/fleetpro-logo";
 
 interface AuthShellProps {
   title: string;
   description: string;
   children: ReactNode;
-  actionLabel?: string;
-  actionHref?: string;
   eyebrow?: string;
-  footer?: ReactNode;
   panelWidth?: "compact" | "standard" | "wide";
 }
 
-
 function AuthBrandPanel() {
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-[30rem] xl:w-[40rem]">
-      <div className="relative flex min-h-screen w-full flex-col overflow-hidden border-r border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-10 py-12 text-white xl:px-12">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(251,191,36,0.12),_transparent_18%)]" />
-        <div className="absolute left-[-5rem] top-[-4rem] h-40 w-40 rounded-full bg-amber-400/10 blur-3xl" />
-        <div className="absolute bottom-[-5rem] right-[-4rem] h-48 w-48 rounded-full bg-amber-300/10 blur-3xl" />
+    <aside className="hidden h-screen bg-slate-950 px-8 py-10 text-white lg:flex lg:w-[48%] lg:flex-col xl:px-10">
+      <Link href="/" className="self-start">
+        <FleetProLogo theme="dark" />
+      </Link>
 
-        <div className="relative z-10 flex h-full flex-col items-center justify-center text-center">
-          <Link href="/" className="absolute left-0 top-0 flex items-center gap-3">
-            <span className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/20 backdrop-blur">
-              <span className="absolute inset-x-2 top-2 h-1.5 rounded-full bg-amber-300" />
-              <span className="absolute left-2 top-5 h-5 w-3 rounded-full border border-amber-300/70" />
-              <span className="absolute right-2 top-5 h-5 w-3 rounded-full border border-amber-300/70" />
-              <span className="absolute bottom-2 left-1/2 h-1.5 w-6 -translate-x-1/2 rounded-full bg-white/80" />
-            </span>
-            <div className="text-left">
-              <p className="text-lg font-bold tracking-tight text-white">
-                FleetPro
-              </p>
-            </div>
-          </Link>
+      <div className="flex flex-1 items-center justify-end">
+        <div className="max-w-md text-center lg:mr-6 xl:mr-10">
+          <div className="mb-6 inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-200">
+            Fleet Management Platform
+          </div>
 
-          <div className="mt-12 max-w-xl space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/25 bg-amber-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-amber-200">
-              Trusted operations platform
-            </div>
-            <div className="space-y-4">
-              <h1 className="text-4xl font-black tracking-tight text-white xl:text-5xl">
-                FleetPro brings users, vehicles, and fuel operations into one secure workspace.
-              </h1>
-              <p className="text-base leading-7 text-slate-300">
-                Built for company teams who need secure access, clear approvals, and reliable fleet records in a professional day-to-day system.
-              </p>
-            </div>
+          <h1 className="mx-auto max-w-md text-[2.1rem] font-black leading-tight tracking-tight text-white xl:text-[2.55rem]">
+            Secure access to your FleetPro workspace.
+          </h1>
+
+          <div className="mx-auto mt-5 max-w-sm space-y-4 text-sm leading-7 text-slate-300 xl:text-[15px]">
+            <p>
+              FleetPro provides a secure and professional access portal for
+              company fleet operations.
+            </p>
+
+            <p>
+              Verified users can sign in, register, and continue directly to
+              their role-based dashboard.
+            </p>
+
+            <p>
+              Designed to support user management, approvals, vehicle records,
+              and fuel operations in one reliable workspace.
+            </p>
           </div>
         </div>
       </div>
@@ -57,27 +56,18 @@ function AuthBrandPanel() {
 
 function AuthMobileHeader() {
   return (
-    <div className="mb-6 rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm backdrop-blur lg:hidden">
-      <Link href="/" className="flex items-center gap-3">
-        <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
-          <span className="absolute inset-x-2 top-2 h-1.5 rounded-full bg-amber-300" />
-          <span className="absolute left-2 top-4.5 h-4.5 w-3 rounded-full border border-amber-300/80" />
-          <span className="absolute right-2 top-4.5 h-4.5 w-3 rounded-full border border-amber-300/80" />
-          <span className="absolute bottom-2 left-1/2 h-1.5 w-5 -translate-x-1/2 rounded-full bg-white/90" />
-        </span>
-        <p className="text-base font-bold tracking-tight text-slate-950">
-          FleetPro
-        </p>
+    <div className="mb-5 rounded-3xl border border-white/10 bg-slate-900 p-4 text-white shadow-xl shadow-black/20 lg:hidden">
+      <Link href="/" className="flex items-center justify-center">
+        <FleetProLogo theme="dark" size="sm" />
       </Link>
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-          Trusted operations platform
+
+      <div className="mt-4 text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200">
+          Fleet Management Platform
         </p>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          FleetPro brings users, vehicles, and fuel operations into one secure workspace.
-        </p>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          Built for company teams who need secure access, clear approvals, and reliable fleet records in a professional day-to-day system.
+
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          Secure access for verified FleetPro company users.
         </p>
       </div>
     </div>
@@ -88,53 +78,56 @@ export function AuthShell({
   title,
   description,
   children,
-  actionLabel,
-  actionHref,
-  eyebrow = "Account access",
-  footer,
+  eyebrow = "Account Access",
   panelWidth = "standard",
 }: AuthShellProps) {
+  const pathname = usePathname();
+
   const panelWidths = {
-    compact: "max-w-lg",
-    standard: "max-w-2xl",
-    wide: "max-w-4xl",
+    compact: "max-w-md",
+    standard: "max-w-lg",
+    wide: "max-w-2xl",
   } as const;
 
   return (
-    <main className="app-shell-background min-h-screen text-slate-950">
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.12),_transparent_18%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)]" />
-        <div className="absolute right-[-10rem] top-[6rem] h-[24rem] w-[24rem] rounded-full bg-slate-200/70 blur-3xl" />
-        <div className="absolute bottom-[-8rem] left-[25%] h-[18rem] w-[18rem] rounded-full bg-amber-100/40 blur-3xl" />
-      </div>
+    <main className="relative min-h-screen overflow-x-hidden bg-slate-950 text-slate-950 lg:h-screen lg:overflow-hidden">
+      <div className="flex min-h-screen flex-col bg-slate-950 lg:h-screen lg:flex-row">
+        <AuthBrandPanel />
 
-      <AuthBrandPanel />
-
-      <section className="min-h-screen lg:ml-[34rem] xl:ml-[40rem]">
-        <div className="mx-auto flex min-h-screen w-full items-center justify-center px-4 py-6 sm:px-6 lg:px-10 lg:py-10 xl:px-14">
+        <section className="flex min-h-screen flex-1 items-center justify-center bg-slate-950 px-4 py-5 sm:px-6 lg:h-screen lg:min-h-0 lg:w-[52%] lg:flex-none lg:justify-start lg:px-8 lg:py-5 xl:px-10">
           <div className={`w-full ${panelWidths[panelWidth]}`}>
             <AuthMobileHeader />
 
-            <div className="app-surface-card rounded-[32px] p-6 sm:p-8 lg:p-9">
-              <div className="mb-8 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
-                  {eyebrow}
-                </p>
-                <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                  {title}
-                </h1>
-                <p className="max-w-xl text-sm leading-7 text-slate-500 sm:text-base">
-                  {description}
-                </p>
-              </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 16, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.985 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              >
+                 <div className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-2xl shadow-black/30 sm:p-6 lg:min-h-[500px] lg:p-6">
+                  <div className="mb-4 space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                      {eyebrow}
+                    </p>
 
-              {children}
-            </div>
+                    <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-[1.9rem]">
+                      {title}
+                    </h1>
 
-            {footer ? <div className="mt-6">{footer}</div> : null}
+                    <p className="max-w-xl text-sm leading-5 text-slate-500">
+                      {description}
+                    </p>
+                  </div>
+
+                  {children}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

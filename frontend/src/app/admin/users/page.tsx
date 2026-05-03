@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowRight,
   CheckCircle2,
   RefreshCw,
   ShieldAlert,
-  Trash2,
   ShieldCheck,
+  Trash2,
+  Truck,
   UserPlus,
-  UserX,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 
+import { UserManagementNav } from "@/components/admin/users/user-management-nav";
 import { UserRoleBadge } from "@/components/admin/users/user-role-badge";
 import { UserStatusBadge } from "@/components/admin/users/user-status-badge";
 import { AdminShell } from "@/components/layout/admin-shell";
@@ -34,6 +34,7 @@ const SUMMARY_CARDS = [
   {
     key: "total",
     label: "Total Accounts",
+    description: "All registered platform accounts",
     icon: Users,
     iconBg: "bg-amber-100",
     iconColor: "text-amber-700",
@@ -41,25 +42,28 @@ const SUMMARY_CARDS = [
   {
     key: "staff",
     label: "Staff",
+    description: "Verified company system users",
     icon: CheckCircle2,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-700",
+    iconBg: "bg-slate-100",
+    iconColor: "text-slate-700",
   },
   {
     key: "drivers",
     label: "Drivers",
-    icon: UserX,
-    iconBg: "bg-red-100",
-    iconColor: "text-red-700",
+    description: "Admin-created driver accounts",
+    icon: Truck,
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-700",
   },
   {
     key: "deleted",
     label: "Archived",
+    description: "Soft-deleted user records",
     icon: Trash2,
     iconBg: "bg-slate-100",
     iconColor: "text-slate-500",
   },
-];
+] as const;
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -84,6 +88,7 @@ export default function UserManagementDashboardPage() {
         getAllUsersApi(),
         getUserCountsApi(),
       ]);
+
       setUsers(usersData);
       setCounts(countsData);
     } catch (err) {
@@ -141,9 +146,9 @@ export default function UserManagementDashboardPage() {
   const lifecycleSummary = useMemo(
     () => [
       { label: "Approved", value: counts?.approved ?? 0 },
+      { label: "Pending", value: counts?.pending ?? 0 },
       { label: "Rejected", value: counts?.rejected ?? 0 },
       { label: "Deactivated", value: counts?.deactivated ?? 0 },
-      { label: "Pending", value: counts?.pending ?? 0 },
     ],
     [counts]
   );
@@ -153,7 +158,7 @@ export default function UserManagementDashboardPage() {
       <div className="space-y-6">
         <PageHeader
           title="User Management"
-          description="Manage account creation, access control, and user lifecycle decisions from one enterprise-ready workspace."
+          description="Manage user accounts, access control, roles, and lifecycle decisions from one professional FleetPro workspace."
           icon={Users}
           actions={
             <>
@@ -168,6 +173,7 @@ export default function UserManagementDashboardPage() {
                 />
                 Refresh
               </Button>
+
               <Button asChild>
                 <Link href="/admin/users/create">
                   <UserPlus size={16} />
@@ -178,155 +184,140 @@ export default function UserManagementDashboardPage() {
           }
         />
 
+        <UserManagementNav />
+
         {loading ? (
-          <div className="flex flex-col items-center gap-3 py-20">
-            <LoadingSpinner size={28} className="text-slate-950" />
-            <p className="text-sm text-slate-500">Loading user dashboard...</p>
+          <div className="rounded-[28px] border border-slate-200 bg-white py-20 shadow-sm">
+            <div className="flex flex-col items-center gap-3">
+              <LoadingSpinner size={28} className="text-slate-950" />
+              <p className="text-sm font-medium text-slate-500">
+                Loading user dashboard...
+              </p>
+            </div>
           </div>
         ) : error ? (
           <FormMessage type="error" message={error} />
         ) : (
           <>
-            {counts && (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <section className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                    Account Overview
+                  </p>
+                  <h2 className="mt-2 text-xl font-black tracking-tight text-slate-950">
+                    FleetPro user access summary
+                  </h2>
+                </div>
+
+                <p className="max-w-xl text-sm leading-6 text-slate-500">
+                  Monitor registered accounts, staff access, driver profiles,
+                  and archived records in one place.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {SUMMARY_CARDS.map((card) => {
                   const Icon = card.icon;
                   const count =
                     summaryValues[card.key as keyof typeof summaryValues] ?? 0;
+
                   return (
                     <Card
                       key={card.key}
-                      className="rounded-2xl border-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                      className="rounded-[24px] border-slate-200 bg-slate-50 shadow-none transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                     >
                       <CardContent className="p-5">
-                        <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-start justify-between gap-4">
                           <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.iconBg}`}
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${card.iconBg}`}
                           >
-                            <Icon className={`h-4 w-4 ${card.iconColor}`} />
+                            <Icon className={`h-5 w-5 ${card.iconColor}`} />
                           </div>
+
+                          <p className="text-3xl font-black tracking-tight text-slate-950">
+                            {count}
+                          </p>
                         </div>
-                        <p className="text-3xl font-semibold tracking-tight text-slate-950">
-                          {count}
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-slate-500">
-                          {card.label}
-                        </p>
+
+                        <div className="mt-5">
+                          <p className="text-sm font-bold text-slate-950">
+                            {card.label}
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            {card.description}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   );
                 })}
               </div>
-            )}
+            </section>
 
-            <div className="rounded-[28px] border border-amber-200 bg-amber-50 px-5 py-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-white text-amber-700">
-                  <ShieldAlert className="h-4 w-4" />
+            <section className="rounded-[28px] border border-amber-200 bg-amber-50 p-5 shadow-sm">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-700 shadow-sm">
+                  <ShieldAlert className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">
+
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-950">
                     Onboarding Standard
                   </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-700">
-                    Staff self-registration is registry-matched and email-verified. Driver, approver, and administrator accounts remain admin-controlled.
+                  <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-700">
+                    Staff self-registration is matched with verified company
+                    records and email verification. Driver, approver, and
+                    administrator accounts remain controlled by the admin team.
                   </p>
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div className="grid gap-5 lg:grid-cols-3">
-              <Link href="/admin/users/all" className="group">
-                <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <CardTitle className="text-base font-semibold text-slate-950">
-                      All Users
-                    </CardTitle>
-                    <p className="mt-2 text-sm text-slate-500">
-                      Open the full user directory with search, role filters,
-                      status filters, and actions.
-                    </p>
-                    <div className="mt-5 flex items-center justify-between text-sm font-semibold text-slate-700">
-                      <span>{counts?.total ?? 0} total accounts</span>
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/users/create" className="group">
-                <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                      <UserPlus className="h-5 w-5" />
-                    </div>
-                    <CardTitle className="text-base font-semibold text-slate-950">
-                      Create User
-                    </CardTitle>
-                    <p className="mt-2 text-sm text-slate-500">
-                      Provision new driver, staff, approver, or administrator accounts with the correct role details from the start.
-                    </p>
-                    <div className="mt-5 flex items-center justify-between text-sm font-semibold text-slate-700">
-                      <span>Admin-controlled onboarding</span>
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/users/deleted" className="group">
-                <Card className="h-full transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                      <Trash2 className="h-5 w-5" />
-                    </div>
-                    <CardTitle className="text-base font-semibold text-slate-950">
-                      Deleted Users
-                    </CardTitle>
-                    <p className="mt-2 text-sm text-slate-500">
-                      Access archived user records for audit, restore actions,
-                      and lifecycle tracking.
-                    </p>
-                    <div className="mt-5 flex items-center justify-between text-sm font-semibold text-slate-700">
-                      <span>{counts?.deleted ?? 0} archived records</span>
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
-
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-              <Card className="overflow-hidden">
+            <section className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+              <Card className="overflow-hidden rounded-[30px] border-slate-200 bg-white shadow-sm">
                 <CardContent className="p-0">
-                  <div className="border-b border-slate-200 px-6 py-4">
-                    <CardTitle className="text-base font-semibold text-slate-950">
-                      Recent Accounts
-                    </CardTitle>
+                  <div className="flex flex-col gap-2 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="text-base font-bold text-slate-950">
+                        Recent Accounts
+                      </CardTitle>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Latest user accounts created in FleetPro.
+                      </p>
+                    </div>
+
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/admin/users/all">View All</Link>
+                    </Button>
                   </div>
 
                   {recentUsers.length === 0 ? (
-                    <div className="px-6 py-10 text-sm text-slate-500">
-                      No user records available yet.
+                    <div className="px-6 py-12 text-center">
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                        <Users className="h-5 w-5" />
+                      </div>
+                      <p className="mt-4 text-sm font-medium text-slate-600">
+                        No user records available yet.
+                      </p>
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-200">
                       {recentUsers.map((user) => (
                         <div
                           key={user.id}
-                          className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+                          className="flex flex-col gap-4 px-6 py-4 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-950">
+                            <p className="truncate text-sm font-bold text-slate-950">
                               {user.fullName}
                             </p>
+
                             <p className="mt-1 truncate text-xs text-slate-500">
                               {user.email}
                             </p>
-                            <p className="mt-2 text-xs text-slate-400">
+
+                            <p className="mt-2 text-xs font-medium text-slate-400">
                               Registered {formatDate(user.createdAt)}
                             </p>
                           </div>
@@ -342,68 +333,81 @@ export default function UserManagementDashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-[30px] border-slate-200 bg-white shadow-sm">
                 <CardContent className="p-6">
-                  <CardTitle className="mb-6 text-base font-semibold text-slate-950">
-                    Access Overview
-                  </CardTitle>
-                  <div className="space-y-4">
+                  <div className="mb-6">
+                    <CardTitle className="text-base font-bold text-slate-950">
+                      Access Overview
+                    </CardTitle>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      Role distribution and account lifecycle status.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
                     {roleSummary.map((item) => (
                       <div
                         key={item.label}
-                        className="flex items-center justify-between border-b border-slate-200 pb-4 last:border-b-0 last:pb-0"
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
                       >
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-semibold text-slate-700">
                           {item.label}
                         </span>
-                        <span className="text-xl font-semibold text-slate-950">
+
+                        <span className="text-xl font-black text-slate-950">
                           {item.value}
                         </span>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+
+                  <div className="mt-5 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       Lifecycle Status
                     </p>
+
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       {lifecycleSummary.map((item) => (
                         <div
                           key={item.label}
                           className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
                         >
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                             {item.label}
                           </p>
-                          <p className="mt-2 text-2xl font-semibold text-slate-950">
+
+                          <p className="mt-2 text-2xl font-black text-slate-950">
                             {item.value}
                           </p>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+
+                  <div className="mt-5 rounded-[24px] border border-slate-200 bg-slate-950 p-4 text-white">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-xl bg-slate-950 text-amber-300">
+                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-300/15 text-amber-300">
                         <ShieldCheck className="h-4 w-4" />
                       </div>
+
                       <div>
-                        <p className="text-sm font-semibold text-slate-950">
-                          Access governance
+                        <p className="text-sm font-bold text-white">
+                          Access Governance
                         </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          Review role distribution regularly so high-privilege accounts stay limited to the correct users.
+
+                        <p className="mt-1 text-sm leading-6 text-slate-300">
+                          Review role distribution regularly and keep
+                          high-privilege access limited to approved users.
                         </p>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </section>
           </>
         )}
       </div>
-
     </AdminShell>
   );
 }

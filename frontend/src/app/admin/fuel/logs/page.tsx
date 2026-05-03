@@ -89,12 +89,25 @@ export default function FuelEntryLogsPage() {
         />
 
         <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <FuelFilterBar
-            vehicles={vehicles}
-            drivers={drivers}
-            onFilter={handleFilter}
-            loading={filtering}
-          />
+          <div className="border-b border-slate-200 pb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Filter Records
+            </p>
+            <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
+              Narrow the fuel record list
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Refine the table by date, vehicle, or driver without leaving the logs workspace.
+            </p>
+          </div>
+          <div className="mt-5">
+            <FuelFilterBar
+              vehicles={vehicles}
+              drivers={drivers}
+              onFilter={handleFilter}
+              loading={filtering}
+            />
+          </div>
         </div>
 
         {loading ? (
@@ -109,7 +122,7 @@ export default function FuelEntryLogsPage() {
         ) : error ? (
           <FormMessage type="error" message={error} />
         ) : records.length === 0 ? (
-          <Card className="py-16 text-center">
+          <Card className="rounded-[28px] py-16 text-center shadow-sm">
             <CardContent>
               <p className="mb-4 text-sm font-medium text-slate-600">
                 No fuel records found
@@ -123,7 +136,7 @@ export default function FuelEntryLogsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-[28px] shadow-sm">
             <CardContent className="p-0">
               <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
                 <CardTitle className="text-base font-semibold text-slate-950">

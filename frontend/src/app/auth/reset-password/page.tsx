@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { AuthPageFooter } from "@/components/auth/auth-page-footer";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { AuthShell } from "@/components/layout/auth-shell";
-import { AUTH_ROUTES } from "@/lib/constants/routes";
 
 export const metadata: Metadata = {
   title: "Reset Password",
-  description: "Set a new password for your VFMS account",
+  description: "Set a new password for your FleetPro account",
 };
 
 function ResetFallback() {
@@ -24,16 +22,8 @@ export default function ResetPasswordPage() {
   return (
     <AuthShell
       title="Set a new password"
-      description="Choose a strong password for your account."
+      description="Choose a strong new password to secure your FleetPro account."
       panelWidth="compact"
-      footer={
-        <AuthPageFooter
-          prompt="Need a new reset link?"
-          actionLabel="Request another one"
-          actionHref={AUTH_ROUTES.FORGOT_PASSWORD}
-          supportingText="For security, reset links expire automatically after a limited time."
-        />
-      }
     >
       <Suspense fallback={<ResetFallback />}>
         <ResetPasswordForm />

@@ -14,8 +14,10 @@ import {
 import { getErrorMessage, getUserCountsApi, type UserCounts } from "@/lib/api/admin";
 import { getAllFuelRecordsApi, type FuelRecord } from "@/lib/api/fuel";
 import { AdminShell } from "@/components/layout/admin-shell";
+import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface DashboardSnapshot {
   counts: UserCounts | null;
@@ -122,40 +124,25 @@ export default function AdminDashboardPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <section className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-xl shadow-slate-950/10 sm:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-300/90">
-                Administrative Overview
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Manage users, fuel workflows, and operational visibility from one place.
-              </h1>
-              <p className="max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
-                This dashboard reuses the live User Management and Fuel Management modules already in the system and surfaces the most important admin signals first.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={loadDashboard}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-60"
-              >
-                <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-                Refresh data
-              </button>
-              <Link
-                href="/admin/users"
-                className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-300"
-              >
-                Open user management
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <PageHeader
+          title="Admin Dashboard"
+          description="Manage users, fuel workflows, and operational visibility from one consistent FleetPro workspace."
+          icon={Users}
+          actions={
+            <>
+              <Button variant="outline" onClick={loadDashboard} disabled={loading}>
+                <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                Refresh
+              </Button>
+              <Button asChild>
+                <Link href="/admin/users">
+                  Open User Management
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </>
+          }
+        />
 
         {loading ? (
           <div className="flex min-h-[320px] items-center justify-center rounded-[28px] border border-slate-200 bg-white shadow-sm">

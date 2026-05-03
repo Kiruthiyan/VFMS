@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Check, Eye, EyeOff, type LucideIcon } from "lucide-react";
 
 import { FormMessage } from "@/components/ui/form-message";
@@ -28,17 +29,17 @@ export function AuthSectionHeader({
   align = "left",
 }: AuthSectionHeaderProps) {
   return (
-    <div className={cn("space-y-2", align === "center" && "text-center")}>
+    <div className={cn("space-y-1.5", align === "center" && "text-center")}>
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
           {eyebrow}
         </p>
       ) : null}
-      <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+      <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
         {title}
       </h2>
       {description ? (
-        <p className="text-sm leading-7 text-slate-500">{description}</p>
+        <p className="text-sm leading-6 text-slate-500">{description}</p>
       ) : null}
     </div>
   );
@@ -62,7 +63,7 @@ export function AuthField({
   children,
 }: AuthFieldProps) {
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-1.5">
       <label
         htmlFor={htmlFor}
         className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-700"
@@ -72,7 +73,7 @@ export function AuthField({
           {required ? <span className="ml-1 text-red-500">*</span> : null}
         </span>
         {required ? (
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
             Required
           </span>
         ) : null}
@@ -83,7 +84,7 @@ export function AuthField({
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs leading-5 text-slate-500">{hint}</p>
+        <p className="text-[11px] leading-4 text-slate-500">{hint}</p>
       ) : null}
     </div>
   );
@@ -269,14 +270,14 @@ export function AuthStepIndicator({
   currentStep,
 }: AuthStepIndicatorProps) {
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
-      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 sm:p-4">
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
         <div
           className="h-full rounded-full bg-amber-400 transition-all duration-300"
           style={{ width: `${(currentStep / steps.length) * 100}%` }}
         />
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-2">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-2">
         {steps.map((step) => {
           const isActive = step.number === currentStep;
           const isComplete = step.number < currentStep;
@@ -285,7 +286,7 @@ export function AuthStepIndicator({
             <div key={step.number} className="space-y-2">
               <div
                 className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold transition-all",
+                  "flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-bold transition-all",
                   isActive &&
                     "border-amber-300 bg-amber-100 text-amber-900 shadow-sm",
                   isComplete &&
@@ -299,7 +300,7 @@ export function AuthStepIndicator({
               </div>
               <p
                 className={cn(
-                  "line-clamp-2 text-[11px] font-semibold leading-4",
+                  "line-clamp-2 text-[10px] font-semibold leading-4",
                   isActive
                     ? "text-slate-900"
                     : isComplete
@@ -313,6 +314,42 @@ export function AuthStepIndicator({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+interface AuthFormLinksProps {
+  prompt: string;
+  actionLabel: string;
+  actionHref: string;
+  homeHref: string;
+  homeLabel?: string;
+}
+
+export function AuthFormLinks({
+  prompt,
+  actionLabel,
+  actionHref,
+  homeHref,
+  homeLabel = "Back to home",
+}: AuthFormLinksProps) {
+  return (
+    <div className="border-t border-slate-200 pt-3 text-center">
+      <p className="text-sm text-slate-600">
+        {prompt}{" "}
+        <Link
+          href={actionHref}
+          className="font-semibold text-slate-950 transition-colors hover:text-amber-600"
+        >
+          {actionLabel}
+        </Link>
+      </p>
+      <Link
+        href={homeHref}
+        className="mt-1.5 inline-flex text-xs font-medium text-slate-500 transition-colors hover:text-amber-600"
+      >
+        {homeLabel}
+      </Link>
     </div>
   );
 }
