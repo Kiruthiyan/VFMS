@@ -68,6 +68,7 @@ build/
 
 ## VS Code
 .vscode/
+.claude/
 
 # ===============================
 # FRONTEND (NEXT.JS / NODE)
@@ -80,6 +81,7 @@ dist/
 # ===============================
 # TEST / TEMP FILES
 # ===============================
+backend/.m2/
 test_output.txt
 test_results_*.txt
 
