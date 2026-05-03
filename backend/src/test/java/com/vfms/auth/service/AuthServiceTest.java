@@ -75,13 +75,13 @@ class AuthServiceTest {
     void logsInApprovedUsersWithValidCredentials() {
         LoginRequest request = new LoginRequest();
         request.setEmail("user@example.com");
-        request.setPassword("TestPassword123!");
+        request.setPassword("Secure@123");
 
         User user = User.builder()
                 .id(UUID.randomUUID())
                 .fullName("Test User")
                 .email("user@example.com")
-                .password("encoded-test-password")
+                .password("encoded-password")
                 .role(Role.SYSTEM_USER)
                 .status(UserStatus.APPROVED)
                 .emailVerified(true)
@@ -90,12 +90,12 @@ class AuthServiceTest {
                 .build();
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(user)).thenReturn("fake-test-secret-only");
+        when(jwtService.generateToken(user)).thenReturn("jwt-token");
         when(refreshTokenService.createRefreshToken(user)).thenReturn(
-                RefreshToken.builder().token("fake-test-secret-only").user(user).build()
+                RefreshToken.builder().token("refresh-token").user(user).build()
         );
 
-        assertEquals("fake-test-secret-only", authService.login(request).getAccessToken());
+        assertEquals("jwt-token", authService.login(request).getAccessToken());
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(userRepository).findByEmail("user@example.com");
     }
@@ -105,7 +105,7 @@ class AuthServiceTest {
     void rejectsLoginWhenNoAccountExistsForTheEmail() {
         LoginRequest request = new LoginRequest();
         request.setEmail("missing@example.com");
-        request.setPassword("TestPassword123!");
+        request.setPassword("Secure@123");
 
         when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
 
@@ -116,7 +116,7 @@ class AuthServiceTest {
     @DisplayName("rejects registration when passwords do not match")
     void rejectsRegistrationWhenPasswordsDoNotMatch() {
         RegisterRequest request = buildRegisterRequest();
-        request.setConfirmPassword("MismatchTestPassword123!");
+        request.setConfirmPassword("Mismatch@123");
 
         ValidationException exception =
                 assertThrows(ValidationException.class, () -> authService.register(request));
@@ -217,7 +217,7 @@ class AuthServiceTest {
                                 .build()
                 )
         );
-        when(passwordEncoder.encode("TestPassword123!")).thenReturn("encoded-test-password");
+        when(passwordEncoder.encode("Secure@123")).thenReturn("encoded-password");
         when(userRepository.findByEmail("staff@example.com")).thenReturn(Optional.empty());
 
         authService.register(request);
@@ -266,8 +266,8 @@ class AuthServiceTest {
         request.setEmail("staff@example.com");
         request.setPhone("0771234567");
         request.setNic("200012345678");
-        request.setPassword("TestPassword123!");
-        request.setConfirmPassword("TestPassword123!");
+        request.setPassword("Secure@123");
+        request.setConfirmPassword("Secure@123");
         request.setRequestedRole(Role.SYSTEM_USER);
         request.setEmployeeId("EMP001");
         return request;
