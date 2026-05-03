@@ -1,50 +1,207 @@
-import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+import type { UserRole, UserStatus } from "@/lib/auth";
+import { API_ENDPOINTS, AUTH_ROUTES } from "@/lib/constants/routes";
+import { useAuthStore } from "@/store/auth-store";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const REQUEST_TIMEOUT_MS = 15000;
+const DEFAULT_ERROR_MESSAGE = "Something went wrong";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000,
+  timeout: REQUEST_TIMEOUT_MS,
 });
 
-// Request interceptor
-// NOTE: Token injection will be added by feature/auth-login (Kiruthiyan)
+interface PersistedAuthState {
+  accessToken?: string;
+  refreshToken?: string;
+  state?: {
+    accessToken?: string;
+    refreshToken?: string;
+  };
+}
+
+interface AuthTokens {
+  accessToken: string | null;
+  refreshToken: string | null;
+}
+
+interface AuthRefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+}
+
+interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+let refreshPromise: Promise<string | null> | null = null;
+
+function readPersistedAuth(): PersistedAuthState | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem("vfms-auth");
+    return raw ? (JSON.parse(raw) as PersistedAuthState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveTokens(): AuthTokens {
+  const store = useAuthStore.getState();
+  const persisted = readPersistedAuth();
+
+  return {
+    accessToken:
+      store.accessToken ??
+      persisted?.state?.accessToken ??
+      persisted?.accessToken ??
+      null,
+    refreshToken:
+      store.refreshToken ??
+      persisted?.state?.refreshToken ??
+      persisted?.refreshToken ??
+      null,
+  };
+}
+
+function resolveAccessToken(): string | null {
+  return resolveTokens().accessToken;
+}
+
+function shouldSkipRefresh(config?: InternalAxiosRequestConfig): boolean {
+  const url = config?.url ?? "";
+  return (
+    url.includes(API_ENDPOINTS.LOGIN) || url.includes(API_ENDPOINTS.REFRESH_TOKEN)
+  );
+}
+
+function redirectToLogin(): void {
+  useAuthStore.getState().clearAuth();
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname !== AUTH_ROUTES.LOGIN
+  ) {
+    window.location.replace(AUTH_ROUTES.LOGIN);
+  }
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  const { refreshToken } = resolveTokens();
+
+  if (!refreshToken) {
+    redirectToLogin();
+    return null;
+  }
+
+  try {
+    const response = await axios.post<ApiEnvelope<AuthRefreshResponse>>(
+      `${API_BASE_URL}${API_ENDPOINTS.REFRESH_TOKEN}`,
+      { refreshToken },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        timeout: REQUEST_TIMEOUT_MS,
+      }
+    );
+
+    const refreshedAuth = response.data.data;
+    useAuthStore.getState().setAuth(refreshedAuth);
+    return refreshedAuth.accessToken;
+  } catch {
+    redirectToLogin();
+    return null;
+  }
+}
+
 api.interceptors.request.use(
   (config) => {
-    // Auth token will be added here when feature/auth-login is merged
+    const token = resolveAccessToken();
+
+    if (token) {
+      config.headers = config.headers ?? {};
+      (config.headers as Record<string, string>).Authorization =
+        `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Redirect to login — handled by middleware (feature/auth-rbac)
-      if (typeof window !== "undefined") {
-        window.location.href = "/auth/login";
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+
+    if (
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      shouldSkipRefresh(originalRequest)
+    ) {
+      if (error.response?.status === 401 && shouldSkipRefresh(originalRequest)) {
+        useAuthStore.getState().clearAuth();
       }
+
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    originalRequest._retry = true;
+
+    refreshPromise ??= refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+
+    const newAccessToken = await refreshPromise;
+
+    if (!newAccessToken) {
+      return Promise.reject(error);
+    }
+
+    originalRequest.headers = originalRequest.headers ?? {};
+    (originalRequest.headers as Record<string, string>).Authorization =
+      `Bearer ${newAccessToken}`;
+
+    return api(originalRequest);
   }
 );
 
 export default api;
 
-// Helper to extract error message from API response
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     return (
-      (error.response?.data as { message?: string })?.message ??
+      (error.response?.data as { message?: string } | undefined)?.message ??
       error.message ??
-      "Something went wrong"
+      DEFAULT_ERROR_MESSAGE
     );
   }
-  if (error instanceof Error) return error.message;
-  return "Something went wrong";
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return DEFAULT_ERROR_MESSAGE;
 }

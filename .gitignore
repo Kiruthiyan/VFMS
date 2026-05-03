@@ -11,6 +11,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+*.local.env
 
 # ===============================
 # BACKEND (SPRING BOOT / MAVEN)
@@ -36,6 +37,9 @@ target/
 *.lock.db
 backend/data/
 backend/uploads/
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-*.local.properties
+backend/src/main/resources/application-secrets.properties
 
 # ===============================
 # IDE FILES
