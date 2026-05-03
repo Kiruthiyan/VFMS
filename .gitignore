@@ -66,3 +66,27 @@ build/
 # Deployment
 .vercel/
 
+## VS Code
+.vscode/
+.claude/
+
+# ===============================
+# FRONTEND (NEXT.JS / NODE)
+# ===============================
+node_modules/
+.next/
+out/
+dist/
+
+# ===============================
+# TEST / TEMP FILES
+# ===============================
+backend/.m2/
+test_output.txt
+test_results_*.txt
+
+# ===============================
+# OS GENERATED FILES
+# ===============================
+*.swp
+*.swo
