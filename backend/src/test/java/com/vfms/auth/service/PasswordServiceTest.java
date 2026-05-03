@@ -42,13 +42,13 @@ class PasswordServiceTest {
     void shouldRejectPasswordChangeWhenConfirmationDoesNotMatch() {
         User user = User.builder()
                 .email("tester@vfms.com")
-                .password("encoded-test-password")
+                .password("encoded-password")
                 .build();
 
         ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setCurrentPassword("CurrentTestPassword123!");
-        request.setNewPassword("NewTestPassword123!");
-        request.setConfirmPassword("MismatchTestPassword123!");
+        request.setCurrentPassword("Current@123");
+        request.setNewPassword("NewSecure@123");
+        request.setConfirmPassword("Mismatch@123");
 
         assertThrows(ValidationException.class, () -> passwordService.changePassword(user, request));
         verifyNoInteractions(passwordEncoder, userRepository, resetTokenRepository, emailService);
@@ -59,15 +59,15 @@ class PasswordServiceTest {
     void shouldRejectPasswordChangeWhenCurrentPasswordIsWrong() {
         User user = User.builder()
                 .email("tester@vfms.com")
-                .password("encoded-test-password")
+                .password("encoded-password")
                 .build();
 
         ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setCurrentPassword("WrongTestPassword123!");
-        request.setNewPassword("NewTestPassword123!");
-        request.setConfirmPassword("NewTestPassword123!");
+        request.setCurrentPassword("Wrong@123");
+        request.setNewPassword("NewSecure@123");
+        request.setConfirmPassword("NewSecure@123");
 
-        when(passwordEncoder.matches("WrongTestPassword123!", "encoded-test-password")).thenReturn(false);
+        when(passwordEncoder.matches("Wrong@123", "encoded-password")).thenReturn(false);
 
         assertThrows(ValidationException.class, () -> passwordService.changePassword(user, request));
     }
