@@ -12,6 +12,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 
 type DriverServiceRequest = {
   id: number;
+  driverId?: string;
+  requesterId?: string;
   vehicleId?: number;
   requestType: string;
   description: string;
@@ -84,6 +86,8 @@ export default function DriverServiceRequestsPage() {
                     <StatusBadge status={req.status} />
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{req.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Requester ID: {req.requesterId ?? 'N/A'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Vehicle ID: {req.vehicleId ?? 'N/A'}</p>
                   <p className="text-xs text-muted-foreground mt-1">{new Date(req.createdAt).toLocaleString()}</p>
                 </div>
                 <div className="flex gap-2 ml-3 flex-shrink-0">

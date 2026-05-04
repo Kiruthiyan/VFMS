@@ -2,6 +2,7 @@ package com.vfms.dsm.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,6 +17,10 @@ public class StaffServiceRequest extends BaseEntity {
     @JoinColumn(name = "staff_id", nullable = false)
     @JsonIgnore
     private Staff staff;
+
+    @Column(name = "staff_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private Long staffIdValue;
 
     @Column(name = "vehicle_id")
     private Long vehicleId;
@@ -36,6 +41,21 @@ public class StaffServiceRequest extends BaseEntity {
     @Column(name = "status", nullable = false)
     @Builder.Default
     private RequestStatus status = RequestStatus.OPEN;
+
+    @Transient
+    @JsonProperty("staffId")
+    public Long getStaffId() {
+        if (staff != null) {
+            return staff.getId();
+        }
+        return staffIdValue;
+    }
+
+    @Transient
+    @JsonProperty("requesterId")
+    public String getRequesterId() {
+        return staff != null ? staff.getEmployeeId() : null;
+    }
 
     public enum RequestType { FAULT_REPORT, SERVICE_REQUEST, INSPECTION_REQUEST }
     public enum Urgency { LOW, MEDIUM, HIGH }

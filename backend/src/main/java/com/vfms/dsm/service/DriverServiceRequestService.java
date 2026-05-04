@@ -34,7 +34,7 @@ public class DriverServiceRequestService {
 
     @Transactional(readOnly = true)
     public List<DriverServiceRequest> getRequestsByDriver(UUID driverId) {
-        return requestRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
+        return requestRepository.findByDriver_IdOrderByCreatedAtDesc(driverId);
     }
 
     @Transactional(readOnly = true)
