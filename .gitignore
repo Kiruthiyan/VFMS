@@ -1,73 +1,78 @@
 # ===============================
-# GENERAL
+# REPOSITORY-WIDE IGNORE RULES
 # ===============================
+
+# OS files
 .DS_Store
 Thumbs.db
-*.log
 
-# ===============================
-# ENV FILES (IMPORTANT)
-# ===============================
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+*.orig
+
+# Environment files
 .env
 .env.*
 !.env.example
+*.local.env
 
-# ===============================
-# BACKEND (SPRING BOOT / MAVEN)
-# ===============================
+# Editors and local tooling
+.idea/
+.vscode/
+.claude/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Java / Maven
 target/
 *.class
 *.jar
 *.war
 *.ear
-
-# Maven Wrapper
 .mvn/wrapper/maven-wrapper.jar
+backend/.m2/
 
-# Ignore build folders inside modules (keep structure clean)
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# ===============================
-# DATABASE FILES (LOCAL ONLY)
-# ===============================
+# Database and storage artifacts
 *.db
 *.mv.db
 *.lock.db
 backend/data/
 backend/uploads/
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-*.local.properties
+backend/src/main/resources/application-secrets.properties
 
-# ===============================
-# IDE FILES
-# ===============================
-
-## STS / Eclipse
+# IDE-specific Java files
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
-## IntelliJ IDEA
-.idea/
-*.iws
-*.iml
-*.ipr
-
-## NetBeans
+# NetBeans
 /nbproject/private/
 /nbbuild/
-/dist/
 /nbdist/
 /.nb-gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+
+# Deployment
+.vercel/
 
 ## VS Code
 .vscode/
+.claude/
 
 # ===============================
 # FRONTEND (NEXT.JS / NODE)
@@ -80,6 +85,7 @@ dist/
 # ===============================
 # TEST / TEMP FILES
 # ===============================
+backend/.m2/
 test_output.txt
 test_results_*.txt
 
