@@ -30,7 +30,8 @@ type VehicleOption = {
 
 interface ServiceRequest {
   id: number;
-  staff: unknown;
+  staffId?: number;
+  requesterId?: string;
   vehicleId?: number;
   requestType: string;
   description: string;
@@ -316,6 +317,8 @@ export default function ServiceRequestsPage() {
                     <StatusBadge status={req.status} />
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{req.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Requester ID: {req.requesterId ?? 'N/A'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Vehicle ID: {req.vehicleId ?? 'N/A'}</p>
                   <p className="text-xs text-muted-foreground mt-1">{new Date(req.createdAt).toLocaleString()}</p>
                 </div>
                 <div className="flex gap-2 ml-3 flex-shrink-0">

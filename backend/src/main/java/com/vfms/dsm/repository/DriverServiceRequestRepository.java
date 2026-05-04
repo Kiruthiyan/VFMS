@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DriverServiceRequestRepository extends JpaRepository<DriverServiceRequest, Long> {
-    List<DriverServiceRequest> findByDriverIdOrderByCreatedAtDesc(UUID driverId);
+    List<DriverServiceRequest> findByDriver_IdOrderByCreatedAtDesc(UUID driverId);
     List<DriverServiceRequest> findByStatusOrderByCreatedAtDesc(DriverServiceRequest.RequestStatus status);
 }

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface StaffServiceRequestRepository extends JpaRepository<StaffServiceRequest, Long> {
-    List<StaffServiceRequest> findByStaffIdOrderByCreatedAtDesc(Long staffId);
+    List<StaffServiceRequest> findByStaff_IdOrderByCreatedAtDesc(Long staffId);
     List<StaffServiceRequest> findByStatusOrderByCreatedAtDesc(StaffServiceRequest.RequestStatus status);
 
     @Query("select distinct r.vehicleId from StaffServiceRequest r where r.vehicleId is not null order by r.vehicleId")

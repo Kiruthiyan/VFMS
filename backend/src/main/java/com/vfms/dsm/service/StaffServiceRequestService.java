@@ -26,7 +26,7 @@ public class StaffServiceRequestService {
     }
 
     public List<StaffServiceRequest> getRequestsByStaff(Long staffId) {
-        return requestRepository.findByStaffIdOrderByCreatedAtDesc(staffId);
+        return requestRepository.findByStaff_IdOrderByCreatedAtDesc(staffId);
     }
 
     public List<StaffServiceRequest> getOpenRequests() {

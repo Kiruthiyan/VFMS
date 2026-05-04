@@ -2,6 +2,7 @@ package com.vfms.dsm.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,6 +25,10 @@ public class DriverServiceRequest extends BaseEntity {
     @JsonIgnore
     private Driver driver;
 
+    @Column(name = "driver_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private java.util.UUID driverIdValue;
+
     @Column(name = "vehicle_id")
     private Long vehicleId;
 
@@ -43,6 +48,21 @@ public class DriverServiceRequest extends BaseEntity {
     @Column(name = "status", nullable = false)
     @Builder.Default
     private RequestStatus status = RequestStatus.OPEN;
+
+    @Transient
+    @JsonProperty("driverId")
+    public java.util.UUID getDriverId() {
+        if (driver != null) {
+            return driver.getId();
+        }
+        return driverIdValue;
+    }
+
+    @Transient
+    @JsonProperty("requesterId")
+    public String getRequesterId() {
+        return driver != null ? driver.getEmployeeId() : null;
+    }
 
     public enum RequestType { FAULT_REPORT, SERVICE_REQUEST, INSPECTION_REQUEST }
     public enum Urgency { LOW, MEDIUM, HIGH }
