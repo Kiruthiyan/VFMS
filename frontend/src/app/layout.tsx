@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-
-import { Toaster } from "@/components/ui/toaster";
-
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+import { ToastProvider } from "@/components/providers/ToastProvider";
+import { RoleProvider } from "@/lib/role-context";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: {
-    default: "FleetPro",
-    template: "%s | FleetPro",
-  },
-  description: "FleetPro - Company Vehicle Fleet Management System",
+  title: "FleetPro — Fleet Management System",
+  description: "FleetPro Vehicle Fleet Management System",
 };
 
 export default function RootLayout({
@@ -19,9 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-slate-50 text-slate-950 antialiased">
-        {children}
+      <body className={`${inter.className} antialiased`}>
+        <RoleProvider>{children}</RoleProvider>
         <Toaster />
+        <ToastProvider />
       </body>
     </html>
   );
