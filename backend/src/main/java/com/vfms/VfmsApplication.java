@@ -58,5 +58,4 @@ public class VfmsApplication {
     public static void main(String[] args) {
         SpringApplication.run(VfmsApplication.class, args);
     }
-
 }

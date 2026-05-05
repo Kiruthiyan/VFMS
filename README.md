@@ -1,419 +1,176 @@
-# VFMS Project
+> ⚠️ **FINAL SUBMISSION BRANCH (Abhinaya J. — Vehicle Maintenance and Rental(VMR) Module):** `feature/vmr-module-finalization`
+# FleetPro - Vehicle Fleet Management System (VFMS)
 
-Vehicle and Fuel Management System (VFMS) is a full-stack web application built to manage user access, administrative user operations, and fuel-record workflows in a role-based environment.
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-green)
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-cyan)
 
-This repository contains:
+> **Module Focus:** Vehicle Maintenance & Rentals Module (Student A)
+> **Status:** Complete
 
-- A Spring Boot backend for authentication, user administration, fuel services, validation, and security
-- A Next.js frontend for login, dashboards, admin management views, and fuel management interfaces
+## 📖 Project Overview
 
-## Student Contribution
+**FleetPro** is an enterprise-grade Vehicle Fleet Management System designed to streamline logistics, reduce operational costs, and enhance fleet visibility for large organizations.
 
-**Student B - Kiruthiyan (23410B)**
+This repository hosts the **Vehicle Maintenance & Rentals Module**, responsible for:
+- **Vehicle Registry:** Maintaining a complete, auditable record of the organization's fleet.
+- **Maintenance Workflow:** Managing the full lifecycle of a maintenance request from creation to closure.
+- **Rental Management:** Tracking vehicles rented from external vendors to supplement the fleet.
+- **Cost Tracking:** Recording maintenance and rental costs for financial reporting.
+- **Secure Access:** Role-Based Access Control (RBAC) ensuring only authorized users can approve or close records.
 
-Primary contribution areas:
+## ✨ Key Features
 
-- User Authentication Module
-- User Management Module
-- Fuel Management Module
+### 🚗 Vehicle Management (Core)
+- **Vehicle Registry:** Add, edit, and soft-retire fleet vehicles with full audit history.
+- **Status Tracking:** Real-time vehicle status — `AVAILABLE`, `UNDER_MAINTENANCE`, `ON_TRIP`, `RETIRED`.
+- **Fleet Overview:** Filterable list view of all vehicles by status and type.
+- **Soft Deletion:** Retired vehicles are deactivated, not deleted, preserving historical data integrity.
 
-## Contribution Summary
+### 🔧 Maintenance Management
+- **Full Request Lifecycle:** Create → Submit → Approve/Reject → Close with strict status transitions.
+- **Document Uploads:** Attach quotation and invoice files at each stage of the workflow.
+- **Cost Recording:** Track estimated and actual repair costs per maintenance request.
+- **Audit Trail:** All status changes are timestamped and stored permanently.
+- **Workflow Integrity:** Closed or rejected requests are frozen — they cannot be accidentally edited.
 
-### 1. User Authentication Module
+### 🚘 Rental Management
+- **Vendor Rentals:** Record vehicles rented from external vendors to supplement the fleet.
+- **Rental Lifecycle:** Track rentals from `ACTIVE` → `RETURNED` → `CLOSED`.
+- **Auto Cost Calculation:** Total rental cost is automatically computed based on daily rate × actual days used.
+- **Minimum Billing:** Enforces a minimum 1-day billing period to protect the organization from billing errors.
+- **Document Management:** Attach rental agreements and invoices to each rental record.
 
-Implemented and integrated the complete authentication flow across backend and frontend, including:
+### 🏢 Vendor Management
+- **Vendor Registry:** Maintain a list of approved external vendors for vehicle rentals.
+- **Soft Deactivation:** Deactivated vendors are hidden from new rentals but preserved in historical records.
 
-- User registration
-- Login with JWT-based authentication
-- Refresh token flow
-- Logout flow
-- OTP send and verify flow
-- Email verification and resend verification
-- Forgot password and reset password flow
-- Auth state persistence and route protection in the frontend
+### 🔐 Role-Based Access Control (RBAC)
+| Action | System User | Approver | Admin | Driver |
+|---|---|---|---|---|
+| Create / Edit Requests | ✅ | ❌ | ✅ | ❌ |
+| Submit Requests | ✅ | ❌ | ✅ | ❌ |
+| Approve / Reject Requests | ❌ | ✅ | ✅ | ❌ |
+| Close Requests & Record Costs | ❌ | ✅ | ✅ | ❌ |
+| Upload Documents | ✅ | ✅ | ✅ | ❌ |
+| Manage Vendors | ❌ | ❌ | ✅ | ❌ |
+| View All Records | ✅ | ✅ | ✅ | ✅ |
+| View Vehicle Details | ✅ | ✅ | ✅ | ✅ |
 
-### 2. User Management Module
+## 🏗️ Technical Architecture
 
-Implemented administrative user lifecycle management features, including:
+### Backend (Spring Boot)
+- **Framework:** Spring Boot 3.4.0 | Java 21
+- **Database:** PostgreSQL hosted on Supabase (JPA/Hibernate)
+- **Security:** Spring Security 6 + Stateless JWT
+- **Architecture:** Layered REST API — Controller → Service → Repository
+- **Error Handling:** Global Exception Handler (`@RestControllerAdvice`) with domain-specific exceptions (`ResourceNotFoundException`, `IllegalStateException`)
+- **Validation:** Bean Validation (`@NotBlank`, `@NotNull`) on all request DTOs
+- **Configuration:** Environment variables loaded via `spring-dotenv` from a `.env` file — no hardcoded credentials
 
-- Admin-only user creation
-- User approval and rejection workflow
-- Active, pending, and deleted user listings
-- Soft delete and restore flow
-- User status toggling
-- User detail update flow
-- Role-aware user handling for admin, approver, staff/system users, and drivers
+### Frontend (Next.js)
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + Shadcn/UI
+- **Forms:** React Hook Form + Zod Validation
+- **API Client:** Axios with centralized service layer
 
-### 3. Fuel Management Module
-
-Implemented and integrated core fuel record management features, including:
-
-- Fuel record creation
-- Fuel record listing and search
-- Vehicle and driver linked fuel entries
-- Flagging and unflagging suspicious records
-- Fuel metadata support for frontend forms
-- Fuel misuse rule enforcement and validation support
-
-## Project Overview
-
-The system is structured as a monorepo with separate frontend and backend applications.
-
-### Backend responsibilities
-
-- REST API development
-- JWT security and role-based authorization
-- DTO validation and centralized error handling
-- User lifecycle business logic
-- Fuel management business logic
-- Database access via Spring Data JPA
-
-### Frontend responsibilities
-
-- Authentication screens and protected routing
-- Dashboard navigation by role
-- Admin user management interfaces
-- Fuel management views and actions
-- API integration with backend services
-
-## Technology Stack
-
-### Backend
-
-- Java 21
-- Spring Boot 3.3.4
-- Spring Security
-- Spring Data JPA
-- Maven
-- H2 database for development profile
-- PostgreSQL-ready configuration for persistent environments
-
-### Frontend
-
-- Next.js 16
-- React 19
-- TypeScript
-- Zustand
-- Axios
-- Tailwind CSS
-- Vitest
-
-## Main Modules
-
-### User Authentication
-
-Backend packages involved:
-
-- `backend/src/main/java/com/vfms/auth`
-- `backend/src/main/java/com/vfms/security`
-- `backend/src/main/java/com/vfms/config`
-- `backend/src/main/java/com/vfms/user/controller/UserController.java`
-
-Frontend paths involved:
-
-- `frontend/src/app/auth`
-- `frontend/src/components/auth`
-- `frontend/src/lib/api/auth.ts`
-- `frontend/src/lib/auth.ts`
-- `frontend/src/store/auth-store.ts`
-- `frontend/src/components/auth/role-guard.tsx`
-
-Key features:
-
-- Register new users
-- Login and token handling
-- Refresh token support
-- Logout support
-- OTP generation and verification
-- Email verification flow
-- Password reset and password change
-- Protected route handling based on auth state and role
-
-### User Management
-
-Backend packages involved:
-
-- `backend/src/main/java/com/vfms/admin`
-- `backend/src/main/java/com/vfms/user`
-- `backend/src/main/java/com/vfms/common`
-
-Frontend paths involved:
-
-- `frontend/src/app/admin/users`
-- `frontend/src/components/layout`
-- `frontend/src/app/dashboards/shared-components`
-
-Key features:
-
-- Create users through admin flow
-- Review pending users
-- Approve or reject requests
-- Soft delete and restore users
-- Activate and deactivate users
-- Update user details
-- Retrieve user counts for management views
-
-### Fuel Management
-
-Backend packages involved:
-
-- `backend/src/main/java/com/vfms/fuel`
-- `backend/src/main/java/com/vfms/vehicle`
-- `backend/src/main/java/com/vfms/driver`
-
-Frontend paths involved:
-
-- `frontend/src/app/admin/fuel`
-- `frontend/src/components/fuel`
-- `frontend/src/lib/api/fuel.ts`
-
-Key features:
-
-- Create fuel records with validation
-- Retrieve and search fuel records
-- View flagged fuel entries
-- Flag and unflag suspicious records
-- Load vehicle and driver metadata for forms
-- Link fuel data to vehicle and driver context
-
-## High-Level Architecture
+## 📂 Project Structure
 
 ```text
-Frontend (Next.js + TypeScript)
-    ->
-Axios API client with auth header injection
-    ->
-Spring Boot REST API
-    ->
-Security layer (JWT + role checks)
-    ->
-Service layer
-    ->
-Repository layer
-    ->
-Database
+VFMS-final/
+├── backend/                        # Java Spring Boot Backend
+│   ├── src/main/java/com/vfms/
+│   │   ├── vehicle/                # Vehicle module (Entity, Controller, Service, Repository)
+│   │   ├── maintenance/            # Maintenance module (Request lifecycle, Document upload)
+│   │   ├── rental/                 # Rental & Vendor modules
+│   │   ├── common/                 # Shared: Global Exception Handler, Custom Exceptions, DTOs
+│   │   └── config/                 # Security (JWT), CORS configuration
+│   ├── src/test/java/com/vfms/     # Unit Tests (JUnit 5 + Mockito)
+│   ├── .env                        # Local environment variables (not committed to Git)
+│   └── .env.example                # Template for setting up local environment
+│
+└── frontend/                       # Next.js Frontend
+    ├── src/app/dashboard/
+    │   ├── vehicles/               # Vehicle list and detail pages
+    │   ├── maintenance/            # Maintenance request list and detail pages
+    │   └── rentals/                # Rental list and detail pages
+    └── src/components/             # Reusable UI Components (Sidebar, Topbar, Tables)
 ```
 
-## Project Structure
+## 🚀 Getting Started
 
-```text
-VFMS/
-|- backend/
-|  |- src/main/java/com/vfms/
-|  |  |- admin/
-|  |  |- auth/
-|  |  |- common/
-|  |  |- config/
-|  |  |- driver/
-|  |  |- fuel/
-|  |  |- security/
-|  |  |- user/
-|  |  |- vehicle/
-|  |- src/main/resources/
-|  |- pom.xml
-|
-|- frontend/
-|  |- src/
-|  |  |- app/
-|  |  |- components/
-|  |  |- lib/
-|  |  |- store/
-|  |  |- __tests__/
-|  |- package.json
-|
-|- README.md
-|- .gitignore
-```
+### Prerequisites
+- **Java JDK 21+**
+- **Node.js 18+**
+- **Maven** (optional, wrapper included)
+- A **PostgreSQL** database (local or cloud — this project uses Supabase)
 
-## Important API Areas
+### 1️⃣ Backend Setup
 
-### Authentication APIs
+1. Navigate to the backend directory:
+    ```bash
+    cd backend
+    ```
+2. Create your environment file by copying the example:
+    ```bash
+    cp .env.example .env
+    ```
+3. Open `.env` and fill in your database credentials.
 
-Base route: `/api/auth`
+4. Run the application (the `.env` file is loaded automatically):
+    ```bash
+    ./mvnw clean spring-boot:run
+    ```
+    *The server will start on `http://localhost:8080`.*
 
-Important endpoints:
+### 2️⃣ Frontend Setup
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `POST /api/auth/send-otp`
-- `POST /api/auth/verify-otp`
-- `POST /api/auth/verify-email`
-- `POST /api/auth/resend-verification`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
+1. Navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
+2. Install dependencies:
+    ```bash
+    npm install
+    ```
+3. Run the development server:
+    ```bash
+    npm run dev
+    ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-User self-service endpoint:
+## 🧪 Testing
 
-- `GET /api/user/me`
-- `POST /api/user/change-password`
+### Backend Unit Tests
+17 unit tests covering the core business logic of all four services, completely isolated from the database using **Mockito**.
 
-### User Management APIs
-
-Base route: `/api/admin/users`
-
-Important endpoints:
-
-- `POST /api/admin/users`
-- `GET /api/admin/users`
-- `GET /api/admin/users/pending`
-- `GET /api/admin/users/deleted`
-- `GET /api/admin/users/counts`
-- `GET /api/admin/users/{userId}`
-- `POST /api/admin/users/{userId}/review`
-- `PATCH /api/admin/users/{userId}/soft-delete`
-- `POST /api/admin/users/{userId}/restore`
-- `PATCH /api/admin/users/{userId}/toggle-status`
-- `PUT /api/admin/users/{userId}`
-
-### Fuel Management APIs
-
-Base route: `/api/v1/fuel`
-
-Important endpoints:
-
-- `POST /api/v1/fuel`
-- `GET /api/v1/fuel`
-- `GET /api/v1/fuel/metadata`
-- `GET /api/v1/fuel/flagged`
-- `GET /api/v1/fuel/search`
-- `GET /api/v1/fuel/{id}`
-- `GET /api/v1/fuel/vehicle/{vehicleId}`
-- `GET /api/v1/fuel/driver/{driverId}`
-- `PATCH /api/v1/fuel/{id}/flag`
-- `PATCH /api/v1/fuel/{id}/unflag`
-- `PUT /api/v1/fuel/{id}`
-- `DELETE /api/v1/fuel/{id}`
-
-## Security and Validation
-
-The project includes:
-
-- JWT-based authentication
-- Role-based authorization using Spring Security
-- Method-level access control for protected admin and fuel routes
-- DTO validation on backend requests
-- Frontend validation for key auth forms
-- Centralized exception handling for consistent API error responses
-- Configurable CORS origins
-
-## Configuration
-
-### Backend configuration
-
-Main file:
-
-- `backend/src/main/resources/application.properties`
-
-Development profile:
-
-- `backend/src/main/resources/application-dev.properties`
-
-Common configuration areas:
-
-- Server port
-- Active Spring profile
-- Database connection
-- JWT secret and expiry
-- Mail configuration
-- CORS allowed origins
-- Fuel misuse thresholds
-
-### Frontend configuration
-
-Common environment usage:
-
-- `NEXT_PUBLIC_API_URL`
-- `NEXT_PUBLIC_FRONTEND_URL`
-
-The frontend currently targets the backend at:
-
-- `http://localhost:8080`
-
-## How to Run
-
-### Backend
-
+Run the tests:
 ```bash
 cd backend
-mvn spring-boot:run
+./mvnw test
 ```
 
-Default development behavior:
+### Test Coverage
+| Test Class | Positive Cases | Negative / Edge Cases |
+|---|---|---|
+| `VehicleServiceTest` | Add vehicle, Get by ID, Retire vehicle | Duplicate plate number |
+| `MaintenanceServiceTest` | Create request, Approve, Close | Vehicle not found, Invalid status jump |
+| `RentalServiceTest` | Create rental, Confirm return | Vendor not found, Return on non-active rental |
+| `VendorServiceTest` | Add vendor, Toggle active status | Vendor not found |
 
-- Runs on `http://localhost:8080`
-- Uses the `dev` Spring profile
-- Uses H2 in-memory database from `application-dev.properties`
+### Verified User Flows
+- [x] Add, Edit, and Retire a Vehicle
+- [x] Full Maintenance Lifecycle (New → Submitted → Approved → Closed)
+- [x] Document Upload (Quotation & Invoice)
+- [x] Full Rental Lifecycle (Active → Returned → Closed)
+- [x] Vendor Deactivation (Soft Delete)
+- [x] Role-Based UI rendering (System User vs. Approver)
 
-### Frontend
+## 📄 License
+This project is proprietary software developed for the **Vehicle Fleet Management System (VFMS)** academic requirement.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Default development behavior:
-
-- Runs on `http://localhost:3000`
-- Uses `NEXT_PUBLIC_API_URL=http://localhost:8080`
-
-## Testing
-
-### Backend tests
-
-```bash
-cd backend
-mvn test
-```
-
-### Frontend tests
-
-```bash
-cd frontend
-npm test
-```
-
-### Frontend production build
-
-```bash
-cd frontend
-npm run build
-```
-
-## Code Quality and Assessment Alignment
-
-This project has been organized to support strong academic assessment outcomes through:
-
-- Consistent naming and formatting
-- DTO-based validation
-- Clear separation of controller, service, repository, entity, DTO, and config layers
-- Centralized error handling
-- Reduced hardcoded values by relying on configuration
-- Cleaner API integration between frontend and backend
-- Testable service and UI integration structure
-
-## Notes for Submission or Demonstration
-
-If you are presenting your contribution, focus on these three modules:
-
-1. User Authentication
-2. User Management
-3. Fuel Management
-
-Recommended demo flow:
-
-1. Register or create a user
-2. Verify email or complete login
-3. Show role-based protected access
-4. Review or manage users from admin pages
-5. Create and view fuel records
-6. Show flagged fuel handling
-
-## Maintainer Information
-
-Prepared for academic/project documentation with contribution emphasis on:
-
-- **Student B - Kiruthiyan (23410B)**
-
+---
+**Developed by:** Abhinaya J. (Vehicle Maintenance & Rentals Module)
