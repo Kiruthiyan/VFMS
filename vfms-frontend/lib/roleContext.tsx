@@ -12,7 +12,6 @@ export interface User {
     employeeId?: string;
 }
 
-// Fixed non-driver users (hardcoded test accounts)
 const FIXED_USERS: User[] = [
     { id: "00000000-0000-0000-0000-000000000001", name: "Niruthigan", role: "SYSTEM_USER" },
     { id: "00000000-0000-0000-0000-000000000002", name: "Kavishanth (Staff)", role: "STAFF" },
