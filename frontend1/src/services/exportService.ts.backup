@@ -1,0 +1,802 @@
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import {
+    VEHICLE_DETAILS,
+    MAINTENANCE_RECORDS,
+    FUEL_LOGS,
+    VEHICLE_UTILIZATION,
+    DRIVER_PERFORMANCE,
+    RENTAL_RECORDS,
+    getOverallSummary
+} from './enhancedMockData';
+
+// Mock data imports
+const MOCK_MAINTENANCE_DATA = [
+    { month: "Jan", cost: 500 },
+    { month: "Feb", cost: 350 },
+    { month: "Mar", cost: 800 },
+    { month: "Apr", cost: 200 },
+    { month: "May", cost: 450 },
+    { month: "Jun", cost: 650 }
+];
+
+const MOCK_FUEL_DATA = [
+    { month: "Jan", cost: 1200 },
+    { month: "Feb", cost: 1150 },
+    { month: "Mar", cost: 1300 },
+    { month: "Apr", cost: 900 },
+    { month: "May", cost: 1100 },
+    { month: "Jun", cost: 950 }
+];
+
+const MOCK_VEHICLE_DATA = [
+    { licensePlate: "KA-01-AB-1234", distance: 5200, trips: 45, fuel: 600 },
+    { licensePlate: "KA-05-XY-9876", distance: 3800, trips: 30, fuel: 450 },
+    { licensePlate: "TN-09-CD-4567", distance: 6100, trips: 52, fuel: 720 },
+    { licensePlate: "KL-07-EF-3210", distance: 2400, trips: 15, fuel: 280 }
+];
+
+const MOCK_DRIVER_DATA = [
+    { name: "Ramesh Kumar", trips: 45, distance: 5200, rating: 4.8 },
+    { name: "Suresh Singh", trips: 30, distance: 3800, rating: 3.5 },
+    { name: "Abdul Rahim", trips: 52, distance: 6100, rating: 4.9 },
+    { name: "John Doe", trips: 15, distance: 2400, rating: 4.2 }
+];
+
+export const exportService = {
+    // ====================
+    // OVERALL SUMMARY EXPORTS
+    // ====================
+
+    exportOverallSummaryPDF: () => {
+        const doc = new jsPDF();
+        const summary = getOverallSummary();
+        const fileName = `VFMS_Overall_Report_${summary.reportDate.replace(' ', '_')}.pdf`;
+
+        // Title
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('VFMS - Overall Fleet Report', 14, 20);
+
+        // Report Info
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Report Period: ${summary.reportDate}`, 14, 30);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 36);
+
+        // Fleet Summary
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Fleet Summary', 14, 50);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        autoTable(doc, {
+            startY: 56,
+            head: [['Metric', 'Value']],
+            body: [
+                ['Total Vehicles', summary.totalVehicles.toString()],
+                ['Total Drivers', summary.totalDrivers.toString()],
+                ['Total Trips', summary.totalTrips.toLocaleString()],
+                ['Total Distance (km)', summary.totalDistance.toLocaleString()],
+                ['Average Utilization', `${summary.averageUtilization}%`]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [51, 122, 183] }
+        });
+
+        const finalY1 = (doc as any).lastAutoTable.finalY + 10;
+
+        // Financial Summary
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Financial Summary', 14, finalY1);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        autoTable(doc, {
+            startY: finalY1 + 6,
+            head: [['Category', 'Amount ($)']],
+            body: [
+                ['Total Maintenance Cost', summary.totalMaintenanceCost.toFixed(2)],
+                ['Total Fuel Cost', summary.totalFuelCost.toFixed(2)],
+                ['Total Operating Cost', (summary.totalMaintenanceCost + summary.totalFuelCost).toFixed(2)]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [92, 184, 92] }
+        });
+
+        const finalY2 = (doc as any).lastAutoTable.finalY + 10;
+
+        // Driver Performance
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Driver Performance', 14, finalY2);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        autoTable(doc, {
+            startY: finalY2 + 6,
+            head: [['Metric', 'Value']],
+            body: [
+                ['Average Driver Rating', `${summary.averageDriverRating}/5.0`],
+                ['Total Violations', summary.totalViolations.toString()]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [240, 173, 78] }
+        });
+
+        doc.save(fileName);
+    },
+
+    exportOverallSummaryExcel: () => {
+        const summary = getOverallSummary();
+        const fileName = `VFMS_Overall_Report_${summary.reportDate.replace(' ', '_')}.xlsx`;
+
+        // Fleet Summary Sheet
+        const fleetData = [
+            { Metric: 'Total Vehicles', Value: summary.totalVehicles },
+            { Metric: 'Total Drivers', Value: summary.totalDrivers },
+            { Metric: 'Total Trips', Value: summary.totalTrips },
+            { Metric: 'Total Distance (km)', Value: summary.totalDistance },
+            { Metric: 'Average Utilization (%)', Value: summary.averageUtilization }
+        ];
+
+        // Financial Summary Sheet
+        const financialData = [
+            { Category: 'Total Maintenance Cost', 'Amount ($)': summary.totalMaintenanceCost },
+            { Category: 'Total Fuel Cost', 'Amount ($)': summary.totalFuelCost },
+            { Category: 'Total Operating Cost', 'Amount ($)': summary.totalMaintenanceCost + summary.totalFuelCost }
+        ];
+
+        // Driver Performance Sheet
+        const driverSummaryData = [
+            { Metric: 'Average Driver Rating', Value: summary.averageDriverRating },
+            { Metric: 'Total Violations', Value: summary.totalViolations }
+        ];
+
+        const wb = XLSX.utils.book_new();
+
+        const wsFleet = XLSX.utils.json_to_sheet(fleetData);
+        const wsFinancial = XLSX.utils.json_to_sheet(financialData);
+        const wsDriver = XLSX.utils.json_to_sheet(driverSummaryData);
+
+        XLSX.utils.book_append_sheet(wb, wsFleet, 'Fleet Summary');
+        XLSX.utils.book_append_sheet(wb, wsFinancial, 'Financial Summary');
+        XLSX.utils.book_append_sheet(wb, wsDriver, 'Driver Performance');
+
+        XLSX.writeFile(wb, fileName);
+    },
+
+    // ====================
+    // INDIVIDUAL VEHICLE REPORT
+    // ====================
+
+    exportVehicleReportPDF: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+
+        const doc = new jsPDF();
+        const fileName = `Vehicle_${vehicle.licensePlate.replace(/-/g, '_')}_Report.pdf`;
+
+        // Title
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Vehicle Report: ${vehicle.licensePlate}`, 14, 20);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+
+        // Vehicle Details
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Vehicle Information', 14, 44);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        autoTable(doc, {
+            startY: 50,
+            head: [['Field', 'Value']],
+            body: [
+                ['Vehicle ID', vehicle.vehicleId],
+                ['License Plate', vehicle.licensePlate],
+                ['Make & Model', `${vehicle.make} ${vehicle.model}`],
+                ['Year', vehicle.year.toString()],
+                ['Last Service Date', vehicle.lastServiceDate]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [51, 122, 183] }
+        });
+
+        const finalY1 = (doc as any).lastAutoTable.finalY + 10;
+
+        // Performance Metrics
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Performance Metrics', 14, finalY1);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        autoTable(doc, {
+            startY: finalY1 + 6,
+            head: [['Metric', 'Value']],
+            body: [
+                ['Total Trips', vehicle.totalTrips.toString()],
+                ['Total Distance (km)', vehicle.totalDistance.toLocaleString()],
+                ['Utilization Status', vehicle.utilizationStatus],
+                ['Fuel Cost ($)', vehicle.fuelCost.toFixed(2)],
+                ['Maintenance Cost ($)', vehicle.maintenanceCost.toFixed(2)],
+                ['Total Operating Cost ($)', (vehicle.fuelCost + vehicle.maintenanceCost).toFixed(2)]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [92, 184, 92] }
+        });
+
+        doc.save(fileName);
+    },
+
+    exportVehicleReportExcel: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+
+        const fileName = `Vehicle_${vehicle.licensePlate.replace(/-/g, '_')}_Report.xlsx`;
+
+        const data = [
+            { Field: 'Vehicle ID', Value: vehicle.vehicleId },
+            { Field: 'License Plate', Value: vehicle.licensePlate },
+            { Field: 'Make & Model', Value: `${vehicle.make} ${vehicle.model}` },
+            { Field: 'Year', Value: vehicle.year },
+            { Field: 'Total Trips', Value: vehicle.totalTrips },
+            { Field: 'Total Distance (km)', Value: vehicle.totalDistance },
+            { Field: 'Fuel Cost ($)', Value: vehicle.fuelCost },
+            { Field: 'Maintenance Cost ($)', Value: vehicle.maintenanceCost },
+            { Field: 'Total Operating Cost ($)', Value: vehicle.fuelCost + vehicle.maintenanceCost },
+            { Field: 'Utilization Status', Value: vehicle.utilizationStatus },
+            { Field: 'Last Service Date', Value: vehicle.lastServiceDate }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Vehicle Report');
+
+        XLSX.writeFile(wb, fileName);
+    },
+
+    // ====================
+    // INDIVIDUAL DRIVER REPORT
+    // ====================
+
+    exportDriverReportPDF: (driverId: string) => {
+        const driver = DRIVER_PERFORMANCE.find(d => d.driverId === driverId);
+        if (!driver) {
+            alert('Driver not found!');
+            return;
+        }
+
+        const doc = new jsPDF();
+        const fileName = `Driver_${driver.driverName.replace(/ /g, '_')}_Report.pdf`;
+
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Driver Report: ${driver.driverName}`, 14, 20);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [['Field', 'Value']],
+            body: [
+                ['Driver ID', driver.driverId],
+                ['Name', driver.driverName],
+                ['License Number', driver.licenseNumber],
+                ['Assigned Vehicle', driver.assignedVehicle],
+                ['Total Trips', driver.totalTrips.toString()],
+                ['Total Distance (km)', driver.totalDistance.toLocaleString()],
+                ['Violations', driver.violations.toString()],
+                ['Feedback Rating', `${driver.feedbackRating}/5.0`],
+                ['Safety Score', `${driver.safetyScore}/100`],
+                ['On-Time Delivery Rate', `${driver.onTimeDeliveryRate}%`]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [139, 92, 246] }
+        });
+
+        doc.save(fileName);
+    },
+
+    exportDriverReportExcel: (driverId: string) => {
+        const driver = DRIVER_PERFORMANCE.find(d => d.driverId === driverId);
+        if (!driver) {
+            alert('Driver not found!');
+            return;
+        }
+
+        const fileName = `Driver_${driver.driverName.replace(/ /g, '_')}_Report.xlsx`;
+        const data = [
+            { Field: 'Driver ID', Value: driver.driverId },
+            { Field: 'Name', Value: driver.driverName },
+            { Field: 'License Number', Value: driver.licenseNumber },
+            { Field: 'Assigned Vehicle', Value: driver.assignedVehicle },
+            { Field: 'Total Trips', Value: driver.totalTrips },
+            { Field: 'Total Distance (km)', Value: driver.totalDistance },
+            { Field: 'Violations', Value: driver.violations },
+            { Field: 'Feedback Rating', Value: driver.feedbackRating },
+            { Field: 'Safety Score', Value: driver.safetyScore },
+            { Field: 'On-Time Delivery Rate (%)', Value: driver.onTimeDeliveryRate }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Driver Report');
+        XLSX.writeFile(wb, fileName);
+    },
+
+    // ====================
+    // INDIVIDUAL FUEL LOG REPORT
+    // ====================
+
+    exportFuelLogReportPDF: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const fuelLogs = FUEL_LOGS.filter(f => f.vehicleId === vehicleId);
+
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+
+        const doc = new jsPDF();
+        const fileName = `Fuel_Log_${vehicle.licensePlate.replace(/-/g, '_')}_Report.pdf`;
+
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Fuel Logs: ${vehicle.licensePlate}`, 14, 20);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Vehicle: ${vehicle.make} ${vehicle.model}`, 14, 30);
+        doc.text(`Total Logs: ${fuelLogs.length}`, 14, 36);
+
+        const totalCost = fuelLogs.reduce((sum, f) => sum + f.totalCost, 0);
+        const totalQuantity = fuelLogs.reduce((sum, f) => sum + f.fuelQuantity, 0);
+
+        autoTable(doc, {
+            startY: 44,
+            head: [['Date', 'Quantity (L)', 'Price/L', 'Total Cost', 'Station']],
+            body: fuelLogs.map(f => [
+                f.date,
+                f.fuelQuantity.toString(),
+                `$${f.pricePerLiter}`,
+                `$${f.totalCost}`,
+                f.fuelStation
+            ]),
+            foot: [['TOTAL', totalQuantity.toString() + ' L', '', `$${totalCost}`, '']],
+            theme: 'grid',
+            headStyles: { fillColor: [34, 197, 94] }
+        });
+
+        doc.save(fileName);
+    },
+
+    exportFuelLogReportExcel: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const fuelLogs = FUEL_LOGS.filter(f => f.vehicleId === vehicleId);
+
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+
+        const fileName = `Fuel_Log_${vehicle.licensePlate.replace(/-/g, '_')}_Report.xlsx`;
+        const data = fuelLogs.map(f => ({
+            Date: f.date,
+            'Vehicle': vehicle.licensePlate,
+            'Quantity (L)': f.fuelQuantity,
+            'Price per Liter': f.pricePerLiter,
+            'Total Cost': f.totalCost,
+            'Odometer': f.odometer,
+            'Fuel Station': f.fuelStation
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Fuel Logs');
+        XLSX.writeFile(wb, fileName);
+    },
+
+    // ====================
+    // INDIVIDUAL MAINTENANCE REPORT
+    // ====================
+
+    exportMaintenanceLogReportPDF: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const maintenanceLogs = MAINTENANCE_RECORDS.filter(m => m.vehicleId === vehicleId);
+
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+
+        const doc = new jsPDF();
+        const fileName = `Maintenance_Log_${vehicle.licensePlate.replace(/-/g, '_')}_Report.pdf`;
+
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Maintenance Records: ${vehicle.licensePlate}`, 14, 20);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Vehicle: ${vehicle.make} ${vehicle.model}`, 14, 30);
+        doc.text(`Total Records: ${maintenanceLogs.length}`, 14, 36);
+
+        const totalCost = maintenanceLogs
+            .filter(m => m.status === 'Completed')
+            .reduce((sum, m) => sum + m.cost, 0);
+
+        autoTable(doc, {
+            startY: 44,
+            head: [['Date', 'Type', 'Cost', 'Status', 'Mechanic']],
+            body: maintenanceLogs.map(m => [
+                m.serviceDate,
+                m.serviceType,
+                `$${m.cost}`,
+                m.status,
+                m.mechanic
+            ]),
+            theme: 'grid',
+            headStyles: { fillColor: [245, 158, 11] }
+        });
+
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total Maintenance Cost: $${totalCost}`, 14, finalY);
+
+        doc.save(fileName);
+    },
+
+    exportMaintenanceLogReportExcel: (vehicleId: string) => {
+        const vehicle = VEHICLE_DETAILS.find(v => v.vehicleId === vehicleId);
+        const maintenanceLogs = MAINTENANCE_RECORDS.filter(m => m.vehicleId === vehicleId);
+
+        if (!vehicle) {
+            alert('Vehicle not found!');
+            return;
+        }
+
+        const fileName = `Maintenance_Log_${vehicle.licensePlate.replace(/-/g, '_')}_Report.xlsx`;
+        const data = maintenanceLogs.map(m => ({
+            Date: m.serviceDate,
+            'Vehicle': vehicle.licensePlate,
+            'Service Type': m.serviceType,
+            'Description': m.description,
+            'Cost': m.cost,
+            'Status': m.status,
+            'Mechanic': m.mechanic
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Records');
+        XLSX.writeFile(wb, fileName);
+    },
+
+    // ====================
+    // INDIVIDUAL RENTAL REPORT
+    // ====================
+
+    exportRentalReportPDF: (rentalId: string) => {
+        const rental = RENTAL_RECORDS.find(r => r.id === rentalId);
+
+        if (!rental) {
+            alert('Rental not found!');
+            return;
+        }
+
+        const doc = new jsPDF();
+        const fileName = `Rental_${rental.id}_Report.pdf`;
+
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Rental Agreement Report', 14, 20);
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Rental ID: ${rental.id}`, 14, 30);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 36);
+
+        autoTable(doc, {
+            startY: 44,
+            head: [['Field', 'Details']],
+            body: [
+                ['Vehicle', rental.licensePlate],
+                ['Customer', rental.customerName],
+                ['Contact', rental.customerPhone],
+                ['Start Date', rental.startDate],
+                ['End Date', rental.endDate],
+                ['Duration', `${rental.days} days`],
+                ['Daily Rate', `$${rental.dailyRate}`],
+                ['Total Cost', `$${rental.totalCost}`],
+                ['Status', rental.status],
+                ['Purpose', rental.purpose]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [236, 72, 153] }
+        });
+
+        doc.save(fileName);
+    },
+
+    exportRentalReportExcel: (rentalId: string) => {
+        const rental = RENTAL_RECORDS.find(r => r.id === rentalId);
+
+        if (!rental) {
+            alert('Rental not found!');
+            return;
+        }
+
+        const fileName = `Rental_${rental.id}_Report.xlsx`;
+        const data = [
+            { Field: 'Rental ID', Details: rental.id },
+            { Field: 'Vehicle', Details: rental.licensePlate },
+            { Field: 'Customer Name', Details: rental.customerName },
+            { Field: 'Contact', Details: rental.customerPhone },
+            { Field: 'Start Date', Details: rental.startDate },
+            { Field: 'End Date', Details: rental.endDate },
+            { Field: 'Duration (days)', Details: rental.days },
+            { Field: 'Daily Rate', Details: rental.dailyRate },
+            { Field: 'Total Cost', Details: rental.totalCost },
+            { Field: 'Status', Details: rental.status },
+            { Field: 'Purpose', Details: rental.purpose }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Rental Report');
+        XLSX.writeFile(wb, fileName);
+    },
+
+    // Maintenance Cost Export
+    exportMaintenancePDF: (startDate?: string, endDate?: string) => {
+        const doc = new jsPDF();
+
+        // Filter data if dates provided
+        let filteredData = MAINTENANCE_RECORDS;
+        let periodText = 'All Time';
+        let filenameSuffix = '';
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            filteredData = MAINTENANCE_RECORDS.filter(record => {
+                const recordDate = new Date(record.serviceDate);
+                return recordDate >= start && recordDate <= end;
+            });
+            periodText = `${start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+            filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+        }
+
+        doc.setFontSize(18);
+        doc.text('Maintenance Cost Report', 14, 20);
+
+        doc.setFontSize(11);
+        doc.text('Generated on: ' + new Date().toLocaleDateString(), 14, 30);
+        doc.text('Period: ' + periodText, 14, 36);
+
+        const totalCost = filteredData.reduce((sum, item) => sum + item.cost, 0);
+        doc.text(`Total Maintenance Cost: $${totalCost.toFixed(2)}`, 14, 46);
+
+        autoTable(doc, {
+            startY: 54,
+            head: [['Date', 'Vehicle', 'Type', 'Cost ($)']],
+            body: filteredData.map(item => [
+                item.serviceDate,
+                item.vehicleId,
+                item.serviceType,
+                item.cost.toFixed(2)
+            ])
+        });
+
+        doc.save(`maintenance_report${filenameSuffix}.pdf`);
+    },
+
+    exportMaintenanceExcel: (startDate?: string, endDate?: string) => {
+        let filteredData = MAINTENANCE_RECORDS;
+        let filenameSuffix = '';
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            filteredData = MAINTENANCE_RECORDS.filter(record => {
+                const recordDate = new Date(record.serviceDate);
+                return recordDate >= start && recordDate <= end;
+            });
+            filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+        }
+
+        const data = filteredData.map(item => ({
+            Date: item.serviceDate,
+            Vehicle: item.vehicleId,
+            'Service Type': item.serviceType,
+            const totalCost = filteredData.reduce((sum, item) => sum + item.cost, 0);
+            data.push({ Date: 'TOTAL', Vehicle: '', 'Service Type': '', Description: '', 'Cost ($)': totalCost, Status: 'Completed' });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Report');
+            XLSX.writeFile(wb, `maintenance_report${filenameSuffix}.xlsx`);
+        },
+
+            // Fuel Analysis Export
+            exportFuelPDF: (startDate?: string, endDate?: string) => {
+                const doc = new jsPDF();
+
+                let filteredData = FUEL_LOGS;
+                let periodText = 'All Time';
+                let filenameSuffix = '';
+
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    filteredData = FUEL_LOGS.filter(log => {
+                        const logDate = new Date(log.date);
+                        return logDate >= start && logDate <= end;
+                    });
+                    periodText = `${start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+                    filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+                }
+
+                doc.setFontSize(18);
+                doc.text('Fuel Analysis Report', 14, 20);
+
+                doc.setFontSize(11);
+                doc.text('Generated on: ' + new Date().toLocaleDateString(), 14, 30);
+                doc.text('Period: ' + periodText, 14, 36);
+
+                const totalCost = filteredData.reduce((sum, item) => sum + item.totalCost, 0);
+                const totalQuantity = filteredData.reduce((sum, item) => sum + item.fuelQuantity, 0);
+                doc.text(`Total Fuel Cost: $${totalCost.toFixed(2)}`, 14, 46);
+                doc.text(`Total Quantity: ${totalQuantity.toFixed(2)} L`, 14, 52);
+
+                autoTable(doc, {
+                    startY: 60,
+                    head: [['Date', 'Vehicle', 'Quantity (L)', 'Cost ($)']],
+                    body: filteredData.map(item => [
+                        item.date,
+                        item.vehicleId,
+                        item.fuelQuantity.toFixed(2),
+                        item.totalCost.toFixed(2)
+                    ])
+                });
+
+                doc.save(`fuel_analysis_report${filenameSuffix}.pdf`);
+            },
+
+            exportFuelExcel: (startDate?: string, endDate?: string) => {
+                let filteredData = FUEL_LOGS;
+                let filenameSuffix = '';
+
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    filteredData = FUEL_LOGS.filter(log => {
+                        const logDate = new Date(log.date);
+                        return logDate >= start && logDate <= end;
+                    });
+                    filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+                }
+
+                const data = filteredData.map(item => ({
+                    Date: item.date,
+                    Vehicle: item.vehicleId,
+                    'Quantity (L)': item.fuelQuantity,
+
+                    // Vehicle Utilization Export
+                    exportUtilizationPDF: (startDate?: string, endDate?: string) => {
+                        const doc = new jsPDF();
+
+                        let periodText = 'All Time';
+                        let filenameSuffix = '';
+
+                        if (startDate && endDate) {
+                            const start = new Date(startDate);
+                            periodText = `${start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+                            filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+                        }
+
+                        doc.setFontSize(18);
+                        doc.text('Vehicle Utilization Report', 14, 20);
+
+                        doc.setFontSize(11);
+                        doc.text('Generated on: ' + new Date().toLocaleDateString(), 14, 30);
+
+                        exportUtilizationExcel: (startDate?: string, endDate?: string) => {
+                            let filenameSuffix = '';
+
+                            if (startDate && endDate) {
+                                const start = new Date(startDate);
+                                filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+                            }
+
+                            const data = VEHICLE_UTILIZATION.map(item => ({
+                                'License Plate': item.licensePlate,
+                                'Distance (km)': item.totalDistance,
+                                'Trips': item.totalTrips,
+                                'Hours': item.totalHours,
+                                'Utilization Rate (%)': item.utilizationRate,
+                                'Avg Trip Distance (km)': item.avgTripDistance
+                            }));
+
+                            const ws = XLSX.utils.json_to_sheet(data);
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, 'Vehicle Utilization');
+                            XLSX.writeFile(wb, `vehicle_utilization_report${filenameSuffix}.xlsx`);
+                        },
+
+                            // Driver Performance Export
+                            exportPerformancePDF: (startDate?: string, endDate?: string) => {
+                                const doc = new jsPDF();
+
+                                let periodText = 'All Time';
+                                let filenameSuffix = '';
+
+                                if (startDate && endDate) {
+                                    const start = new Date(startDate);
+                                    periodText = `${start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+                                    filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+                                }
+
+                                doc.setFontSize(18);
+                                doc.text('Driver Performance Report', 14, 20);
+
+                                doc.setFontSize(11);
+                                doc.text('Generated on: ' + new Date().toLocaleDateString(), 14, 30);
+                                doc.text('Period: ' + periodText, 14, 36);
+
+                                autoTable(doc, {
+                                    startY: 44,
+                                    head: [['Driver Name', 'Total Trips', 'Distance (km)', 'Rating']],
+                                    body: DRIVER_PERFORMANCE.map(item => [
+                                        item.driverName,
+                                        item.totalTrips,
+                                        item.totalDistance,
+                                        item.feedbackRating.toFixed(1)
+                                    ])
+                                });
+
+                                doc.save(`driver_performance_report${filenameSuffix}.pdf`);
+                            },
+
+                                exportPerformanceExcel: (startDate?: string, endDate?: string) => {
+                                    let filenameSuffix = '';
+
+                                    if (startDate && endDate) {
+                                        const start = new Date(startDate);
+                                        filenameSuffix = `_${start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '_')}`;
+                                    }
+
+                                    const data = DRIVER_PERFORMANCE.map(item => ({
+                                        'Driver Name': item.driverName,
+                                        'License Number': item.licenseNumber,
+                                        'Total Trips': item.totalTrips,
+                                        'Distance (km)': item.totalDistance,
+                                        'Rating': item.feedbackRating,
+                                        'Safety Score': item.safetyScore,
+                                        'Violations': item.violations
+                                    }));
+
+                                    const ws = XLSX.utils.json_to_sheet(data);
+                                    const wb = XLSX.utils.book_new();
+                                    XLSX.utils.book_append_sheet(wb, ws, 'Driver Performance');
+                                    XLSX.writeFile(wb, `driver_performance_report${filenameSuffix}.xlsx`);
+                                }
+                    };

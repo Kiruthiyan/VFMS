@@ -1,4 +1,22 @@
 # ===============================
+<<<<<<< HEAD
+# GENERAL
+# ===============================
+.DS_Store
+Thumbs.db
+*.log
+
+# ===============================
+# ENV FILES (IMPORTANT)
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# BACKEND (SPRING BOOT / MAVEN)
+# ===============================
+=======
 # REPOSITORY-WIDE IGNORE RULES
 # ===============================
 
@@ -33,29 +51,77 @@ coverage/
 *.tsbuildinfo
 
 # Java / Maven
+>>>>>>> origin/develop
 target/
 *.class
 *.jar
 *.war
 *.ear
+<<<<<<< HEAD
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Ignore build folders inside modules (keep structure clean)
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ===============================
+# DATABASE FILES (LOCAL ONLY)
+# ===============================
+=======
 .mvn/wrapper/maven-wrapper.jar
 backend/.m2/
 
 # Database and storage artifacts
+>>>>>>> origin/develop
 *.db
 *.mv.db
 *.lock.db
 backend/data/
 backend/uploads/
+<<<<<<< HEAD
+
+# ===============================
+# IDE FILES
+# ===============================
+
+## STS / Eclipse
+=======
 backend/src/main/resources/application-local.properties
 backend/src/main/resources/application-*.local.properties
 backend/src/main/resources/application-secrets.properties
 
 # IDE-specific Java files
+>>>>>>> origin/develop
 .apt_generated
 .classpath
 .factorypath
 .project
+<<<<<<< HEAD
+.settings
+.springBeans
+.sts4-cache
+
+## IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+## NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+## VS Code
+.vscode/
+=======
 .settings/
 .springBeans
 .sts4-cache
@@ -73,6 +139,7 @@ build/
 ## VS Code
 .vscode/
 .claude/
+>>>>>>> origin/develop
 
 # ===============================
 # FRONTEND (NEXT.JS / NODE)
@@ -85,7 +152,10 @@ dist/
 # ===============================
 # TEST / TEMP FILES
 # ===============================
+<<<<<<< HEAD
+=======
 backend/.m2/
+>>>>>>> origin/develop
 test_output.txt
 test_results_*.txt
 
@@ -93,4 +163,8 @@ test_results_*.txt
 # OS GENERATED FILES
 # ===============================
 *.swp
+<<<<<<< HEAD
 *.swo
+=======
+*.swo
+>>>>>>> origin/develop
