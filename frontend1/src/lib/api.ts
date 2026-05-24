@@ -1,42 +1,50 @@
-import axios from "axios"
-import { authService } from "./auth"
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-})
+  timeout: 15000,
+});
 
-// Add request interceptor to include auth token
+// Request interceptor
+// NOTE: Token injection will be added by feature/auth-login (Kiruthiyan)
 api.interceptors.request.use(
   (config) => {
-    const authHeader = authService.getAuthHeader()
-    if ("Authorization" in authHeader) {
-      config.headers.Authorization = authHeader.Authorization
-    }
-    return config
+    // Auth token will be added here when feature/auth-login is merged
+    return config;
   },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
+  (error) => Promise.reject(error),
+);
 
-// Add response interceptor to handle auth errors
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
-      authService.clearAuth()
+      // Redirect to login — handled by middleware (feature/auth-rbac)
       if (typeof window !== "undefined") {
-        window.location.href = "/login"
+        window.location.href = "/auth/login";
       }
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
+  },
+);
+
+export default api;
+
+// Helper to extract error message from API response
+export function getErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    return (
+      (error.response?.data as { message?: string })?.message ??
+      error.message ??
+      "Something went wrong"
+    );
   }
-)
-
-export default api
-
+  if (error instanceof Error) return error.message;
+  return "Something went wrong";
+}

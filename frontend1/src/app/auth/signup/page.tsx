@@ -1,3 +1,4 @@
+<<<<<<< HEAD:frontend1/src/app/auth/signup/page.tsx
 // PLACEHOLDER — Kiruthiyan will replace this in feature/auth-signup
 
 export default function SignupPage() {
@@ -13,3 +14,32 @@ export default function SignupPage() {
     </div>
   );
 }
+=======
+'use client';
+
+import { Suspense } from 'react';
+
+import { SignupForm } from '@/components/forms/signup-form';
+import { AuthShell } from '@/components/layout/auth-shell';
+
+function SignupContent() {
+  return (
+    <AuthShell
+      eyebrow="Verified staff registration"
+      title="Create your FleetPro account"
+      description="Register using your verified company staff information."
+      panelWidth="compact"
+    >
+      <SignupForm />
+    </AuthShell>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SignupContent />
+    </Suspense>
+  );
+}
+>>>>>>> origin/develop:frontend/src/app/auth/signup/page.tsx
