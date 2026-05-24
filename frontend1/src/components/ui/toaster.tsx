@@ -1,5 +1,6 @@
-"use client"
+"use client";
 
+<<<<<<< HEAD:frontend1/src/components/ui/toaster.tsx
 import { useToast } from "@/hooks/use-toast"
 import {
     Toast,
@@ -32,4 +33,17 @@ export function Toaster() {
             <ToastViewport />
         </ToastProvider>
     )
+=======
+import { Toaster as SonnerToaster } from "sonner";
+
+export function Toaster() {
+  return (
+    <SonnerToaster
+      position="top-right"
+      richColors
+      closeButton
+      duration={4000}
+    />
+  );
+>>>>>>> origin/develop:frontend/src/components/ui/toaster.tsx
 }
