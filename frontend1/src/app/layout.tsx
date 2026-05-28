@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { RoleProvider } from "@/lib/role-context";
 
 const inter = Inter({ subsets: ["latin"] });
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "FleetPro — Fleet Management System",
@@ -19,13 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-<<<<<<< HEAD:frontend1/src/app/layout.tsx
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
-        {children}
-=======
+
       <body className={`${inter.className} antialiased`}>
         <RoleProvider>{children}</RoleProvider>
->>>>>>> origin/develop:frontend/src/app/layout.tsx
         <Toaster />
         <ToastProvider />
       </body>

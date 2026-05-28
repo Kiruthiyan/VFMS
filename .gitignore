@@ -1,3 +1,12 @@
+<<<<<<< HEAD
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+=======
 # ===============================
 <<<<<<< HEAD
 # GENERAL
@@ -94,22 +103,35 @@ backend/src/main/resources/application-secrets.properties
 
 # IDE-specific Java files
 >>>>>>> origin/develop
+>>>>>>> develop
 .apt_generated
 .classpath
 .factorypath
 .project
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> develop
 .settings
 .springBeans
 .sts4-cache
 
+<<<<<<< HEAD
+### IntelliJ IDEA ###
+.idea
+=======
 ## IntelliJ IDEA
 .idea/
+>>>>>>> develop
 *.iws
 *.iml
 *.ipr
 
+<<<<<<< HEAD
+### NetBeans ###
+=======
 ## NetBeans
+>>>>>>> develop
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -119,6 +141,17 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+<<<<<<< HEAD
+### VS Code ###
+.vscode/
+
+# Environment / secrets - NEVER commit
+.env
+
+# Local config with secrets
+src/main/resources/application.propertiesvfms-frontend/node_modules/
+vfms-frontend/.next/
+=======
 ## VS Code
 .vscode/
 =======
@@ -168,3 +201,4 @@ test_results_*.txt
 =======
 *.swo
 >>>>>>> origin/develop
+>>>>>>> develop
