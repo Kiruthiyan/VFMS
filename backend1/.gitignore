@@ -75,3 +75,4 @@ test_results_*.txt
 # ===============================
 *.swp
 *.swo
+src/main/resources/application.properties

@@ -26,23 +26,9 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
-<<<<<<< HEAD:backend1/src/main/java/com/vfms/config/SecurityConfig.java
-    /**
-     * PLACEHOLDER SECURITY CONFIG — permits all requests.
-     * Kiruthiyan (auth-login feature) will replace this with JWT-based security.
-     * Other team members: do NOT modify this file on your feature branches.
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-=======
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
@@ -52,29 +38,29 @@ public class SecurityConfig {
                         // TODO: Replace with role-based rules before deploying to production
                         .anyRequest()
                         .permitAll());
->>>>>>> origin/develop:backend/src/main/java/com/vfms/config/SecurityConfig.java
 
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-<<<<<<< HEAD:backend1/src/main/java/com/vfms/config/SecurityConfig.java
-=======
 
-        // Comma-separated in the property file so multiple environments (local, staging, production) can be configured without changing code
->>>>>>> origin/develop:backend/src/main/java/com/vfms/config/SecurityConfig.java
+        CorsConfiguration config = new CorsConfiguration();
+
+        // Comma-separated in the property file so multiple environments
+        // (local, staging, production) can be configured without changing code
         config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+        );
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-<<<<<<< HEAD:backend1/src/main/java/com/vfms/config/SecurityConfig.java
-=======
 
->>>>>>> origin/develop:backend/src/main/java/com/vfms/config/SecurityConfig.java
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
+
         return source;
     }
 

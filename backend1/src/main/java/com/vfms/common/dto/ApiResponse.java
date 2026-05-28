@@ -28,8 +28,5 @@ public class ApiResponse<T> {
                 .message(message)
                 .build();
     }
-<<<<<<< HEAD:backend1/src/main/java/com/vfms/common/dto/ApiResponse.java
 }
-=======
-}
->>>>>>> origin/develop:backend/src/main/java/com/vfms/common/dto/ApiResponse.java
+
