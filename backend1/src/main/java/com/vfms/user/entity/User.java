@@ -1,0 +1,188 @@
+package com.vfms.user.entity;
+
+import com.vfms.common.enums.Role;
+import com.vfms.common.enums.UserStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class User implements UserDetails {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false)
+    private String fullName;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String phone;
+
+    @Column(nullable = false)
+    private String nic;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.EMAIL_UNVERIFIED;
+
+    @Builder.Default
+    @Column(nullable = false, name = "email_verified")
+    private boolean emailVerified = false;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean createdByAdmin = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean passwordChangeRequired = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean enabled = true;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_reason")
+    private String deletedReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_before_deletion")
+    private UserStatus statusBeforeDeletion;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "deleted_by")
+    private String deletedBy;
+
+    @Column(name = "restored_by")
+    private String restoredBy;
+
+    @Column(name = "license_number")
+    private String licenseNumber;
+
+    @Column(name = "license_expiry_date")
+    private LocalDate licenseExpiryDate;
+
+    private String certifications;
+
+    @Column(name = "experience_years")
+    private Integer experienceYears;
+
+    @Column(name = "employee_id")
+    private String employeeId;
+
+    private String department;
+
+    @Column(name = "office_location")
+    private String officeLocation;
+
+    private String designation;
+
+    @Column(name = "approval_level")
+    private String approvalLevel;
+
+    @CreationTimestamp
+    @Column(updatable = false, name = "created_at")
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    void syncUsername() {
+        if (email != null) {
+            email = email.trim().toLowerCase();
+            username = email;
+        }
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return deletedAt == null
+                && status != UserStatus.DEACTIVATED
+                && status != UserStatus.REJECTED;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    } 
+
+    @Override
+    public boolean isEnabled() {
+        return enabled && deletedAt == null && status == UserStatus.APPROVED;
+    }
+}

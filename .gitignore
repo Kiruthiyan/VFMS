@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -5,21 +6,132 @@ target/
 !**/src/test/**/target/
 
 ### STS ###
+=======
+# ===============================
+<<<<<<< HEAD
+# GENERAL
+# ===============================
+.DS_Store
+Thumbs.db
+*.log
+
+# ===============================
+# ENV FILES (IMPORTANT)
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# BACKEND (SPRING BOOT / MAVEN)
+# ===============================
+=======
+# REPOSITORY-WIDE IGNORE RULES
+# ===============================
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+*.orig
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.local.env
+
+# Editors and local tooling
+.idea/
+.vscode/
+.claude/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Java / Maven
+>>>>>>> origin/develop
+target/
+*.class
+*.jar
+*.war
+*.ear
+<<<<<<< HEAD
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Ignore build folders inside modules (keep structure clean)
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ===============================
+# DATABASE FILES (LOCAL ONLY)
+# ===============================
+=======
+.mvn/wrapper/maven-wrapper.jar
+backend/.m2/
+
+# Database and storage artifacts
+>>>>>>> origin/develop
+*.db
+*.mv.db
+*.lock.db
+backend/data/
+backend/uploads/
+<<<<<<< HEAD
+
+# ===============================
+# IDE FILES
+# ===============================
+
+## STS / Eclipse
+=======
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-*.local.properties
+backend/src/main/resources/application-secrets.properties
+
+# IDE-specific Java files
+>>>>>>> origin/develop
+>>>>>>> develop
 .apt_generated
 .classpath
 .factorypath
 .project
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> develop
 .settings
 .springBeans
 .sts4-cache
 
+<<<<<<< HEAD
 ### IntelliJ IDEA ###
 .idea
+=======
+## IntelliJ IDEA
+.idea/
+>>>>>>> develop
 *.iws
 *.iml
 *.ipr
 
+<<<<<<< HEAD
 ### NetBeans ###
+=======
+## NetBeans
+>>>>>>> develop
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,6 +141,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+<<<<<<< HEAD
 ### VS Code ###
 .vscode/
 
@@ -38,3 +151,54 @@ build/
 # Local config with secrets
 src/main/resources/application.propertiesvfms-frontend/node_modules/
 vfms-frontend/.next/
+=======
+## VS Code
+.vscode/
+=======
+.settings/
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+build/
+
+# Deployment
+.vercel/
+
+## VS Code
+.vscode/
+.claude/
+>>>>>>> origin/develop
+
+# ===============================
+# FRONTEND (NEXT.JS / NODE)
+# ===============================
+node_modules/
+.next/
+out/
+dist/
+
+# ===============================
+# TEST / TEMP FILES
+# ===============================
+<<<<<<< HEAD
+=======
+backend/.m2/
+>>>>>>> origin/develop
+test_output.txt
+test_results_*.txt
+
+# ===============================
+# OS GENERATED FILES
+# ===============================
+*.swp
+<<<<<<< HEAD
+*.swo
+=======
+*.swo
+>>>>>>> origin/develop
+>>>>>>> develop
