@@ -5,8 +5,4 @@
 
 export function ToastProvider() {
   return null;
-<<<<<<< HEAD:frontend1/src/components/providers/ToastProvider.tsx
 }
-=======
-}
->>>>>>> origin/develop:frontend/src/components/providers/ToastProvider.tsx

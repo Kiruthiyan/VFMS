@@ -1,8 +1,4 @@
-<<<<<<< HEAD:frontend1/tailwind.config.ts
-import type { Config } from "tailwindcss"
-=======
 import type { Config } from "tailwindcss";
->>>>>>> origin/develop:frontend/tailwind.config.ts
 /* eslint-disable @typescript-eslint/no-require-imports */
 
 const config = {
@@ -22,11 +18,6 @@ const config = {
         "2xl": "1400px",
       },
     },
-<<<<<<< HEAD:frontend1/tailwind.config.ts
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    plugins: [require("tailwindcss-animate")],
-} satisfies Config
-=======
     extend: {
       colors: {
         border: "hsl(var(--border))",
@@ -87,6 +78,5 @@ const config = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
->>>>>>> origin/develop:frontend/tailwind.config.ts
 
 export default config;

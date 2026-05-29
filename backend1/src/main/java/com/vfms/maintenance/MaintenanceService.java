@@ -134,24 +134,28 @@ public class MaintenanceService {
         return mapToResponse(maintenanceRepository.save(mr));
     }
 
+    @Transactional(readOnly = true)
     public List<MaintenanceResponseDto> getAllRequests() {
         return maintenanceRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<MaintenanceResponseDto> getRequestsByStatus(MaintenanceStatus status) {
         return maintenanceRepository.findByStatus(status).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<MaintenanceResponseDto> getRequestsByVehicle(Long vehicleId) {
         return maintenanceRepository.findByVehicleId(vehicleId).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public MaintenanceResponseDto getRequestById(Long id) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
@@ -181,6 +185,7 @@ public class MaintenanceService {
     }
 
     // Only records with both dates present are included so that downtime hours can be calculated accurately — partial records would skew the report
+    @Transactional(readOnly = true)
     public List<MaintenanceResponseDto> getDowntimeByVehicle(Long vehicleId) {
         return maintenanceRepository.findByVehicleId(vehicleId).stream()
                 .filter(mr -> mr.getApprovedDate() != null && mr.getClosedDate() != null)
@@ -188,6 +193,7 @@ public class MaintenanceService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<MaintenanceResponseDto> getPendingApprovals() {
         return maintenanceRepository.findByStatus(MaintenanceStatus.SUBMITTED).stream()
                 .map(this::mapToResponse)
@@ -195,6 +201,7 @@ public class MaintenanceService {
     }
 
     // Summary is built from CLOSED records only so that in-progress estimates do not inflate the reported actual spend figures
+    @Transactional(readOnly = true)
     public Map<String, Object> getMaintenanceCostSummary() {
         List<MaintenanceRequest> closed = maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED);
 
@@ -220,6 +227,7 @@ public class MaintenanceService {
                 "totalDowntimeHours", totalDowntimeHours);
     }
 
+    @Transactional(readOnly = true)
     public Map<String, BigDecimal> getCostByMaintenanceType() {
         return maintenanceRepository.findByStatus(MaintenanceStatus.CLOSED).stream()
                 .filter(mr -> mr.getActualCost() != null)
@@ -229,6 +237,7 @@ public class MaintenanceService {
     }
 
     // Includes all records so partial costs from still-open work are not excluded from fleet spend
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getCostPerVehicle() {
         return maintenanceRepository.findAll().stream()
                 .filter(mr -> mr.getActualCost() != null)

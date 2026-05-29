@@ -11,4 +11,11 @@ public interface DriverRepository extends JpaRepository<Driver, UUID>, JpaSpecif
     Optional<Driver> findByNic(String nic);
     boolean existsByEmployeeId(String employeeId);
     boolean existsByNic(String nic);
+
+    @org.springframework.data.jpa.repository.Query("""
+            select d.id as id, d.fullName as fullName
+            from Driver d
+            where d.status = com.vfms.dsm.entity.Driver.DriverStatus.ACTIVE
+            """)
+    java.util.List<com.vfms.fuel.dto.FuelMetadataDriverProjection> findFuelMetadataDrivers();
 }

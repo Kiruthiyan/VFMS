@@ -54,4 +54,10 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
             @Param("driverId") UUID driverId,
             @Param("departureTime") LocalDateTime departureTime,
             @Param("returnTime") LocalDateTime returnTime);
+
+    @Query("SELECT t FROM TripRequest t WHERE t.assignedDriverId = :driverId " +
+           "AND t.status = com.vfms.trip.enums.TripStatus.ONGOING")
+    java.util.Optional<TripRequest> findActiveTrip(
+            @Param("driverId") UUID driverId,
+            @Param("now") LocalDateTime now);
 }
