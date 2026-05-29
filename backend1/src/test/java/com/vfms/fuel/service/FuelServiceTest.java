@@ -2,8 +2,8 @@ package com.vfms.fuel.service;
 
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
-import com.vfms.driver.entity.Driver;
-import com.vfms.driver.repository.DriverRepository;
+import com.vfms.dsm.entity.Driver;
+import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelMetadataDriverProjection;
@@ -11,8 +11,8 @@ import com.vfms.fuel.dto.FuelMetadataVehicleProjection;
 import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
-import com.vfms.vehicle.entity.Vehicle;
-import com.vfms.vehicle.repository.VehicleRepository;
+import com.vfms.vehicle.Vehicle;
+import com.vfms.vehicle.VehicleRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +68,7 @@ class FuelServiceTest {
         Vehicle vehicle = Vehicle.builder()
                 .id(Long.valueOf(req.getVehicleId()))
                 .plateNumber("ABC-1234")
-                .make("Toyota")
+                .brand("Toyota")
                 .model("Camry")
                 .odometerReading(900.0)
                 .build();
@@ -102,7 +102,7 @@ class FuelServiceTest {
         UUID id = UUID.randomUUID();
         FuelRecord record = FuelRecord.builder()
                 .id(id)
-                .vehicle(Vehicle.builder().id(101L).plateNumber("A").make("M").model("X").build())
+                .vehicle(Vehicle.builder().id(101L).plateNumber("A").brand("M").model("X").build())
                 .fuelDate(LocalDate.now())
                 .quantity(null)
                 .costPerLitre(null)
@@ -123,7 +123,7 @@ class FuelServiceTest {
         UUID id = UUID.randomUUID();
         FuelRecord record = FuelRecord.builder()
                 .id(id)
-                .vehicle(Vehicle.builder().id(202L).plateNumber("A").make("M").model("X").build())
+                .vehicle(Vehicle.builder().id(202L).plateNumber("A").brand("M").model("X").build())
                 .fuelDate(LocalDate.now())
                 .quantity(BigDecimal.TEN)
                 .costPerLitre(BigDecimal.TEN)
@@ -159,7 +159,7 @@ class FuelServiceTest {
 
         FuelRecord record = FuelRecord.builder()
                 .id(id)
-                .vehicle(Vehicle.builder().id(vehicleId).plateNumber("A").make("M").model("X").build())
+                .vehicle(Vehicle.builder().id(vehicleId).plateNumber("A").brand("M").model("X").build())
                 .fuelDate(LocalDate.now())
                 .quantity(BigDecimal.ONE)
                 .costPerLitre(BigDecimal.ONE)
@@ -171,7 +171,7 @@ class FuelServiceTest {
         Vehicle vehicle = Vehicle.builder()
                 .id(vehicleId)
                 .plateNumber("A")
-                .make("M")
+                .brand("M")
                 .model("X")
                 .build();
 

@@ -41,10 +41,12 @@ public class VendorService {
     }
 
     // Filters by active=true so deactivated vendors are invisible to normal operations, preventing new rentals from being assigned to retired vendors
+    @Transactional(readOnly = true)
     public List<Vendor> getAllVendors() {
         return vendorRepository.findByActiveTrue();
     }
 
+    @Transactional(readOnly = true)
     public List<Vendor> getAllVendorsIncludingInactive() {
         return vendorRepository.findAll();
     }
@@ -60,6 +62,7 @@ public class VendorService {
         return vendorRepository.save(vendor);
     }
 
+    @Transactional(readOnly = true)
     public Vendor getVendorById(Long id) {
         return vendorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor", id));

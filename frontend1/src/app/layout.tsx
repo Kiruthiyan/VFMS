@@ -6,7 +6,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { RoleProvider } from "@/lib/role-context";
-
+import { RoleProvider as TripsRoleProvider } from "@/lib/roleContext";
 const inter = Inter({ subsets: ["latin"] });
 
 const geistSans = Geist({
@@ -33,7 +33,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
 
       <body className={`${inter.className} antialiased`}>
-        <RoleProvider>{children}</RoleProvider>
+        <RoleProvider>
+          <TripsRoleProvider>
+            {children}
+          </TripsRoleProvider>
+        </RoleProvider>
         <Toaster />
         <ToastProvider />
       </body>

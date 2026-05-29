@@ -108,7 +108,7 @@ export default function LandingPage() {
             <Link href="/auth/login">
               <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-50">Log In</Button>
             </Link>
-            <Link href="/trips">
+            <Link href="/auth/login">
               <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-6 font-bold shadow-lg shadow-slate-200">
                 Get Started
               </Button>
@@ -143,7 +143,7 @@ export default function LandingPage() {
                 The world's most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
               </motion.p>
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
-                <Link href="/trips">
+                <Link href="/auth/login">
                   <Button size="lg" className="h-16 px-8 rounded-2xl bg-slate-900 text-white hover:bg-black text-lg font-bold group">
                     Go to Dashboard
                     <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -261,7 +261,7 @@ export default function LandingPage() {
               <div className="flex-1">
                 <h4 className="text-3xl font-black mb-4">Analytics Dashboard</h4>
                 <p className="text-slate-500 font-medium mb-6">Cost analysis, utilization reports, and driver performance insights exported to PDF or Excel.</p>
-                <Link href="/trips">
+                <Link href="/auth/login">
                   <Button variant="link" className="p-0 font-bold text-amber-600 text-lg">Go to Dashboard <ArrowRight className="ml-2 w-5 h-5" /></Button>
                 </Link>
               </div>
@@ -325,7 +325,7 @@ export default function LandingPage() {
                     {activeTab === 'system_user' && "Request vehicles for trips, track your request status in real-time, and manage your travel schedule."}
                     {activeTab === 'driver' && "View your assigned trips, start and complete journeys, and access all trip details from one place."}
                   </p>
-                  <Link href="/trips">
+                  <Link href="/auth/login">
                     <Button className="bg-white text-slate-900 hover:bg-amber-50 font-bold rounded-full px-8 h-12">
                       Launch Dashboard
                     </Button>
@@ -383,7 +383,7 @@ export default function LandingPage() {
               <p className="text-slate-400 text-xl max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
                 Your complete Vehicle Fleet Management System is ready to use.
               </p>
-              <Link href="/trips">
+              <Link href="/auth/login">
                 <Button size="lg" className="h-16 px-12 rounded-2xl bg-amber-400 text-slate-900 hover:bg-amber-300 text-lg font-black">
                   Open Dashboard
                 </Button>
@@ -403,7 +403,7 @@ export default function LandingPage() {
             <span className="text-lg font-black tracking-tighter uppercase">FleetPro</span>
           </div>
           <p className="text-sm font-bold text-slate-400">© 2026 VFMS — Vehicle Fleet Management System. University of Moratuwa.</p>
-          <Link href="/trips">
+          <Link href="/auth/login">
             <Button variant="outline" className="font-bold rounded-full">Go to Dashboard</Button>
           </Link>
         </div>

@@ -81,24 +81,28 @@ public class RentalService {
         return mapToResponse(rentalRepository.save(rental));
     }
 
+    @Transactional(readOnly = true)
     public List<RentalResponseDto> getAllRentals() {
         return rentalRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<RentalResponseDto> getRentalsByStatus(RentalStatus status) {
         return rentalRepository.findByStatus(status).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<RentalResponseDto> getRentalsByVendor(Long vendorId) {
         return rentalRepository.findByVendorId(vendorId).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public RentalResponseDto getRentalById(Long id) {
         RentalRecord rental = rentalRepository
                 .findById(id)
@@ -163,6 +167,7 @@ public class RentalService {
         return mapToResponse(rentalRepository.save(rental));
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> getRentalCostSummary() {
         List<RentalRecord> all = rentalRepository.findAll();
 
@@ -186,6 +191,7 @@ public class RentalService {
                 "totalRentalCost", totalCost);
     }
 
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getCostPerVendor() {
         return rentalRepository.findAll().stream()
                 // Rentals without a total cost are excluded because they are still in progress and would skew vendor-level spending figures.

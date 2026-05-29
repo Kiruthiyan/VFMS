@@ -60,6 +60,9 @@ public class Vehicle {
     @Builder.Default
     private Boolean active = true;
 
+    @Column(name = "odometer_reading")
+    private Double odometerReading;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
