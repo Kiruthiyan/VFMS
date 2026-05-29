@@ -1,7 +1,7 @@
 package com.vfms.fuel.entity;
 
-import com.vfms.driver.entity.Driver;
-import com.vfms.vehicle.entity.Vehicle;
+import com.vfms.dsm.entity.Driver;
+import com.vfms.vehicle.Vehicle;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

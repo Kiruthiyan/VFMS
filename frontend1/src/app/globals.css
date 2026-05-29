@@ -237,8 +237,6 @@ body {
   background-color: #475569; /* slate-600 — slightly lighter on hover */
 }
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -11,7 +11,7 @@ import com.vfms.dsm.repository.DriverCertificationRepository;
 import com.vfms.dsm.repository.DriverLicenseRepository;
 import com.vfms.dsm.repository.DriverReadinessCacheRepository;
 import com.vfms.dsm.repository.DriverRepository;
-import com.vfms.dsm.repository.TripRequestRepository;
+import com.vfms.trip.repository.TripRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

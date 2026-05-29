@@ -118,9 +118,9 @@ export type SignupStep5Values = z.infer<typeof signupStep5Schema>;
 
 // Complete schema is retained for shared validation utilities and tests.
 export const completeSignupSchema = signupStep1Schema
-  .merge(signupStep2Schema)
-  .merge(signupStep3Schema)
-  .merge(signupStep4Schema)
-  .merge(signupStep5Schema);
+  .and(signupStep2Schema)
+  .and(signupStep3Schema)
+  .and(signupStep4Schema)
+  .and(signupStep5Schema);
 
 export type CompleteSignupValues = z.infer<typeof completeSignupSchema>;

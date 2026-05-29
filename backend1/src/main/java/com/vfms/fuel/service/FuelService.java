@@ -3,9 +3,9 @@ package com.vfms.fuel.service;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.common.enums.DriverStatus;
-import com.vfms.common.enums.VehicleStatus;
-import com.vfms.driver.entity.Driver;
-import com.vfms.driver.repository.DriverRepository;
+import com.vfms.vehicle.VehicleStatus;
+import com.vfms.dsm.entity.Driver;
+import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelMetadataDriverProjection;
@@ -17,8 +17,8 @@ import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.dto.VehicleDetailDto;
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
-import com.vfms.vehicle.entity.Vehicle;
-import com.vfms.vehicle.repository.VehicleRepository;
+import com.vfms.vehicle.Vehicle;
+import com.vfms.vehicle.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -409,8 +409,8 @@ public class FuelService {
     }
 
     private void validateDriverEligibility(Driver driver) {
-        DriverStatus status = driver.getStatus();
-        if (status != DriverStatus.ACTIVE && status != DriverStatus.AVAILABLE) {
+        Driver.DriverStatus status = driver.getStatus();
+        if (status != Driver.DriverStatus.ACTIVE) {
             throw new ValidationException("Only active drivers can be assigned to fuel entries.");
         }
     }
@@ -420,7 +420,7 @@ public class FuelService {
                 .id(record.getId())
                 .vehicleId(String.valueOf(record.getVehicle().getId()))
                 .vehiclePlate(record.getVehicle().getPlateNumber())
-                .vehicleMakeModel(record.getVehicle().getMake() + " " + record.getVehicle().getModel())
+                .vehicleMakeModel(record.getVehicle().getBrand() + " " + record.getVehicle().getModel())
                 .driverId(record.getDriver() != null ? record.getDriver().getId() : null)
                 .driverName(record.getDriver() != null ? record.getDriver().getFullName() : null)
                 .fuelDate(record.getFuelDate())

@@ -41,6 +41,7 @@ public class VehicleService {
     }
 
     // Filters by active=true so retired vehicles are excluded from normal listings without requiring callers to pass an explicit filter
+    @Transactional(readOnly = true)
     public List<VehicleResponseDto> getAllVehicles() {
         return vehicleRepository.findByActiveTrue().stream()
                 .map(this::mapToResponse)
@@ -48,12 +49,14 @@ public class VehicleService {
     }
 
     // Combines status and active filters so retired vehicles never surface even when querying a specific status
+    @Transactional(readOnly = true)
     public List<VehicleResponseDto> getVehiclesByStatus(VehicleStatus status) {
         return vehicleRepository.findByStatusAndActiveTrue(status).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public VehicleResponseDto getVehicleById(Long id) {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));

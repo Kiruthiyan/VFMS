@@ -2,7 +2,7 @@ package com.vfms.fuel.service;
 
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
-import com.vfms.vehicle.entity.Vehicle;
+import com.vfms.vehicle.Vehicle;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
