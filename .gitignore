@@ -1,204 +1,78 @@
-<<<<<<< HEAD
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-=======
 # ===============================
-<<<<<<< HEAD
-# GENERAL
-# ===============================
-.DS_Store
-Thumbs.db
-*.log
-
-# ===============================
-# ENV FILES (IMPORTANT)
-# ===============================
-.env
-.env.*
-!.env.example
-
-# ===============================
-# BACKEND (SPRING BOOT / MAVEN)
-# ===============================
-=======
-# REPOSITORY-WIDE IGNORE RULES
+# VFMS — repository-wide ignore rules
 # ===============================
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Logs and temp files
+# Logs and temp
 *.log
 *.tmp
 *.swp
 *.swo
 *.orig
+test_output.txt
+test_results_*.txt
 
-# Environment files
+# Local env / secrets (never commit)
 .env
 .env.*
 !.env.example
 *.local.env
 
-# Editors and local tooling
+# Disposable local archive (removed after review)
+_bin/
+cleanup-bin/
+
+# Editors / AI tooling
 .idea/
 .vscode/
 .claude/
+*.iml
+*.ipr
+*.iws
 
 # Node / Next.js
 node_modules/
 .next/
 out/
 dist/
+build/
 coverage/
+.vercel/
 *.tsbuildinfo
 
 # Java / Maven
->>>>>>> origin/develop
 target/
 *.class
 *.jar
 *.war
 *.ear
-<<<<<<< HEAD
-
-# Maven Wrapper
-.mvn/wrapper/maven-wrapper.jar
-
-# Ignore build folders inside modules (keep structure clean)
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# ===============================
-# DATABASE FILES (LOCAL ONLY)
-# ===============================
-=======
 .mvn/wrapper/maven-wrapper.jar
 backend/.m2/
 
-# Database and storage artifacts
->>>>>>> origin/develop
+# Local DB / uploads
 *.db
 *.mv.db
 *.lock.db
-backend/data/
-backend/uploads/
-<<<<<<< HEAD
+uploads/
 
-# ===============================
-# IDE FILES
-# ===============================
-
-## STS / Eclipse
-=======
-backend/src/main/resources/application-local.properties
-backend/src/main/resources/application-*.local.properties
-backend/src/main/resources/application-secrets.properties
-
-# IDE-specific Java files
->>>>>>> origin/develop
->>>>>>> develop
+# Eclipse / STS / NetBeans (legacy IDE)
 .apt_generated
 .classpath
 .factorypath
 .project
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> develop
-.settings
-.springBeans
-.sts4-cache
-
-<<<<<<< HEAD
-### IntelliJ IDEA ###
-.idea
-=======
-## IntelliJ IDEA
-.idea/
->>>>>>> develop
-*.iws
-*.iml
-*.ipr
-
-<<<<<<< HEAD
-### NetBeans ###
-=======
-## NetBeans
->>>>>>> develop
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-<<<<<<< HEAD
-### VS Code ###
-.vscode/
-
-# Environment / secrets - NEVER commit
-.env
-
-# Local config with secrets
-src/main/resources/application.propertiesvfms-frontend/node_modules/
-vfms-frontend/.next/
-=======
-## VS Code
-.vscode/
-=======
 .settings/
 .springBeans
 .sts4-cache
-
-# NetBeans
 /nbproject/private/
 /nbbuild/
 /nbdist/
 /.nb-gradle/
-build/
 
-# Deployment
-.vercel/
+# Security keys
+*.pem
 
-## VS Code
-.vscode/
-.claude/
->>>>>>> origin/develop
-
-# ===============================
-# FRONTEND (NEXT.JS / NODE)
-# ===============================
-node_modules/
-.next/
-out/
-dist/
-
-# ===============================
-# TEST / TEMP FILES
-# ===============================
-<<<<<<< HEAD
-=======
-backend/.m2/
->>>>>>> origin/develop
-test_output.txt
-test_results_*.txt
-
-# ===============================
-# OS GENERATED FILES
-# ===============================
-*.swp
-<<<<<<< HEAD
-*.swo
-=======
-*.swo
->>>>>>> origin/develop
->>>>>>> develop
+# Backend local overrides (use .env + application-dev.properties)
+backend1/src/main/resources/application.properties

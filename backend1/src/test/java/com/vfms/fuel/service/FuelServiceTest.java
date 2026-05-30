@@ -77,7 +77,7 @@ class FuelServiceTest {
         when(userDetails.getUsername()).thenReturn("admin@vfms.com");
         when(vehicleRepository.findById(Long.valueOf(req.getVehicleId()))).thenReturn(Optional.of(vehicle));
         when(driverRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
-        when(fuelMisuseService.checkForMisuse(any())).thenReturn(null);
+        when(fuelMisuseService.checkForMisuse(any(), any())).thenReturn(null);
         when(fuelRecordRepository.save(any())).thenAnswer(inv -> {
             FuelRecord r = inv.getArgument(0);
             r.setId(UUID.randomUUID());
@@ -180,7 +180,7 @@ class FuelServiceTest {
         when(fuelRecordRepository.findById(id)).thenReturn(Optional.of(record));
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
         when(driverRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
-        when(fuelMisuseService.checkForMisuse(any())).thenReturn(null);
+        when(fuelMisuseService.checkForMisuse(any(), any())).thenReturn(null);
         when(fuelRecordRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var resp = fuelService.updateFuelRecord(id, req);

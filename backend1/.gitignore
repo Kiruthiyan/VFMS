@@ -1,78 +1,60 @@
 # ===============================
-# GENERAL
+# BACKEND (Spring Boot / Maven)
 # ===============================
+
+# General
 .DS_Store
 Thumbs.db
 *.log
 
-# ===============================
-# ENV FILES (IMPORTANT)
-# ===============================
+# Environment
 .env
 .env.*
 !.env.example
 
-# ===============================
-# SPRING BOOT / MAVEN BUILD
-# ===============================
+# Maven / Java build
 target/
 *.class
 *.jar
 *.war
 *.ear
-
-# Maven Wrapper
 .mvn/wrapper/maven-wrapper.jar
 
-# ===============================
-# DATABASE FILES (LOCAL ONLY)
-# ===============================
+# Local DB / uploads (not tracked CSV templates under src/main/resources/data/)
 *.db
 *.mv.db
 *.lock.db
-data/
 uploads/
 
-# ===============================
-# IDE FILES
-# ===============================
-
-## IntelliJ IDEA
+# IDE
 .idea/
 *.iws
 *.iml
 *.ipr
-
-## Eclipse / STS
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
-
-## NetBeans
 /nbproject/private/
 /nbbuild/
-/dist/
 /nbdist/
 /.nb-gradle/
 build/
 
-## VS Code
 .vscode/
 
-# ===============================
-# TEST / TEMP FILES
-# ===============================
+# Test / temp
 test_output.txt
 test_results_*.txt
 *.tmp
+full_log.txt
 
-# ===============================
-# OS TEMP FILES
-# ===============================
+# OS swap
 *.swp
 *.swo
+
+# Local secrets file (use .env + application-dev.properties)
 src/main/resources/application.properties

@@ -5,7 +5,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/components/providers/ToastProvider";
-import { RoleProvider } from "@/lib/role-context";
 import { RoleProvider as TripsRoleProvider } from "@/lib/roleContext";
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,11 +32,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
 
       <body className={`${inter.className} antialiased`}>
-        <RoleProvider>
-          <TripsRoleProvider>
-            {children}
-          </TripsRoleProvider>
-        </RoleProvider>
+        <TripsRoleProvider>
+          {children}
+        </TripsRoleProvider>
         <Toaster />
         <ToastProvider />
       </body>

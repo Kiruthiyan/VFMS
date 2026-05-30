@@ -438,6 +438,9 @@ public class AuthService {
      * review, rejected, or deactivated.
      */
     private void validateLoginStatus(User user) {
+        if (user.getDeletedAt() != null) {
+            throw new AuthorizationException("This account has been deleted. Please contact an administrator.");
+        }
         if (!user.isEmailVerified() || user.getStatus() == UserStatus.EMAIL_UNVERIFIED) {
             throw new ValidationException("Please verify your email before signing in.");
         }
@@ -461,6 +464,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .status(user.getStatus())
+                .passwordChangeRequired(user.isPasswordChangeRequired())
                 .build();
     }
 }

@@ -389,9 +389,13 @@ public class FuelService {
      * leave the flag state out of sync with the current fuel record values.
      */
     private void reEvaluateMisuse(FuelRecord record) {
+        if (MANUAL_FLAG_REASON.equals(record.getFlagReason())) {
+            return;
+        }
+
         record.setFlaggedForMisuse(false);
         record.setFlagReason(null);
-        String reason = fuelMisuseService.checkForMisuse(record);
+        String reason = fuelMisuseService.checkForMisuse(record, record.getId());
         if (reason != null) {
             record.setFlaggedForMisuse(true);
             record.setFlagReason(reason);

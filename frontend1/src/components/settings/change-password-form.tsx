@@ -39,6 +39,8 @@ export function ChangePasswordForm() {
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
   });
 
   const onSubmit = async (data: ChangePasswordFormValues) => {
@@ -47,6 +49,14 @@ export function ChangePasswordForm() {
       await changePasswordApi(data);
       toast.success("Password changed successfully!");
       reset();
+      if (user) {
+        useAuthStore.setState({
+          user: {
+            ...user,
+            passwordChangeRequired: false,
+          },
+        });
+      }
       const destination = user
         ? ROLE_DASHBOARDS[user.role]
         : DEFAULT_ROUTES.DEFAULT_DASHBOARD;

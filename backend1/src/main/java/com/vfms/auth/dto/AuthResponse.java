@@ -17,4 +17,5 @@ public class AuthResponse {
     private String email;
     private Role role;
     private UserStatus status;
+    private boolean passwordChangeRequired;
 }

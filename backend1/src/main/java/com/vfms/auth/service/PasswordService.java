@@ -104,6 +104,7 @@ public class PasswordService {
 
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordChangeRequired(false);
         userRepository.save(user);
 
         // Delete token after use
@@ -145,6 +146,7 @@ public class PasswordService {
 
         currentUser.setPassword(
                 passwordEncoder.encode(request.getNewPassword()));
+        currentUser.setPasswordChangeRequired(false);
         userRepository.save(currentUser);
         
         log.info("Password changed successfully for user: {}", currentUser.getEmail());

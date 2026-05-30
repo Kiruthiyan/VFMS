@@ -83,6 +83,13 @@ export const adminNavigationSections: AdminNavSection[] = [
         description: "Fuel module overview",
       },
       {
+        href: "/admin/fuel/create",
+        label: "Add Fuel Entry",
+        icon: Droplets,
+        exact: true,
+        description: "Record a new fuel transaction",
+      },
+      {
         href: "/admin/fuel/logs",
         label: "Fuel Logs",
         icon: FileText,

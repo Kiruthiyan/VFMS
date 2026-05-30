@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class AdminSeedProperties {
 
     private boolean enabled;
+    private boolean cleanupDemoUsers;
     private String email;
     private String password;
     private String fullName;

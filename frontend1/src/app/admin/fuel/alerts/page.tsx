@@ -330,7 +330,7 @@ export default function FuelAlertsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Fuel Alerts"
-          description="Detect suspicious fuel activity and review anomalies using the same VFMS admin pattern."
+          description="Client-side anomaly heuristics for quick review. For backend misuse flags and unflag actions, use the Flagged Records page."
           icon={AlertTriangle}
           actions={
             <Button variant="outline" onClick={fetchAndAnalyze} disabled={loading}>

@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import type { UserRole } from "@/lib/auth";
+import { resolveSessionRedirect } from "@/lib/auth-session-routing";
 import { ROLE_HOME, ROLE_LABELS } from "@/lib/rbac";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -29,6 +30,16 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
 
   useEffect(() => {
     if (isLoading) {
+      return;
+    }
+
+    const sessionRedirect = resolveSessionRedirect(
+      user ?? undefined,
+      accessToken,
+      pathname
+    );
+    if (sessionRedirect) {
+      router.replace(sessionRedirect);
       return;
     }
 

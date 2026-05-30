@@ -17,35 +17,13 @@ import {
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ADMIN_MANAGED_ROLE_OPTIONS, ROLE_LABELS } from "@/lib/auth";
+import { ROLE_GUIDANCE } from "@/lib/constants/user-management";
 
 interface EditUserDialogProps {
   user: UserSummary;
   onClose: () => void;
   onSuccess: (updated?: UserSummary) => void;
 }
-
-const ROLE_GUIDANCE = {
-  ADMIN: {
-    title: "Administrator access",
-    description:
-      "Use this role for trusted platform administrators who manage users, approvals, and system-wide operations.",
-  },
-  APPROVER: {
-    title: "Approver access",
-    description:
-      "Use this role for staff who review and authorize operational actions. Approval level can be added if your workflow uses approval tiers.",
-  },
-  SYSTEM_USER: {
-    title: "Staff account",
-    description:
-      "Use this role for company staff who need day-to-day access. Employee ID, department, designation, and office location are required.",
-  },
-  DRIVER: {
-    title: "Driver account",
-    description:
-      "Use this role only for verified drivers. Licence number and licence expiry date are required before the account is approved.",
-  },
-} as const;
 
 const inputClass =
   "w-full rounded-lg border border-[#E4E7EC] bg-white px-3 py-2.5 " +

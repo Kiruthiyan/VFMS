@@ -11,6 +11,7 @@ interface AuthUser {
   email: string;
   role: UserRole;
   status: UserStatus;
+  passwordChangeRequired?: boolean;
 }
 
 interface AuthState {
@@ -42,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
             email: data.email,
             role: data.role,
             status: data.status,
+            passwordChangeRequired: data.passwordChangeRequired,
           },
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,

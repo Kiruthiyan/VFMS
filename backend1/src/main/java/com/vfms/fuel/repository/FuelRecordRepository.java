@@ -47,6 +47,19 @@ public interface FuelRecordRepository extends JpaRepository<FuelRecord, UUID> {
             @Param("vehicleId") Long vehicleId,
             @Param("date") LocalDate date);
 
+    @Query("SELECT COUNT(f) FROM FuelRecord f WHERE f.vehicle.id = :vehicleId " +
+           "AND f.fuelDate = :date AND f.id <> :excludeId")
+    long countByVehicleAndDateExcluding(
+            @Param("vehicleId") Long vehicleId,
+            @Param("date") LocalDate date,
+            @Param("excludeId") UUID excludeId);
+
+    @Query("SELECT f FROM FuelRecord f WHERE f.vehicle.id = :vehicleId " +
+           "AND f.id <> :excludeId ORDER BY f.fuelDate DESC, f.createdAt DESC")
+    List<FuelRecord> findLatestByVehicleExcluding(
+            @Param("vehicleId") Long vehicleId,
+            @Param("excludeId") UUID excludeId);
+
     List<FuelRecord> findByFlaggedForMisuseTrue();
 
     @Query("SELECT f FROM FuelRecord f WHERE f.flaggedForMisuse = true " +

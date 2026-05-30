@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Applies configurable heuristics that help identify suspicious or inconsistent
@@ -30,20 +32,27 @@ public class FuelMisuseService {
      * Thresholds stay in configuration so policy changes do not require code edits.
      */
     public String checkForMisuse(FuelRecord record) {
+        return checkForMisuse(record, null);
+    }
+
+    public String checkForMisuse(FuelRecord record, UUID excludeRecordId) {
         if (record.getQuantity().compareTo(BigDecimal.valueOf(maxLitresPerEntry)) > 0) {
             return "Quantity exceeds maximum allowed per entry (" + maxLitresPerEntry
                     + " L). Entered: " + record.getQuantity() + " L";
         }
 
-        long todayCount = fuelRecordRepository.countByVehicleAndDate(
+        long todayCount = countEntriesForDate(
                 record.getVehicle().getId(),
-                record.getFuelDate());
+                record.getFuelDate(),
+                excludeRecordId);
         if (todayCount >= maxEntriesPerDay) {
             return "Vehicle has already reached the maximum fuel entries for this date ("
                     + maxEntriesPerDay + "). Please review.";
         }
 
-        List<FuelRecord> previous = fuelRecordRepository.findLatestByVehicle(record.getVehicle().getId());
+        List<FuelRecord> previous = findPreviousEntries(
+                record.getVehicle().getId(),
+                excludeRecordId);
         if (!previous.isEmpty()) {
             double lastOdometer = previous.get(0).getOdometerReading();
             if (record.getOdometerReading() < lastOdometer) {
@@ -54,5 +63,19 @@ public class FuelMisuseService {
         }
 
         return null;
+    }
+
+    private long countEntriesForDate(Long vehicleId, LocalDate date, UUID excludeRecordId) {
+        if (excludeRecordId == null) {
+            return fuelRecordRepository.countByVehicleAndDate(vehicleId, date);
+        }
+        return fuelRecordRepository.countByVehicleAndDateExcluding(vehicleId, date, excludeRecordId);
+    }
+
+    private List<FuelRecord> findPreviousEntries(Long vehicleId, UUID excludeRecordId) {
+        if (excludeRecordId == null) {
+            return fuelRecordRepository.findLatestByVehicle(vehicleId);
+        }
+        return fuelRecordRepository.findLatestByVehicleExcluding(vehicleId, excludeRecordId);
     }
 }

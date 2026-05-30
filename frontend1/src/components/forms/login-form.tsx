@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
-import { LogIn } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, useSearchParams } from "next/navigation";
+import { LogIn } from "lucide-react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useState } from "react";
 
 import {
   AuthField,
@@ -14,16 +14,39 @@ import {
   AuthInlineMessage,
   AuthInput,
   PasswordField,
-} from '@/components/auth/auth-ui';
-import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { getErrorMessage, loginApi } from '@/lib/api/auth';
-import { AUTH_ROUTES, DEFAULT_ROUTES, PUBLIC_ROUTES, ROLE_DASHBOARDS } from '@/lib/constants/routes';
-import { loginSchema, type LoginFormValues } from '@/lib/validators/auth/login-schema';
-import { useAuthStore } from '@/store/auth-store';
+} from "@/components/auth/auth-ui";
+import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { getErrorMessage, loginApi, type AuthResponse } from "@/lib/api/auth";
+import {
+  AUTH_ROUTES,
+  DEFAULT_ROUTES,
+  PUBLIC_ROUTES,
+  ROLE_DASHBOARDS,
+  SETTINGS_ROUTES,
+} from "@/lib/constants/routes";
+import { canAccess } from "@/lib/rbac";
+import { loginSchema, type LoginFormValues } from "@/lib/validators/auth/login-schema";
+import { useAuthStore } from "@/store/auth-store";
+
+function resolvePostLoginRedirect(
+  response: AuthResponse,
+  fromParam: string | null
+): string {
+  if (response.passwordChangeRequired) {
+    return SETTINGS_ROUTES.CHANGE_PASSWORD;
+  }
+
+  if (fromParam && canAccess(response.role, fromParam)) {
+    return fromParam;
+  }
+
+  return ROLE_DASHBOARDS[response.role] ?? DEFAULT_ROUTES.DEFAULT_DASHBOARD;
+}
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -34,8 +57,8 @@ export function LoginForm() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
@@ -50,7 +73,7 @@ export function LoginForm() {
 
       setAuth(response);
       router.replace(
-        ROLE_DASHBOARDS[response.role] ?? DEFAULT_ROUTES.DEFAULT_DASHBOARD
+        resolvePostLoginRedirect(response, searchParams.get("from"))
       );
     } catch (error: unknown) {
       setServerError(getErrorMessage(error));
@@ -83,7 +106,7 @@ export function LoginForm() {
             placeholder="you@example.com"
             aria-invalid={Boolean(errors.email)}
             disabled={isSubmitting}
-            {...register('email')}
+            {...register("email")}
           />
         </AuthField>
 
@@ -96,7 +119,7 @@ export function LoginForm() {
           error={errors.password?.message}
           disabled={isSubmitting}
           required
-          {...register('password')}
+          {...register("password")}
         />
       </div>
 
@@ -109,11 +132,7 @@ export function LoginForm() {
         </Link>
       </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isSubmitting}
-      >
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
           <>
             <LoadingSpinner size={16} />

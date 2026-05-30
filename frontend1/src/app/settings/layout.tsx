@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { AUTH_ROUTES } from "@/lib/constants/routes";
+import { resolveSessionRedirect } from "@/lib/auth-session-routing";
 import { useAuthStore } from "@/store/auth-store";
 
 export default function SettingsLayout({
@@ -12,6 +12,7 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const hydrated = useAuthStore((state) => state.hydrated);
   const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
@@ -20,10 +21,15 @@ export default function SettingsLayout({
   const isAuthenticated = !!accessToken && !!user;
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace(AUTH_ROUTES.LOGIN);
+    if (isLoading) {
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
+
+    const redirect = resolveSessionRedirect(user, accessToken, pathname);
+    if (redirect) {
+      router.replace(redirect);
+    }
+  }, [accessToken, isLoading, pathname, router, user]);
 
   if (isLoading) {
     return (

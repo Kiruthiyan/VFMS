@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { FleetProLogo } from "@/components/branding/fleetpro-logo";
@@ -13,6 +13,7 @@ import {
   isAdminNavItemActive,
 } from "@/lib/admin-navigation";
 import { AUTH_ROUTES } from "@/lib/constants/routes";
+import { ROLE_HOME } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -21,11 +22,25 @@ interface AdminShellProps {
   requireAdmin?: boolean;
 }
 
-export function AdminShell({ children }: AdminShellProps) {
+export function AdminShell({ children, requireAdmin = false }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const user = useAuthStore((state) => state.user);
+  const hydrated = useAuthStore((state) => state.hydrated);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const adminRequired = requireAdmin || pathname.startsWith("/admin");
+
+  useEffect(() => {
+    if (!hydrated || !adminRequired || !user) {
+      return;
+    }
+
+    if (user.role !== "ADMIN") {
+      router.replace(ROLE_HOME[user.role]);
+    }
+  }, [adminRequired, hydrated, router, user]);
 
   const handleLogout = async () => {
     try {

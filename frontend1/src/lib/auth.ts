@@ -32,15 +32,5 @@ export const ADMIN_MANAGED_ROLE_OPTIONS: UserRole[] = [
   "DRIVER",
 ];
 
-export const ROLE_REDIRECTS: Record<UserRole, string> = {
-  ADMIN: "/dashboards/admin",
-  APPROVER: "/dashboards/approver",
-  SYSTEM_USER: "/dashboards/staff",
-  DRIVER: "/dashboards/driver",
-};
-
-export const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/signup"];
-
-export function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-}
+/** @deprecated Use ROLE_HOME from @/lib/rbac */
+export { ROLE_HOME as ROLE_REDIRECTS } from "@/lib/rbac";

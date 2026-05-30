@@ -12,6 +12,7 @@ export interface AuthResponse {
   status: UserStatus;
   accessToken: string;
   refreshToken: string;
+  passwordChangeRequired?: boolean;
 }
 
 export interface ApiSuccessResponse {
@@ -74,18 +75,6 @@ export class AuthApiError extends Error {
     this.status = options?.status;
     this.fieldErrors = options?.fieldErrors;
   }
-}
-
-export interface OTPVerificationRequest {
-  email: string;
-  otp: string;
-}
-
-export interface OTPVerificationResponse extends ApiSuccessResponse {
-  data?: {
-    verified: boolean;
-    token?: string;
-  };
 }
 
 function normalizeFieldErrors(
@@ -255,41 +244,6 @@ export async function loginApi(data: {
       error,
       "Invalid email or password. Please check your details and try again."
     );
-  }
-}
-
-export async function sendOTPApi(email: string): Promise<ApiSuccessResponse> {
-  try {
-    const response = await api.post<ApiSuccessResponse>("/api/auth/send-otp", {
-      email: email.trim(),
-    });
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response?.data?.message) {
-      throw error;
-    }
-    throw error;
-  }
-}
-
-export async function verifyOTPApi(
-  email: string,
-  otp: string
-): Promise<OTPVerificationResponse> {
-  try {
-    const response = await api.post<OTPVerificationResponse>(
-      "/api/auth/verify-otp",
-      {
-        email: email.trim(),
-        otp: otp.trim(),
-      }
-    );
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response?.data?.message) {
-      throw error;
-    }
-    throw error;
   }
 }
 
