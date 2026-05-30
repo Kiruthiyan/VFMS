@@ -1,12 +1,12 @@
 # VFMS project structure
 
-Canonical layout for active development. Legacy and scratch files are not kept in the tree.
+Canonical layout for active development.
 
 ```
 VFMS/
 ├── README.md                 # Project overview
-├── docs/                     # Security notes, structure, archived references
-├── backend1/                 # Spring Boot API (Java 21)
+├── docs/                     # Structure, security notes
+├── backend/                  # Spring Boot API (Java 21)
 │   ├── src/main/java/com/vfms/
 │   │   ├── auth/             # Login, signup, JWT, password flows
 │   │   ├── admin/            # Admin user management
@@ -22,15 +22,16 @@ VFMS/
 │   ├── src/main/resources/
 │   │   ├── application-dev.properties
 │   │   ├── application.properties.example
-│   │   ├── db/migration/     # Flyway SQL
+│   │   ├── db/migration/     # SQL migrations
 │   │   └── data/             # employee-registry.csv template
+│   ├── scripts/              # Supabase reset helpers
 │   ├── .env.example
 │   └── pom.xml
-├── frontend1/                # Next.js app (App Router)
+├── frontend/                 # Next.js app (App Router)
 │   ├── src/app/
 │   │   ├── auth/             # Public auth pages
 │   │   ├── admin/            # Admin UI (users, fuel)
-│   │   ├── dashboards/     # Role dashboards (guarded)
+│   │   ├── dashboards/       # Role dashboards (guarded)
 │   │   ├── settings/         # Change password
 │   │   └── dashboard/        # Legacy URL redirect only
 │   ├── src/components/
@@ -42,13 +43,13 @@ VFMS/
 ## Run locally
 
 ```bash
-# Backend
-cd backend1
-cp .env.example .env   # fill DB, JWT, mail, admin seed
+# Backend (Supabase PostgreSQL via backend/.env)
+cd backend
+cp .env.example .env
 ./mvnw spring-boot:run
 
 # Frontend
-cd frontend1
+cd frontend
 npm install
 npm run dev
 ```
@@ -67,4 +68,4 @@ Open: `http://localhost:3000/auth/login`
 
 ## Legacy URLs
 
-Old `/dashboard/**` routes redirect via `frontend1/src/app/dashboard/[[...path]]/page.tsx` to login or the correct `/dashboards/{role}` path.
+Old `/dashboard/**` routes redirect via `frontend/src/app/dashboard/[[...path]]/page.tsx` to login or the correct `/dashboards/{role}` path.
