@@ -11,18 +11,18 @@ Enterprise fleet platform: vehicles, maintenance, rentals, drivers, trips, fuel,
 
 | Path | Purpose |
 |------|---------|
-| [`backend1/`](backend1/) | Spring Boot REST API |
-| [`frontend1/`](frontend1/) | Next.js web app |
+| [`backend/`](backend/) | Spring Boot REST API |
+| [`frontend/`](frontend/) | Next.js web app |
 | [`docs/`](docs/) | Structure, security, history notes |
 
 See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for the full tree and module map.
 
 ## Quick start
 
-**Backend** (requires Java 21, PostgreSQL or dev H2 fallback):
+**Backend** (requires Java 21, Supabase PostgreSQL via `backend/.env`):
 
 ```bash
-cd backend1
+cd backend
 cp .env.example .env
 ./mvnw spring-boot:run
 ```
@@ -30,14 +30,14 @@ cp .env.example .env
 **Frontend**:
 
 ```bash
-cd frontend1
+cd frontend
 npm install
 npm run dev
 ```
 
 App: `http://localhost:3000` — login at `/auth/login`.
 
-Configure `backend1/.env` for database, JWT, SMTP, CORS, and optional admin seed (`ADMIN_SEED_*`).
+Configure `backend/.env` for database, JWT, SMTP, CORS, and optional admin seed (`ADMIN_SEED_*`).
 
 ## Security
 

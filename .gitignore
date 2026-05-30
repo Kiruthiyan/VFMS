@@ -76,6 +76,3 @@ uploads/
 
 # Backend local overrides (use .env + application-dev.properties)
 backend/src/main/resources/application.properties
-
-
-/docs/
