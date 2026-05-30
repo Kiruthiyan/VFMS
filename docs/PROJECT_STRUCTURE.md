@@ -5,7 +5,12 @@ Canonical layout for active development.
 ```
 VFMS/
 ├── README.md                 # Project overview
-├── docs/                     # Structure, security notes
+├── docs/                     # Structure, security, final module reports
+│   ├── README.md             # Doc index
+│   ├── FINAL_REPORT_SUMMARY.md
+│   ├── FINAL_REPORT_USER_AUTHENTICATION.md
+│   ├── FINAL_REPORT_USER_MANAGEMENT.md
+│   └── FINAL_REPORT_FUEL_MANAGEMENT.md
 ├── backend/                  # Spring Boot API (Java 21)
 │   ├── src/main/java/com/vfms/
 │   │   ├── auth/             # Login, signup, JWT, password flows
