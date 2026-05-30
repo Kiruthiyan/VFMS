@@ -4,7 +4,6 @@
 
 - Config files use environment variables (`${DB_URL}`, `${JWT_SECRET}`, etc.)
 - `backend/.env` is gitignored; `backend/.env.example` uses placeholders only
-- Pre-commit hook (`.pre-commit-config.yaml`) scans for secrets on commit
 - Auth, admin user, and fuel API paths scoped in `SecurityConfig`
 
 ## If secrets were ever committed

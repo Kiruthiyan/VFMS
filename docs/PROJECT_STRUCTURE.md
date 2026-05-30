@@ -37,7 +37,7 @@ VFMS/
 │   ├── src/components/
 │   ├── src/lib/              # API clients, validators, rbac
 │   └── src/store/            # auth-store (Zustand)
-└── .pre-commit-config.yaml
+└── .gitignore
 ```
 
 ## Run locally

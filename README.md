@@ -13,7 +13,7 @@ Enterprise fleet platform: vehicles, maintenance, rentals, drivers, trips, fuel,
 |------|---------|
 | [`backend/`](backend/) | Spring Boot REST API |
 | [`frontend/`](frontend/) | Next.js web app |
-| [`docs/`](docs/) | Structure, security, history notes |
+| [`docs/`](docs/) | Structure and security notes |
 
 See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for the full tree and module map.
 
