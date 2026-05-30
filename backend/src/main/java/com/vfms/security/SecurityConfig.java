@@ -25,11 +25,23 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * HTTP security for VFMS.
+ * <p>
+ * Scoped modules (auth, admin user management, fuel) are locked down explicitly.
+ * {@code /api/**} remains {@code permitAll} for legacy modules (vehicles, trips,
+ * maintenance, rental, DSM, reports) until those controllers are migrated — see
+ * {@link #REMAINING_OPEN_API_RISK}.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+  /** Paths still reachable without authentication due to the legacy {@code /api/**} fallback. */
+  public static final String REMAINING_OPEN_API_RISK =
+      "Non-scoped modules under /api/** (vehicles, trips, maintenance, rental, drivers, reports, etc.)";
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
@@ -44,6 +56,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(auth -> auth
+                        // --- Authentication (public) ---
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
@@ -57,11 +70,14 @@ public class SecurityConfig {
                                 "/api/auth/send-otp",
                                 "/api/auth/verify-otp"
                         ).permitAll()
+                        // --- User management (admin only) ---
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // --- Fuel management (admin only; matches FuelController) ---
                         .requestMatchers("/api/v1/fuel/**").hasRole("ADMIN")
+                        // --- Authenticated user profile & password change ---
                         .requestMatchers("/api/user/**").authenticated()
+                        // --- Legacy modules: keep open until individually secured ---
                         .requestMatchers("/api/**").permitAll()
-                        .requestMatchers(org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher("/h2-console/**")).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->

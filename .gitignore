@@ -75,4 +75,7 @@ uploads/
 *.pem
 
 # Backend local overrides (use .env + application-dev.properties)
-backend1/src/main/resources/application.properties
+backend/src/main/resources/application.properties
+
+
+/docs/

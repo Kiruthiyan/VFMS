@@ -5,6 +5,12 @@ import { useAuthStore } from "@/store/auth-store";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+/** API root with `/api` suffix (e.g. report export URLs). */
+export function resolveApiBaseUrl(): string {
+  const root = API_BASE_URL.replace(/\/$/, "");
+  return root.endsWith("/api") ? root : `${root}/api`;
+}
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {

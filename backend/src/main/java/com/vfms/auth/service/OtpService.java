@@ -5,6 +5,7 @@ import com.vfms.auth.repository.OtpVerificationRepository;
 import com.vfms.common.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +20,11 @@ public class OtpService {
 
     private final OtpVerificationRepository otpRepository;
     private final EmailService emailService;
+
     private static final int OTP_LENGTH = 6;
-    private static final int OTP_VALIDITY_MINUTES = 5;
+
+    @Value("${vfms.auth.otp.validity-minutes:5}")
+    private int otpValidityMinutes;
 
     /**
      * Generate and send OTP to email
@@ -38,11 +42,11 @@ public class OtpService {
             // Generate 6-digit OTP
             String otp = generateOtp();
             Instant now = Instant.now();
-            Instant expiryTime = now.plus(OTP_VALIDITY_MINUTES, ChronoUnit.MINUTES);
+            Instant expiryTime = now.plus(otpValidityMinutes, ChronoUnit.MINUTES);
 
             // LOG SECURELY: Don't log the actual OTP or expiry details
             log.info("[OTP-SEND] OTP generation completed for email: {} (validity: {} minutes)",
-                    email, OTP_VALIDITY_MINUTES);
+                    email, otpValidityMinutes);
 
             if (existingOtp.isPresent()) {
                 // Update existing OTP
@@ -101,7 +105,7 @@ public class OtpService {
         if (otpVerification.getExpiryTime().isBefore(Instant.now())) {
             log.warn("[OTP-VERIFY] OTP expired for email: {}", email);
             otpRepository.delete(otpVerification);
-            throw new ValidationException("[OTP_EXPIRED] Verification code has expired (valid for " + OTP_VALIDITY_MINUTES + " minutes). Please request a new code.");
+            throw new ValidationException("[OTP_EXPIRED] Verification code has expired (valid for " + otpValidityMinutes + " minutes). Please request a new code.");
         }
 
         // Check if OTP matches
