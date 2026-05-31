@@ -1,6 +1,6 @@
-import { Suspense } from "react";
-
+﻿import { Suspense } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export const metadata = {
   title: "Admin | VFMS",
@@ -14,7 +14,9 @@ export default function AdminLayout({
 }) {
   return (
     <Suspense>
-      <RoleGuard allowedRole="ADMIN">{children}</RoleGuard>
+      <RoleGuard allowedRole="ADMIN">
+        <DashboardShell>{children}</DashboardShell>
+      </RoleGuard>
     </Suspense>
   );
 }

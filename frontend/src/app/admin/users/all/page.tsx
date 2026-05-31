@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -15,7 +15,7 @@ import Link from "next/link";
 
 import { UserManagementNav } from "@/components/admin/users/user-management-nav";
 import { UserTable } from "@/components/admin/users/user-table";
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
@@ -151,7 +151,7 @@ export default function AllUsersPage() {
   }, [hasPendingUsers, statusFilter]);
 
   return (
-    <AdminShell>
+
       <div className="space-y-5">
         <PageHeader
           title="All Users"
@@ -388,6 +388,6 @@ export default function AllUsersPage() {
           </>
         )}
       </div>
-    </AdminShell>
+
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { FileText, Plus, RefreshCw } from "lucide-react";
@@ -11,7 +11,7 @@ import {
   extractUniqueDrivers,
   type FuelRecord,
 } from "@/lib/api/fuel";
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { FuelRecordsTable } from "@/components/fuel/fuel-records-table";
 import { FuelFilterBar } from "@/components/fuel/fuel-filter-bar";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -63,7 +63,7 @@ export default function FuelEntryLogsPage() {
   };
 
   return (
-    <AdminShell>
+
       <div className="space-y-6">
         <PageHeader
           title="Fuel Entry Logs"
@@ -150,6 +150,6 @@ export default function FuelEntryLogsPage() {
           </Card>
         )}
       </div>
-    </AdminShell>
+
   );
 }

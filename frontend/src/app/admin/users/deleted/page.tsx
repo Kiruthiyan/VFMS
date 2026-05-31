@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -11,7 +11,7 @@ import {
 
 import { UserManagementNav } from "@/components/admin/users/user-management-nav";
 import { UserTable } from "@/components/admin/users/user-table";
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
@@ -47,7 +47,7 @@ export default function DeletedUsersPage() {
   }, [fetchDeleted]);
 
   return (
-    <AdminShell>
+
       <div className="space-y-6">
         <PageHeader
           title="Deleted Users"
@@ -177,6 +177,6 @@ export default function DeletedUsersPage() {
           </section>
         )}
       </div>
-    </AdminShell>
+
   );
 }

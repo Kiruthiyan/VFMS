@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { FuelEntryForm } from "@/components/fuel/fuel-entry-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -49,7 +49,7 @@ export default function CreateFuelEntryPage() {
   };
 
   return (
-    <AdminShell>
+
       <div className="space-y-6">
         <PageHeader
           title="Create Fuel Entry"
@@ -90,6 +90,6 @@ export default function CreateFuelEntryPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminShell>
+
   );
 }

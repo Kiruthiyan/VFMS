@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -16,7 +16,7 @@ import Link from "next/link";
 import { UserManagementNav } from "@/components/admin/users/user-management-nav";
 import { UserRoleBadge } from "@/components/admin/users/user-role-badge";
 import { UserStatusBadge } from "@/components/admin/users/user-status-badge";
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
@@ -154,7 +154,7 @@ export default function UserManagementDashboardPage() {
   );
 
   return (
-    <AdminShell>
+
       <div className="space-y-6">
         <PageHeader
           title="User Management"
@@ -408,6 +408,6 @@ export default function UserManagementDashboardPage() {
           </>
         )}
       </div>
-    </AdminShell>
+
   );
 }

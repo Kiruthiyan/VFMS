@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -326,7 +326,7 @@ export default function FuelAlertsPage() {
   };
 
   return (
-    <AdminShell>
+
       <div className="space-y-6">
         <PageHeader
           title="Fuel Alerts"
@@ -570,6 +570,6 @@ export default function FuelAlertsPage() {
           </>
         )}
       </div>
-    </AdminShell>
+
   );
 }

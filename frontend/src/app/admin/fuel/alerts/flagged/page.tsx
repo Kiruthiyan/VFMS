@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Flag, Link2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -81,7 +81,7 @@ export default function FlaggedRecordsPage() {
   };
 
   return (
-    <AdminShell>
+
       <div className="space-y-6">
         <PageHeader
           title="Flagged Fuel Records"
@@ -247,6 +247,6 @@ export default function FlaggedRecordsPage() {
           </>
         )}
       </div>
-    </AdminShell>
+
   );
 }

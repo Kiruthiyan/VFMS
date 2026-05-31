@@ -13,7 +13,7 @@ import {
 
 import { getErrorMessage, getUserCountsApi, type UserCounts } from "@/lib/api/admin";
 import { getAllFuelRecordsApi, type FuelRecord } from "@/lib/api/fuel";
-import { AdminShell } from "@/components/layout/admin-shell";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
   );
 
   return (
-    <AdminShell>
+    <DashboardShell>
       <div className="space-y-6">
         <PageHeader
           title="Admin Dashboard"
@@ -301,6 +301,6 @@ export default function AdminDashboardPage() {
           </>
         )}
       </div>
-    </AdminShell>
+    </DashboardShell>
   );
 }

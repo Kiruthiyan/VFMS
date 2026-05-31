@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +11,7 @@ import {
 
 import { UserManagementNav } from "@/components/admin/users/user-management-nav";
 import { CreateUserForm } from "@/components/admin/users/create-user-form";
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -40,7 +40,7 @@ export default function CreateUserPage() {
   const router = useRouter();
 
   return (
-    <AdminShell>
+
       <div className="space-y-6">
         <PageHeader
           title="Create User"
@@ -178,6 +178,6 @@ export default function CreateUserPage() {
           </aside>
         </div>
       </div>
-    </AdminShell>
+
   );
 }

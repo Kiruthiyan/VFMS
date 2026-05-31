@@ -47,7 +47,7 @@ export function DashboardShell({
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Open dashboard menu"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
           >
             <Menu className="h-4 w-4" />
           </button>
