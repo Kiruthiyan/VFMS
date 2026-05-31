@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { FleetProLogo } from '@/components/branding/fleetpro-logo';
 import { logoutApi } from '@/lib/api/auth';
 import { adminNavigationSections } from '@/lib/admin-navigation';
+import { AUTH_ROUTES } from '@/lib/constants/routes';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -31,6 +32,13 @@ const dashboardHrefByRole: Record<string, string> = {
   APPROVER: "/dashboards/approver",
   DRIVER: "/dashboards/driver",
   SYSTEM_USER: "/dashboards/staff",
+};
+
+const workspaceLabelByRole: Record<string, string> = {
+  ADMIN: "Administrative Workspace",
+  APPROVER: "Approver Workspace",
+  SYSTEM_USER: "Staff Workspace",
+  DRIVER: "Driver Workspace",
 };
 
 export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
@@ -59,18 +67,15 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
       <div className="border-b border-white/10 px-5 py-5">
         <Link href={fallbackHref} className="space-y-3">
           <FleetProLogo theme="dark" size="sm" />
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-              Role workspace
-            </p>
-            <p className="text-sm leading-6 text-slate-300">
-              Clean access for daily FleetPro tasks and account controls.
+              {user?.role ? (workspaceLabelByRole[user.role] ?? 'Workspace') : 'Workspace'}
             </p>
           </div>
         </Link>
       </div>
 
-      <div className="sidebar-scrollbar-hidden flex-1 overflow-y-auto px-4 py-5">
+      <div className="sidebar-nav flex-1 overflow-y-auto px-4 py-5">
         <div className="space-y-5">
           {navSections.map((section) => (
             <div key={section.title} className="space-y-1.5">

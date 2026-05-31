@@ -17,7 +17,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { AdminShell } from "@/components/layout/admin-shell";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -187,8 +187,7 @@ export default function AdminFuelDetailPage() {
   }, [record]);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/admin/fuel"
@@ -504,7 +503,6 @@ export default function AdminFuelDetailPage() {
             </div>
           </>
         )}
-      </div>
-    </AdminShell>
+    </div>
   );
 }
