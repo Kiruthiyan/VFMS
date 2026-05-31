@@ -91,7 +91,7 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
-      <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-0 gap-0 pb-4">
         <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
           <CardTitle className="flex items-center gap-3 text-white text-lg">
             <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
@@ -321,3 +321,4 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
     </div>
   );
 }
+

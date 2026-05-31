@@ -63,9 +63,6 @@ export function AdminShell({ children, requireAdmin = false }: AdminShellProps) 
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
               Administrative workspace
             </p>
-            <h1 className="text-sm leading-6 text-slate-300">
-              Manage users, fuel activity, and platform controls from one place.
-            </h1>
           </div>
         </Link>
       </div>

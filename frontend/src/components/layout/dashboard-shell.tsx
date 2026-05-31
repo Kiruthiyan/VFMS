@@ -7,8 +7,8 @@ import { DashboardSidebar } from "@/app/dashboards/shared-components/sidebar";
 import { cn } from "@/lib/utils";
 
 interface DashboardShellProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   children: ReactNode;
 }
 
@@ -55,23 +55,27 @@ export function DashboardShell({
 
         <main className="px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl space-y-6">
-            <section className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
-              <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_55%),radial-gradient(circle_at_top_right,_rgba(148,163,184,0.14),_transparent_45%)]" />
-              <div className="relative flex flex-col gap-5 p-6 sm:p-7">
-                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  FleetPro Workspace
+            {title && (
+              <section className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
+                <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_55%),radial-gradient(circle_at_top_right,_rgba(148,163,184,0.14),_transparent_45%)]" />
+                <div className="relative flex flex-col gap-5 p-6 sm:p-7">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    FleetPro Workspace
+                  </div>
+                  <div className="space-y-2">
+                    <h1 className="text-3xl font-black tracking-tight text-slate-950">
+                      {title}
+                    </h1>
+                    {description && (
+                      <p className="max-w-3xl text-sm leading-6 text-slate-500 sm:text-base">
+                        {description}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-black tracking-tight text-slate-950">
-                    {title}
-                  </h1>
-                  <p className="max-w-3xl text-sm leading-6 text-slate-500 sm:text-base">
-                    {description}
-                  </p>
-                </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {children}
           </div>

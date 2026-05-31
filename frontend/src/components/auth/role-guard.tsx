@@ -11,11 +11,12 @@ import { ROLE_HOME, ROLE_LABELS } from "@/lib/rbac";
 import { useAuthStore } from "@/store/auth-store";
 
 interface RoleGuardProps {
-  allowedRole: UserRole;
+  allowedRole?: UserRole;
+  allowedRoles?: UserRole[];
   children: React.ReactNode;
 }
 
-export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
+export function RoleGuard({ allowedRole, allowedRoles, children }: RoleGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -26,7 +27,10 @@ export function RoleGuard({ allowedRole, children }: RoleGuardProps) {
 
   const isLoading = !hydrated;
   const isAuthenticated = !!accessToken && !!user;
-  const hasCorrectRole = user?.role === allowedRole;
+  
+  const hasCorrectRole = user ? 
+    (allowedRoles ? allowedRoles.includes(user.role) : user.role === allowedRole) 
+    : false;
 
   useEffect(() => {
     if (isLoading) {

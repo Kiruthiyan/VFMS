@@ -11,6 +11,9 @@ import {
   Trash2,
   UserPlus,
   Users,
+  Car,
+  Wrench,
+  Store,
 } from "lucide-react";
 
 export interface AdminNavItem {
@@ -69,6 +72,39 @@ export const adminNavigationSections: AdminNavSection[] = [
         icon: Trash2,
         exact: true,
         description: "Audit and restore soft-deleted users",
+      },
+    ],
+  },
+  {
+    title: "Fleet Management",
+    items: [
+      {
+        href: "/dashboards/fleet/vehicles",
+        label: "Vehicles",
+        icon: Car,
+        exact: false,
+        description: "Manage fleet assets and compliance",
+      },
+      {
+        href: "/dashboards/fleet/maintenance",
+        label: "Maintenance",
+        icon: Wrench,
+        exact: false,
+        description: "Schedule and track vehicle repairs",
+      },
+      {
+        href: "/dashboards/fleet/rentals",
+        label: "Rentals",
+        icon: FileText,
+        exact: false,
+        description: "Manage leased vehicles and contracts",
+      },
+      {
+        href: "/dashboards/fleet/vendors",
+        label: "Vendors",
+        icon: Store,
+        exact: false,
+        description: "Manage service and vehicle providers",
       },
     ],
   },
