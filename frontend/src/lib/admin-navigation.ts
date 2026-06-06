@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Download,
   AlertTriangle,
   BarChart3,
   Droplets,
@@ -149,6 +150,60 @@ export const adminNavigationSections: AdminNavSection[] = [
     ],
   },
   {
+    title: "Reports",
+    items: [
+      {
+        href: "/dashboard/admin/reports",
+        label: "Reports Dashboard",
+        icon: BarChart3,
+        exact: true,
+        description: "Overview of all reports",
+      },
+      {
+        href: "/dashboard/admin/reports/drivers",
+        label: "Driver Reports",
+        icon: Users,
+        exact: false,
+        description: "Driver performance and analytics",
+      },
+      {
+        href: "/dashboard/admin/reports/fuel",
+        label: "Fuel Reports",
+        icon: Droplets,
+        exact: false,
+        description: "Fuel consumption and cost analysis",
+      },
+      {
+        href: "/dashboard/admin/reports/utilization",
+        label: "Vehicle Utilization",
+        icon: Car,
+        exact: false,
+        description: "Fleet utilization metrics",
+      },
+      {
+        href: "/dashboard/admin/reports/maintenance",
+        label: "Maintenance Reports",
+        icon: Wrench,
+        exact: false,
+        description: "Maintenance cost and history",
+      },
+      {
+        href: "/dashboard/admin/reports/rentals",
+        label: "Rental Reports",
+        icon: FileText,
+        exact: false,
+        description: "Rental analytics and insights",
+      },
+      {
+        href: "/dashboard/admin/reports/export",
+        label: "Export Reports",
+        icon: Download,
+        exact: false,
+        description: "Download reports in PDF or Excel format",
+      },
+    ],
+  },
+  {
     title: "Account",
     items: [
       {
@@ -262,3 +317,7 @@ export function getAdminBreadcrumbs(pathname: string): string[] {
 
   return breadcrumbs;
 }
+
+
+
+

@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-import { resolveApiBaseUrl } from '@/lib/api';
-
-const API_BASE_URL = resolveApiBaseUrl();
+const API_BASE_URL = 'http://localhost:8080/api';
 
 export interface DashboardStats {
     totalFuelCost: number;
