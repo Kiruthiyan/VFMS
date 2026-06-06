@@ -11,6 +11,20 @@ export function resolveApiBaseUrl(): string {
   return root.endsWith("/api") ? root : `${root}/api`;
 }
 
+export function resolveBackendAssetUrl(pathOrUrl: string): string {
+  if (!pathOrUrl) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(pathOrUrl)) {
+    return encodeURI(pathOrUrl);
+  }
+
+  const root = API_BASE_URL.replace(/\/$/, "");
+  const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  return encodeURI(`${root}${path}`);
+}
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -18,6 +32,23 @@ export const api = axios.create({
   },
   timeout: 15000,
 });
+
+type ApiFetchOptions = Omit<Parameters<typeof api.request>[0], "url" | "method" | "data"> & {
+  method?: string;
+  body?: unknown;
+};
+
+export async function apiFetch<T>(url: string, options: ApiFetchOptions = {}): Promise<T> {
+  const { body, ...requestOptions } = options;
+  const response = await api.request<T>({
+    url,
+    ...requestOptions,
+    data: body,
+    method: requestOptions.method ?? "GET",
+  });
+
+  return response.data;
+}
 
 const PUBLIC_AUTH_PATHS = [
   "/api/auth/login",
@@ -152,10 +183,41 @@ api.interceptors.response.use(
 
 export default api;
 
+function extractErrorMessageFromData(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") {
+    return undefined;
+  }
+
+  const payload = data as {
+    message?: unknown;
+    errors?: unknown;
+  };
+
+  if (typeof payload.message === "string" && payload.message.trim().length > 0) {
+    return payload.message;
+  }
+
+  if (payload.errors && typeof payload.errors === "object") {
+    const firstError = Object.values(payload.errors as Record<string, unknown>).find(
+      (value) => typeof value === "string" && value.trim().length > 0
+    );
+
+    if (typeof firstError === "string") {
+      return firstError;
+    }
+  }
+
+  return undefined;
+}
+
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
+    const serverMessage = extractErrorMessageFromData(error.response?.data);
+    if (serverMessage) {
+      return serverMessage;
+    }
+
     return (
-      (error.response?.data as { message?: string })?.message ??
       error.message ??
       "Something went wrong"
     );

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CalendarDays, CheckCircle2, ClipboardCheck, ShieldCheck, Wrench } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 type DriverSubSidebarProps = {
   className?: string;
@@ -19,11 +18,6 @@ const items = [
     href: '/drivers/assignment-readiness',
     label: 'Assignment Readiness',
     icon: ClipboardCheck,
-  },
-  {
-    href: '/drivers/eligibility-check',
-    label: 'Eligibility Check',
-    icon: ShieldCheck,
   },
   {
     href: '/drivers/leave-requests',
@@ -44,13 +38,11 @@ const profileSections = [
   { key: 'documents', label: 'Documents' },
   { key: 'availability', label: 'Availability' },
   { key: 'infractions', label: 'Infractions' },
-  { key: 'qualification', label: 'Qualification' },
   { key: 'trips', label: 'Trips' },
 ] as const;
 
 const moduleRoutes = [
   'assignment-readiness',
-  'eligibility-check',
   'leave-requests',
   'service-requests',
 ] as const;
@@ -74,20 +66,44 @@ export function DriverSubSidebar({ className }: DriverSubSidebarProps) {
   };
 
   return (
-    <aside className={cn('h-full w-full rounded-2xl border border-border/70 bg-white shadow-sm', className)}>
-      <div className="border-b border-border/60 px-4 py-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFB401]/15 text-[#FFB401]">
-            <CheckCircle2 className="h-4 w-4" />
+    <aside
+      className={className}
+      style={{
+        height: '100%',
+        width: '100%',
+        borderRadius: '1rem',
+        background: 'linear-gradient(180deg, hsl(220 30% 8%) 0%, hsl(220 28% 11%) 100%)',
+        border: '1px solid hsl(220 20% 18%)',
+        boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ padding: '1.5rem 1.25rem 1rem', borderBottom: '1px solid hsl(220 20% 18%)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+          <div
+            style={{
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.5rem',
+              background: 'linear-gradient(135deg, hsl(42 100% 50%), hsl(28 100% 50%))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <CheckCircle2 style={{ width: '1.25rem', height: '1.25rem', color: '#000' }} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">Driver Module</p>
-            <p className="text-xs text-muted-foreground">Quick navigation</p>
+            <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', lineHeight: 1 }}>Driver Module</p>
+            <p style={{ fontSize: '0.65rem', color: 'hsl(220 10% 55%)', marginTop: '0.125rem' }}>Quick navigation</p>
           </div>
         </div>
       </div>
 
-      <nav className="flex flex-col gap-2 p-3">
+      <nav style={{ flex: 1, padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -96,17 +112,41 @@ export function DriverSubSidebar({ className }: DriverSubSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                'group flex items-center gap-3 rounded-lg px-4 py-2 text-sm transition-all duration-200 hover:translate-x-1 hover:bg-gray-100',
-                active ? 'bg-[#FFB401]/20 font-medium text-[#953002] shadow-sm' : 'text-gray-600'
-              )}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.625rem',
+                padding: '0.5rem 0.75rem',
+                borderRadius: '0.5rem',
+                textDecoration: 'none',
+                fontSize: '0.8125rem',
+                fontWeight: active ? 600 : 400,
+                color: active ? 'hsl(42 100% 60%)' : 'hsl(220 10% 65%)',
+                background: active ? 'hsl(42 100% 50% / 0.12)' : 'transparent',
+                border: active ? '1px solid hsl(42 100% 50% / 0.2)' : '1px solid transparent',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.color = '#fff';
+                  (e.currentTarget as HTMLElement).style.background = 'hsl(220 20% 18%)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.color = 'hsl(220 10% 65%)';
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
+                }
+              }}
               aria-current={active ? 'page' : undefined}
             >
               <Icon
-                className={cn(
-                  'h-4 w-4 shrink-0 transition-colors duration-200',
-                  active ? 'text-[#FFB401]' : 'text-gray-500 group-hover:text-[#FFB401]'
-                )}
+                style={{
+                  width: '1rem',
+                  height: '1rem',
+                  flexShrink: 0,
+                  color: active ? 'hsl(42 100% 60%)' : 'hsl(220 10% 65%)',
+                }}
               />
               <span className="truncate">{item.label}</span>
             </Link>
@@ -115,8 +155,8 @@ export function DriverSubSidebar({ className }: DriverSubSidebarProps) {
 
         {driverId && (
           <>
-            <div className="my-2 border-t border-border/60" />
-            <div className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div style={{ margin: '0.5rem 0', borderTop: '1px solid hsl(220 20% 18%)' }} />
+            <div style={{ padding: '0 0.75rem 0.25rem', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'hsl(220 10% 45%)' }}>
               Driver Profile
             </div>
             {profileSections.map((section) => {
@@ -131,17 +171,43 @@ export function DriverSubSidebar({ className }: DriverSubSidebarProps) {
                 <Link
                   key={section.key}
                   href={href}
-                  className={cn(
-                    'group flex items-center gap-3 rounded-lg px-4 py-2 text-sm transition-all duration-200 hover:translate-x-1 hover:bg-gray-100',
-                    active ? 'bg-[#FFB401]/20 font-medium text-[#953002] shadow-sm' : 'text-gray-600'
-                  )}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.625rem',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.5rem',
+                    textDecoration: 'none',
+                    fontSize: '0.8125rem',
+                    fontWeight: active ? 600 : 400,
+                    color: active ? 'hsl(42 100% 60%)' : 'hsl(220 10% 65%)',
+                    background: active ? 'hsl(42 100% 50% / 0.12)' : 'transparent',
+                    border: active ? '1px solid hsl(42 100% 50% / 0.2)' : '1px solid transparent',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      (e.currentTarget as HTMLElement).style.color = '#fff';
+                      (e.currentTarget as HTMLElement).style.background = 'hsl(220 20% 18%)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      (e.currentTarget as HTMLElement).style.color = 'hsl(220 10% 65%)';
+                      (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    }
+                  }}
                   aria-current={active ? 'page' : undefined}
                 >
                   <span
-                    className={cn(
-                      'h-2 w-2 shrink-0 rounded-full transition-colors duration-200',
-                      active ? 'bg-[#FFB401]' : 'bg-gray-400 group-hover:bg-[#FFB401]'
-                    )}
+                    style={{
+                      height: '0.375rem',
+                      width: '0.375rem',
+                      flexShrink: 0,
+                      borderRadius: '9999px',
+                      backgroundColor: active ? 'hsl(42 100% 60%)' : 'hsl(220 10% 45%)',
+                      transition: 'background-color 0.2s',
+                    }}
                   />
                   <span className="truncate">{section.label}</span>
                 </Link>

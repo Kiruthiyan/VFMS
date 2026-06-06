@@ -21,6 +21,7 @@ public class DriverCertification extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Driver driver;
 
     @Enumerated(EnumType.STRING)

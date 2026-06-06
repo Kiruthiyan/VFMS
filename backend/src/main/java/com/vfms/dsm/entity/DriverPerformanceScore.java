@@ -20,6 +20,7 @@ public class DriverPerformanceScore extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Driver driver;
 
     @Column(name = "period_year")

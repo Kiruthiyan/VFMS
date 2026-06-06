@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { FileText, Upload, X } from "lucide-react";
@@ -62,7 +62,7 @@ export function FuelEntryForm({
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FuelEntryFormValues>({
-    resolver: zodResolver(fuelEntrySchema),
+    resolver: zodResolver(fuelEntrySchema) as Resolver<FuelEntryFormValues>,
     defaultValues: {
       fuelDate: todayStr(),
       driverId: driverId ?? "",

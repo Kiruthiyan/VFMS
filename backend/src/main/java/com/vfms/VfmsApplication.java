@@ -3,6 +3,7 @@ package com.vfms;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.core.env.AbstractEnvironment;
 
 /**
@@ -19,6 +20,7 @@ import org.springframework.core.env.AbstractEnvironment;
  * the startup.</p>
  */
 @SpringBootApplication
+@EnableJpaAuditing
 public class VfmsApplication {
 
     static {
@@ -32,6 +34,8 @@ public class VfmsApplication {
             "DB_URL",
             "DB_USER",
             "DB_PASSWORD",
+            "DB_DRIVER",
+            "HIBERNATE_DIALECT",
             "JWT_SECRET",
             "MAIL_USERNAME",
             "MAIL_PASSWORD",

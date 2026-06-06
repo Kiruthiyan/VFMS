@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Search, UserRound } from 'lucide-react';
 import { apiFetch, getErrorMessage } from '@/lib/api';
-import { Driver } from '@/types';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -13,8 +12,19 @@ type DriverQuickListProps = {
   activeDriverId?: string;
 };
 
+/** Minimal user shape from /api/drivers/from-users (matches DriverUserResponse). */
+interface DriverUserItem {
+  id: string;
+  employeeId: string | null;
+  fullName: string;
+  email: string;
+  nic: string;
+  phone: string;
+  driverId: string | null;
+}
+
 export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
-  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [drivers, setDrivers] = useState<DriverUserItem[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -24,23 +34,14 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
     const loadDrivers = async () => {
       try {
         setLoading(true);
-        // The API may return either an array or a paginated response { content: Driver[] }
-        const data = await apiFetch<any>('/api/drivers');
+        // Fetch all driver-role users from users table (large page to get all)
+        const data = await apiFetch<any>('/api/drivers/from-users?page=0&size=100');
 
-        let list: Driver[] = [];
-
+        let list: DriverUserItem[] = [];
         if (Array.isArray(data)) {
           list = data;
         } else if (data && Array.isArray(data.content)) {
           list = data.content;
-        } else if (data && Array.isArray(data.drivers)) {
-          // fallback if backend uses a different key
-          list = data.drivers;
-        } else {
-          // If response shape is unexpected, attempt to coerce single object into array
-          if (data && typeof data === 'object') {
-            // no-op: leave list empty or try to push if it looks like a driver
-          }
         }
 
         if (mounted) {
@@ -70,11 +71,11 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
     }
 
     return drivers.filter((driver) => {
-      const fullName = `${driver.firstName} ${driver.lastName}`.toLowerCase();
       return (
-        fullName.includes(normalizedQuery) ||
-        driver.employeeId.toLowerCase().includes(normalizedQuery) ||
-        (driver.department || '').toLowerCase().includes(normalizedQuery)
+        (driver.employeeId || '').toLowerCase().includes(normalizedQuery) ||
+        driver.fullName.toLowerCase().includes(normalizedQuery) ||
+        (driver.email || '').toLowerCase().includes(normalizedQuery) ||
+        (driver.nic || '').toLowerCase().includes(normalizedQuery)
       );
     });
   }, [drivers, query]);
@@ -103,8 +104,12 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
           ) : filteredDrivers.length > 0 ? (
             <div className="space-y-2">
               {filteredDrivers.map((driver) => {
-                const isActive = driver.id === activeDriverId;
-                const initials = `${driver.firstName?.[0] || ''}${driver.lastName?.[0] || ''}`.toUpperCase();
+                // Compare by linked driverId (driver table UUID) since activeDriverId is a driver table ID
+                const isActive = driver.driverId === activeDriverId;
+                const nameParts = driver.fullName.split(' ');
+                const initials = nameParts.length >= 2
+                  ? `${nameParts[0]?.[0] || ''}${nameParts[nameParts.length - 1]?.[0] || ''}`.toUpperCase()
+                  : (nameParts[0]?.[0] || '').toUpperCase();
 
                 return (
                   <Link
@@ -128,11 +133,19 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">
-                        {driver.firstName} {driver.lastName}
-                      </p>
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="truncate font-medium">
+                          {driver.fullName}
+                        </p>
+                        {driver.employeeId && (
+                          <span className={cn('text-[10px] font-mono font-semibold px-1 py-0.5 rounded border leading-none', 
+                            isActive ? 'bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30' : 'bg-muted text-muted-foreground border-border')}>
+                            {driver.employeeId}
+                          </span>
+                        )}
+                      </div>
                       <p className={cn('truncate text-xs', isActive ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
-                        {driver.employeeId}
+                        {driver.email}
                       </p>
                     </div>
                   </Link>

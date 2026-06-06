@@ -70,12 +70,16 @@ public class SecurityConfig {
                                 "/api/auth/send-otp",
                                 "/api/auth/verify-otp"
                         ).permitAll()
+                        // --- Uploaded driver/profile files served as static resources ---
+                        .requestMatchers("/uploads/**").permitAll()
                         // --- User management (admin only) ---
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // --- Fuel management (admin only; matches FuelController) ---
                         .requestMatchers("/api/v1/fuel/**").hasRole("ADMIN")
                         // --- Authenticated user profile & password change ---
                         .requestMatchers("/api/user/**").authenticated()
+                        // --- Driver self-service portal (ROLE_DRIVER only, IDOR-safe) ---
+                        .requestMatchers("/api/driver/**").hasRole("DRIVER")
                         // --- Legacy modules: keep open until individually secured ---
                         .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated()
@@ -92,31 +96,32 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        
+
         // Set allowed origins from configuration
         config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
                 .toList());
-        
+
         // Allow all HTTP methods needed for REST API
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        
+
         // Explicitly list allowed headers (SECURITY: Never use "*" with allowCredentials=true)
         config.setAllowedHeaders(List.of(
             "Authorization",      // JWT token
             "Content-Type",       // JSON content type
             "Accept",             // Response format
-            "X-Requested-With"    // AJAX request identifier
+            "X-Requested-With",   // AJAX request identifier
+            "X-User-Id"           // Legacy DSM user audit header
         ));
-        
+
         // Allow credentials (cookies, authorization headers)
         // SECURITY: This only works with explicit headers (not "*")
         config.setAllowCredentials(true);
-        
+
         // Expose headers that browser can access from JS
         config.setExposedHeaders(List.of("Authorization", "Content-Type"));
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
