@@ -31,6 +31,24 @@ const statusMap: Record<string, BadgeStyle> = {
       text: 'hsl(360 79% 30%)',
       border: 'hsl(360 79% 75%)',
     },
+  AVAILABLE: {
+    label: 'Available',
+    bg: 'hsl(145 63% 94%)',
+    text: 'hsl(145 63% 25%)',
+    border: 'hsl(145 63% 70%)',
+  },
+  ON_TRIP: {
+    label: 'On Trip',
+    bg: 'hsl(207 90% 95%)',
+    text: 'hsl(207 90% 28%)',
+    border: 'hsl(207 90% 72%)',
+  },
+  ON_LEAVE: {
+    label: 'On Leave',
+    bg: 'hsl(42 100% 94%)',
+    text: 'hsl(35 92% 27%)',
+    border: 'hsl(42 100% 70%)',
+  },
   APPROVER: {
     label: 'Approver',
     bg: 'hsl(19 97% 93%)',

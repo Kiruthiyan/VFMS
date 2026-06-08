@@ -159,9 +159,11 @@ function PasswordRequirement({
 }
 
 function createSafeResolver<T extends Record<string, unknown>>(schema: object): Resolver<T> {
+  const resolver = zodResolver(schema as never) as Resolver<T>;
+
   return async (values, context, options) => {
     try {
-      return await zodResolver(schema as never)(values, context, options);
+      return await resolver(values, context, options);
     } catch (error) {
       if (error instanceof ZodError) {
         const fieldErrors = error.issues.reduce<Record<string, FieldError>>((acc, issue) => {
@@ -178,7 +180,7 @@ function createSafeResolver<T extends Record<string, unknown>>(schema: object): 
         }, {});
 
         return {
-          values: {} as never,
+          values: {} as Record<string, never>,
           errors: fieldErrors as FieldErrors<T>,
         };
       }

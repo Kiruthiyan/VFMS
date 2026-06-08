@@ -14,6 +14,7 @@ public class DriverLicense extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Driver driver;
 
     @Column(name = "license_number", unique = true, nullable = false)

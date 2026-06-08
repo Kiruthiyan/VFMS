@@ -15,7 +15,7 @@ const AVAILABILITY_STATUSES: AvailabilityStatus[] = ['AVAILABLE', 'ON_TRIP', 'ON
 
 type DriverAvailabilityTabProps = {
   driverId: string;
-  onUpdated?: () => void | Promise<void>;
+  onUpdated?: (availability: DriverAvailability) => void | Promise<void>;
 };
 
 export function DriverAvailabilityTab({ driverId, onUpdated }: DriverAvailabilityTabProps) {
@@ -37,14 +37,14 @@ export function DriverAvailabilityTab({ driverId, onUpdated }: DriverAvailabilit
     setLoading(true);
 
     try {
-      await apiFetch(`/api/drivers/${driverId}/availability`, {
+      const updatedAvailability = await apiFetch<DriverAvailability>(`/api/drivers/${driverId}/availability`, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus, reason }),
         headers: { 'X-User-Id': 'ADMIN' },
       });
       toast.success('Updated');
-      await fetchAvailability();
-      await onUpdated?.();
+      setAvailability(updatedAvailability);
+      await onUpdated?.(updatedAvailability);
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to update status');
     } finally {

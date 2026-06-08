@@ -25,7 +25,7 @@ public class DriverAvailability {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "driver_id")
-    @JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Driver driver;
 
     @Enumerated(EnumType.STRING)

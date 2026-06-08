@@ -63,6 +63,17 @@ export const PROTECTED_ROUTES = [
   SETTINGS_ROUTES.CHANGE_PASSWORD,
 ];
 
+export const DRIVER_PORTAL_ROUTES = {
+  PROFILE: '/dashboards/driver/profile',
+  LICENSES: '/dashboards/driver/licenses',
+  CERTIFICATIONS: '/dashboards/driver/certifications',
+  DOCUMENTS: '/dashboards/driver/documents',
+  INFRACTIONS: '/dashboards/driver/infractions',
+  TRIPS: '/dashboards/driver/trips',
+  LEAVE_REQUESTS: '/dashboards/driver/leave-requests',
+  SERVICE_REQUESTS: '/dashboards/driver/service-requests',
+} as const;
+
 export const UNPROTECTED_ROUTES = [
   PUBLIC_ROUTES.HOME,
   AUTH_ROUTES.LOGIN,

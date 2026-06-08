@@ -193,6 +193,7 @@ function getNavSectionsByRole(role?: string) {
       title: "Fleet Management",
       items: [
         { label: 'Vehicles', href: '/dashboards/fleet/vehicles', icon: Car },
+        { label: 'Drivers', href: '/drivers', icon: Users },
         { label: 'Maintenance', href: '/dashboards/fleet/maintenance', icon: Wrench },
         { label: 'Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
         { label: 'Vendors', href: '/dashboards/fleet/vendors', icon: Users },

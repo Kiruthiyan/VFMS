@@ -11,7 +11,9 @@ import { Label } from '@/components/ui/label';
 import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 import { Input } from '@/components/ui/input';
 
-type VehicleOption = { id: number };
+type VehicleOption = { id: number; plateNumber?: string; brand?: string; model?: string };
+
+type ApiResponse<T> = { success: boolean; message: string; data: T };
 
 type RequestFormData = {
   vehicleId?: number;
@@ -39,11 +41,13 @@ export function DriverServiceRequestDialog({ driverId }: { driverId: string }) {
       setLoadingVehicles(true);
       setVehicleLoadError(null);
       try {
-        const data = await apiFetch<number[]>('/api/vehicles');
-        const uniqueIds = Array.from(new Set(data)).sort((a, b) => b - a).map((id) => ({ id }));
-        setVehicles(uniqueIds);
-        if (uniqueIds.length === 0) {
-          setVehicleLoadError('No vehicle IDs found in the database yet.');
+        const res = await apiFetch<ApiResponse<VehicleOption[]>>('/api/vehicles');
+        const list: VehicleOption[] = Array.isArray(res?.data) ? res.data : [];
+        const uniqueVehicles = Array.from(new Map(list.map((v) => [v.id, v])).values())
+          .sort((a, b) => a.id - b.id);
+        setVehicles(uniqueVehicles);
+        if (uniqueVehicles.length === 0) {
+          setVehicleLoadError('No vehicles found in the database yet.');
         }
       } catch (error) {
         console.error(error);
@@ -126,7 +130,9 @@ export function DriverServiceRequestDialog({ driverId }: { driverId: string }) {
                 <SelectContent>
                   {vehicles.map((vehicle) => (
                     <SelectItem key={vehicle.id} value={String(vehicle.id)}>
-                      Vehicle #{vehicle.id}
+                      {vehicle.plateNumber
+                        ? `${vehicle.plateNumber}${vehicle.brand ? ` — ${vehicle.brand}${vehicle.model ? ` ${vehicle.model}` : ''}` : ''}`
+                        : `Vehicle #${vehicle.id}`}
                     </SelectItem>
                   ))}
                   {!loadingVehicles && vehicles.length === 0 && (

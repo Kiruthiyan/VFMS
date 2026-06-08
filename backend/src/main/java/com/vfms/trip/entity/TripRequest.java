@@ -43,6 +43,7 @@ public class TripRequest {
     private LocalDateTime returnTime;
 
     @Column(name = "passenger_count")
+    @Builder.Default
     private Integer passengerCount = 1;
 
     @Column(name = "distance_km", precision = 10, scale = 2)
@@ -51,6 +52,7 @@ public class TripRequest {
     // Tracks the current lifecycle state of the trip
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private TripStatus status = TripStatus.NEW;
 
     // Resource and administrative assignments (typically populated post-approval)

@@ -8,6 +8,7 @@ import com.vfms.dsm.entity.DriverReadinessCache;
 import com.vfms.dsm.exception.ResourceNotFoundException;
 import com.vfms.dsm.repository.DriverAvailabilityRepository;
 import com.vfms.dsm.repository.DriverCertificationRepository;
+import com.vfms.dsm.repository.DriverLeaveRepository;
 import com.vfms.dsm.repository.DriverLicenseRepository;
 import com.vfms.dsm.repository.DriverReadinessCacheRepository;
 import com.vfms.dsm.repository.DriverRepository;
@@ -17,7 +18,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +35,7 @@ public class DriverReadinessService {
     private final DriverCertificationRepository certRepository;
     private final DriverAvailabilityRepository availabilityRepository;
     private final TripRequestRepository tripRequestRepository;
+    private final DriverLeaveRepository leaveRepository;
 
     public DriverReadinessCache getReadiness(UUID driverId) {
         return cacheRepository.findById(driverId).orElseGet(() -> refreshForDriver(driverId));
@@ -45,7 +49,7 @@ public class DriverReadinessService {
 
         public List<DriverReadinessCache> getAllReadiness() {
                                 return driverRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")).stream()
-                                .map(driver -> cacheRepository.findById(driver.getId()).orElseGet(() -> refreshForDriver(driver.getId())))
+                                .map(driver -> refreshForDriver(driver.getId()))
                                 .toList();
         }
 
@@ -58,16 +62,20 @@ public class DriverReadinessService {
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + driverId));
 
-        DriverLicense latestLicense = licenseRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream()
-            .findFirst()
-            .orElse(null);
-
-        boolean licenseValid = latestLicense != null
-            && latestLicense.getStatus() != DriverLicense.LicenseStatus.EXPIRED
-            && !latestLicense.getExpiryDate().isBefore(java.time.LocalDate.now());
+        boolean licenseValid = driver.getLicenseExpiryDate() != null
+            && !driver.getLicenseExpiryDate().isBefore(LocalDate.now());
 
         boolean certsValid = certRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream()
                 .noneMatch(c -> c.getStatus() == DriverCertification.CertStatus.EXPIRED);
+
+        // Check for approved leave on the current date
+        boolean onLeaveToday = leaveRepository.hasApprovedLeaveOnDate(driverId, LocalDate.now());
+
+        // Build not-ready reason
+        List<String> reasons = new ArrayList<>();
+        if (!licenseValid) reasons.add("License expired");
+        if (onLeaveToday) reasons.add("On approved leave");
+        String notReadyReason = reasons.isEmpty() ? null : String.join(", ", reasons);
 
         // Check for active trips from trip_requests table
         DriverAvailability.AvailabilityStatus status = determineAvailabilityStatus(driverId);
@@ -80,6 +88,8 @@ public class DriverReadinessService {
 
         cache.setLicenseValid(licenseValid);
         cache.setAllCertsValid(certsValid);
+        cache.setOnLeaveToday(onLeaveToday);
+        cache.setNotReadyReason(notReadyReason);
         cache.setAvailabilityStatus(status);
         cache.setLastRefreshed(LocalDateTime.now());
 
