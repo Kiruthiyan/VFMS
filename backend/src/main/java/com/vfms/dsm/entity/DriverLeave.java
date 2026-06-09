@@ -1,6 +1,7 @@
 package com.vfms.dsm.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +23,13 @@ public class DriverLeave extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id", nullable = false)
+    @JsonIgnore
     private Driver driver;
+
+    @JsonIgnore
+    public Driver getDriver() {
+        return this.driver;
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "leave_type", nullable = false)
@@ -60,5 +67,17 @@ public class DriverLeave extends BaseEntity {
         APPROVED,
         REJECTED,
         CANCELLED
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("driver")
+    public java.util.Map<String, String> getDriverSummary() {
+        if (driver != null) {
+            return java.util.Map.of(
+                "firstName", driver.getFirstName() != null ? driver.getFirstName() : "",
+                "lastName", driver.getLastName() != null ? driver.getLastName() : ""
+            );
+        }
+        return null;
     }
 }

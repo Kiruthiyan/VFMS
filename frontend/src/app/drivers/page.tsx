@@ -3,17 +3,35 @@
 import { ChangeEvent, MouseEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Eye, Users } from 'lucide-react';
+import { Search, Eye, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
-import { Driver, PageResponse } from '@/types';
+import { PageResponse } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
-import { DriverForm } from '@/components/drivers/DriverForm';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/lib/useUser';
+
+/** Shape returned by GET /api/drivers/from-users (user-creation data for DRIVER role) */
+interface DriverUser {
+  id: string;
+  employeeId: string | null;
+  fullName: string;
+  email: string;
+  phone: string;
+  nic: string;
+  licenseNumber: string | null;
+  licenseExpiryDate: string | null;
+  certifications: string | null;
+  experienceYears: number | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string | null;
+  /** Linked driver-table UUID (resolved by email). Used for sub-resource tabs. */
+  driverId: string | null;
+}
 
 type LicenseAlertLevel = 'VALID' | 'EXPIRING_SOON' | 'EXPIRED' | 'UNKNOWN';
 
@@ -25,7 +43,7 @@ type LicenseAlertMeta = {
   border: string;
 };
 
-function getDaysUntil(expiryDate: string): number | null {
+function getDaysUntil(expiryDate: string | null): number | null {
   if (!expiryDate) return null;
 
   const parsed = new Date(`${expiryDate}T00:00:00`);
@@ -37,7 +55,7 @@ function getDaysUntil(expiryDate: string): number | null {
   return Math.floor((expiryStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getLicenseAlertMeta(expiryDate: string): LicenseAlertMeta {
+function getLicenseAlertMeta(expiryDate: string | null): LicenseAlertMeta {
   const daysUntil = getDaysUntil(expiryDate);
   if (daysUntil === null) {
     return {
@@ -81,17 +99,17 @@ function getLicenseAlertMeta(expiryDate: string): LicenseAlertMeta {
 
 export default function DriversPage() {
   const router = useRouter();
-  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const { isApprover } = useUser();
+  const [drivers, setDrivers] = useState<DriverUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [open, setOpen] = useState(false);
 
   const fetchDrivers = async () => {
     try {
       setLoading(true);
-      const d = await apiFetch<PageResponse<Driver>>(`/api/drivers?page=${page}&size=10`);
+      const d = await apiFetch<PageResponse<DriverUser>>(`/api/drivers/from-users?page=${page}&size=10`);
       setDrivers(d.content);
       setTotalPages(d.totalPages);
     } catch (e: any) {
@@ -106,11 +124,11 @@ export default function DriversPage() {
   }, [page]);
 
   const filtered = drivers.filter((d) =>
-    `${d.firstName} ${d.lastName} ${d.employeeId} ${d.nic}`.toLowerCase().includes(search.toLowerCase())
+    `${d.employeeId || ''} ${d.fullName} ${d.email} ${d.nic} ${d.phone}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const expiredCount = filtered.filter((driver) => getLicenseAlertMeta(driver.licenseExpiryDate).level === 'EXPIRED').length;
-  const expiringSoonCount = filtered.filter((driver) => getLicenseAlertMeta(driver.licenseExpiryDate).level === 'EXPIRING_SOON').length;
+  const expiredCount = filtered.filter((d) => getLicenseAlertMeta(d.licenseExpiryDate).level === 'EXPIRED').length;
+  const expiringSoonCount = filtered.filter((d) => getLicenseAlertMeta(d.licenseExpiryDate).level === 'EXPIRING_SOON').length;
 
   return (
     <div className="p-6 animate-fade-in">
@@ -119,33 +137,14 @@ export default function DriversPage() {
         title="Drivers"
         subtitle="Manage driver profiles"
         action={
-          <div className="flex items-center gap-2">
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <button
-                  className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium transition-colors"
-                  style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Driver
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-black dark:text-white">New Driver</DialogTitle>
-                  <DialogDescription className="text-black/80 dark:text-white/80">
-                    Fill in the driver details and submit the form to create a new driver profile.
-                  </DialogDescription>
-                </DialogHeader>
-                <DriverForm
-                  onSuccess={() => {
-                    setOpen(false);
-                    fetchDrivers();
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
+          isApprover ? (
+            <Link
+              href="/dashboards/approver"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              Back to Approver Dashboard
+            </Link>
+          ) : undefined
         }
       />
 
@@ -179,7 +178,7 @@ export default function DriversPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name, employee ID or NIC..."
+              placeholder="Search by Driver ID, name, email, NIC or phone..."
               className="pl-9"
               value={search}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
@@ -196,7 +195,7 @@ export default function DriversPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent bg-muted/40">
-                    {['Employee ID', 'Name', 'NIC', 'Department', 'License Alert', 'Status', ''].map((h) => (
+                    {['Driver ID', 'Full Name', 'Email', 'NIC', 'Phone', 'License Alert', 'Status', ''].map((h) => (
                       <TableHead key={h} className="text-xs font-medium text-muted-foreground">
                         {h}
                       </TableHead>
@@ -221,18 +220,15 @@ export default function DriversPage() {
                       onMouseEnter={(e: MouseEvent<HTMLTableRowElement>) => (e.currentTarget.style.backgroundColor = 'hsl(42 100% 50% / 0.06)')}
                       onMouseLeave={(e: MouseEvent<HTMLTableRowElement>) => (e.currentTarget.style.backgroundColor = '')}
                     >
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        <Link href={`/drivers/${d.id}/overview`} onClick={(event) => event.stopPropagation()}>
-                          {d.employeeId}
-                        </Link>
+                      <TableCell className="font-semibold text-sm text-foreground">
+                        {d.employeeId || '—'}
                       </TableCell>
                       <TableCell className="font-medium text-sm text-foreground">
-                        <Link href={`/drivers/${d.id}/overview`} onClick={(event) => event.stopPropagation()}>
-                          {d.firstName} {d.lastName}
-                        </Link>
+                        {d.fullName}
                       </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.email}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{d.nic}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{d.department || '-'} </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.phone || '-'}</TableCell>
                       <TableCell>
                         <LicenseAlertBadge expiryDate={d.licenseExpiryDate} />
                       </TableCell>
@@ -254,7 +250,7 @@ export default function DriversPage() {
                   ))}
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-16 text-sm">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-16 text-sm">
                         No drivers found
                       </TableCell>
                     </TableRow>
@@ -325,7 +321,7 @@ function PageHeader({
   );
 }
 
-function LicenseAlertBadge({ expiryDate }: { expiryDate: string }) {
+function LicenseAlertBadge({ expiryDate }: { expiryDate: string | null }) {
   const alert = getLicenseAlertMeta(expiryDate);
 
   return (

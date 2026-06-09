@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class DriverRequest {
-    @NotBlank private String employeeId;
+    private String employeeId;
     @NotBlank private String firstName;
     @NotBlank private String lastName;
     @NotBlank private String nic;

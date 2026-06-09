@@ -38,7 +38,7 @@ public class DriverReadinessCache {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "driver_id")
-    @JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Driver driver;
 
     @Builder.Default
@@ -55,10 +55,17 @@ public class DriverReadinessCache {
     private DriverAvailability.AvailabilityStatus availabilityStatus = DriverAvailability.AvailabilityStatus.AVAILABLE;
 
     @Builder.Default
+    @Column(name = "on_leave_today")
+    private Boolean onLeaveToday = false;
+
+    @Column(name = "not_ready_reason")
+    private String notReadyReason;
+
+    @Builder.Default
     @Column(name = "last_refreshed")
     private LocalDateTime lastRefreshed = LocalDateTime.now();
     
     public boolean isReady() {
-        return Boolean.TRUE.equals(licenseValid);
+        return Boolean.TRUE.equals(licenseValid) && !Boolean.TRUE.equals(onLeaveToday);
     }
 }

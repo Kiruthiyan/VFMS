@@ -19,6 +19,7 @@ export interface Driver {
   dateOfJoining?: string;
   photoUrl?: string;
   status: DriverStatus;
+  availabilityStatus?: AvailabilityStatus;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -82,6 +83,8 @@ export interface DriverReadinessCache {
   driverId: string;
   licenseValid: boolean;
   allCertsValid: boolean;
+  onLeaveToday?: boolean;
+  notReadyReason?: string;
   availabilityStatus: AvailabilityStatus;
   lastRefreshed: string;
   ready?: boolean;

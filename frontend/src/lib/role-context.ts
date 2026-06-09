@@ -10,7 +10,7 @@ export function useRole() {
     role,
     canAdmin: role === "ADMIN",
     canApprove: role === "ADMIN" || role === "APPROVER",
-    canCreate: role === "ADMIN" || role === "SYSTEM_USER" || role === "STAFF",
+    canCreate: role === "ADMIN" || role === "SYSTEM_USER",
     canDrive: role === "DRIVER"
   };
 }

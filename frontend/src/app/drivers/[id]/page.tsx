@@ -2,50 +2,66 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Pencil, Trash2, UserRound } from 'lucide-react';
-import { apiFetch, getErrorMessage } from '@/lib/api';
-import { Driver, DriverDocument } from '@/types';
+import { useParams, useSearchParams } from 'next/navigation';
+import { ArrowLeft, UserRound } from 'lucide-react';
+import { apiFetch, getErrorMessage, resolveBackendAssetUrl } from '@/lib/api';
+import { DriverAvailability, DriverDocument } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DriverForm } from '@/components/drivers/DriverForm';
+
 import { DriverLicensesTab } from '@/components/drivers/DriverLicensesTab';
 import { DriverCertificationsTab } from '@/components/drivers/DriverCertificationsTab';
 import { DriverDocumentsTab } from '@/components/drivers/DriverDocumentsTab';
 import { DriverAvailabilityTab } from '@/components/drivers/DriverAvailabilityTab';
 import { DriverInfractionsTab } from '@/components/drivers/DriverInfractionsTab';
-import { DriverQualificationTab } from '@/components/drivers/DriverQualificationTab';
 import { DriverTripsTab } from '@/components/drivers/DriverTripsTab';
-import { DriverLeaveRequestDialog } from '@/components/drivers/DriverLeaveRequestDialog';
-import { DriverServiceRequestDialog } from '@/components/drivers/DriverServiceRequestDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DriverQuickList } from '@/components/driver/DriverQuickList';
-import { toast } from 'sonner';
+import { useUser } from '@/lib/useUser';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+/** Shape returned by GET /api/drivers/from-users/{userId} */
+interface DriverUserDetail {
+	id: string;
+	employeeId: string | null;
+	fullName: string;
+	email: string;
+	phone: string;
+	nic: string;
+	licenseNumber: string | null;
+	licenseExpiryDate: string | null;
+	certifications: string | null;
+	experienceYears: number | null;
+	status: string;
+	createdAt: string;
+	updatedAt: string | null;
+	/** Linked driver-table UUID (resolved by email). Used for sub-resource tabs. */
+	driverId: string | null;
+}
 
 export default function DriverDetailsPage() {
-	const router = useRouter();
+
+	const { isApprover } = useUser();
 	const params = useParams<{ id: string }>();
 	const searchParams = useSearchParams();
-	const id = params?.id;
+	const id = params?.id; // This is the USER id from the users table
 	const requestedTab = searchParams.get('tab') || 'overview';
-	const initialTab = ['overview', 'licenses', 'certifications', 'documents', 'availability', 'infractions', 'qualification', 'trips'].includes(requestedTab)
+	const initialTab = ['overview', 'licenses', 'certifications', 'documents', 'availability', 'infractions', 'trips'].includes(requestedTab)
 		? requestedTab
 		: 'overview';
 
-	const [driver, setDriver] = useState<Driver | null>(null);
+	const [driverUser, setDriverUser] = useState<DriverUserDetail | null>(null);
 	const [profilePicture, setProfilePicture] = useState<DriverDocument | null>(null);
+	const [availability, setAvailability] = useState<DriverAvailability | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [editOpen, setEditOpen] = useState(false);
-	const [isRemoving, setIsRemoving] = useState(false);
+	const profilePictureUrl = profilePicture?.fileUrl ? resolveBackendAssetUrl(profilePicture.fileUrl) : '';
 
-	const fetchDriver = async () => {
+	// The linked driver-table ID for sub-resource tabs
+	const linkedDriverId = driverUser?.driverId ?? null;
+
+	const fetchDriverUser = async () => {
 		if (!id) {
-			setError('Driver id is missing from URL.');
+			setError('Driver user id is missing from URL.');
 			setLoading(false);
 			return;
 		}
@@ -53,16 +69,25 @@ export default function DriverDetailsPage() {
 		try {
 			setLoading(true);
 			setError(null);
-			const data = await apiFetch<Driver>(`/api/drivers/${id}`);
-			setDriver(data);
-			
-			// Fetch profile picture
-			try {
-				const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${id}/profile-picture`);
-				setProfilePicture(profilePic);
-			} catch (e) {
-				// Profile picture not found is not an error, just means no profile picture uploaded yet
-				setProfilePicture(null);
+			// Fetch user-creation data from users table
+			const data = await apiFetch<DriverUserDetail>(`/api/drivers/from-users/${id}`);
+			setDriverUser(data);
+
+			// If there's a linked driver record, fetch profile picture and availability
+			if (data.driverId) {
+				try {
+					const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${data.driverId}/profile-picture`);
+					setProfilePicture(profilePic);
+				} catch (e) {
+					setProfilePicture(null);
+				}
+
+				try {
+					const availabilityData = await apiFetch<DriverAvailability>(`/api/drivers/${data.driverId}/availability`);
+					setAvailability(availabilityData);
+				} catch (e) {
+					setAvailability(null);
+				}
 			}
 		} catch (e) {
 			setError(getErrorMessage(e));
@@ -72,25 +97,8 @@ export default function DriverDetailsPage() {
 	};
 
 	useEffect(() => {
-		void fetchDriver();
+		void fetchDriverUser();
 	}, [id]);
-
-	const handleRemoveDriver = async () => {
-		if (!id || isRemoving) return;
-		if (!window.confirm('Remove this driver? This will set status to Inactive.')) return;
-
-		try {
-			setIsRemoving(true);
-			await apiFetch<void>(`/api/drivers/${id}/deactivate`, { method: 'PATCH' });
-			toast.success('Driver removed successfully.');
-			router.push('/drivers');
-			router.refresh();
-		} catch (e) {
-			toast.error(getErrorMessage(e));
-		} finally {
-			setIsRemoving(false);
-		}
-	};
 
 	return (
 		<div className="p-6 space-y-4 animate-fade-in">
@@ -101,61 +109,23 @@ export default function DriverDetailsPage() {
 					</div>
 					<div>
 						<h1 className="text-xl font-semibold text-foreground">
-							Driver Profile {driver && !loading && `- ${driver.firstName} ${driver.lastName}`}
+							Driver Profile {driverUser && !loading && `- ${driverUser.fullName}`}
 						</h1>
 						<p className="text-sm text-muted-foreground">
-							{driver && !loading ? `${driver.employeeId} • ${driver.department || 'N/A'}` : 'Driver details view'}
+							{driverUser && !loading ? `${driverUser.email}` : 'Driver details view'}
 						</p>
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
-					{driver && !loading && !error && <DriverLeaveRequestDialog driverId={id} />}
-					{driver && !loading && !error && <DriverServiceRequestDialog driverId={id} />}
-
-					{driver && !loading && !error && (
-						<Dialog open={editOpen} onOpenChange={setEditOpen}>
-							<DialogTrigger asChild>
-								<Button variant="outline" size="sm" className="inline-flex items-center gap-1.5">
-									<Pencil className="w-4 h-4" />
-									Edit Driver
-								</Button>
-							</DialogTrigger>
-							<DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-								<DialogHeader>
-									<DialogTitle className="text-black dark:text-white">Edit Driver</DialogTitle>
-									<DialogDescription className="text-black/80 dark:text-white/80">
-										Update driver details and save your changes.
-									</DialogDescription>
-								</DialogHeader>
-								<DriverForm
-									driver={driver}
-									onSuccess={() => {
-										setEditOpen(false);
-										void fetchDriver();
-										toast.success('Driver updated successfully.');
-									}}
-								/>
-							</DialogContent>
-						</Dialog>
-					)}
-
-					{driver && !loading && !error && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleRemoveDriver}
-							disabled={isRemoving}
-							className="inline-flex items-center gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
-						>
-							<Trash2 className="w-4 h-4" />
-							{isRemoving ? 'Removing...' : 'Remove Driver'}
-						</Button>
-					)}
-
 					<Link href="/drivers" className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md border border-border hover:bg-muted transition-colors">
 						<ArrowLeft className="w-4 h-4" />
 						Back
 					</Link>
+					{isApprover && (
+						<Link href="/dashboards/approver" className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+							Back to Approver Dashboard
+						</Link>
+					)}
 				</div>
 			</div>
 
@@ -174,20 +144,19 @@ export default function DriverDetailsPage() {
 								</p>
 							)}
 
-							{!loading && !error && driver && id && (
+							{!loading && !error && driverUser && id && (
 								<Tabs defaultValue={initialTab} className="w-full">
-														<div className="w-full overflow-x-auto">
-															<TabsList className="flex gap-2 w-max whitespace-nowrap px-2">
-																<TabsTrigger value="overview" className="px-4 py-2 rounded-md inline-flex">Overview</TabsTrigger>
-																<TabsTrigger value="licenses" className="px-4 py-2 rounded-md inline-flex">Licenses</TabsTrigger>
-																<TabsTrigger value="certifications" className="px-4 py-2 rounded-md inline-flex">Certs</TabsTrigger>
-																<TabsTrigger value="documents" className="px-4 py-2 rounded-md inline-flex">Documents</TabsTrigger>
-																<TabsTrigger value="availability" className="px-4 py-2 rounded-md inline-flex">Availability</TabsTrigger>
-																<TabsTrigger value="infractions" className="px-4 py-2 rounded-md inline-flex">Infractions</TabsTrigger>
-																<TabsTrigger value="qualification" className="px-4 py-2 rounded-md inline-flex">Qualification</TabsTrigger>
-																<TabsTrigger value="trips" className="px-4 py-2 rounded-md inline-flex">Trips</TabsTrigger>
-															</TabsList>
-														</div>
+									<div className="w-full overflow-x-auto">
+										<TabsList className="flex gap-2 w-max whitespace-nowrap px-2">
+											<TabsTrigger value="overview" className="px-4 py-2 rounded-md inline-flex">Overview</TabsTrigger>
+											<TabsTrigger value="licenses" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Licenses</TabsTrigger>
+											<TabsTrigger value="certifications" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Certs</TabsTrigger>
+											<TabsTrigger value="documents" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Documents</TabsTrigger>
+											<TabsTrigger value="availability" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Availability</TabsTrigger>
+											<TabsTrigger value="infractions" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Infractions</TabsTrigger>
+											<TabsTrigger value="trips" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Trips</TabsTrigger>
+										</TabsList>
+									</div>
 
 									<TabsContent value="overview">
 										<div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
@@ -195,7 +164,7 @@ export default function DriverDetailsPage() {
 												<div className="md:col-span-1 flex flex-col items-center">
 													<div className="mb-3 h-32 w-32 overflow-hidden rounded-lg bg-muted flex items-center justify-center">
 														<img
-															src={`${API_BASE}${profilePicture.fileUrl}`}
+															src={profilePictureUrl}
 															alt="Driver Profile Picture"
 															className="h-full w-full object-cover"
 															onError={(e) => {
@@ -203,82 +172,82 @@ export default function DriverDetailsPage() {
 															}}
 														/>
 													</div>
-													<p className="text-center text-xs font-medium text-muted-foreground">{driver.firstName} {driver.lastName}</p>
+													<p className="text-center text-xs font-medium text-muted-foreground">{driverUser.fullName}</p>
 												</div>
 											)}
 											<div className={profilePicture ? 'md:col-span-2' : 'md:col-span-3'}>
 												<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-													<Detail label="Employee ID" value={driver.employeeId} />
-													<Detail label="NIC" value={driver.nic} />
-													<Detail label="First Name" value={driver.firstName} />
-													<Detail label="Last Name" value={driver.lastName} />
-													<Detail label="Phone" value={driver.phone} />
-													<Detail label="License Number" value={driver.licenseNumber} />
-													<Detail label="License Expiry Date" value={driver.licenseExpiryDate} />
-													<Detail label="Date of Birth" value={driver.dateOfBirth} />
-													<Detail label="Date of Joining" value={driver.dateOfJoining} />
-													<Detail label="Department" value={driver.department} />
-													<Detail label="Designation" value={driver.designation} />
-													<Detail label="Email" value={driver.email} />
-													<div className="md:col-span-2">
-														<Detail label="Address" value={driver.address} className="md:col-span-2" />
-													</div>
-													<Detail label="Emergency Contact Name" value={driver.emergencyContactName} />
-													<Detail label="Emergency Contact Phone" value={driver.emergencyContactPhone} />
+													<Detail label="Driver ID" value={driverUser.employeeId ?? undefined} />
+													<Detail label="Full Name" value={driverUser.fullName} />
+													<Detail label="NIC" value={driverUser.nic} />
+													<Detail label="Email" value={driverUser.email} />
+													<Detail label="Phone" value={driverUser.phone} />
+													<Detail label="License Number" value={driverUser.licenseNumber ?? undefined} />
+													<Detail label="License Expiry Date" value={driverUser.licenseExpiryDate ?? undefined} />
+													<Detail label="Certifications" value={driverUser.certifications ?? undefined} />
+													<Detail label="Experience (Years)" value={driverUser.experienceYears != null ? String(driverUser.experienceYears) : undefined} />
 													<div className="space-y-1">
 														<p className="text-xs font-medium text-muted-foreground">Status</p>
-														<StatusBadge status={driver.status} />
+														<StatusBadge status={availability?.status ?? driverUser.status} />
 													</div>
 												</div>
 											</div>
 										</div>
 									</TabsContent>
 
-									<TabsContent value="licenses">
-										<DriverLicensesTab driverId={id} />
-									</TabsContent>
+									{linkedDriverId ? (
+										<>
+											<TabsContent value="licenses">
+												<DriverLicensesTab driverId={linkedDriverId} />
+											</TabsContent>
 
-									<TabsContent value="certifications">
-										<DriverCertificationsTab driverId={id} />
-									</TabsContent>
+											<TabsContent value="certifications">
+												<DriverCertificationsTab driverId={linkedDriverId} />
+											</TabsContent>
 
-									<TabsContent value="documents">
-										<DriverDocumentsTab 
-											driverId={id} 
-											onProfilePictureUpload={async () => {
-												try {
-													const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${id}/profile-picture`);
-													setProfilePicture(profilePic);
-												} catch (e) {
-													setProfilePicture(null);
-												}
-											}}
-										/>
-									</TabsContent>
+											<TabsContent value="documents">
+												<DriverDocumentsTab
+													driverId={linkedDriverId}
+													onProfilePictureUpload={async () => {
+														try {
+															const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${linkedDriverId}/profile-picture`);
+															setProfilePicture(profilePic);
+														} catch (e) {
+															setProfilePicture(null);
+														}
+													}}
+												/>
+											</TabsContent>
 
-									<TabsContent value="availability">
-										<DriverAvailabilityTab driverId={id} />
-									</TabsContent>
+											<TabsContent value="availability">
+												<DriverAvailabilityTab driverId={linkedDriverId} onUpdated={setAvailability} />
+											</TabsContent>
 
-									<TabsContent value="infractions">
-										<DriverInfractionsTab driverId={id} />
-									</TabsContent>
+											<TabsContent value="infractions">
+												<DriverInfractionsTab driverId={linkedDriverId} />
+											</TabsContent>
 
-									<TabsContent value="qualification">
-										<DriverQualificationTab driverId={id} />
-									</TabsContent>
-
-									<TabsContent value="trips">
-										<DriverTripsTab driverId={id} />
-									</TabsContent>
+											<TabsContent value="trips">
+												<DriverTripsTab driverId={linkedDriverId} />
+											</TabsContent>
+										</>
+									) : (
+										<div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+											<p className="font-medium">No linked driver record found</p>
+											<p className="mt-1 text-xs text-amber-600">
+												This user has been created as a Driver but has not yet logged in to the Driver Portal.
+												Licenses, certifications, documents, and other tabs will become available once the driver logs in and their driver record is created.
+											</p>
+										</div>
+									)}
 								</Tabs>
 							)}
 						</CardContent>
 					</Card>
 				</div>
 
-				{driver && !loading && !error && id && (
-					<DriverQuickList activeDriverId={id} />
+				{driverUser && !loading && !error && linkedDriverId && (
+					<DriverQuickList activeDriverId={linkedDriverId} />
 				)}
 			</div>
 		</div>
