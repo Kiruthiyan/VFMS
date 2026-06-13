@@ -137,6 +137,18 @@ public class User implements UserDetails {
     @Column(name = "approval_level")
     private String approvalLevel;
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
+
+    @Column(name = "emergency_contact_name")
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_phone")
+    private String emergencyContactPhone;
+
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
     private LocalDateTime createdAt;

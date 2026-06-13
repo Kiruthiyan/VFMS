@@ -2,16 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
 import {
-  User, Mail, Phone, Calendar, CreditCard,
-  Shield, Camera, Loader2, Badge,
+  User, Mail, Phone, MapPin, Activity, 
+  Shield, Camera, Loader2, Badge, Briefcase, Building
 } from 'lucide-react';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import {
-  getMyProfile, uploadProfilePicture,
-  type DriverProfileResponse,
-} from '@/lib/api/driver-portal';
+  getMyStaffProfile, updateMyStaffProfile, uploadStaffProfilePicture,
+  type StaffProfileResponse, type StaffProfileUpdateRequest
+} from '@/lib/api/staff-profile';
 import { resolveBackendAssetUrl } from '@/lib/api';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
   return (
@@ -33,11 +37,11 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 
 function StatusPill({ status }: { status: string }) {
   const colors: Record<string, { bg: string; text: string; border: string }> = {
-    ACTIVE: { bg: 'hsl(145 63% 94%)', text: 'hsl(145 63% 25%)', border: 'hsl(145 63% 70%)' },
-    INACTIVE: { bg: 'hsl(0 0% 94%)', text: 'hsl(0 0% 35%)', border: 'hsl(0 0% 75%)' },
-    SUSPENDED: { bg: 'hsl(360 79% 95%)', text: 'hsl(360 79% 30%)', border: 'hsl(360 79% 75%)' },
+    APPROVED: { bg: 'hsl(145 63% 94%)', text: 'hsl(145 63% 25%)', border: 'hsl(145 63% 70%)' },
+    PENDING: { bg: 'hsl(42 100% 94%)', text: 'hsl(42 100% 25%)', border: 'hsl(42 100% 70%)' },
+    REJECTED: { bg: 'hsl(360 79% 95%)', text: 'hsl(360 79% 30%)', border: 'hsl(360 79% 75%)' },
   };
-  const c = colors[status] ?? colors.INACTIVE;
+  const c = colors[status] ?? colors.PENDING;
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, border: `1px solid ${c.border}`, background: c.bg, color: c.text }}>
       {status}
@@ -45,27 +49,37 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-export default function DriverProfilePage() {
-  const [profile, setProfile] = useState<DriverProfileResponse | null>(null);
+export default function StaffProfilePage() {
+  const [profile, setProfile] = useState<StaffProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadingPic, setUploadingPic] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<StaffProfileUpdateRequest>();
+
   useEffect(() => {
-    getMyProfile()
-      .then((data) => { setProfile(data); })
+    getMyStaffProfile()
+      .then((data) => {
+        setProfile(data);
+        reset({
+          phone: data.phone || '',
+          address: data.address || '',
+          emergencyContactName: data.emergencyContactName || '',
+          emergencyContactPhone: data.emergencyContactPhone || '',
+        });
+      })
       .catch((err) => toast.error(err?.response?.data?.message ?? 'Failed to load profile'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [reset]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingPic(true);
     try {
-      await uploadProfilePicture(file);
-      // Re-fetch profile to get updated photo URL
-      const updated = await getMyProfile();
+      await uploadStaffProfilePicture(file);
+      const updated = await getMyStaffProfile();
       setProfile(updated);
       toast.success('Profile picture updated');
     } catch (err: any) {
@@ -76,17 +90,28 @@ export default function DriverProfilePage() {
     }
   };
 
+  const onSubmitUpdate = async (data: StaffProfileUpdateRequest) => {
+    try {
+      const updated = await updateMyStaffProfile(data);
+      setProfile(updated);
+      toast.success('Profile updated successfully');
+      setIsEditing(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to update profile');
+    }
+  };
+
   const avatarSrc = profile?.photoUrl ? resolveBackendAssetUrl(profile.photoUrl) : null;
 
   return (
-    <DashboardShell title="My Profile" description="View your personal information">
+    <DashboardShell title="My Profile" description="View and manage your personal information">
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: 'hsl(var(--muted-foreground))' }}>
           <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite' }} />
         </div>
       ) : !profile ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'hsl(var(--muted-foreground))' }}>
-          <p>No driver profile linked to your account. Contact an administrator.</p>
+          <p>No profile linked to your account. Contact an administrator.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '20rem 1fr', gap: '1.5rem', alignItems: 'start' }}>
@@ -141,19 +166,14 @@ export default function DriverProfilePage() {
                 </div>
 
                 <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--foreground))', margin: 0 }}>
-                  {profile.firstName} {profile.lastName}
+                  {profile.fullName}
                 </h2>
                 <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.25rem 0 0.75rem' }}>
-                  Driver
+                  {profile.designation || 'Staff'}
                 </p>
 
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <StatusPill status={profile.status} />
-                  {profile.availabilityStatus && (
-                    <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '9999px', background: 'hsl(220 20% 90%)', color: 'hsl(220 20% 35%)' }}>
-                      {profile.availabilityStatus.replace('_', ' ')}
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -161,32 +181,63 @@ export default function DriverProfilePage() {
             {/* Identity card */}
             <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem' }}>
               <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>
-                Identity
+                System Identity
               </p>
-              <InfoRow icon={Badge} label="Driver ID" value={profile.employeeId} />
-              <InfoRow icon={CreditCard} label="NIC / Passport" value={profile.nic} />
-            </div>
-
-            {/* License card */}
-            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem' }}>
-              <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>
-                License
-              </p>
-              <InfoRow icon={Shield} label="License Number" value={profile.licenseNumber} />
-              <InfoRow icon={Calendar} label="Expiry Date" value={profile.licenseExpiryDate} />
+              <InfoRow icon={Badge} label="Employee ID" value={profile.employeeId} />
+              <InfoRow icon={Building} label="Department" value={profile.department} />
+              <InfoRow icon={Briefcase} label="Office Location" value={profile.officeLocation} />
             </div>
           </div>
 
-          {/* Right: Read-only contact info */}
+          {/* Right: Editable contact info */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Contact info */}
             <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1.25rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>Contact Information</h3>
-                <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.125rem 0 0' }}>Your registered contact details</p>
+              <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>Personal Information</h3>
+                  <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.125rem 0 0' }}>Your contact details and emergency contacts</p>
+                </div>
+                {!isEditing && (
+                  <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>Edit Details</Button>
+                )}
               </div>
-              <InfoRow icon={Phone} label="Phone Number" value={profile.phone} />
-              <InfoRow icon={Mail} label="Email Address" value={profile.email} />
+
+              {!isEditing ? (
+                <>
+                  <InfoRow icon={Mail} label="Email Address" value={profile.email} />
+                  <InfoRow icon={Phone} label="Phone Number" value={profile.phone} />
+                  <InfoRow icon={MapPin} label="Address" value={profile.address} />
+                  <InfoRow icon={User} label="Emergency Contact Name" value={profile.emergencyContactName} />
+                  <InfoRow icon={Activity} label="Emergency Contact Phone" value={profile.emergencyContactPhone} />
+                </>
+              ) : (
+                <form onSubmit={handleSubmit(onSubmitUpdate)} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <Label className="text-xs">Phone Number</Label>
+                      <Input {...register('phone')} className="h-9 mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Address</Label>
+                      <Input {...register('address')} className="h-9 mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Emergency Contact Name</Label>
+                      <Input {...register('emergencyContactName')} className="h-9 mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Emergency Contact Phone</Label>
+                      <Input {...register('emergencyContactPhone')} className="h-9 mt-1" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="ghost" onClick={() => setIsEditing(false)} type="button">Cancel</Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
+                </form>
+              )}
             </div>
 
             {/* Read-only notice */}
@@ -197,7 +248,7 @@ export default function DriverProfilePage() {
             }}>
               <Shield style={{ width: '1rem', height: '1rem', color: 'hsl(42 100% 45%)', flexShrink: 0, marginTop: '0.125rem' }} />
               <p style={{ fontSize: '0.8rem', color: 'hsl(42 100% 35%)', margin: 0, lineHeight: 1.5 }}>
-                <strong>Read-only profile</strong> — All profile details (Driver ID, NIC, License, Contact information) are managed by an administrator through the User Management system.
+                <strong>Controlled access</strong> — Your system role, identity, and access permissions can only be modified by a System Administrator.
               </p>
             </div>
           </div>

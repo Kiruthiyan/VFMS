@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, Wrench, Loader2, X, Save } from 'lucide-react';
-import { DriverPortalShell } from '@/components/driver-portal/DriverPortalShell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { getMyServiceRequests, submitServiceRequest, type ServiceRequestItem, type ServiceRequestPayload } from '@/lib/api/driver-portal';
 import { apiFetch } from '@/lib/api';
 
@@ -57,7 +57,7 @@ export default function DriverServiceRequestsPage() {
   };
 
   return (
-    <DriverPortalShell title="Service Requests" subtitle="Report vehicle faults and request maintenance">
+    <DashboardShell title="Service Requests" description="Report vehicle faults and request maintenance">
       <div style={{ maxWidth:'56rem' }}>
         <div style={{ display:'flex',justifyContent:'flex-end',marginBottom:'1rem' }}>
           <button onClick={() => { setForm(EMPTY_FORM); setShowForm(true); }} style={{ display:'flex',alignItems:'center',gap:'0.375rem',padding:'0.5rem 1rem',borderRadius:'0.5rem',border:'none',background:'hsl(42 100% 50%)',color:'#000',fontWeight:600,fontSize:'0.8125rem',cursor:'pointer' }}>
@@ -153,6 +153,6 @@ export default function DriverServiceRequestsPage() {
         </div>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DriverPortalShell>
+    </DashboardShell>
   );
 }

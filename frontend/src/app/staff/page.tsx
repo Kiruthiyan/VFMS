@@ -3,7 +3,9 @@ import { useState, useEffect, type ChangeEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { apiFetch } from '@/lib/api';
-import { Staff, PageResponse } from '@/types';
+import { Staff } from '@/types';
+import { getStaffList, UserSummaryResponse } from '@/lib/api/staff-profile';
+import { useAuthStore } from '@/store/auth-store';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -15,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Eye, Pencil, Plus, Search, Trash2, Users2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 
 const hasMinDigits = (value: string, minDigits = 10) => value.replace(/\D/g, '').length >= minDigits;
 
@@ -31,12 +34,15 @@ type StaffFormData = {
 };
 
 export default function StaffPage() {
-  const [staff, setStaff] = useState<Staff[]>([]);
+  const currentUser = useAuthStore((state) => state.user);
+  const isApprover = currentUser?.role === 'APPROVER';
+
+  const [staff, setStaff] = useState<UserSummaryResponse[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [activeStaff, setActiveStaff] = useState<Staff | null>(null);
+  const [activeStaff, setActiveStaff] = useState<UserSummaryResponse | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
   const {
@@ -60,43 +66,35 @@ export default function StaffPage() {
 
   const requiredFields: Array<keyof StaffFormData> = ['employeeId', 'firstName', 'lastName', 'role'];
 
-  const fetchStaff = () => apiFetch<PageResponse<Staff>>('/api/staff?size=50').then(d => setStaff(d.content)).catch(e => toast.error(e.message));
+  const fetchStaff = () => getStaffList().then(d => setStaff(d)).catch(e => toast.error(e.message));
   useEffect(() => { fetchStaff(); }, []);
 
-  const fetchStaffById = async (id: number): Promise<Staff | null> => {
-    setLoadingDetails(true);
-    try {
-      const detail = await apiFetch<Staff>(`/api/staff/${id}`);
+  const fetchStaffById = async (id: string): Promise<UserSummaryResponse | null> => {
+    return staff.find(s => s.id === id) || null;
+  };
+
+  const handleOpenView = async (id: string) => {
+    setViewOpen(true);
+    const detail = await fetchStaffById(id);
+    if (detail) {
       setActiveStaff(detail);
-      return detail;
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to load staff details');
-      return null;
-    } finally {
-      setLoadingDetails(false);
     }
   };
 
-  const handleOpenView = async (id: number) => {
-    setViewOpen(true);
-    await fetchStaffById(id);
-  };
-
-  const handleOpenEdit = async (id: number) => {
+  const handleOpenEdit = async (id: string) => {
     setEditOpen(true);
     const detail = await fetchStaffById(id);
     if (!detail) return;
 
     resetEdit({
       employeeId: detail.employeeId,
-      firstName: detail.firstName,
-      lastName: detail.lastName,
+      firstName: detail.fullName?.split(' ')[0] || '',
+      lastName: detail.fullName?.split(' ').slice(1).join(' ') || '',
       email: detail.email || '',
       phone: detail.phone || '',
       department: detail.department || '',
       designation: detail.designation || '',
-      role: detail.role,
-      dateOfJoining: detail.dateOfJoining || '',
+      role: detail.role as any,
     });
   };
 
@@ -170,7 +168,7 @@ export default function StaffPage() {
     }
   };
 
-  const filtered = staff.filter(s => `${s.firstName} ${s.lastName} ${s.employeeId}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = staff.filter(s => `${s.fullName} ${s.employeeId}`.toLowerCase().includes(search.toLowerCase()));
   const createFormErrorMessages = Object.values(errors)
     .map((error) => error?.message)
     .filter((message): message is string => Boolean(message));
@@ -178,7 +176,8 @@ export default function StaffPage() {
     .map((error) => error?.message)
     .filter((message): message is string => Boolean(message));
   return (
-    <div className="p-6 space-y-4 animate-fade-in">
+    <DashboardShell>
+    <div className="space-y-4 animate-fade-in">
       <PageHeader icon={<Users2 className="w-5 h-5" />} title="Staff" subtitle="Manage staff members"
         action={
           <div className="flex items-center gap-2">
@@ -186,18 +185,20 @@ export default function StaffPage() {
               Back
             </Link>
 
-            <Link href="/service-requests">
-              <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
-                Service Requests
-              </Button>
-            </Link>
+            {!isApprover && (
+              <>
+                <Link href="/service-requests">
+                  <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
+                    Service Requests
+                  </Button>
+                </Link>
 
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <button className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
-                  <Plus className="w-4 h-4" />Add Staff
-                </button>
-              </DialogTrigger>
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <button className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md font-medium" style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
+                      <Plus className="w-4 h-4" />Add Staff
+                    </button>
+                  </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-black dark:text-white">New Staff Member</DialogTitle>
@@ -259,6 +260,8 @@ export default function StaffPage() {
                 </form>
               </DialogContent>
             </Dialog>
+            </>
+            )}
           </div>
         }
       />
@@ -287,7 +290,7 @@ export default function StaffPage() {
                   onMouseLeave={(event) => (event.currentTarget.style.backgroundColor = '')}
                 >
                   <TableCell className="font-mono text-xs text-muted-foreground">{s.employeeId}</TableCell>
-                  <TableCell className="font-medium text-sm text-foreground">{s.firstName} {s.lastName}</TableCell>
+                  <TableCell className="font-medium text-sm text-foreground">{s.fullName}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{s.department || '—'}</TableCell>
                   <TableCell><StatusBadge status={s.role} /></TableCell>
                   <TableCell><StatusBadge status={s.status} /></TableCell>
@@ -297,14 +300,18 @@ export default function StaffPage() {
                         <Eye className="w-3.5 h-3.5" />
                         View
                       </Button>
-                      <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs transition-all hover:shadow-sm" onClick={() => handleOpenEdit(s.id)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                        Edit
-                      </Button>
-                      <Button type="button" variant="destructive" size="sm" className="h-8 px-2 text-xs transition-all hover:shadow-sm" disabled={s.status === 'INACTIVE' || removingId === s.id} onClick={() => handleDeactivate(s)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Remove
-                      </Button>
+                      {!isApprover && (
+                        <>
+                          <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs transition-all hover:shadow-sm" onClick={() => handleOpenEdit(s.id)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                            Edit
+                          </Button>
+                          <Button type="button" variant="destructive" size="sm" className="h-8 px-2 text-xs transition-all hover:shadow-sm" disabled={s.status === 'INACTIVE' || removingId === (s.id as unknown as number)} onClick={() => handleDeactivate(s as unknown as Staff)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Remove
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -325,13 +332,11 @@ export default function StaffPage() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <DetailRow label="Employee ID" value={activeStaff.employeeId} />
               <DetailRow label="Role" value={activeStaff.role.replace('_', ' ')} />
-              <DetailRow label="First Name" value={activeStaff.firstName} />
-              <DetailRow label="Last Name" value={activeStaff.lastName} />
+              <DetailRow label="Name" value={activeStaff.fullName} />
               <DetailRow label="Email" value={activeStaff.email || '—'} />
               <DetailRow label="Phone" value={activeStaff.phone || '—'} />
               <DetailRow label="Department" value={activeStaff.department || '—'} />
               <DetailRow label="Designation" value={activeStaff.designation || '—'} />
-              <DetailRow label="Date of Joining" value={activeStaff.dateOfJoining || '—'} />
               <DetailRow label="Status" value={activeStaff.status} />
               <DetailRow label="Created At" value={new Date(activeStaff.createdAt).toLocaleString()} />
             </div>
@@ -379,6 +384,7 @@ export default function StaffPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </DashboardShell>
   );
 }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, CalendarDays, Loader2, X, Save, Trash2 } from 'lucide-react';
-import { DriverPortalShell } from '@/components/driver-portal/DriverPortalShell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { getErrorMessage } from '@/lib/api';
 import { getMyLeaveRequests, submitLeaveRequest, deleteLeaveRequest, type LeaveRequestItem, type LeaveRequestPayload } from '@/lib/api/driver-portal';
 
@@ -51,7 +51,7 @@ export default function DriverLeaveRequestsPage() {
   };
 
   return (
-    <DriverPortalShell title="Leave Requests" subtitle="Request and track your leave applications">
+    <DashboardShell title="Leave Requests" description="Request and track your leave applications">
       <div style={{ maxWidth:'56rem' }}>
         <div style={{ display:'flex',justifyContent:'flex-end',marginBottom:'1rem' }}>
           <button onClick={() => { setForm(EMPTY_FORM); setRequestError(''); setShowForm(true); }} style={{ display:'flex',alignItems:'center',gap:'0.375rem',padding:'0.5rem 1rem',borderRadius:'0.5rem',border:'none',background:'hsl(42 100% 50%)',color:'#000',fontWeight:600,fontSize:'0.8125rem',cursor:'pointer' }}>
@@ -154,6 +154,6 @@ export default function DriverLeaveRequestsPage() {
         </div>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DriverPortalShell>
+    </DashboardShell>
   );
 }

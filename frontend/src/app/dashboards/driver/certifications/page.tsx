@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, Award, Loader2, X, Save } from 'lucide-react';
-import { DriverPortalShell } from '@/components/driver-portal/DriverPortalShell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { getMyCertifications, addMyCertification, type CertificationItem, type CertificationPayload } from '@/lib/api/driver-portal';
 
 const CERT_TYPES = ['DEFENSIVE_DRIVING', 'FIRST_AID', 'HAZMAT', 'PASSENGER_SAFETY', 'VEHICLE_INSPECTION', 'OTHER'];
@@ -30,7 +30,7 @@ export default function DriverCertificationsPage() {
   };
 
   return (
-    <DriverPortalShell title="My Certifications" subtitle="View and manage your training certifications">
+    <DashboardShell title="My Certifications" description="View and manage your training certifications">
       <div style={{ maxWidth: '56rem' }}>
         <div style={{ display:'flex',justifyContent:'flex-end',marginBottom:'1rem' }}>
           <button onClick={() => { setForm(EMPTY_FORM); setShowForm(true); }} style={{ display:'flex',alignItems:'center',gap:'0.375rem',padding:'0.5rem 1rem',borderRadius:'0.5rem',border:'none',background:'hsl(42 100% 50%)',color:'#000',fontWeight:600,fontSize:'0.8125rem',cursor:'pointer' }}>
@@ -98,6 +98,6 @@ export default function DriverCertificationsPage() {
         </div>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DriverPortalShell>
+    </DashboardShell>
   );
 }
