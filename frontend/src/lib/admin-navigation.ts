@@ -15,6 +15,7 @@ import {
   Car,
   Wrench,
   Store,
+  CheckSquare,
 } from "lucide-react";
 
 export interface AdminNavItem {
@@ -99,6 +100,13 @@ export const adminNavigationSections: AdminNavSection[] = [
         icon: FileText,
         exact: false,
         description: "Manage leased vehicles and contracts",
+      },
+      {
+        href: "/trips",
+        label: "Trip Requests",
+        icon: CheckSquare,
+        exact: false,
+        description: "Manage, review, and approve trip requests",
       },
       {
         href: "/dashboards/fleet/vendors",

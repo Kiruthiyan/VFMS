@@ -10,6 +10,7 @@ import {
     Clock, CheckCircle, XCircle, AlertCircle
 } from "lucide-react";
 import api from "@/lib/api";
+import { useRole } from "@/lib/roleContext";
 
 interface Trip {
     id: string;
@@ -50,19 +51,21 @@ const formatDate = (dateStr: string) =>
 
 export default function RequesterTripsPage() {
     const router = useRouter();
-    const requesterId = "00000000-0000-0000-0000-000000000001";
+    const { currentUser } = useRole();
 
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState("ALL");
 
     useEffect(() => {
-        fetchTrips();
-    }, []);
+        if (currentUser?.id && currentUser.id !== "anonymous") {
+            fetchTrips();
+        }
+    }, [currentUser]);
 
     const fetchTrips = async () => {
         try {
-            const res = await api.get(`/trips/requester/${requesterId}/history`);
+            const res = await api.get(`/trips/requester/${currentUser.id}/history`);
             setTrips(res.data);
         } catch (err) {
             console.error("Failed to fetch trips", err);

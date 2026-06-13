@@ -1,0 +1,100 @@
+/**
+ * Professional Frontend Folder Reorganization
+ * 
+ * BEFORE:
+ * ├── app/
+ * │   ├── admin/fuel/
+ * │   │   ├── page.tsx
+ * │   │   ├── add/page.tsx
+ * │   │   ├── [id]/page.tsx
+ * │   │   ├── flagged/page.tsx
+ * │   │   └── alerts/page.tsx
+ * │   └── driver/fuel/
+ * │       ├── add/page.tsx
+ * │       ├── history/page.tsx
+ * │       └── [id]/page.tsx
+ * 
+ * AFTER (NEW PROFESSIONAL STRUCTURE):
+ * ├── app/
+ * │   └── admin/
+ * │       ├── fuel/
+ * │       │   ├── page.tsx                    (Dashboard)
+ * │       │   ├── layout.tsx
+ * │       │   ├── error.tsx                   (Error boundary)
+ * │       │   ├── (records)/                  (Route group: detail views)
+ * │       │   │   ├── layout.tsx
+ * │       │   │   ├── [id]/
+ * │       │   │   │   ├── page.tsx           (View record)
+ * │       │   │   │   ├── edit/
+ * │       │   │   │   │   └── page.tsx       (Edit record)
+ * │       │   │   │   └── layout.tsx
+ * │       │   │   └── create/
+ * │       │   │       └── page.tsx           (Create new)
+ * │       │   └── (reports)/                 (Route group: analytics)
+ * │       │       ├── flagged/page.tsx
+ * │       │       ├── alerts/page.tsx
+ * │       │       └── analytics/page.tsx
+ * │       └── [other modules...]
+ * 
+ * COMPONENTS (Feature + Role-based):
+ * ├── components/
+ * │   ├── fuel/
+ * │   │   ├── admin/                         (Admin-only components)
+ * │   │   │   ├── FuelAdminDashboard.tsx
+ * │   │   │   ├── FuelRecordsTable.tsx       (Moved from shared)
+ * │   │   │   ├── FuelFlagManager.tsx
+ * │   │   │   ├── FuelDetailsPanel.tsx
+ * │   │   │   └── FuelAnalyticsCards.tsx
+ * │   │   ├── shared/                        (Shared components)
+ * │   │   │   ├── FuelEntryForm.tsx          (Can be used by both)
+ * │   │   │   ├── FuelReceiptUploader.tsx
+ * │   │   │   └── FuelEmptyState.tsx
+ * │   │   └── (deprecated)/                  (Keep old for migration)
+ * │   │       └── [old files to migrate...]
+ * │   └── [other components...]
+ * 
+ * API LAYER (Organized by concern):
+ * ├── lib/
+ * │   ├── api/
+ * │   │   ├── fuel.ts                        (All fuel APIs - versioned)
+ * │   │   ├── admin/                         (Optional: role-specific)
+ * │   │   │   └── fuel-admin.ts              (Future: admin-specific queries)
+ * │   │   └── [other modules...]
+ * │   └── [other utilities...]
+ * 
+ * DRIVER ROUTES:
+ * driver/fuel/* - REMOVED (Fuel management is admin-only)
+ * No driver can access fuel management features
+ */
+
+// THIS FILE IS A STRUCTURE GUIDE - DELETE IT AFTER MIGRATION
+// Run the following to reorganize:
+
+// 1. CREATE NEW FOLDER STRUCTURE:
+// mkdir -p app/admin/fuel/\(records\)/\[id\]/edit
+// mkdir -p app/admin/fuel/\(records\)/create
+// mkdir -p app/admin/fuel/\(reports\)
+// mkdir -p components/fuel/admin
+// mkdir -p components/fuel/shared
+// mkdir -p components/fuel/deprecated
+
+// 2. MOVE FILES:
+// Endpoints to move:
+// - app/admin/fuel/page.tsx → app/admin/fuel/page.tsx (keep)
+// - app/admin/fuel/add/page.tsx → app/admin/fuel/(records)/create/page.tsx
+// - app/admin/fuel/[id]/page.tsx → app/admin/fuel/(records)/[id]/page.tsx
+// - app/admin/fuel/flagged/page.tsx → app/admin/fuel/(reports)/flagged/page.tsx
+// - app/admin/fuel/alerts/page.tsx → app/admin/fuel/(reports)/alerts/page.tsx
+
+// Components to move:
+// - fuel-records-table → components/fuel/admin/
+// - fuel-entry-form → components/fuel/shared/
+// - fuel-filter-bar → components/fuel/admin/
+// - fuel-summary-cards → components/fuel/admin/
+// - fuel-flag-badge → components/fuel/admin/
+
+// 3. DELETE (admin-only now):
+// - app/driver/fuel/ (entire folder - drivers can't access fuel management)
+
+// 4. UPDATE IMPORTS:
+// Update all import paths in pages and components to match new structure

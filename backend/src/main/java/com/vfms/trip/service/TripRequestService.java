@@ -52,6 +52,7 @@ public class TripRequestService {
     }
 
     // Using native SQL queries here to efficiently fetch lightweight DTOs directly from cross-domain tables
+    @SuppressWarnings("unchecked")
     public List<VehicleOptionDTO> getAvailableVehicles() {
         List<Object[]> rows = entityManager.createNativeQuery(
                 "SELECT id, brand, model, plate_number FROM vehicles WHERE status = 'AVAILABLE'"
