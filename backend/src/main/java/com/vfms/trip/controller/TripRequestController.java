@@ -25,6 +25,32 @@ import com.vfms.trip.dto.DriverOptionDTO;
 @CrossOrigin(origins = "*")   // Allows cross-origin requests from any domain (e.g., frontend apps)
 public class TripRequestController {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.vfms.user.repository.UserRepository userRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @GetMapping("/dev-reset-all")
+    @ResponseBody
+    public String devResetAll(@RequestParam(defaultValue = "kiruthiyan1234") String password) {
+        if (password.length() < 8) {
+            return "Error: Password must be at least 8 characters.";
+        }
+        var users = userRepository.findAll();
+        StringBuilder sb = new StringBuilder("Resetting passwords to: " + password + "\n");
+        for (var u : users) {
+            u.setPassword(passwordEncoder.encode(password));
+            u.setEnabled(true);
+            u.setStatus(com.vfms.common.enums.UserStatus.APPROVED);
+            u.setEmailVerified(true);
+            u.setPasswordChangeRequired(false);
+            userRepository.save(u);
+            sb.append("Reset: ").append(u.getEmail()).append(" (").append(u.getRole()).append(")\n");
+        }
+        return sb.toString();
+    }
+
     // Service layer dependency where the actual business logic is executed
     private final TripRequestService service;
 

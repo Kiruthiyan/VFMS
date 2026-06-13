@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, MapPin, Users, ArrowLeft, Loader2, FileText, AlertTriangle } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/roleContext";
-import RoleSwitcher from "@/components/RoleSwitcher";
 
 const MAX_PASSENGERS = 54;
 const MIN_PASSENGERS = 1;
@@ -134,8 +133,6 @@ export default function CreateTripPage() {
     return (
         <div className="min-h-screen bg-slate-50 p-6">
             <div className="max-w-2xl mx-auto space-y-4">
-
-                <RoleSwitcher />
 
                 <button
                     onClick={() => router.push("/trips")}

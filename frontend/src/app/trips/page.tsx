@@ -14,7 +14,6 @@ import {
 import { MoreHorizontal, Plus, MapPin, Calendar, Loader2, X, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/roleContext";
-import RoleSwitcher from "@/components/RoleSwitcher";
 import api from "@/lib/api";
 
 interface Trip {
@@ -73,6 +72,7 @@ export default function TripsPage() {
             } else if (currentUser.role === "DRIVER") {
                 response = await api.get(`/trips/driver/${currentUser.id}`);
             } else {
+                // ADMIN and APPROVER see all trips
                 response = await api.get("/trips");
             }
             setTrips(response.data);
@@ -110,7 +110,7 @@ export default function TripsPage() {
     const getPageTitle = () => {
         const titles: Record<string, string> = {
             SYSTEM_USER: "My Trip Requests",
-            STAFF:       "Trip Management",
+            APPROVER:    "Trip Management",
             DRIVER:      "My Assignments",
             ADMIN:       "All Trips",
         };
@@ -127,7 +127,7 @@ export default function TripsPage() {
                 { label: "Approved", value: trips.filter(t => t.status === "APPROVED").length, color: "text-green-600" },
                 { label: "Completed", value: trips.filter(t => t.status === "COMPLETED").length, color: "text-blue-600" },
             ],
-            STAFF: [
+            APPROVER: [
                 { label: "Needs Review", value: trips.filter(t => ["SUBMITTED", "DRIVER_REJECTED"].includes(t.status)).length, color: "text-amber-600" },
                 { label: "Approved", value: trips.filter(t => t.status === "APPROVED").length, color: "text-green-600" },
                 { label: "Ongoing", value: trips.filter(t => t.status === "ONGOING").length, color: "text-purple-600" },
@@ -153,9 +153,6 @@ export default function TripsPage() {
     return (
         <div className="min-h-screen bg-slate-50 p-6 space-y-4">
 
-            {/* Role Switcher — inline at top, no overlay */}
-            <RoleSwitcher />
-
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -169,7 +166,7 @@ export default function TripsPage() {
                         </span>
                     </p>
                 </div>
-                {currentUser.role === "SYSTEM_USER" && (
+                {["SYSTEM_USER", "ADMIN"].includes(currentUser.role) && (
                     <Button
                         className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                         onClick={() => router.push("/trips/create")}
@@ -193,8 +190,8 @@ export default function TripsPage() {
                 ))}
             </div>
 
-            {/* Filter Section — only for STAFF and ADMIN */}
-            {["STAFF", "ADMIN"].includes(currentUser.role) && (
+            {/* Filter Section — only for APPROVER and ADMIN */}
+            {["APPROVER", "ADMIN"].includes(currentUser.role) && (
             <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -363,7 +360,7 @@ export default function TripsPage() {
                                                         Edit trip
                                                     </DropdownMenuItem>
                                                 )}
-                                                {currentUser.role === "STAFF" &&
+                                                {["APPROVER", "ADMIN"].includes(currentUser.role) &&
                                                     ["SUBMITTED", "DRIVER_REJECTED"].includes(trip.status) && (
                                                     <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}/approve`)}>
                                                         Review & Assign

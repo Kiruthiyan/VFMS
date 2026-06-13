@@ -9,6 +9,7 @@ import {
     Calendar, MapPin, Users, Loader2, AlertTriangle, Car, User
 } from "lucide-react";
 import api from "@/lib/api";
+import { useRole } from "@/lib/roleContext";
 
 interface Trip {
     id: string;
@@ -44,6 +45,7 @@ export default function ApproveTripPage() {
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;
+    const { currentUser } = useRole();
 
     const [trip, setTrip] = useState<Trip | null>(null);
     const [loading, setLoading] = useState(true);
@@ -51,13 +53,19 @@ export default function ApproveTripPage() {
     const [drivers, setDrivers] = useState<DriverOption[]>([]);
     const [actionLoading, setActionLoading] = useState("");
     const [form, setForm] = useState({
-        approverId: "00000000-0000-0000-0000-000000000002",
+        approverId: "",
         notes: "",
         assignedVehicleId: "",
         assignedDriverId: "",
     });
     const [rejectMode, setRejectMode] = useState(false);
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (currentUser?.id && currentUser.id !== "anonymous") {
+            setForm(f => ({ ...f, approverId: currentUser.id }));
+        }
+    }, [currentUser]);
 
     useEffect(() => {
         fetchTrip();

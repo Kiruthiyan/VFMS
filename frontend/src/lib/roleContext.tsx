@@ -11,7 +11,7 @@ import {
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 
-export type UserRole = "SYSTEM_USER" | "STAFF" | "DRIVER" | "ADMIN";
+export type UserRole = "SYSTEM_USER" | "APPROVER" | "DRIVER" | "ADMIN";
 
 export interface User {
   id: string;
@@ -44,31 +44,18 @@ function mapAuthUserToTripUser(
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const authUser = useAuthStore((state) => state.user);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [drivers, setDrivers] = useState<User[]>([]);
   const [driversLoading, setDriversLoading] = useState(true);
 
-  const sessionUser = useMemo(() => {
+  // currentUser is always derived from the auth store — no manual switching
+  const currentUser = useMemo<User>(() => {
     if (!authUser) {
-      return null;
+      return { id: "anonymous", name: "Guest", role: "SYSTEM_USER" as UserRole };
     }
-
-    return mapAuthUserToTripUser(
-      authUser.userId,
-      authUser.fullName,
-      authUser.role
-    );
+    return mapAuthUserToTripUser(authUser.userId, authUser.fullName, authUser.role);
   }, [authUser]);
 
-  const currentUser =
-    selectedUser ??
-    sessionUser ?? {
-      id: "anonymous",
-      name: "Guest",
-      role: "SYSTEM_USER" as UserRole,
-    };
-
-  const fixedUsers = sessionUser ? [sessionUser] : [];
+  const fixedUsers = authUser ? [currentUser] : [];
 
   useEffect(() => {
     api
@@ -93,15 +80,11 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       .finally(() => setDriversLoading(false));
   }, []);
 
-  useEffect(() => {
-    setSelectedUser(null);
-  }, [authUser?.userId]);
-
   return (
     <RoleContext.Provider
       value={{
         currentUser,
-        setCurrentUser: setSelectedUser,
+        setCurrentUser: () => {}, // no-op: role is read-only from auth store
         fixedUsers,
         drivers,
         driversLoading,

@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/roleContext";
-import RoleSwitcher from "@/components/RoleSwitcher";
 
 interface Trip {
     id: string;
@@ -125,8 +124,6 @@ export default function TripDetailPage() {
     return (
         <div className="min-h-screen bg-slate-50 p-6">
             <div className="max-w-2xl mx-auto space-y-4">
-
-                <RoleSwitcher />
 
                 <button
                     onClick={() => router.push("/trips")}
@@ -283,7 +280,7 @@ export default function TripDetailPage() {
                         <div className="border-t border-slate-100" />
 
                         {/* Contextual status info for staff/admin on non-actionable trips */}
-                        {currentUser.role === "STAFF" && trip.status === "NEW" && (
+                        {["APPROVER", "ADMIN"].includes(currentUser.role) && trip.status === "NEW" && (
                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                                 <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                                 <div>
@@ -294,7 +291,7 @@ export default function TripDetailPage() {
                                 </div>
                             </div>
                         )}
-                        {currentUser.role === "STAFF" && trip.status === "APPROVED" && (
+                        {["APPROVER", "ADMIN"].includes(currentUser.role) && trip.status === "APPROVED" && (
                             <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 flex items-start gap-3">
                                 <CheckCircle className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
                                 <div>
@@ -341,7 +338,7 @@ export default function TripDetailPage() {
                             )}
 
                             {/* Staff: review & assign (also for driver-rejected trips) */}
-                            {currentUser.role === "STAFF" &&
+                            {["APPROVER", "ADMIN"].includes(currentUser.role) &&
                                 ["SUBMITTED", "DRIVER_REJECTED"].includes(trip.status) && (
                                 <Button
                                     onClick={() => router.push(`/trips/${id}/approve`)}

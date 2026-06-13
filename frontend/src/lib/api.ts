@@ -134,6 +134,10 @@ async function refreshAccessToken(): Promise<string | null> {
 
 api.interceptors.request.use(
   (config) => {
+    if (config.url && !config.url.startsWith("/api") && !config.url.startsWith("http") && !config.url.startsWith("/uploads")) {
+      config.url = `/api${config.url.startsWith("/") ? "" : "/"}${config.url}`;
+    }
+
     if (isPublicAuthPath(config.url)) {
       return config;
     }
