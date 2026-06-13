@@ -12,7 +12,12 @@ import {
   Users, 
   Briefcase, 
   Calendar, 
-  CheckSquare 
+  CheckSquare,
+  UserCircle,
+  CreditCard,
+  Award,
+  AlertTriangle,
+  Store,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -167,18 +172,26 @@ function getNavSectionsByRole(role?: string) {
 
   if (role === 'DRIVER') {
     sections.push({
+      title: "My Profile",
+      items: [
+        { label: 'Profile', href: '/dashboards/driver/profile', icon: UserCircle },
+        { label: 'Licenses', href: '/dashboards/driver/licenses', icon: CreditCard },
+        { label: 'Certifications', href: '/dashboards/driver/certifications', icon: Award },
+        { label: 'Documents', href: '/dashboards/driver/documents', icon: FileText },
+        { label: 'Infractions', href: '/dashboards/driver/infractions', icon: AlertTriangle },
+      ]
+    });
+    sections.push({
       title: "Trips & Fleet",
       items: [
-        { label: 'My Trips', href: '/trips/driver', icon: Briefcase },
-        { label: 'Trip Calendar', href: '/trips/calendar', icon: Calendar },
-        { label: 'My Vehicle', href: '/drivers/assignment-readiness', icon: Car },
+        { label: 'My Trips', href: '/dashboards/driver/trips', icon: Briefcase },
       ]
     });
     sections.push({
       title: "Self Service",
       items: [
-        { label: 'Leave Requests', href: '/drivers/leave-requests', icon: Calendar },
-        { label: 'Maintenance', href: '/dashboards/fleet/maintenance', icon: Wrench },
+        { label: 'Leave Requests', href: '/dashboards/driver/leave-requests', icon: Calendar },
+        { label: 'Service Requests', href: '/dashboards/driver/service-requests', icon: Wrench },
       ]
     });
   }
@@ -194,14 +207,21 @@ function getNavSectionsByRole(role?: string) {
       items: [
         { label: 'Vehicles', href: '/dashboards/fleet/vehicles', icon: Car },
         { label: 'Drivers', href: '/drivers', icon: Users },
+        { label: 'Staff', href: '/staff', icon: Users },
         { label: 'Maintenance', href: '/dashboards/fleet/maintenance', icon: Wrench },
         { label: 'Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
-        { label: 'Vendors', href: '/dashboards/fleet/vendors', icon: Users },
+        { label: 'Vendors', href: '/dashboards/fleet/vendors', icon: Store },
       ]
     });
   }
 
   if (role === 'SYSTEM_USER' || role === 'STAFF') {
+    sections.push({
+      title: "My Profile",
+      items: [
+        { label: 'Profile', href: '/dashboards/staff/profile', icon: UserCircle },
+      ]
+    });
     sections.push({
       title: "Self Service",
       items: [

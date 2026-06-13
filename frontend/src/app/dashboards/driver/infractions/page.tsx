@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, AlertTriangle, Loader2, X, Save } from 'lucide-react';
-import { DriverPortalShell } from '@/components/driver-portal/DriverPortalShell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { getMyInfractions, submitMyInfraction, type InfractionItem, type InfractionPayload } from '@/lib/api/driver-portal';
 
 const INFRACTION_TYPES = ['TRAFFIC_VIOLATION','MINOR_ACCIDENT','MAJOR_ACCIDENT','NEAR_MISS','RECKLESS_DRIVING','OTHER'];
@@ -42,7 +42,7 @@ export default function DriverInfractionsPage() {
   };
 
   return (
-    <DriverPortalShell title="My Infractions" subtitle="View your infraction history and submit reports">
+    <DashboardShell title="My Infractions" description="View your infraction history and submit reports">
       <div style={{ maxWidth: '56rem' }}>
         <div style={{ display:'flex',justifyContent:'flex-end',marginBottom:'1rem' }}>
           <button onClick={() => { setForm(EMPTY_FORM); setShowForm(true); }} style={{ display:'flex',alignItems:'center',gap:'0.375rem',padding:'0.5rem 1rem',borderRadius:'0.5rem',border:'none',background:'hsl(42 100% 50%)',color:'#000',fontWeight:600,fontSize:'0.8125rem',cursor:'pointer' }}>
@@ -128,6 +128,6 @@ export default function DriverInfractionsPage() {
         </div>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DriverPortalShell>
+    </DashboardShell>
   );
 }

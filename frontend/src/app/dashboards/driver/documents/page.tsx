@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Upload, FileText, Loader2, Trash2, Download } from 'lucide-react';
-import { DriverPortalShell } from '@/components/driver-portal/DriverPortalShell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { getMyDocuments, uploadMyDocument, deleteMyDocument, type DocumentItem } from '@/lib/api/driver-portal';
 import { resolveBackendAssetUrl } from '@/lib/api';
 
@@ -50,7 +50,7 @@ export default function DriverDocumentsPage() {
   };
 
   return (
-    <DriverPortalShell title="My Documents" subtitle="Upload and manage your personal documents">
+    <DashboardShell title="My Documents" description="Upload and manage your personal documents">
       <div style={{ maxWidth: '56rem' }}>
         {/* Upload bar */}
         <div style={{ borderRadius:'1rem',border:'1px solid hsl(var(--border))',background:'hsl(var(--card))',padding:'1.25rem',marginBottom:'1.25rem' }}>
@@ -112,6 +112,6 @@ export default function DriverDocumentsPage() {
         )}
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DriverPortalShell>
+    </DashboardShell>
   );
 }

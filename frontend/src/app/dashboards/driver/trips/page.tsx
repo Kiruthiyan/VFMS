@@ -1,11 +1,11 @@
 'use client';
 
 import { MapPin } from 'lucide-react';
-import { DriverPortalShell } from '@/components/driver-portal/DriverPortalShell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 
 export default function DriverTripsPage() {
   return (
-    <DriverPortalShell title="My Trips" subtitle="View your assigned trip history">
+    <DashboardShell title="My Trips" description="View your assigned trip history">
       <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',textAlign:'center',color:'hsl(var(--muted-foreground))' }}>
         <div style={{ width:'4rem',height:'4rem',borderRadius:'1rem',background:'hsl(var(--muted))',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'1.25rem' }}>
           <MapPin style={{ width:'2rem',height:'2rem',opacity:0.4 }}/>
@@ -15,6 +15,6 @@ export default function DriverTripsPage() {
           Your assigned trips will appear here once the fleet trip module is connected to the driver portal.
         </p>
       </div>
-    </DriverPortalShell>
+    </DashboardShell>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2, CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import { DriverPortalShell } from '@/components/driver-portal/DriverPortalShell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { getMyProfile, getMyDocuments, type DriverProfileResponse, type DocumentItem } from '@/lib/api/driver-portal';
 import { resolveBackendAssetUrl } from '@/lib/api';
 
@@ -41,7 +41,7 @@ export default function DriverLicensesPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <DriverPortalShell title="My Licenses" subtitle="View your primary driving license details">
+    <DashboardShell title="My Licenses" description="View your primary driving license details">
       <div style={{ maxWidth: '56rem' }}>
         <div style={{ borderRadius:'1rem',border:'1px solid hsl(var(--border))',background:'hsl(var(--card))',overflow:'hidden' }}>
           {loading ? (
@@ -97,6 +97,6 @@ export default function DriverLicensesPage() {
         )}
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DriverPortalShell>
+    </DashboardShell>
   );
 }
