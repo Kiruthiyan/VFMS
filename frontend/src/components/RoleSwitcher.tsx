@@ -18,8 +18,8 @@ const ROLE_CONFIG: Record<string, {
         dot:      "bg-blue-500",
         dropdown: "text-blue-700",
     },
-    STAFF: {
-        label:    "Staff",
+    APPROVER: {
+        label:    "Approver",
         active:   "bg-amber-600 text-white border-amber-600",
         idle:     "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100",
         dot:      "bg-amber-500",
@@ -41,7 +41,7 @@ const ROLE_CONFIG: Record<string, {
     },
 };
 
-const ROLE_ORDER = ["SYSTEM_USER", "STAFF", "DRIVER", "ADMIN"];
+const ROLE_ORDER = ["SYSTEM_USER", "APPROVER", "DRIVER", "ADMIN"];
 
 interface RoleGroupProps {
     role: string;
@@ -141,7 +141,7 @@ export default function RoleSwitcher() {
 
     const groupedUsers: Record<string, User[]> = {
         SYSTEM_USER: fixedUsers.filter(u => u.role === "SYSTEM_USER"),
-        STAFF:       fixedUsers.filter(u => u.role === "STAFF"),
+        APPROVER:    fixedUsers.filter(u => u.role === "APPROVER"),
         DRIVER:      drivers,
         ADMIN:       fixedUsers.filter(u => u.role === "ADMIN"),
     };

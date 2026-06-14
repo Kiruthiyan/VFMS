@@ -165,7 +165,7 @@ export default function UtilizationPage() {
                         <CardDescription>Ratio of approved requests vs rejections</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[300px] flex flex-col justify-center items-center">
-                        <ResponsiveContainer width="100%" height="200px">
+                        <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
                                 <Pie
                                     data={statusData}

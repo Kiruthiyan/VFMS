@@ -32,8 +32,10 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "framer-motion": "^12.23.26",
+    "hasown": "^2.0.4",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.7",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.556.0",
     "next": "16.0.7",
     "react": "19.2.0",
@@ -52,6 +54,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

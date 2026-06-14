@@ -289,9 +289,9 @@ function SidebarInner() {
               FleetPro User
             </p>
             <span
-              className={`inline-flex text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${roleColors[role]}`}
+              className={`inline-flex text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${role ? roleColors[role] : ""}`}
             >
-              {roleLabels[role]}
+              {role ? roleLabels[role] : ""}
             </span>
           </div>
         </div>

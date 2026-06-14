@@ -125,7 +125,7 @@ export default function AvailabilityAnalytics() {
                         <CardDescription>Current status breakdown of all drivers</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[350px] flex flex-col items-center justify-center">
-                        <ResponsiveContainer width="100%" height="250px">
+                        <ResponsiveContainer width="100%" height={250}>
                             <PieChart>
                                 <Pie
                                     data={statusData}

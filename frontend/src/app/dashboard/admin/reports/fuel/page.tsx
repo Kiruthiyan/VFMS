@@ -232,7 +232,7 @@ export default function FuelAnalysisPage() {
                         <CardDescription>Distribution of fuel stations used</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[350px] flex flex-col justify-center items-center">
-                        <ResponsiveContainer width="100%" height="250px">
+                        <ResponsiveContainer width="100%" height={250}>
                             <PieChart>
                                 <Pie
                                     data={pieData}

@@ -1,11 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useRole, Role } from "@/lib/role-context";
+import { useRole } from "@/lib/role-context";
 import { Bell, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import type { UserRole } from "@/lib/auth";
+import { useAuthStore } from "@/store/auth-store";
+import { setAuthCookies } from "@/lib/rbac";
 
-const ROLES: { value: Role; label: string }[] = [
+const ROLES: { value: UserRole; label: string }[] = [
   { value: "ADMIN", label: "Administrator" },
   { value: "SYSTEM_USER", label: "System User" },
   { value: "APPROVER", label: "Approver" },
@@ -39,10 +42,21 @@ function getBreadcrumb(pathname: string): string {
 
 export function Topbar() {
   const pathname = usePathname();
-  const { role, setRole } = useRole();
+  const { role } = useRole();
   const [showRolePicker, setShowRolePicker] = useState(false);
 
   const breadcrumb = getBreadcrumb(pathname);
+  const currentRole: UserRole = role || "SYSTEM_USER";
+
+  const setRole = (newRole: UserRole) => {
+    const auth = useAuthStore.getState();
+    if (auth.user) {
+      useAuthStore.setState({
+        user: { ...auth.user, role: newRole }
+      });
+      setAuthCookies(auth.accessToken || "", newRole);
+    }
+  };
 
   return (
     <header className="fixed top-0 left-64 right-0 h-14 bg-white border-b border-slate-200 flex items-center px-6 z-30 shadow-sm">
@@ -70,9 +84,9 @@ export function Topbar() {
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
           >
             <span
-              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadgeColors[role]}`}
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadgeColors[currentRole]}`}
             >
-              {ROLES.find((r) => r.value === role)?.label}
+              {ROLES.find((r) => r.value === currentRole)?.label}
             </span>
             <span className="text-[10px] text-slate-400 hidden sm:block">
               Demo Role
@@ -81,8 +95,8 @@ export function Topbar() {
           </button>
 
           {showRolePicker && (
-            <div className="absolute right-0 top-10 w-44 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 pt-2 pb-1">
+            <div className="absolute right-0 top-10 w-44 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden text-slate-800">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 pt-2 pb-1">
                 Switch Role
               </p>
               {ROLES.map((r) => (
@@ -92,14 +106,13 @@ export function Topbar() {
                     setRole(r.value);
                     setShowRolePicker(false);
                   }}
-                  className={`w-full text-left text-sm px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${
-                    role === r.value
+                  className={`w-full text-left text-sm px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${currentRole === r.value
                       ? "text-blue-700 font-semibold bg-blue-50"
                       : "text-slate-700"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`h-2 w-2 rounded-full ${role === r.value ? "bg-blue-500" : "bg-slate-200"}`}
+                    className={`h-2 w-2 rounded-full ${currentRole === r.value ? "bg-blue-500" : "bg-slate-200"}`}
                   />
                   {r.label}
                 </button>
@@ -110,11 +123,11 @@ export function Topbar() {
 
         {/* Avatar */}
         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-xs shadow">
-          {role === "ADMIN"
+          {currentRole === "ADMIN"
             ? "AD"
-            : role === "SYSTEM_USER"
+            : currentRole === "SYSTEM_USER"
               ? "SU"
-              : role === "APPROVER"
+              : currentRole === "APPROVER"
                 ? "AP"
                 : "DR"}
         </div>
