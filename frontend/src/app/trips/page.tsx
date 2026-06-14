@@ -328,7 +328,10 @@ export default function TripsPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-2 text-sm text-slate-700">
                                             <MapPin className="h-3 w-3 text-blue-950" />
-                                            {trip.destination}
+                                            {(() => {
+                                                const parts = trip.destination.split(" -> ");
+                                                return parts[parts.length - 1] || trip.destination;
+                                            })()}
                                         </div>
                                     </TableCell>
                                     <TableCell>
