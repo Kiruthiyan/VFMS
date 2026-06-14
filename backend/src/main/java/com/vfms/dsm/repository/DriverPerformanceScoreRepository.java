@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface DriverPerformanceScoreRepository extends JpaRepository<DriverPerformanceScore, Long> {
 
-    List<DriverPerformanceScore> findByDriverIdOrderByPeriodYearDescPeriodMonthDesc(UUID driverId);
+    List<DriverPerformanceScore> findByUserIdOrderByPeriodYearDescPeriodMonthDesc(UUID driverId);
 
-    Optional<DriverPerformanceScore> findByDriverIdAndPeriodYearAndPeriodMonth(UUID driverId, int year, int month);
+    Optional<DriverPerformanceScore> findByUserIdAndPeriodYearAndPeriodMonth(UUID driverId, int year, int month);
 }

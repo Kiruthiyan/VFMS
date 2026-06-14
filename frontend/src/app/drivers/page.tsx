@@ -131,7 +131,7 @@ export default function DriversPage() {
   const expiringSoonCount = filtered.filter((d) => getLicenseAlertMeta(d.licenseExpiryDate).level === 'EXPIRING_SOON').length;
 
   return (
-    <div className="p-6 animate-fade-in">
+    <div className="p-6 md:p-8 space-y-6 animate-fade-in">
       <PageHeader
         icon={<Users className="w-5 h-5" />}
         title="Drivers"
@@ -148,34 +148,34 @@ export default function DriversPage() {
         }
       />
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card>
-          <CardContent className="py-3">
-            <p className="text-xs text-muted-foreground">System Status</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">License Monitoring</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
+            <p className="text-sm font-medium text-muted-foreground">System Status</p>
+            <p className="mt-2 text-xl font-bold tracking-tight text-foreground">License Monitoring</p>
           </CardContent>
         </Card>
-        <Card style={{ borderTopWidth: 3, borderTopStyle: 'solid', borderTopColor: 'hsl(360 79% 60%)' }}>
-          <CardContent className="py-3">
-            <p className="text-xs text-muted-foreground">Expired Licenses</p>
-            <p className="mt-1 text-lg font-semibold" style={{ color: 'hsl(360 79% 36%)' }}>
+        <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(360 79% 60%)' }}>
+          <CardContent className="p-5">
+            <p className="text-sm font-medium text-muted-foreground">Expired Licenses</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(360 79% 36%)' }}>
               {expiredCount}
             </p>
           </CardContent>
         </Card>
-        <Card style={{ borderTopWidth: 3, borderTopStyle: 'solid', borderTopColor: 'hsl(36 95% 54%)' }}>
-          <CardContent className="py-3">
-            <p className="text-xs text-muted-foreground">Expiring in 30 Days</p>
-            <p className="mt-1 text-lg font-semibold" style={{ color: 'hsl(31 92% 34%)' }}>
+        <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(36 95% 54%)' }}>
+          <CardContent className="p-5">
+            <p className="text-sm font-medium text-muted-foreground">Expiring in 30 Days</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(31 92% 34%)' }}>
               {expiringSoonCount}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="relative">
+      <Card className="shadow-sm border-muted">
+        <CardHeader className="pb-4">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search by Driver ID, name, email, NIC or phone..."
@@ -204,22 +204,19 @@ export default function DriversPage() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((d) => (
-                    <TableRow
-                      key={d.id}
-                      className="group"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => router.push(`/drivers/${d.id}/overview`)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          router.push(`/drivers/${d.id}/overview`);
-                        }
-                      }}
-                      tabIndex={0}
-                      role="button"
-                      onMouseEnter={(e: MouseEvent<HTMLTableRowElement>) => (e.currentTarget.style.backgroundColor = 'hsl(42 100% 50% / 0.06)')}
-                      onMouseLeave={(e: MouseEvent<HTMLTableRowElement>) => (e.currentTarget.style.backgroundColor = '')}
-                    >
+                      <TableRow
+                        key={d.id}
+                        className="group cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => router.push(`/drivers/${d.id}/overview`)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            router.push(`/drivers/${d.id}/overview`);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                      >
                       <TableCell className="font-semibold text-sm text-foreground">
                         {d.employeeId || '—'}
                       </TableCell>
@@ -303,17 +300,17 @@ function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between mb-5">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
         <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
           style={{ backgroundColor: 'hsl(var(--primary))' }}
         >
           <span style={{ color: 'hsl(var(--primary-foreground))' }}>{icon}</span>
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+          <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
         </div>
       </div>
       {action}

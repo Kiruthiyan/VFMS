@@ -12,6 +12,8 @@ import com.vfms.trip.dto.ApprovalDTO;
 import java.time.LocalDateTime;
 import com.vfms.trip.dto.VehicleOptionDTO;
 import com.vfms.trip.dto.DriverOptionDTO;
+import com.vfms.common.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ValidationException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
@@ -28,7 +30,7 @@ public class TripRequestService {
         // Validate that the trip spans a valid, logical time window
         if (dto.getReturnTime().isBefore(dto.getDepartureTime()) ||
                 dto.getReturnTime().isEqual(dto.getDepartureTime())) {
-            throw new RuntimeException("Return time must be after departure time");
+            throw new ValidationException("Return time must be after departure time");
         }
         TripRequest trip = TripRequest.builder()
                 .requesterId(dto.getRequesterId())
@@ -104,7 +106,7 @@ public class TripRequestService {
 
     private TripRequest findById(UUID id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + id));
     }
 
     // --- Trip Lifecycle Management ---
@@ -112,11 +114,11 @@ public class TripRequestService {
     public TripRequest editTrip(UUID tripId, CreateTripRequestDTO dto) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.NEW) {
-            throw new RuntimeException("Only NEW trips can be edited");
+            throw new ValidationException("Only NEW trips can be edited");
         }
         if (dto.getReturnTime().isBefore(dto.getDepartureTime()) ||
                 dto.getReturnTime().isEqual(dto.getDepartureTime())) {
-            throw new RuntimeException("Return time must be after departure time");
+            throw new ValidationException("Return time must be after departure time");
         }
         trip.setPurpose(dto.getPurpose());
         trip.setDestination(dto.getDestination());
@@ -130,7 +132,7 @@ public class TripRequestService {
     public TripRequest submitTrip(UUID tripId) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.NEW) {
-            throw new RuntimeException("Only NEW trips can be submitted");
+            throw new ValidationException("Only NEW trips can be submitted");
         }
         trip.setStatus(TripStatus.SUBMITTED);
         return repository.save(trip);
@@ -140,7 +142,7 @@ public class TripRequestService {
         TripRequest trip = findById(tripId);
         // Allows re-approval if a previously assigned driver rejected the trip
         if (trip.getStatus() != TripStatus.SUBMITTED && trip.getStatus() != TripStatus.DRIVER_REJECTED) {
-            throw new RuntimeException("Only SUBMITTED or DRIVER_REJECTED trips can be approved");
+            throw new ValidationException("Only SUBMITTED or DRIVER_REJECTED trips can be approved");
         }
         trip.setStatus(TripStatus.APPROVED);
         trip.setApproverId(dto.getApproverId());
@@ -153,7 +155,7 @@ public class TripRequestService {
     public TripRequest rejectTrip(UUID tripId, ApprovalDTO dto) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.SUBMITTED) {
-            throw new RuntimeException("Only SUBMITTED trips can be rejected");
+            throw new ValidationException("Only SUBMITTED trips can be rejected");
         }
         trip.setStatus(TripStatus.REJECTED);
         trip.setApproverId(dto.getApproverId());
@@ -164,7 +166,7 @@ public class TripRequestService {
     public TripRequest assignDriver(UUID tripId, ApprovalDTO dto) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.APPROVED) {
-            throw new RuntimeException("Only APPROVED trips can have a driver assigned");
+            throw new ValidationException("Only APPROVED trips can have a driver assigned");
         }
         // Prevent driver double-booking
         List<TripRequest> conflicts = repository.findConflictingDriverBookings(
@@ -172,7 +174,7 @@ public class TripRequestService {
                 trip.getDepartureTime(),
                 trip.getReturnTime());
         if (!conflicts.isEmpty()) {
-            throw new RuntimeException("Driver is already assigned for this time slot");
+            throw new ValidationException("Driver is already assigned for this time slot");
         }
         trip.setAssignedDriverId(dto.getAssignedDriverId());
         return repository.save(trip);
@@ -181,7 +183,7 @@ public class TripRequestService {
     public TripRequest assignVehicle(UUID tripId, ApprovalDTO dto) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.APPROVED) {
-            throw new RuntimeException("Only APPROVED trips can have a vehicle assigned");
+            throw new ValidationException("Only APPROVED trips can have a vehicle assigned");
         }
         // Prevent vehicle double-booking
         List<TripRequest> conflicts = repository.findConflictingVehicleBookings(
@@ -189,7 +191,7 @@ public class TripRequestService {
                 trip.getDepartureTime(),
                 trip.getReturnTime());
         if (!conflicts.isEmpty()) {
-            throw new RuntimeException("Vehicle is already booked for this time slot");
+            throw new ValidationException("Vehicle is already booked for this time slot");
         }
         trip.setAssignedVehicleId(dto.getAssignedVehicleId());
         return repository.save(trip);
@@ -198,7 +200,7 @@ public class TripRequestService {
     public TripRequest driverAcceptTrip(UUID tripId) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.APPROVED) {
-            throw new RuntimeException("Only APPROVED trips can be accepted by driver");
+            throw new ValidationException("Only APPROVED trips can be accepted by driver");
         }
         trip.setStatus(TripStatus.DRIVER_CONFIRMED);
         return repository.save(trip);
@@ -207,7 +209,7 @@ public class TripRequestService {
     public TripRequest driverRejectTrip(UUID tripId, ApprovalDTO dto) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.APPROVED) {
-            throw new RuntimeException("Only APPROVED trips can be rejected by driver");
+            throw new ValidationException("Only APPROVED trips can be rejected by driver");
         }
         // Clear assignment so administrative staff can cleanly reassign a different driver/vehicle
         trip.setStatus(TripStatus.DRIVER_REJECTED);
@@ -220,7 +222,7 @@ public class TripRequestService {
     public TripRequest startTrip(UUID tripId) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.DRIVER_CONFIRMED) {
-            throw new RuntimeException("Only DRIVER_CONFIRMED trips can be started");
+            throw new ValidationException("Only DRIVER_CONFIRMED trips can be started");
         }
         trip.setStatus(TripStatus.ONGOING);
         trip.setStartTime(LocalDateTime.now());
@@ -230,7 +232,7 @@ public class TripRequestService {
     public TripRequest completeTrip(UUID tripId) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.ONGOING) {
-            throw new RuntimeException("Only ONGOING trips can be completed");
+            throw new ValidationException("Only ONGOING trips can be completed");
         }
         trip.setStatus(TripStatus.COMPLETED);
         trip.setEndTime(LocalDateTime.now());
@@ -240,8 +242,8 @@ public class TripRequestService {
     public TripRequest cancelTrip(UUID tripId, UUID cancelledBy, String reason) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() == TripStatus.COMPLETED ||
-                trip.getStatus() == TripStatus.CANCELLED) {
-            throw new RuntimeException("Cannot cancel a completed or already cancelled trip");
+            trip.getStatus() == TripStatus.CANCELLED) {
+            throw new ValidationException("Cannot cancel a completed or already cancelled trip");
         }
         trip.setStatus(TripStatus.CANCELLED);
         trip.setApprovalNotes(reason);

@@ -1,1 +1,3 @@
-export { default } from '../eligibility/page';
+export default function DeprecatedPage() {
+  return null;
+}

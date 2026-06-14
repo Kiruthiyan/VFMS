@@ -5,11 +5,11 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import {
   User, Mail, Phone, MapPin, Activity, 
-  Shield, Camera, Loader2, Badge, Briefcase, Building
+  Shield, Camera, Loader2, Badge, Briefcase, Building, Trash2
 } from 'lucide-react';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import {
-  getMyStaffProfile, updateMyStaffProfile, uploadStaffProfilePicture,
+  getMyStaffProfile, updateMyStaffProfile, uploadStaffProfilePicture, removeStaffProfilePicture,
   type StaffProfileResponse, type StaffProfileUpdateRequest
 } from '@/lib/api/staff-profile';
 import { resolveBackendAssetUrl } from '@/lib/api';
@@ -90,6 +90,21 @@ export default function StaffProfilePage() {
     }
   };
 
+  const handlePhotoRemove = async () => {
+    if (!profile?.photoUrl) return;
+    setUploadingPic(true);
+    try {
+      await removeStaffProfilePicture();
+      const updated = await getMyStaffProfile();
+      setProfile(updated);
+      toast.success('Profile picture removed');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to remove photo');
+    } finally {
+      setUploadingPic(false);
+    }
+  };
+
   const onSubmitUpdate = async (data: StaffProfileUpdateRequest) => {
     try {
       const updated = await updateMyStaffProfile(data);
@@ -144,6 +159,22 @@ export default function StaffProfilePage() {
                       <User style={{ width: '2rem', height: '2rem', color: '#fff' }} />
                     </div>
                   )}
+                  {avatarSrc && (
+                    <button
+                      onClick={handlePhotoRemove}
+                      disabled={uploadingPic}
+                      aria-label="Remove profile picture"
+                      style={{
+                        position: 'absolute', bottom: '0', left: '0',
+                        width: '1.5rem', height: '1.5rem', borderRadius: '50%',
+                        background: 'hsl(0 84% 60%)', border: '2px solid hsl(var(--background))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', zIndex: 10
+                      }}
+                    >
+                      <Trash2 style={{ width: '0.625rem', height: '0.625rem', color: '#fff' }} />
+                    </button>
+                  )}
                   {/* Upload overlay */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
@@ -154,7 +185,7 @@ export default function StaffProfilePage() {
                       width: '1.5rem', height: '1.5rem', borderRadius: '50%',
                       background: 'hsl(42 100% 50%)', border: '2px solid hsl(var(--background))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer',
+                      cursor: 'pointer', zIndex: 10
                     }}
                   >
                     {uploadingPic

@@ -33,7 +33,7 @@ public class LicenseExpiryScheduler {
         for (DriverLicense license : expiredLicenses) {
             license.setStatus(DriverLicense.LicenseStatus.EXPIRED);
             logNotification(
-                    license.getDriver().getId(),
+                    license.getUser().getId(),
                     "LICENSE_EXPIRED",
                     "License " + license.getLicenseNumber() + " has expired."
             );
@@ -44,7 +44,7 @@ public class LicenseExpiryScheduler {
             if (license.getStatus() != DriverLicense.LicenseStatus.EXPIRED) {
                 license.setStatus(DriverLicense.LicenseStatus.EXPIRING_SOON);
                 logNotification(
-                        license.getDriver().getId(),
+                        license.getUser().getId(),
                         "LICENSE_EXPIRING_SOON",
                         "License " + license.getLicenseNumber() + " expires on " + license.getExpiryDate()
                 );

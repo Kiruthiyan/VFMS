@@ -53,6 +53,13 @@ public class StaffProfileController {
         return ResponseEntity.ok(staffProfileService.getProfile(user));
     }
 
+    @DeleteMapping("/picture")
+    @PreAuthorize("hasRole('SYSTEM_USER')")
+    public ResponseEntity<Void> removeProfilePicture(@AuthenticationPrincipal User user) {
+        staffProfileService.updateProfilePicture(user, null);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/list")
     @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
     public ResponseEntity<List<UserSummaryResponse>> getStaffList() {

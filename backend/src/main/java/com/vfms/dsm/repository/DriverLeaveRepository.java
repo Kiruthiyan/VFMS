@@ -11,16 +11,16 @@ import java.util.UUID;
 
 public interface DriverLeaveRepository extends JpaRepository<DriverLeave, Long> {
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "driver")
-    List<DriverLeave> findByDriverIdOrderByCreatedAtDesc(UUID driverId);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "user")
+    List<DriverLeave> findByUserIdOrderByCreatedAtDesc(UUID driverId);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "driver")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "user")
     List<DriverLeave> findByStatusOrderByCreatedAtDesc(DriverLeave.LeaveStatus status);
 
     @Query("SELECT l FROM DriverLeave l WHERE l.status = 'APPROVED' AND l.endDate = :today")
     List<DriverLeave> findLeavesEndingToday(@Param("today") LocalDate today);
 
-    @Query("SELECT COUNT(l) FROM DriverLeave l WHERE l.driver.id = :driverId " +
+    @Query("SELECT COUNT(l) FROM DriverLeave l WHERE l.user.id = :driverId " +
            "AND l.status NOT IN :excludedStatuses " +
            "AND l.startDate <= :endDate AND l.endDate >= :startDate")
     long countOverlappingLeaves(@Param("driverId") UUID driverId, 
@@ -28,7 +28,7 @@ public interface DriverLeaveRepository extends JpaRepository<DriverLeave, Long> 
                                 @Param("endDate") LocalDate endDate,
                                 @Param("excludedStatuses") List<DriverLeave.LeaveStatus> excludedStatuses);
 
-    @Query("SELECT COUNT(l) > 0 FROM DriverLeave l WHERE l.driver.id = :driverId " +
+    @Query("SELECT COUNT(l) > 0 FROM DriverLeave l WHERE l.user.id = :driverId " +
            "AND l.status = 'APPROVED' AND l.startDate <= :date AND l.endDate >= :date")
     boolean hasApprovedLeaveOnDate(@Param("driverId") UUID driverId, @Param("date") LocalDate date);
 }

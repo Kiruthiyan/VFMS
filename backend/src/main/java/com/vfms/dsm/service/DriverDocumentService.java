@@ -1,8 +1,10 @@
 package com.vfms.dsm.service;
 
-import com.vfms.dsm.entity.Driver;
+import com.vfms.user.entity.User;
+
+
 import com.vfms.dsm.entity.DriverDocument;
-import com.vfms.dsm.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.dsm.repository.DriverDocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +35,7 @@ public class DriverDocumentService {
             throw new IllegalArgumentException("File type not allowed: " + file.getContentType());
         }
 
-        Driver driver = driverService.findById(driverId);
+        User user = driverService.findById(driverId);
         String originalFilename = file.getOriginalFilename() == null ? "document" : file.getOriginalFilename();
         String filename = UUID.randomUUID() + "_" + originalFilename;
 
@@ -44,7 +46,7 @@ public class DriverDocumentService {
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         DriverDocument doc = DriverDocument.builder()
-                .driver(driver)
+                .user(user)
                 .entityType(entityType)
                 .entityId(entityId)
                 .fileName(originalFilename)
@@ -62,13 +64,13 @@ public class DriverDocumentService {
 
     @Transactional(readOnly = true)
     public List<DriverDocument> getDocumentsByDriver(UUID driverId) {
-        return documentRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
+        return documentRepository.findByUserIdOrderByCreatedAtDesc(driverId);
     }
 
     @Transactional(readOnly = true)
     public DriverDocument getProfilePicture(UUID driverId) {
         List<DriverDocument> profiles = documentRepository
-                .findByDriverIdAndEntityTypeOrderByCreatedAtDesc(driverId, DriverDocument.DocumentEntityType.PROFILE);
+                .findByUserIdAndEntityTypeOrderByCreatedAtDesc(driverId, DriverDocument.DocumentEntityType.PROFILE);
         return profiles.isEmpty() ? null : profiles.get(0);
     }
 
@@ -81,8 +83,8 @@ public class DriverDocumentService {
         Files.deleteIfExists(filePath);
 
         documentRepository.delete(doc);
-        if (doc.getEntityType() == DriverDocument.DocumentEntityType.LICENSE && doc.getDriver() != null) {
-            readinessService.refreshForDriver(doc.getDriver().getId());
+        if (doc.getEntityType() == DriverDocument.DocumentEntityType.LICENSE && doc.getUser() != null) {
+            readinessService.refreshForDriver(doc.getUser().getId());
         }
     }
 }

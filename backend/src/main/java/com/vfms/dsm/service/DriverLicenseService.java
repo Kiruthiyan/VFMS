@@ -1,8 +1,10 @@
 package com.vfms.dsm.service;
 
+import com.vfms.user.entity.User;
+
 import com.vfms.dsm.dto.*;
 import com.vfms.dsm.entity.*;
-import com.vfms.dsm.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.dsm.repository.DriverLicenseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,9 +20,9 @@ public class DriverLicenseService {
     private final DriverReadinessService readinessService;
 
     public DriverLicenseResponse addLicense(DriverLicenseRequest request) {
-        Driver driver = driverService.findById(request.getDriverId());
+        User user = driverService.findById(request.getDriverId());
         DriverLicense license = DriverLicense.builder()
-            .driver(driver)
+            .user(user)
             .licenseNumber(request.getLicenseNumber())
             .category(request.getCategory())
             .issuingAuthority(request.getIssuingAuthority())
@@ -29,13 +31,13 @@ public class DriverLicenseService {
             .isPrimary(Boolean.TRUE.equals(request.getIsPrimary()))
             .build();
         DriverLicense saved = licenseRepository.save(license);
-        readinessService.refreshForDriver(driver.getId());
+        readinessService.refreshForDriver(user.getId());
         return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public List<DriverLicenseResponse> getLicensesByDriver(UUID driverId) {
-        return licenseRepository.findByDriver_IdOrderByCreatedAtDesc(driverId).stream().map(this::toResponse).collect(Collectors.toList());
+        return licenseRepository.findByUser_IdOrderByCreatedAtDesc(driverId).stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     public DriverLicenseResponse updateLicense(Long id, DriverLicenseRequest request) {
@@ -48,22 +50,22 @@ public class DriverLicenseService {
         license.setExpiryDate(request.getExpiryDate());
         if (request.getIsPrimary() != null) license.setIsPrimary(request.getIsPrimary());
         DriverLicense saved = licenseRepository.save(license);
-        readinessService.refreshForDriver(saved.getDriver().getId());
+        readinessService.refreshForDriver(saved.getUser().getId());
         return toResponse(saved);
     }
 
     public void deleteLicense(Long id) {
         DriverLicense license = licenseRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("License not found: " + id));
-        UUID driverId = license.getDriver().getId();
+        UUID driverId = license.getUser().getId();
         licenseRepository.delete(license);
         readinessService.refreshForDriver(driverId);
     }
 
     private DriverLicenseResponse toResponse(DriverLicense l) {
         return DriverLicenseResponse.builder()
-            .id(l.getId()).driverId(l.getDriver().getId())
-            .driverName(l.getDriver().getFirstName() + " " + l.getDriver().getLastName())
+            .id(l.getId()).driverId(l.getUser().getId())
+            .driverName(l.getUser().getFullName())
             .licenseNumber(l.getLicenseNumber()).category(l.getCategory())
             .issuingAuthority(l.getIssuingAuthority()).issueDate(l.getIssueDate())
             .expiryDate(l.getExpiryDate()).documentUrl(l.getDocumentUrl())

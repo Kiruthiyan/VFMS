@@ -1,9 +1,11 @@
 package com.vfms.dsm.service;
 
+import com.vfms.user.entity.User;
+
 import com.vfms.dsm.dto.DriverServiceRequestDto;
-import com.vfms.dsm.entity.Driver;
+
 import com.vfms.dsm.entity.DriverServiceRequest;
-import com.vfms.dsm.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.dsm.repository.DriverServiceRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,9 +23,9 @@ public class DriverServiceRequestService {
     private final DriverService driverService;
 
     public DriverServiceRequest createRequest(DriverServiceRequestDto dto) {
-        Driver driver = driverService.findById(dto.getDriverId());
+        User user = driverService.findById(dto.getDriverId());
         DriverServiceRequest request = DriverServiceRequest.builder()
-                .driver(driver)
+                .user(user)
                 .vehicleId(dto.getVehicleId())
                 .requestType(dto.getRequestType())
                 .description(dto.getDescription())
@@ -34,7 +36,7 @@ public class DriverServiceRequestService {
 
     @Transactional(readOnly = true)
     public List<DriverServiceRequest> getRequestsByDriver(UUID driverId) {
-        return requestRepository.findByDriver_IdOrderByCreatedAtDesc(driverId);
+        return requestRepository.findByUser_IdOrderByCreatedAtDesc(driverId);
     }
 
     @Transactional(readOnly = true)

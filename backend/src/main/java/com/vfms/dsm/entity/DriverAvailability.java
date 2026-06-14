@@ -1,5 +1,7 @@
 package com.vfms.dsm.entity;
 
+import com.vfms.user.entity.User;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -19,14 +21,14 @@ import java.util.UUID;
 public class DriverAvailability {
 
     @Id
-    @Column(name = "driver_id")
-    private UUID driverId;
+    @Column(name = "user_id")
+    private UUID userId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
-    @JoinColumn(name = "driver_id")
+    @JoinColumn(name = "user_id")
     @com.fasterxml.jackson.annotation.JsonIgnore
-    private Driver driver;
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

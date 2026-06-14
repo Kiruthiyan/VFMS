@@ -39,14 +39,14 @@ public class DriverQualificationService {
 
         List<DriverLicense.LicenseCategory> requiredClasses =
             VEHICLE_REQUIREMENTS.getOrDefault(normalizedCategory, List.of());
-        List<DriverLicense> licenses = licenseRepository.findByDriver_IdOrderByCreatedAtDesc(driverId);
+        List<DriverLicense> licenses = licenseRepository.findByUser_IdOrderByCreatedAtDesc(driverId);
         boolean hasValidLicense = licenses.stream().anyMatch(l ->
             requiredClasses.contains(l.getCategory()) && l.getStatus() == DriverLicense.LicenseStatus.VALID);
         if (!hasValidLicense) reasons.add("No valid license of required category: " + requiredClasses);
 
         List<DriverCertification.CertificationType> requiredCerts =
             CERT_REQUIREMENTS.getOrDefault(normalizedCategory, List.of());
-        List<DriverCertification> certs = certRepository.findByDriver_IdOrderByCreatedAtDesc(driverId);
+        List<DriverCertification> certs = certRepository.findByUser_IdOrderByCreatedAtDesc(driverId);
         for (DriverCertification.CertificationType certType : requiredCerts) {
             boolean hasCert = certs.stream().anyMatch(c ->
                 c.getCertType() == certType && c.getStatus() == DriverCertification.CertStatus.VALID);

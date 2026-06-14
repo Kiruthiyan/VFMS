@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import com.vfms.user.entity.User;
 
 @Entity @Table(name = "driver_licenses")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -13,9 +14,9 @@ public class DriverLicense extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     @com.fasterxml.jackson.annotation.JsonIgnore
-    private Driver driver;
+    private User user;
 
     @Column(name = "license_number", unique = true, nullable = false)
     private String licenseNumber;

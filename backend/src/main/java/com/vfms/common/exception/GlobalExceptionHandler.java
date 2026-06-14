@@ -67,16 +67,30 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        log.warn("Illegal state: {}", ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(com.vfms.dsm.exception.DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResource(
+            com.vfms.dsm.exception.DuplicateResourceException ex
+    ) {
+        log.warn("Duplicate resource: {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
         log.error("Unexpected runtime exception", ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred: " + ex.toString());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAll(Exception ex) {
         log.error("Unhandled exception", ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Server Error: " + ex.toString());
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message) {

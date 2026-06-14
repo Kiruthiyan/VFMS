@@ -43,9 +43,10 @@ public class StaffProfileService {
 
     @Transactional(readOnly = true)
     public List<UserSummaryResponse> getStaffList() {
-        // Find all users with SYSTEM_USER role who are not deleted
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == Role.SYSTEM_USER && u.getDeletedAt() == null)
+        // Find all users with SYSTEM_USER or APPROVER role who are not deleted
+        return userRepository.findByRoleInAndDeletedAtIsNull(
+                        java.util.Arrays.asList(Role.SYSTEM_USER, Role.APPROVER))
+                .stream()
                 .map(this::mapToSummaryResponse)
                 .collect(Collectors.toList());
     }
