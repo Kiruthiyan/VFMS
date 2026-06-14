@@ -123,7 +123,7 @@ export default function TripDetailPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
-            <div className="max-w-2xl mx-auto space-y-4">
+            <div className="max-w-5xl mx-auto space-y-4">
 
                 <button
                     onClick={() => router.push("/trips")}
@@ -141,9 +141,6 @@ export default function TripDetailPage() {
                                 </div>
                                 <div>
                                     <CardTitle className="text-white text-lg font-bold">Trip Details</CardTitle>
-                                    <p className="text-blue-200 text-xs mt-0.5 font-mono">
-                                        {trip.id.slice(0, 8)}...
-                                    </p>
                                 </div>
                             </div>
                             <Badge variant="outline" className={STATUS_STYLES[trip.status]}>
@@ -152,7 +149,15 @@ export default function TripDetailPage() {
                         </div>
                     </CardHeader>
 
-                    <CardContent className="p-6 space-y-5">
+                    <CardContent className="p-6 space-y-6">
+
+                        {/* Trip ID */}
+                        <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Trip Request ID</p>
+                            <p className="text-slate-900 font-semibold font-mono text-sm bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 w-fit select-all">
+                                {trip.id}
+                            </p>
+                        </div>
 
                         {/* Purpose */}
                         <div>
@@ -160,12 +165,72 @@ export default function TripDetailPage() {
                             <p className="text-slate-900 font-medium">{trip.purpose}</p>
                         </div>
 
-                        {/* Destination */}
-                        <div className="flex items-start gap-2">
-                            <MapPin className="h-4 w-4 text-blue-950 mt-0.5 shrink-0" />
-                            <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Destination</p>
-                                <p className="text-slate-900 font-medium">{trip.destination}</p>
+                        {/* Route Locations Table */}
+                        <div className="space-y-2">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <MapPin className="h-4 w-4 text-blue-950" />
+                                Route Details
+                            </p>
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <table className="w-full text-sm border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-500 font-bold border-b border-slate-200">
+                                            <th className="px-4 py-2.5 text-left w-1/3 text-xs uppercase tracking-wider">Route Point</th>
+                                            <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider">Address / Location</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 bg-white">
+                                        {(() => {
+                                            const routeParts = trip.destination.split(" -> ").map(p => p.trim()).filter(Boolean);
+                                            if (routeParts.length === 0) return null;
+                                            
+                                            const start = routeParts[0];
+                                            const dest = routeParts.length > 1 ? routeParts[routeParts.length - 1] : null;
+                                            const stops = routeParts.length > 2 ? routeParts.slice(1, routeParts.length - 1) : [];
+
+                                            const rows = [];
+                                            
+                                            // Start row
+                                            rows.push(
+                                                <tr key="start" className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-4 py-3 font-semibold text-slate-800 flex items-center gap-1.5">
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-blue-600 block shrink-0" />
+                                                        Starting Point
+                                                    </td>
+                                                    <td className="px-4 py-3 text-slate-600 font-medium">{start}</td>
+                                                </tr>
+                                            );
+
+                                            // Stop rows
+                                            stops.forEach((stop, index) => {
+                                                rows.push(
+                                                    <tr key={`stop-${index}`} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="px-4 py-3 font-semibold text-amber-600 flex items-center gap-1.5">
+                                                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block shrink-0" />
+                                                            Stop {index + 1}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-slate-600 font-medium">{stop}</td>
+                                                    </tr>
+                                                );
+                                            });
+
+                                            // Destination row
+                                            if (dest) {
+                                                rows.push(
+                                                    <tr key="dest" className="hover:bg-slate-50 transition-colors">
+                                                        <td className="px-4 py-3 font-semibold text-red-600 flex items-center gap-1.5">
+                                                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 block shrink-0" />
+                                                            Destination
+                                                        </td>
+                                                        <td className="px-4 py-3 text-slate-600 font-medium">{dest}</td>
+                                                    </tr>
+                                                );
+                                            }
+
+                                            return rows;
+                                        })()}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -442,7 +507,14 @@ export default function TripDetailPage() {
                             {["SYSTEM_USER", "ADMIN"].includes(currentUser.role) &&
                                 !TERMINAL_STATUSES.includes(trip.status) && (
                                 <Button
-                                    onClick={() => handleAction("cancel")}
+                                    onClick={() => {
+                                        const reason = window.prompt("Enter reason for cancellation:");
+                                        if (reason === null) return;
+                                        handleAction("cancel", {
+                                            approverId: currentUser.id,
+                                            notes: reason.trim() || "Cancelled by requester"
+                                        });
+                                    }}
                                     disabled={actionLoading === "cancel"}
                                     variant="outline"
                                     className="border-red-200 text-red-600 hover:bg-red-50"
