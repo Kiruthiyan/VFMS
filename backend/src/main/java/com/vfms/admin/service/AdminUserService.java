@@ -9,8 +9,10 @@ import com.vfms.admin.dto.UpdateUserRequest;
 import com.vfms.admin.dto.UserSummaryResponse;
 import com.vfms.admin.dto.VerifiedStaffProfileResponse;
 import com.vfms.auth.service.EmailService;
+import com.vfms.auth.service.RefreshTokenService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
+import com.vfms.common.exception.AuthorizationException;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.employee.entity.EmployeeRegistryRecord;
@@ -49,9 +51,13 @@ public class AdminUserService {
     private final UserManagementProperties userManagementProperties;
     private final EmployeeRegistryRepository employeeRegistryRepository;
     private final DriverRepository driverRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public UserSummaryResponse createUser(CreateUserRequest request) {
+        assertActorCanManageUsers();
+        assertAdminRoleAssignment(request.getRole());
+
         EmployeeRegistryRecord verifiedStaffRecord = null;
         if (request.getRole() == Role.SYSTEM_USER) {
             verifiedStaffRecord = findVerifiedStaffRecordForProvisioning(
@@ -182,6 +188,7 @@ public class AdminUserService {
 
     @Transactional
     public void reviewUser(UUID userId, ReviewUserRequest request) {
+        assertActorCanManageUsers();
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
@@ -198,6 +205,10 @@ public class AdminUserService {
 
         if (request.getDecision() == ReviewDecision.APPROVE) {
             if (request.getAssignedRole() != null && request.getAssignedRole() != user.getRole()) {
+                assertAdminRoleAssignment(request.getAssignedRole());
+                if (user.getRole() == Role.ADMIN && request.getAssignedRole() != Role.ADMIN) {
+                    assertNotLastActiveAdmin(user);
+                }
                 user.setRole(request.getAssignedRole());
                 clearRoleSpecificFields(user);
             }
@@ -241,10 +252,16 @@ public class AdminUserService {
 
     @Transactional
     public void softDeleteUser(UUID userId, SoftDeleteRequest request) {
+        assertActorCanManageUsers();
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
             throw new ValidationException("User is already deleted.");
+        }
+
+        assertNotSelf(user);
+        if (user.getRole() == Role.ADMIN) {
+            assertNotLastActiveAdmin(user);
         }
 
         Role oldRole = user.getRole();
@@ -258,6 +275,8 @@ public class AdminUserService {
         user.setDeletedBy(SecurityContextProvider.getCurrentUserEmail());
         user.setStatus(UserStatus.DEACTIVATED);
         userRepository.save(user);
+
+        revokeUserSessions(user);
 
         syncDriverRecord(user, oldRole, oldEmployeeId);
 
@@ -296,17 +315,24 @@ public class AdminUserService {
 
     @Transactional
     public void toggleUserStatus(UUID userId) {
+        assertActorCanManageUsers();
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
             throw new ValidationException("Cannot toggle status of a deleted user.");
         }
 
+        assertNotSelf(user);
+
         Role oldRole = user.getRole();
         String oldEmployeeId = user.getEmployeeId();
 
         if (user.getStatus() == UserStatus.APPROVED) {
+            if (user.getRole() == Role.ADMIN) {
+                assertNotLastActiveAdmin(user);
+            }
             user.setStatus(UserStatus.DEACTIVATED);
+            revokeUserSessions(user);
         } else if (user.getStatus() == UserStatus.DEACTIVATED) {
             user.setStatus(UserStatus.APPROVED);
         } else {
@@ -322,6 +348,7 @@ public class AdminUserService {
 
     @Transactional
     public UserSummaryResponse updateUser(UUID userId, UpdateUserRequest request) {
+        assertActorCanManageUsers();
         User user = findUser(userId);
 
         if (user.getDeletedAt() != null) {
@@ -371,6 +398,10 @@ public class AdminUserService {
         }
 
         if (roleChanged) {
+            assertAdminRoleAssignment(targetRole);
+            if (user.getRole() == Role.ADMIN && targetRole != Role.ADMIN) {
+                assertNotLastActiveAdmin(user);
+            }
             user.setRole(targetRole);
             clearRoleSpecificFields(user);
             if (targetRole == Role.DRIVER) {
@@ -404,6 +435,58 @@ public class AdminUserService {
     private User findUser(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+    }
+
+    private void assertActorCanManageUsers() {
+        User actor = SecurityContextProvider.getCurrentUser()
+                .orElseThrow(() -> new AuthorizationException("Authentication required."));
+
+        User freshActor = userRepository.findById(actor.getId())
+                .filter(candidate -> candidate.getDeletedAt() == null)
+                .orElseThrow(() -> new AuthorizationException("Authentication required."));
+
+        if (freshActor.getRole() != Role.ADMIN || freshActor.getStatus() != UserStatus.APPROVED) {
+            throw new AuthorizationException("Only active administrators can manage users.");
+        }
+    }
+
+    private void assertAdminRoleAssignment(Role targetRole) {
+        if (targetRole != Role.ADMIN) {
+            return;
+        }
+
+        User actor = SecurityContextProvider.getCurrentUser()
+                .orElseThrow(() -> new AuthorizationException("Authentication required."));
+
+        User freshActor = userRepository.findById(actor.getId())
+                .filter(candidate -> candidate.getDeletedAt() == null)
+                .orElseThrow(() -> new AuthorizationException("Authentication required."));
+
+        if (freshActor.getRole() != Role.ADMIN || freshActor.getStatus() != UserStatus.APPROVED) {
+            throw new AuthorizationException("Only active administrators can assign administrator access.");
+        }
+    }
+
+    private void assertNotLastActiveAdmin(User target) {
+        if (target.getRole() != Role.ADMIN) {
+            return;
+        }
+
+        if (userRepository.countByRoleAndDeletedAtIsNull(Role.ADMIN) <= 1) {
+            throw new ValidationException("Cannot remove or demote the last administrator account.");
+        }
+    }
+
+    private void assertNotSelf(User target) {
+        SecurityContextProvider.getCurrentUser().ifPresent(actor -> {
+            if (actor.getId().equals(target.getId())) {
+                throw new ValidationException("You cannot perform this action on your own account.");
+            }
+        });
+    }
+
+    private void revokeUserSessions(User user) {
+        refreshTokenService.deleteByUser(user);
     }
 
     private String generateTempPassword() {

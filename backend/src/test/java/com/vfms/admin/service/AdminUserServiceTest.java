@@ -7,13 +7,16 @@ import com.vfms.admin.dto.ReviewUserRequest;
 import com.vfms.admin.dto.SoftDeleteRequest;
 import com.vfms.admin.dto.UpdateUserRequest;
 import com.vfms.auth.service.EmailService;
+import com.vfms.auth.service.RefreshTokenService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.employee.entity.EmployeeRegistryRecord;
 import com.vfms.employee.repository.EmployeeRegistryRepository;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +25,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -51,8 +56,16 @@ class AdminUserServiceTest {
     @Mock
     private EmployeeRegistryRepository employeeRegistryRepository;
 
+    @Mock
+    private DriverRepository driverRepository;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     @InjectMocks
     private AdminUserService adminUserService;
+
+    private final UUID actorId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
@@ -61,6 +74,26 @@ class AdminUserServiceTest {
         tempPassword.setLength(10);
         tempPassword.setChars("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%");
         lenient().when(userManagementProperties.getTempPassword()).thenReturn(tempPassword);
+
+        User actor = User.builder()
+                .id(actorId)
+                .fullName("Admin Actor")
+                .email("admin@vfms.com")
+                .nic("200099999999")
+                .role(Role.ADMIN)
+                .status(UserStatus.APPROVED)
+                .enabled(true)
+                .build();
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(actor, null, actor.getAuthorities())
+        );
+        lenient().when(userRepository.findById(actorId)).thenReturn(Optional.of(actor));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test

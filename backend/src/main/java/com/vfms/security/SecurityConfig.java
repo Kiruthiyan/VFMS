@@ -45,6 +45,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
+    private final RestAccessDeniedHandler accessDeniedHandler;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -78,6 +80,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/fuel/**").hasRole("ADMIN")
                         // --- Authenticated user profile & password change ---
                         .requestMatchers("/api/user/**").authenticated()
+                        // --- Staff self-profile (authenticated; method security enforces role) ---
+                        .requestMatchers("/api/staff-profile/**").authenticated()
                         // --- Driver self-service portal (ROLE_DRIVER only, IDOR-safe) ---
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
                         // --- Legacy modules: keep open until individually secured ---
@@ -86,6 +90,10 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,5 +1,6 @@
 "use client";
 
+import { RoleGuard } from "@/components/auth/role-guard";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BarChart3, Calendar, Droplet, FileText, Map, Truck, Users, Wrench } from "lucide-react";
 
@@ -32,13 +33,15 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <Sidebar title="Admin" menuItems={adminMenu} />
-      <main className="flex-1 p-6">
-        <div className="mx-auto max-w-7xl rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/50 min-h-[72vh]">
-          {children}
-        </div>
-      </main>
-    </div>
+    <RoleGuard allowedRole="ADMIN">
+      <div className="flex min-h-screen bg-slate-100">
+        <Sidebar title="Admin" menuItems={adminMenu} />
+        <main className="flex-1 p-6">
+          <div className="mx-auto max-w-7xl rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/50 min-h-[72vh]">
+            {children}
+          </div>
+        </main>
+      </div>
+    </RoleGuard>
   );
 }

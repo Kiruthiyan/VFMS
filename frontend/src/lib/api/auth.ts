@@ -10,8 +10,8 @@ export interface AuthResponse {
   fullName: string;
   role: UserRole;
   status: UserStatus;
-  accessToken: string;
-  refreshToken: string;
+  accessToken?: string | null;
+  refreshToken?: string | null;
   passwordChangeRequired?: boolean;
 }
 

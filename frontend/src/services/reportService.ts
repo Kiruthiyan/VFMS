@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAllFuelRecordsApi } from '@/lib/api/fuel';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -191,8 +192,18 @@ export const reportService = {
 
     getFuelLogs: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/fuel/logs`);
-            return response.data;
+            const records = await getAllFuelRecordsApi();
+            return records.map((record) => ({
+                id: record.id,
+                vehicleId: record.vehicleId,
+                licensePlate: record.vehiclePlate,
+                date: record.fuelDate,
+                fuelQuantity: record.quantity,
+                pricePerLiter: record.costPerLitre,
+                totalCost: record.totalCost,
+                odometer: record.odometerReading,
+                fuelStation: record.fuelStation ?? '',
+            }));
         } catch (error) {
             console.error("Error fetching fuel logs:", error);
             return [];

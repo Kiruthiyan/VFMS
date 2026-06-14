@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { AuthResponse } from "@/lib/api/auth";
+import { getMeApi, type AuthResponse } from "@/lib/api/auth";
 import type { UserRole, UserStatus } from "@/lib/auth";
 import { clearAuthCookies, setAuthCookies } from "@/lib/rbac";
 
@@ -21,6 +21,7 @@ interface AuthState {
   refreshToken: string | null;
   setHydrated: (hydrated: boolean) => void;
   setAuth: (data: AuthResponse) => void;
+  syncSessionFromServer: () => Promise<void>;
   clearAuth: () => void;
   isAuthenticated: () => boolean;
 }
@@ -45,10 +46,40 @@ export const useAuthStore = create<AuthState>()(
             status: data.status,
             passwordChangeRequired: data.passwordChangeRequired,
           },
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
+          accessToken: data.accessToken ?? null,
+          refreshToken: data.refreshToken ?? null,
         });
-        setAuthCookies(data.accessToken, data.role);
+        if (data.accessToken) {
+          setAuthCookies(data.accessToken, data.role);
+        }
+      },
+
+      syncSessionFromServer: async () => {
+        const { accessToken, refreshToken } = get();
+        if (!accessToken) {
+          set({ hydrated: true });
+          return;
+        }
+
+        try {
+          const profile = await getMeApi();
+          set({
+            hydrated: true,
+            user: {
+              userId: profile.userId,
+              fullName: profile.fullName,
+              email: profile.email,
+              role: profile.role,
+              status: profile.status,
+              passwordChangeRequired: profile.passwordChangeRequired,
+            },
+            accessToken: profile.accessToken ?? accessToken,
+            refreshToken: profile.refreshToken ?? refreshToken,
+          });
+          setAuthCookies(accessToken, profile.role);
+        } catch {
+          get().clearAuth();
+        }
       },
 
       clearAuth: () => {
@@ -72,7 +103,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true);
+        void state?.syncSessionFromServer();
       },
     }
   )
