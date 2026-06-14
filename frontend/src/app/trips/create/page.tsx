@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Users, ArrowLeft, Loader2, FileText, AlertTriangle, Plus, Trash2, Navigation } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowLeft, Loader2, FileText, AlertTriangle, Plus, Trash2, Navigation, ArrowUp, ArrowDown } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/roleContext";
 import AddressSearchInput from "@/components/trips/AddressSearchInput";
@@ -175,6 +175,32 @@ export default function CreateTripPage() {
         setStops(prev => prev.map((s, idx) => idx === index ? { coords: { lat, lng }, address: name } : s));
     };
 
+    const handleStartSelected = (lat: number, lng: number, address: string) => {
+        setStartCoords({ lat, lng });
+        setStartAddress(address);
+    };
+
+    const handleStopSelected = (index: number, lat: number, lng: number, address: string) => {
+        setStops(prev => prev.map((s, idx) => idx === index ? { coords: { lat, lng }, address } : s));
+    };
+
+    const handleDestinationSelected = (lat: number, lng: number, address: string) => {
+        setDestCoords({ lat, lng });
+        setDestAddress(address);
+    };
+
+    const moveStop = (index: number, direction: number) => {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= stops.length) return;
+        setStops(prev => {
+            const updated = [...prev];
+            const temp = updated[index];
+            updated[index] = updated[newIndex];
+            updated[newIndex] = temp;
+            return updated;
+        });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitError("");
@@ -313,15 +339,40 @@ export default function CreateTripPage() {
                                                         icon={<MapPin className="h-4 w-4 text-amber-500" />}
                                                     />
                                                 </div>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => removeStop(index)}
-                                                    className="h-9 w-9 text-slate-400 hover:text-red-500 hover:bg-red-50 mb-0.5 shrink-0"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                <div className="flex gap-1 mb-0.5 shrink-0">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        disabled={index === 0}
+                                                        onClick={() => moveStop(index, -1)}
+                                                        className="h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-30"
+                                                        title="Move Up"
+                                                    >
+                                                        <ArrowUp className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        disabled={index === stops.length - 1}
+                                                        onClick={() => moveStop(index, 1)}
+                                                        className="h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-30"
+                                                        title="Move Down"
+                                                    >
+                                                        <ArrowDown className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => removeStop(index)}
+                                                        className="h-9 w-9 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                                        title="Remove Stop"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -466,23 +517,31 @@ export default function CreateTripPage() {
                         </Card>
                     </div>
 
-                    {/* Interactive Routing Map */}
+                    {/* Routing Map */}
                     <div className="lg:col-span-5 lg:sticky lg:top-6">
                         <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <CardHeader className="bg-slate-900 py-4">
-                                <CardTitle className="text-white text-md font-bold flex items-center gap-2">
-                                    <MapPin className="h-5 w-5 text-amber-400" />
-                                    Interactive Routing Map
-                                </CardTitle>
+                            <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
+                                        <MapPin className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-white text-lg font-bold">
+                                            Routing Map
+                                        </CardTitle>
+                                        <p className="text-blue-200 text-sm mt-0.5">
+                                            Visualizing stops & path
+                                        </p>
+                                    </div>
+                                </div>
                             </CardHeader>
                             <CardContent className="p-4 space-y-4">
                                 <MapComponent 
                                     locations={mapLocations} 
                                     onRouteCalculated={handleRouteCalculated} 
-                                    onDestinationSelected={(lat, lng, address) => {
-                                        setDestCoords({ lat, lng });
-                                        setDestAddress(address);
-                                    }}
+                                    onStartSelected={handleStartSelected}
+                                    onStopSelected={handleStopSelected}
+                                    onDestinationSelected={handleDestinationSelected}
                                 />
                                 <div className="text-xs text-slate-500 leading-relaxed bg-slate-50 p-3.5 rounded-lg border border-slate-100">
                                     <span className="font-semibold text-slate-700 block mb-1">Route Path Information:</span>

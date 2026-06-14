@@ -12,10 +12,18 @@ interface Location {
 interface MapComponentProps {
     locations: Location[];
     onRouteCalculated: (distanceKm: number, durationSeconds: number) => void;
+    onStartSelected?: (lat: number, lng: number, address: string) => void;
+    onStopSelected?: (index: number, lat: number, lng: number, address: string) => void;
     onDestinationSelected?: (lat: number, lng: number, address: string) => void;
 }
 
-export default function MapComponent({ locations, onRouteCalculated, onDestinationSelected }: MapComponentProps) {
+export default function MapComponent({ 
+    locations, 
+    onRouteCalculated, 
+    onStartSelected,
+    onStopSelected,
+    onDestinationSelected 
+}: MapComponentProps) {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<any>(null);
     const routeLayerRef = useRef<any>(null);
@@ -54,7 +62,10 @@ export default function MapComponent({ locations, onRouteCalculated, onDestinati
             // Add map click listener to select a destination on map click
             mapInstance.on("click", async (e: any) => {
                 const { lat, lng } = e.latlng;
-                await reverseGeocode(L, lat, lng);
+                const address = await reverseGeocode(lat, lng);
+                if (address && onDestinationSelected) {
+                    onDestinationSelected(lat, lng, address);
+                }
             });
 
             updateRouteAndMarkers(L, mapInstance);
@@ -88,8 +99,7 @@ export default function MapComponent({ locations, onRouteCalculated, onDestinati
         update();
     }, [locations]);
 
-    const reverseGeocode = async (L: any, lat: number, lng: number) => {
-        if (!onDestinationSelected) return;
+    const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
         try {
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
                 headers: {
@@ -102,11 +112,12 @@ export default function MapComponent({ locations, onRouteCalculated, onDestinati
                 const displayName = data.display_name || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
                 const parts = displayName.split(",");
                 const shortName = parts.slice(0, 2).join(",").trim();
-                onDestinationSelected(lat, lng, shortName);
+                return shortName;
             }
         } catch (err) {
             console.error("Reverse geocoding failed:", err);
         }
+        return null;
     };
 
     const updateRouteAndMarkers = async (L: any, map: any) => {
@@ -138,19 +149,21 @@ export default function MapComponent({ locations, onRouteCalculated, onDestinati
         // Render numbered/labeled markers for all stops
         validLocations.forEach((loc, index) => {
             let label = "";
+            const isStart = index === 0;
             const isDestination = index === validLocations.length - 1 && index > 0;
+            const isStop = index > 0 && index < validLocations.length - 1;
             
-            if (index === 0) {
+            if (isStart) {
                 label = "Start: " + loc.name;
-            } else if (index === validLocations.length - 1) {
+            } else if (isDestination) {
                 label = "Destination: " + loc.name;
             } else {
                 label = `Stop ${index}: ` + loc.name;
             }
 
-            // Make the destination marker draggable
+            // Make ALL markers draggable
             const marker = L.marker([loc.lat, loc.lng], {
-                draggable: isDestination
+                draggable: true
             }).addTo(map);
 
             marker.bindTooltip(label, { 
@@ -159,12 +172,19 @@ export default function MapComponent({ locations, onRouteCalculated, onDestinati
                 className: "font-semibold text-xs border-slate-200 rounded px-1.5 py-0.5 shadow-sm text-slate-800 bg-white" 
             });
 
-            if (isDestination) {
-                marker.on("dragend", async (e: any) => {
-                    const { lat, lng } = e.target.getLatLng();
-                    await reverseGeocode(L, lat, lng);
-                });
-            }
+            marker.on("dragend", async (e: any) => {
+                const { lat, lng } = e.target.getLatLng();
+                const address = await reverseGeocode(lat, lng);
+                if (address) {
+                    if (isStart && onStartSelected) {
+                        onStartSelected(lat, lng, address);
+                    } else if (isDestination && onDestinationSelected) {
+                        onDestinationSelected(lat, lng, address);
+                    } else if (isStop && onStopSelected) {
+                        onStopSelected(index - 1, lat, lng, address);
+                    }
+                }
+            });
 
             markersRef.current.push(marker);
         });
