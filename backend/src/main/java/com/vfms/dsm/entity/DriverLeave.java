@@ -1,5 +1,7 @@
 package com.vfms.dsm.entity;
 
+import com.vfms.user.entity.User;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -22,13 +24,13 @@ public class DriverLeave extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
-    private Driver driver;
+    private User user;
 
     @JsonIgnore
-    public Driver getDriver() {
-        return this.driver;
+    public User getDriver() {
+        return this.user;
     }
 
     @Enumerated(EnumType.STRING)
@@ -72,10 +74,10 @@ public class DriverLeave extends BaseEntity {
     @Transient
     @com.fasterxml.jackson.annotation.JsonProperty("driver")
     public java.util.Map<String, String> getDriverSummary() {
-        if (driver != null) {
+        if (user != null) {
             return java.util.Map.of(
-                "firstName", driver.getFirstName() != null ? driver.getFirstName() : "",
-                "lastName", driver.getLastName() != null ? driver.getLastName() : ""
+                "fullName", user.getFullName() != null ? user.getFullName() : "",
+                "employeeId", user.getEmployeeId() != null ? user.getEmployeeId() : ""
             );
         }
         return null;

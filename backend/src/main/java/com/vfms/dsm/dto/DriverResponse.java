@@ -1,7 +1,6 @@
 package com.vfms.dsm.dto;
 
-import com.vfms.dsm.entity.Driver;
-import com.vfms.dsm.entity.DriverAvailability;
+import com.vfms.common.enums.UserStatus;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,8 +25,7 @@ public class DriverResponse {
     private String designation;
     private LocalDate dateOfJoining;
     private String photoUrl;
-    private Driver.DriverStatus status;
-    private DriverAvailability.AvailabilityStatus availabilityStatus;
+    private UserStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

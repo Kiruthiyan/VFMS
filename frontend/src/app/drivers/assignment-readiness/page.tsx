@@ -123,15 +123,15 @@ export default function DriverReadinessPage() {
 	});
 
 	return (
-		<div className="p-6 animate-fade-in">
-			<div className="flex items-center justify-between mb-5">
-				<div className="flex items-center gap-3">
-					<div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'hsl(var(--primary))' }}>
+		<div className="p-6 md:p-8 space-y-6 animate-fade-in">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+				<div className="flex items-center gap-4">
+					<div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
 						<LayoutDashboard className="w-5 h-5" style={{ color: 'hsl(var(--primary-foreground))' }} />
 					</div>
 					<div>
-						<h1 className="text-xl font-semibold text-foreground">Assignment Readiness</h1>
-						<p className="text-sm text-muted-foreground">Real-time driver readiness status</p>
+						<h1 className="text-2xl font-bold tracking-tight text-foreground">Assignment Readiness</h1>
+						<p className="text-sm font-medium text-muted-foreground mt-1">Real-time driver readiness status</p>
 					</div>
 				</div>
 
@@ -163,22 +163,22 @@ export default function DriverReadinessPage() {
 			</div>
 
 			{/* Summary Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-				<Card style={{ borderTopWidth: 4, borderTopStyle: 'solid', borderTopColor: 'hsl(var(--success))' }}>
-					<CardContent className="pt-4 pb-4 px-4">
-						<p className="text-3xl font-bold tabular-nums" style={{ color: 'hsl(var(--success))' }}>
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(var(--success))' }}>
+					<CardContent className="p-5">
+						<p className="text-sm font-medium text-muted-foreground">Ready to assign</p>
+						<p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(var(--success))' }}>
 							{readyCount}
 						</p>
-						<p className="text-xs text-muted-foreground mt-0.5">Ready to assign</p>
 					</CardContent>
 				</Card>
 
-				<Card style={{ borderTopWidth: 4, borderTopStyle: 'solid', borderTopColor: 'hsl(19 97% 50%)' }}>
-					<CardContent className="pt-4 pb-4 px-4">
-						<p className="text-3xl font-bold tabular-nums" style={{ color: 'hsl(19 97% 40%)' }}>
+				<Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(19 97% 50%)' }}>
+					<CardContent className="p-5">
+						<p className="text-sm font-medium text-muted-foreground">Not ready</p>
+						<p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(19 97% 40%)' }}>
 							{notReadyCount}
 						</p>
-						<p className="text-xs text-muted-foreground mt-0.5">Not ready</p>
 					</CardContent>
 				</Card>
 			</div>
@@ -192,14 +192,16 @@ export default function DriverReadinessPage() {
 				</ul>
 			</div>
 
-			<Card>
-				<CardHeader className="pb-3 px-4 pt-4">
-					<Input
-						placeholder="Search by Driver ID, name, email, NIC or phone..."
-						className="h-9 text-sm"
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-					/>
+			<Card className="shadow-sm border-muted">
+				<CardHeader className="pb-4">
+					<div className="relative max-w-md">
+						<Input
+							placeholder="Search by Driver ID, name, email, NIC or phone..."
+							className="text-sm"
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+						/>
+					</div>
 				</CardHeader>
 
 				<CardContent className="p-0">
@@ -209,7 +211,7 @@ export default function DriverReadinessPage() {
 						<Table>
 							<TableHeader>
 								<TableRow className="hover:bg-transparent bg-muted/40">
-									{['Driver ID', 'Full Name', 'Email', 'Phone', 'Availability', 'Ready', 'Reason', 'Last Refreshed', ''].map((h) => (
+									{['Driver ID', 'Full Name', 'Email', 'Phone', 'Ready', 'Reason', 'Last Refreshed', ''].map((h) => (
 										<TableHead key={h} className="text-xs font-medium text-muted-foreground">
 											{h}
 										</TableHead>
@@ -220,7 +222,7 @@ export default function DriverReadinessPage() {
 								{filtered.map((row) => {
 									const ready = isRowReady(row);
 									return (
-										<TableRow key={row.user.id} className="hover:bg-muted/20">
+										<TableRow key={row.user.id} className="hover:bg-muted/50 transition-colors">
 											<TableCell className="font-semibold text-sm text-foreground">
 												{row.user.employeeId || '—'}
 											</TableCell>
@@ -232,13 +234,6 @@ export default function DriverReadinessPage() {
 											</TableCell>
 											<TableCell className="text-sm text-muted-foreground">
 												{row.user.phone || '—'}
-											</TableCell>
-											<TableCell>
-												{row.readiness ? (
-													<StatusBadge status={row.readiness.availabilityStatus} />
-												) : (
-													<span className="text-xs text-muted-foreground">—</span>
-												)}
 											</TableCell>
 											<TableCell>
 												<span

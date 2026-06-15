@@ -27,6 +27,7 @@ export const ROUTE_ROLES: { prefix: string; role: UserRole }[] = [
   { prefix: "/dashboards/staff", role: "SYSTEM_USER" },
   { prefix: "/dashboards/driver", role: "DRIVER" },
   { prefix: "/admin", role: "ADMIN" },
+  { prefix: "/drivers", role: "APPROVER" },
 ];
 
 export function getRouteOwner(pathname: string): UserRole | null {

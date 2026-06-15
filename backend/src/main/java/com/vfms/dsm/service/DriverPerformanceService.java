@@ -1,11 +1,13 @@
 package com.vfms.dsm.service;
 
-import com.vfms.dsm.entity.Driver;
+import com.vfms.user.entity.User;
+
+
 import com.vfms.dsm.entity.DriverInfraction;
 import com.vfms.dsm.entity.DriverPerformanceScore;
 import com.vfms.dsm.repository.DriverInfractionRepository;
 import com.vfms.dsm.repository.DriverPerformanceScoreRepository;
-import com.vfms.dsm.repository.DriverRepository;
+import com.vfms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,35 +26,35 @@ import java.util.UUID;
 public class DriverPerformanceService {
 
     private final DriverPerformanceScoreRepository scoreRepository;
-    private final DriverRepository driverRepository;
+    private final UserRepository userRepository;
     private final DriverInfractionRepository infractionRepository;
 
     @Transactional(readOnly = true)
     public List<DriverPerformanceScore> getScoresByDriver(UUID driverId) {
-        return scoreRepository.findByDriverIdOrderByPeriodYearDescPeriodMonthDesc(driverId);
+        return scoreRepository.findByUserIdOrderByPeriodYearDescPeriodMonthDesc(driverId);
     }
 
     @Scheduled(cron = "0 0 1 1 * *")
     @Transactional
     public void calculateMonthlyScores() {
         YearMonth lastMonth = YearMonth.now().minusMonths(1);
-        List<Driver> drivers = driverRepository.findAll();
+        List<User> drivers = userRepository.findAll();
 
-        for (Driver driver : drivers) {
-            calculateScoreForDriver(driver, lastMonth.getYear(), lastMonth.getMonthValue());
+        for (User user : drivers) {
+            calculateScoreForDriver(user, lastMonth.getYear(), lastMonth.getMonthValue());
         }
 
         log.info("Monthly performance calculation complete for {} drivers", drivers.size());
     }
 
-    public DriverPerformanceScore calculateScoreForDriver(Driver driver, int year, int month) {
-        long criticalInfractions = infractionRepository.countByDriverIdAndSeverityAndResolutionStatusNot(
-                driver.getId(),
+    public DriverPerformanceScore calculateScoreForDriver(User user, int year, int month) {
+        long criticalInfractions = infractionRepository.countByUserIdAndSeverityAndResolutionStatusNot(
+                user.getId(),
                 DriverInfraction.Severity.CRITICAL,
                 DriverInfraction.ResolutionStatus.RESOLVED
         );
-        long highInfractions = infractionRepository.countByDriverIdAndSeverityAndResolutionStatusNot(
-                driver.getId(),
+        long highInfractions = infractionRepository.countByUserIdAndSeverityAndResolutionStatusNot(
+                user.getId(),
                 DriverInfraction.Severity.HIGH,
                 DriverInfraction.ResolutionStatus.RESOLVED
         );
@@ -67,9 +69,9 @@ public class DriverPerformanceService {
                 .subtract(infractionDeduction.multiply(BigDecimal.valueOf(0.3)));
 
         DriverPerformanceScore score = scoreRepository
-                .findByDriverIdAndPeriodYearAndPeriodMonth(driver.getId(), year, month)
+                .findByUserIdAndPeriodYearAndPeriodMonth(user.getId(), year, month)
                 .orElse(DriverPerformanceScore.builder()
-                        .driver(driver)
+                        .user(user)
                         .periodYear(year)
                         .periodMonth(month)
                         .build());

@@ -1,9 +1,11 @@
 package com.vfms.dsm.service;
 
+import com.vfms.user.entity.User;
+
 import com.vfms.dsm.dto.InfractionRequest;
-import com.vfms.dsm.entity.Driver;
+
 import com.vfms.dsm.entity.DriverInfraction;
-import com.vfms.dsm.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.dsm.repository.DriverInfractionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,10 +24,10 @@ public class DriverInfractionService {
     private final DriverService driverService;
 
     public DriverInfraction logInfraction(InfractionRequest request) {
-        Driver driver = driverService.findById(request.getDriverId());
+        User user = driverService.findById(request.getDriverId());
 
         DriverInfraction infraction = DriverInfraction.builder()
-                .driver(driver)
+                .user(user)
                 .infractionType(request.getInfractionType())
                 .severity(request.getSeverity())
                 .incidentDate(request.getIncidentDate())
@@ -38,7 +40,7 @@ public class DriverInfractionService {
 
     @Transactional(readOnly = true)
     public List<DriverInfraction> getInfractionsByDriver(UUID driverId) {
-        return infractionRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
+        return infractionRepository.findByUserIdOrderByCreatedAtDesc(driverId);
     }
 
     public DriverInfraction resolveInfraction(Long id) {
@@ -53,7 +55,7 @@ public class DriverInfractionService {
 
     @Transactional(readOnly = true)
     public boolean hasBlockingInfractions(UUID driverId) {
-        long critical = infractionRepository.countByDriverIdAndSeverityAndResolutionStatusNot(
+        long critical = infractionRepository.countByUserIdAndSeverityAndResolutionStatusNot(
                 driverId,
                 DriverInfraction.Severity.CRITICAL,
                 DriverInfraction.ResolutionStatus.RESOLVED

@@ -50,7 +50,7 @@ export default function DriverServiceRequestsPage() {
   };
 
   return (
-    <div className="p-6 animate-fade-in">
+    <div className="p-6 md:p-8 space-y-6 animate-fade-in">
       <PageHeader
         icon={<Wrench className="w-5 h-5" />}
         title="Driver Service Requests"
@@ -64,10 +64,11 @@ export default function DriverServiceRequestsPage() {
         }
       />
 
-      <div className="space-y-2.5">
+      <div className="space-y-4">
         {requests.map((req) => (
           <Card
             key={req.id}
+            className="shadow-sm hover:shadow-md transition-shadow"
             style={{
               borderLeftWidth: 4,
               borderLeftStyle: 'solid',
@@ -136,14 +137,14 @@ function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="rounded-lg p-2" style={{ backgroundColor: 'hsl(42 100% 50% / 0.12)' }}>
-          {icon}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
+          <span style={{ color: 'hsl(var(--primary-foreground))' }}>{icon}</span>
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+          <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
         </div>
       </div>
       {action}

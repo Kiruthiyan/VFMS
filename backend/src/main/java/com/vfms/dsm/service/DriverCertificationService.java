@@ -1,9 +1,11 @@
 package com.vfms.dsm.service;
 
+import com.vfms.user.entity.User;
+
 import com.vfms.dsm.dto.CertificationRequest;
-import com.vfms.dsm.entity.Driver;
+
 import com.vfms.dsm.entity.DriverCertification;
-import com.vfms.dsm.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.dsm.repository.DriverCertificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,9 +22,9 @@ public class DriverCertificationService {
     private final DriverService driverService;
 
     public DriverCertification addCertification(CertificationRequest request) {
-        Driver driver = driverService.findById(request.getDriverId());
+        User user = driverService.findById(request.getDriverId());
         DriverCertification cert = DriverCertification.builder()
-            .driver(driver)
+            .user(user)
             .certType(request.getCertType())
             .certName(request.getCertName())
             .issuedBy(request.getIssuedBy())
@@ -34,7 +36,7 @@ public class DriverCertificationService {
 
     @Transactional(readOnly = true)
     public List<DriverCertification> getCertificationsByDriver(UUID driverId) {
-        return certRepository.findByDriver_IdOrderByCreatedAtDesc(driverId);
+        return certRepository.findByUser_IdOrderByCreatedAtDesc(driverId);
     }
 
     public DriverCertification updateCertification(Long id, CertificationRequest request) {

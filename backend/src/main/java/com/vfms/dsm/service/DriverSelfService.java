@@ -1,8 +1,10 @@
 package com.vfms.dsm.service;
 
+import com.vfms.user.entity.User;
+
 import com.vfms.dsm.dto.*;
 import com.vfms.dsm.entity.*;
-import com.vfms.dsm.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.dsm.mapper.DriverMapper;
 import com.vfms.dsm.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.common.exception.AuthorizationException;
+import com.vfms.user.repository.UserRepository;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -29,7 +32,7 @@ import java.util.UUID;
 @Transactional
 public class DriverSelfService {
 
-    private final DriverRepository driverRepository;
+    private final UserRepository userRepository;
     private final DriverLicenseRepository licenseRepository;
     private final DriverCertificationRepository certRepository;
     private final DriverDocumentRepository documentRepository;
@@ -37,7 +40,6 @@ public class DriverSelfService {
     private final DriverLeaveRepository leaveRepository;
     private final DriverServiceRequestRepository serviceRequestRepository;
     private final DriverReadinessService readinessService;
-    private final DriverAvailabilityRepository availabilityRepository;
     private final DriverMapper driverMapper;
 
     @Value("${app.upload.dir:uploads/documents}")
@@ -50,21 +52,18 @@ public class DriverSelfService {
 
     @Transactional(readOnly = true)
     public DriverResponse getMyProfile(String email) {
-        Driver driver = resolveDriver(email);
-        DriverResponse response = driverMapper.toResponse(driver);
-        availabilityRepository.findById(driver.getId())
-                .ifPresent(a -> response.setAvailabilityStatus(a.getStatus()));
-        return response;
+        User user = resolveUser(email);
+        return driverMapper.toResponse(user);
     }
 
     public DriverResponse updateMyProfile(String email, DriverProfileUpdateRequest request) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         // Only whitelisted fields are mutated; identity fields are never touched.
-        if (request.getPhone() != null)                 driver.setPhone(request.getPhone());
-        if (request.getAddress() != null)               driver.setAddress(request.getAddress());
-        if (request.getEmergencyContactName() != null)  driver.setEmergencyContactName(request.getEmergencyContactName());
-        if (request.getEmergencyContactPhone() != null) driver.setEmergencyContactPhone(request.getEmergencyContactPhone());
-        driverRepository.save(driver);
+        if (request.getPhone() != null)                 user.setPhone(request.getPhone());
+        if (request.getAddress() != null)               user.setAddress(request.getAddress());
+        if (request.getEmergencyContactName() != null)  user.setEmergencyContactName(request.getEmergencyContactName());
+        if (request.getEmergencyContactPhone() != null) user.setEmergencyContactPhone(request.getEmergencyContactPhone());
+        userRepository.save(user);
         return getMyProfile(email);
     }
 
@@ -72,15 +71,15 @@ public class DriverSelfService {
 
     @Transactional(readOnly = true)
     public List<DriverLicenseResponse> getMyLicenses(String email) {
-        Driver driver = resolveDriver(email);
-        return licenseRepository.findByDriver_IdOrderByCreatedAtDesc(driver.getId())
+        User user = resolveUser(email);
+        return licenseRepository.findByUser_IdOrderByCreatedAtDesc(user.getId())
                 .stream().map(this::toLicenseResponse).toList();
     }
 
     public DriverLicenseResponse addMyLicense(String email, DriverLicenseRequest request) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         DriverLicense license = DriverLicense.builder()
-                .driver(driver)
+                .user(user)
                 .licenseNumber(request.getLicenseNumber())
                 .category(request.getCategory())
                 .issueDate(request.getIssueDate())
@@ -89,22 +88,22 @@ public class DriverSelfService {
                 .isPrimary(Boolean.TRUE.equals(request.getIsPrimary()))
                 .build();
         DriverLicense saved = licenseRepository.save(license);
-        readinessService.refreshForDriver(driver.getId());
+        readinessService.refreshForDriver(user.getId());
         return toLicenseResponse(saved);
     }
 
     public DriverLicenseResponse updateMyLicense(String email, Long licenseId, DriverLicenseRequest request) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         DriverLicense license = licenseRepository.findById(licenseId)
                 .orElseThrow(() -> new ResourceNotFoundException("License not found: " + licenseId));
-        assertOwnership(license.getDriver().getId(), driver.getId(), "License");
+        assertOwnership(license.getUser().getId(), user.getId(), "License");
         license.setLicenseNumber(request.getLicenseNumber());
         license.setCategory(request.getCategory());
         license.setIssueDate(request.getIssueDate());
         license.setExpiryDate(request.getExpiryDate());
         license.setIssuingAuthority(request.getIssuingAuthority());
         if (request.getIsPrimary() != null) license.setIsPrimary(request.getIsPrimary());
-        readinessService.refreshForDriver(driver.getId());
+        readinessService.refreshForDriver(user.getId());
         return toLicenseResponse(licenseRepository.save(license));
     }
 
@@ -112,14 +111,14 @@ public class DriverSelfService {
 
     @Transactional(readOnly = true)
     public List<DriverCertification> getMyCertifications(String email) {
-        Driver driver = resolveDriver(email);
-        return certRepository.findByDriver_IdOrderByCreatedAtDesc(driver.getId());
+        User user = resolveUser(email);
+        return certRepository.findByUser_IdOrderByCreatedAtDesc(user.getId());
     }
 
     public DriverCertification addMyCertification(String email, DriverSelfCertificationRequest request) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         DriverCertification cert = DriverCertification.builder()
-                .driver(driver)
+                .user(user)
                 .certType(request.getCertType())
                 .certName(request.getCertName())
                 .issuedBy(request.getIssuedBy())
@@ -133,14 +132,14 @@ public class DriverSelfService {
 
     @Transactional(readOnly = true)
     public List<DriverDocument> getMyDocuments(String email) {
-        Driver driver = resolveDriver(email);
-        return documentRepository.findByDriverIdOrderByCreatedAtDesc(driver.getId());
+        User user = resolveUser(email);
+        return documentRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
     }
 
     public DriverDocument uploadMyDocument(String email, MultipartFile file,
                                            DriverDocument.DocumentEntityType entityType,
                                            Long entityId) throws IOException {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         if (!ALLOWED_MIME_TYPES.contains(file.getContentType())) {
             throw new IllegalArgumentException("File type not allowed: " + file.getContentType());
         }
@@ -152,7 +151,7 @@ public class DriverSelfService {
         Files.copy(file.getInputStream(), uploadPath.resolve(storedFilename), StandardCopyOption.REPLACE_EXISTING);
 
         DriverDocument doc = DriverDocument.builder()
-                .driver(driver)
+                .user(user)
                 .entityType(entityType)
                 .entityId(entityId)
                 .fileName(originalFilename)
@@ -163,25 +162,31 @@ public class DriverSelfService {
 
         DriverDocument saved = documentRepository.save(doc);
         if (entityType == DriverDocument.DocumentEntityType.PROFILE) {
-            driver.setPhotoUrl(doc.getFileUrl());
-            driverRepository.save(driver);
+            user.setPhotoUrl(doc.getFileUrl());
+            userRepository.save(user);
         } else if (entityType == DriverDocument.DocumentEntityType.LICENSE) {
-            readinessService.refreshForDriver(driver.getId());
+            readinessService.refreshForDriver(user.getId());
         }
         return saved;
     }
 
+    public void removeProfilePicture(String email) {
+        User user = resolveUser(email);
+        user.setPhotoUrl(null);
+        userRepository.save(user);
+    }
+
     public void deleteMyDocument(String email, Long documentId) throws IOException {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         DriverDocument doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + documentId));
-        assertOwnership(doc.getDriver().getId(), driver.getId(), "Document");
+        assertOwnership(doc.getUser().getId(), user.getId(), "Document");
 
         String filename = Paths.get(doc.getFileUrl()).getFileName().toString();
         Files.deleteIfExists(Paths.get(uploadDir, filename));
         documentRepository.delete(doc);
         if (doc.getEntityType() == DriverDocument.DocumentEntityType.LICENSE) {
-            readinessService.refreshForDriver(driver.getId());
+            readinessService.refreshForDriver(user.getId());
         }
     }
 
@@ -189,14 +194,14 @@ public class DriverSelfService {
 
     @Transactional(readOnly = true)
     public List<DriverInfraction> getMyInfractions(String email) {
-        Driver driver = resolveDriver(email);
-        return infractionRepository.findByDriverIdOrderByCreatedAtDesc(driver.getId());
+        User user = resolveUser(email);
+        return infractionRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
     }
 
     public DriverInfraction submitMyInfraction(String email, DriverSelfInfractionRequest request) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         DriverInfraction infraction = DriverInfraction.builder()
-                .driver(driver)
+                .user(user)
                 .infractionType(request.getInfractionType())
                 .severity(request.getSeverity())
                 .incidentDate(request.getIncidentDate())
@@ -210,23 +215,23 @@ public class DriverSelfService {
 
     @Transactional(readOnly = true)
     public List<DriverLeave> getMyLeaveRequests(String email) {
-        Driver driver = resolveDriver(email);
-        return leaveRepository.findByDriverIdOrderByCreatedAtDesc(driver.getId());
+        User user = resolveUser(email);
+        return leaveRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
     }
 
     public DriverLeave submitLeaveRequest(String email, DriverSelfLeaveRequest request) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
 
         List<DriverLeave.LeaveStatus> excludedStatuses = List.of(
             DriverLeave.LeaveStatus.REJECTED, 
             DriverLeave.LeaveStatus.CANCELLED
         );
-        if (leaveRepository.countOverlappingLeaves(driver.getId(), request.getStartDate(), request.getEndDate(), excludedStatuses) > 0) {
+        if (leaveRepository.countOverlappingLeaves(user.getId(), request.getStartDate(), request.getEndDate(), excludedStatuses) > 0) {
             throw new ValidationException("Leave dates overlap with an existing request.");
         }
 
         DriverLeave leave = DriverLeave.builder()
-                .driver(driver)
+                .user(user)
                 .leaveType(request.getLeaveType())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
@@ -236,10 +241,10 @@ public class DriverSelfService {
     }
 
     public void deleteMyLeaveRequest(String email, Long id) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         DriverLeave leave = leaveRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave request not found: " + id));
-        assertOwnership(leave.getDriver().getId(), driver.getId(), "Leave Request");
+        assertOwnership(leave.getUser().getId(), user.getId(), "Leave Request");
         
         if (leave.getStatus() != DriverLeave.LeaveStatus.PENDING) {
             throw new ValidationException("Only pending leave requests can be deleted.");
@@ -252,14 +257,14 @@ public class DriverSelfService {
 
     @Transactional(readOnly = true)
     public List<DriverServiceRequest> getMyServiceRequests(String email) {
-        Driver driver = resolveDriver(email);
-        return serviceRequestRepository.findByDriver_IdOrderByCreatedAtDesc(driver.getId());
+        User user = resolveUser(email);
+        return serviceRequestRepository.findByUser_IdOrderByCreatedAtDesc(user.getId());
     }
 
     public DriverServiceRequest submitServiceRequest(String email, DriverSelfServiceRequestDto dto) {
-        Driver driver = resolveDriver(email);
+        User user = resolveUser(email);
         DriverServiceRequest request = DriverServiceRequest.builder()
-                .driver(driver)
+                .user(user)
                 .vehicleId(dto.getVehicleId())
                 .requestType(dto.getRequestType())
                 .description(dto.getDescription())
@@ -274,8 +279,8 @@ public class DriverSelfService {
      * Resolves the Driver record for the currently authenticated user.
      * Throws 404 if no driver profile is linked to that email.
      */
-    public Driver resolveDriver(String email) {
-        return driverRepository.findByEmail(email)
+    public User resolveUser(String email) {
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No driver profile found for the authenticated user. " +
                         "Please contact an administrator to link your driver record."));
@@ -290,7 +295,7 @@ public class DriverSelfService {
     private DriverLicenseResponse toLicenseResponse(DriverLicense license) {
         return DriverLicenseResponse.builder()
                 .id(license.getId())
-                .driverId(license.getDriver() != null ? license.getDriver().getId() : null)
+                .driverId(license.getUser() != null ? license.getUser().getId() : null)
                 .licenseNumber(license.getLicenseNumber())
                 .category(license.getCategory())
                 .issueDate(license.getIssueDate())

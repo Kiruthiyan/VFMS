@@ -1,5 +1,7 @@
 package com.vfms.dsm.entity;
 
+import com.vfms.user.entity.User;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,9 +21,9 @@ public class DriverPerformanceScore extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     @com.fasterxml.jackson.annotation.JsonIgnore
-    private Driver driver;
+    private User user;
 
     @Column(name = "period_year")
     private Integer periodYear;

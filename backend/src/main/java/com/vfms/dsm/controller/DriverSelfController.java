@@ -53,6 +53,12 @@ public class DriverSelfController {
         return ResponseEntity.status(HttpStatus.CREATED).body(doc);
     }
 
+    @DeleteMapping("/profile/picture")
+    public ResponseEntity<Void> removeProfilePicture(@AuthenticationPrincipal User user) {
+        selfService.removeProfilePicture(user.getEmail());
+        return ResponseEntity.noContent().build();
+    }
+
     // ── Licenses ─────────────────────────────────────────────────────────────
 
     @GetMapping("/licenses")

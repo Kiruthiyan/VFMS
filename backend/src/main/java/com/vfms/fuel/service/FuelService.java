@@ -2,10 +2,10 @@ package com.vfms.fuel.service;
 
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
-import com.vfms.common.enums.DriverStatus;
+import com.vfms.common.enums.UserStatus;
 import com.vfms.vehicle.VehicleStatus;
-import com.vfms.dsm.entity.Driver;
-import com.vfms.dsm.repository.DriverRepository;
+import com.vfms.user.entity.User;
+import com.vfms.user.repository.UserRepository;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelMetadataDriverProjection;
@@ -47,7 +47,7 @@ public class FuelService {
 
     private final FuelRecordRepository fuelRecordRepository;
     private final VehicleRepository vehicleRepository;
-    private final DriverRepository driverRepository;
+    private final UserRepository userRepository;
     private final VehicleApiClient vehicleApiClient;
     private final FuelStorageService fuelStorageService;
     private final FuelMisuseService fuelMisuseService;
@@ -63,9 +63,9 @@ public class FuelService {
                         "Vehicle not found: " + request.getVehicleId()));
         validateVehicleEligibility(vehicle);
 
-        Driver driver = null;
+        User driver = null;
         if (request.getDriverId() != null) {
-            driver = driverRepository.findById(request.getDriverId())
+            driver = userRepository.findById(request.getDriverId())
                     .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + request.getDriverId()));
             validateDriverEligibility(driver);
         }
@@ -195,9 +195,9 @@ public class FuelService {
                         "Vehicle not found in database: " + request.getVehicleId()));
         validateVehicleEligibility(vehicle);
 
-        Driver driver = null;
+        User driver = null;
         if (request.getDriverId() != null) {
-            driver = driverRepository.findById(request.getDriverId())
+            driver = userRepository.findById(request.getDriverId())
                     .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + request.getDriverId()));
             validateDriverEligibility(driver);
         }
@@ -236,7 +236,7 @@ public class FuelService {
         }
 
         if (updates.getDriverId() != null) {
-            Driver driver = driverRepository.findById(updates.getDriverId())
+            User driver = userRepository.findById(updates.getDriverId())
                     .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + updates.getDriverId()));
             validateDriverEligibility(driver);
             record.setDriver(driver);
@@ -328,7 +328,7 @@ public class FuelService {
                 ))
                 .toList();
 
-        List<FuelLookupOptionResponse> drivers = driverRepository.findFuelMetadataDrivers()
+        List<FuelLookupOptionResponse> drivers = userRepository.findFuelMetadataDrivers()
                 .stream()
                 .map(driver -> FuelLookupOptionResponse.builder()
                         .id(String.valueOf(driver.getId()))
@@ -412,21 +412,24 @@ public class FuelService {
         }
     }
 
-    private void validateDriverEligibility(Driver driver) {
-        Driver.DriverStatus status = driver.getStatus();
-        if (status != Driver.DriverStatus.ACTIVE) {
+    private void validateDriverEligibility(User driver) {
+        UserStatus status = driver.getStatus();
+        if (status != UserStatus.APPROVED) {
             throw new ValidationException("Only active drivers can be assigned to fuel entries.");
         }
     }
 
     FuelRecordResponse toResponse(FuelRecord record) {
+        Vehicle vehicle = record.getVehicle();
+        User driver = record.getDriver();
+
         return FuelRecordResponse.builder()
                 .id(record.getId())
-                .vehicleId(String.valueOf(record.getVehicle().getId()))
-                .vehiclePlate(record.getVehicle().getPlateNumber())
-                .vehicleMakeModel(record.getVehicle().getBrand() + " " + record.getVehicle().getModel())
-                .driverId(record.getDriver() != null ? record.getDriver().getId() : null)
-                .driverName(record.getDriver() != null ? record.getDriver().getFullName() : null)
+                .vehicleId(vehicle != null ? String.valueOf(vehicle.getId()) : null)
+                .vehiclePlate(vehicle != null ? vehicle.getPlateNumber() : null)
+                .vehicleMakeModel(vehicle != null ? joinNonBlank(vehicle.getBrand(), vehicle.getModel()) : null)
+                .driverId(driver != null ? driver.getId() : null)
+                .driverName(driver != null ? driver.getFullName() : null)
                 .fuelDate(record.getFuelDate())
                 .quantity(record.getQuantity())
                 .costPerLitre(record.getCostPerLitre())
@@ -445,14 +448,20 @@ public class FuelService {
 
     public FuelRecordResponse toResponseWithRealTimeData(FuelRecord record) {
         try {
-            VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(record.getVehicle().getId());
+            Vehicle vehicle = record.getVehicle();
+            if (vehicle == null) {
+                return toResponse(record);
+            }
+
+            User driver = record.getDriver();
+            VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(vehicle.getId());
             return FuelRecordResponse.builder()
                     .id(record.getId())
-                    .vehicleId(String.valueOf(record.getVehicle().getId()))
+                    .vehicleId(String.valueOf(vehicle.getId()))
                     .vehiclePlate(vehicleDetail.getPlateNumber())
                     .vehicleMakeModel(vehicleDetail.getMake() + " " + vehicleDetail.getModel())
-                    .driverId(record.getDriver() != null ? record.getDriver().getId() : null)
-                    .driverName(record.getDriver() != null ? record.getDriver().getFullName() : null)
+                    .driverId(driver != null ? driver.getId() : null)
+                    .driverName(driver != null ? driver.getFullName() : null)
                     .fuelDate(record.getFuelDate())
                     .quantity(record.getQuantity())
                     .costPerLitre(record.getCostPerLitre())
@@ -475,7 +484,12 @@ public class FuelService {
 
     private FuelRecordResponse toResponseWithEfficiency(FuelRecord record) {
         FuelRecordResponse response = toResponse(record);
-        List<FuelRecord> vehicleRecords = fuelRecordRepository.findLatestByVehicle(record.getVehicle().getId());
+        Vehicle vehicle = record.getVehicle();
+        if (vehicle == null) {
+            return response;
+        }
+
+        List<FuelRecord> vehicleRecords = fuelRecordRepository.findLatestByVehicle(vehicle.getId());
 
         for (int index = 0; index < vehicleRecords.size(); index++) {
             if (vehicleRecords.get(index).getId().equals(record.getId()) && index + 1 < vehicleRecords.size()) {

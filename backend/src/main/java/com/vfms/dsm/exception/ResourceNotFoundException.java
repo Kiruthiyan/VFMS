@@ -1,7 +1,2 @@
-package com.vfms.dsm.exception;
-
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String message) {
-        super(message);
-    }
-}
+// This file is intentionally left blank. Exception moved to
+// com.vfms.common.exception.ResourceNotFoundException
