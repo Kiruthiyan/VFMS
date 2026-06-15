@@ -76,8 +76,11 @@ export const useAuthStore = create<AuthState>()(
             accessToken: profile.accessToken ?? accessToken,
             refreshToken: profile.refreshToken ?? refreshToken,
           });
-          setAuthCookies(accessToken, profile.role);
-        } catch {
+
+          const nextAccessToken = profile.accessToken ?? accessToken;
+          if (nextAccessToken) {
+            setAuthCookies(nextAccessToken, profile.role);
+          }
           get().clearAuth();
         }
       },
