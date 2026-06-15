@@ -279,7 +279,7 @@ class FuelServiceTest {
         FuelRecord record = FuelRecord.builder()
                 .id(recordId)
                 .vehicle(Vehicle.builder().id(101L).plateNumber("ABC-1234").brand("Toyota").model("Camry").build())
-                .driver(Driver.builder().id(driverId).fullName("Test Driver").build())
+                .driver(testDriver(driverId, "Test Driver"))
                 .fuelDate(LocalDate.of(2026, 6, 10))
                 .quantity(new BigDecimal("40.00"))
                 .costPerLitre(new BigDecimal("350.00"))
@@ -357,6 +357,25 @@ class FuelServiceTest {
                 () -> fuelService.getByDateRange("not-a-date", "2024-01-31", null, null));
         assertTrue(ex.getErrors().containsKey("from"));
         verify(fuelRecordRepository, never()).findByDateRange(any(), any());
+    }
+
+    @Test
+    @DisplayName("createFuelRecord should throw 404 when driver does not exist")
+    void createFuelRecord_shouldThrowWhenDriverIsMissing() {
+        CreateFuelRecordRequest req = baseCreateRequest();
+        Vehicle vehicle = Vehicle.builder()
+                .id(Long.valueOf(req.getVehicleId()))
+                .plateNumber("ABC-1234")
+                .brand("Toyota")
+                .model("Camry")
+                .build();
+
+        when(vehicleRepository.findById(Long.valueOf(req.getVehicleId()))).thenReturn(Optional.of(vehicle));
+        when(userRepository.findById(req.getDriverId())).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> fuelService.createFuelRecord(req, null, userDetails));
+        verify(fuelRecordRepository, never()).save(any());
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.vfms.fuel.service;
 
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.vehicle.VehicleStatus;
 import com.vfms.user.entity.User;
@@ -422,6 +423,9 @@ public class FuelService {
     }
 
     private void validateDriverEligibility(User driver) {
+        if (driver.getRole() != Role.DRIVER) {
+            throw new ValidationException("Only users with the DRIVER role can be assigned to fuel entries.");
+        }
         UserStatus status = driver.getStatus();
         if (status != UserStatus.APPROVED) {
             throw new ValidationException("Only active drivers can be assigned to fuel entries.");
@@ -431,7 +435,7 @@ public class FuelService {
     private record DriverFields(UUID id, String name) {}
 
     private DriverFields resolveDriverFields(FuelRecord record) {
-        Driver driver = record.getDriver();
+        User driver = record.getDriver();
         if (driver == null) {
             return new DriverFields(null, null);
         }
@@ -439,12 +443,19 @@ public class FuelService {
     }
 
     FuelRecordResponse toResponse(FuelRecord record) {
-//        DriverFields driverFields = resolveDriverFields(record);
+        DriverFields driverFields = resolveDriverFields(record);
+        Vehicle vehicle = record.getVehicle();
+        String vehicleId = vehicle != null ? String.valueOf(vehicle.getId()) : null;
+        String vehiclePlate = vehicle != null ? vehicle.getPlateNumber() : null;
+        String vehicleMakeModel = vehicle != null
+                ? vehicle.getBrand() + " " + vehicle.getModel()
+                : null;
+
         return FuelRecordResponse.builder()
                 .id(record.getId())
-                .vehicleId(String.valueOf(record.getVehicle().getId()))
-                .vehiclePlate(record.getVehicle().getPlateNumber())
-                .vehicleMakeModel(record.getVehicle().getBrand() + " " + record.getVehicle().getModel())
+                .vehicleId(vehicleId)
+                .vehiclePlate(vehiclePlate)
+                .vehicleMakeModel(vehicleMakeModel)
                 .driverId(driverFields.id())
                 .driverName(driverFields.name())
                 .fuelDate(record.getFuelDate())
@@ -465,16 +476,19 @@ public class FuelService {
 
     public FuelRecordResponse toResponseWithRealTimeData(FuelRecord record) {
         try {
-          //
-            VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(record.getVehicle().getId());
+            Vehicle vehicle = record.getVehicle();
+            if (vehicle == null) {
+                return toResponse(record);
+            }
+
+            VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(vehicle.getId());
             DriverFields driverFields = resolveDriverFields(record);
             return FuelRecordResponse.builder()
                     .id(record.getId())
                     .vehicleId(String.valueOf(vehicle.getId()))
                     .vehiclePlate(vehicleDetail.getPlateNumber())
                     .vehicleMakeModel(vehicleDetail.getMake() + " " + vehicleDetail.getModel())
-//
-              .driverId(driverFields.id())
+                    .driverId(driverFields.id())
                     .driverName(driverFields.name())
                     .fuelDate(record.getFuelDate())
                     .quantity(record.getQuantity())

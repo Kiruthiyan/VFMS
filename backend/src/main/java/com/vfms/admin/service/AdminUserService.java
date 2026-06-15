@@ -49,8 +49,6 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
     private final UserManagementProperties userManagementProperties;
     private final EmployeeRegistryRepository employeeRegistryRepository;
-//
-  private final DriverRepository driverRepository;
     private final RefreshTokenService refreshTokenService;
 
     @Transactional
@@ -137,9 +135,8 @@ public class AdminUserService {
             String employeeId,
             UUID excludeUserId
     ) {
-        EmployeeRegistryRecord staffRecord = findVerifiedStaffRecordForProvisioning(
-                employeeId, excludeUserId);
-        return toVerifiedStaffProfile(staffRecord);
+        EmployeeRegistryRecord staffRecord = findActiveRegistryRecord(employeeId);
+        return toVerifiedStaffProfile(staffRecord, excludeUserId);
     }
 
     public List<UserSummaryResponse> getAllUsers() {
@@ -196,9 +193,6 @@ public class AdminUserService {
             throw new ValidationException(
                     "User is not in PENDING_APPROVAL status. Current status: " + user.getStatus());
         }
-
-        Role oldRole = user.getRole();
-        String oldEmployeeId = user.getEmployeeId();
 
         if (request.getDecision() == ReviewDecision.APPROVE) {
             if (request.getAssignedRole() != null && request.getAssignedRole() != user.getRole()) {
@@ -257,9 +251,6 @@ public class AdminUserService {
             assertNotLastActiveAdmin(user);
         }
 
-        Role oldRole = user.getRole();
-        String oldEmployeeId = user.getEmployeeId();
-
         // Preserve the previous lifecycle state so an administrator can restore the
         // account without losing whether it was approved or deactivated beforehand.
         user.setStatusBeforeDeletion(user.getStatus());
@@ -268,10 +259,8 @@ public class AdminUserService {
         user.setDeletedBy(SecurityContextProvider.getCurrentUserEmail());
         user.setStatus(UserStatus.DEACTIVATED);
         userRepository.save(user);
-//
-        revokeUserSessions(user);
 
-        syncDriverRecord(user, oldRole, oldEmployeeId);
+        revokeUserSessions(user);
 
         log.info("[ADMIN-DELETE] User soft-deleted: {} ({}). Reason: {}",
                 user.getFullName(), user.getEmail(), request.getReason());
@@ -279,14 +268,12 @@ public class AdminUserService {
 
     @Transactional
     public void restoreUser(UUID userId) {
+        assertActorCanManageUsers();
         User user = findUser(userId);
 
         if (user.getDeletedAt() == null) {
             throw new ValidationException("User is not deleted and cannot be restored.");
         }
-
-        Role oldRole = user.getRole();
-        String oldEmployeeId = user.getEmployeeId();
 
         UserStatus restoredStatus = user.getStatusBeforeDeletion() != null
                 ? user.getStatusBeforeDeletion()
@@ -315,9 +302,6 @@ public class AdminUserService {
 
         assertNotSelf(user);
 
-        Role oldRole = user.getRole();
-        String oldEmployeeId = user.getEmployeeId();
-
         if (user.getStatus() == UserStatus.APPROVED) {
             if (user.getRole() == Role.ADMIN) {
                 assertNotLastActiveAdmin(user);
@@ -343,9 +327,6 @@ public class AdminUserService {
         if (user.getDeletedAt() != null) {
             throw new ValidationException("Cannot edit a deleted user.");
         }
-
-        Role oldRole = user.getRole();
-        String oldEmployeeId = user.getEmployeeId();
 
         Role targetRole = request.getRole() != null ? request.getRole() : user.getRole();
         boolean roleChanged = targetRole != user.getRole();
@@ -387,6 +368,7 @@ public class AdminUserService {
         }
 
         if (roleChanged) {
+            assertNotSelf(user);
             assertAdminRoleAssignment(targetRole);
             if (user.getRole() == Role.ADMIN && targetRole != Role.ADMIN) {
                 assertNotLastActiveAdmin(user);
@@ -459,7 +441,7 @@ public class AdminUserService {
             return;
         }
 
-        if (userRepository.countByRoleAndDeletedAtIsNull(Role.ADMIN) <= 1) {
+        if (userRepository.countByRoleAndStatusAndDeletedAtIsNull(Role.ADMIN, UserStatus.APPROVED) <= 1) {
             throw new ValidationException("Cannot remove or demote the last administrator account.");
         }
     }
@@ -685,13 +667,9 @@ public class AdminUserService {
     }
 
     /**
-     * Loads a verified staff record and blocks duplicate VFMS accounts for the
-     * same employee identity before a staff account is created or reassigned.
+     * Loads an active company registry record without checking VFMS account conflicts.
      */
-    private EmployeeRegistryRecord findVerifiedStaffRecordForProvisioning(
-            String employeeId,
-            UUID excludeUserId
-    ) {
+    private EmployeeRegistryRecord findActiveRegistryRecord(String employeeId) {
         String normalizedEmployeeId = normalizeIdentifier(employeeId);
         if (normalizedEmployeeId == null) {
             throw new ValidationException("Validation failed", Map.of(
@@ -711,40 +689,96 @@ public class AdminUserService {
             ));
         }
 
-        boolean duplicateEmployeeId = excludeUserId == null
-                ? userRepository.existsByEmployeeIdAndDeletedAtIsNull(staffRecord.getEmployeeId())
-                : userRepository.existsByEmployeeIdAndDeletedAtIsNullAndIdNot(
-                        staffRecord.getEmployeeId(), excludeUserId);
-        if (duplicateEmployeeId) {
-            throw new ValidationException("Validation failed", Map.of(
-                    "employeeId", "A user account already exists for this staff member."
-            ));
-        }
-
-        boolean duplicateEmail = excludeUserId == null
-                ? userRepository.existsByEmailAndDeletedAtIsNull(staffRecord.getEmail())
-                : userRepository.existsByEmailAndDeletedAtIsNullAndIdNot(
-                        staffRecord.getEmail(), excludeUserId);
-        if (duplicateEmail) {
-            throw new ValidationException("Validation failed", Map.of(
-                    "email", "An active account with this staff email already exists."
-            ));
-        }
-
         return staffRecord;
     }
 
-    private VerifiedStaffProfileResponse toVerifiedStaffProfile(EmployeeRegistryRecord staffRecord) {
-        return VerifiedStaffProfileResponse.builder()
-                .employeeId(staffRecord.getEmployeeId())
-                .fullName(staffRecord.getFullName())
-                .email(staffRecord.getEmail())
-                .phone(normalizePhone(staffRecord.getPhone()))
-                .nic(normalizeNic(staffRecord.getNic()))
-                .department(staffRecord.getDepartment())
-                .designation(staffRecord.getDesignation())
-                .officeLocation(staffRecord.getOfficeLocation())
-                .build();
+    /**
+     * Loads a verified staff record and blocks duplicate VFMS accounts for the
+     * same employee identity before a staff account is created or reassigned.
+     */
+    private EmployeeRegistryRecord findVerifiedStaffRecordForProvisioning(
+            String employeeId,
+            UUID excludeUserId
+    ) {
+        EmployeeRegistryRecord staffRecord = findActiveRegistryRecord(employeeId);
+        assertNoStaffProvisioningConflicts(staffRecord, excludeUserId);
+        return staffRecord;
+    }
+
+    private void assertNoStaffProvisioningConflicts(
+            EmployeeRegistryRecord staffRecord,
+            UUID excludeUserId
+    ) {
+        User conflictingUser = findConflictingUserForStaffRecord(staffRecord, excludeUserId)
+                .orElse(null);
+        if (conflictingUser == null) {
+            return;
+        }
+
+        String roleLabel = formatRoleLabel(conflictingUser.getRole());
+        if (staffRecord.getEmployeeId().equalsIgnoreCase(conflictingUser.getEmployeeId())) {
+            throw new ValidationException("Validation failed", Map.of(
+                    "employeeId",
+                    "A user account already exists for this staff member (existing role: "
+                            + roleLabel + "). Review the account in All Users."
+            ));
+        }
+
+        throw new ValidationException("Validation failed", Map.of(
+                "email",
+                "An active account with this staff email already exists (existing role: "
+                        + roleLabel + "). Review the account in All Users."
+        ));
+    }
+
+    private java.util.Optional<User> findConflictingUserForStaffRecord(
+            EmployeeRegistryRecord staffRecord,
+            UUID excludeUserId
+    ) {
+        java.util.Optional<User> byEmployeeId = excludeUserId == null
+                ? userRepository.findByEmployeeIdAndDeletedAtIsNull(staffRecord.getEmployeeId())
+                : userRepository.findByEmployeeIdAndDeletedAtIsNull(staffRecord.getEmployeeId())
+                        .filter(user -> !user.getId().equals(excludeUserId));
+        if (byEmployeeId.isPresent()) {
+            return byEmployeeId;
+        }
+
+        java.util.Optional<User> byEmail = excludeUserId == null
+                ? userRepository.findByEmailAndDeletedAtIsNull(staffRecord.getEmail())
+                : userRepository.findByEmailAndDeletedAtIsNull(staffRecord.getEmail())
+                        .filter(user -> !user.getId().equals(excludeUserId));
+        return byEmail;
+    }
+
+    private String formatRoleLabel(Role role) {
+        return role.name().replace('_', ' ');
+    }
+
+    private VerifiedStaffProfileResponse toVerifiedStaffProfile(
+            EmployeeRegistryRecord staffRecord,
+            UUID excludeUserId
+    ) {
+        java.util.Optional<User> conflictingUser =
+                findConflictingUserForStaffRecord(staffRecord, excludeUserId);
+
+        VerifiedStaffProfileResponse.VerifiedStaffProfileResponseBuilder builder =
+                VerifiedStaffProfileResponse.builder()
+                        .employeeId(staffRecord.getEmployeeId())
+                        .fullName(staffRecord.getFullName())
+                        .email(staffRecord.getEmail())
+                        .phone(normalizePhone(staffRecord.getPhone()))
+                        .nic(normalizeNic(staffRecord.getNic()))
+                        .department(staffRecord.getDepartment())
+                        .designation(staffRecord.getDesignation())
+                        .officeLocation(staffRecord.getOfficeLocation())
+                        .accountAlreadyExists(false);
+
+        conflictingUser.ifPresent(user -> builder
+                .accountAlreadyExists(true)
+                .existingAccountId(user.getId())
+                .existingAccountRole(user.getRole()));
+
+        return builder.build();
     }
 
     private UserSummaryResponse toSummary(User user) {

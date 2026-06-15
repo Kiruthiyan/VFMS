@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -59,6 +61,20 @@ public class GlobalExceptionHandler {
 
         log.warn("Method argument validation failed: {}", message);
         return build(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = "Invalid value for parameter '" + ex.getName() + "'.";
+        log.warn("Type mismatch: {}", message);
+        return build(HttpStatus.BAD_REQUEST, message, Map.of(ex.getName(), message));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException ex) {
+        String message = "Required parameter '" + ex.getParameterName() + "' is missing.";
+        log.warn("Missing request parameter: {}", message);
+        return build(HttpStatus.BAD_REQUEST, message, Map.of(ex.getParameterName(), message));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

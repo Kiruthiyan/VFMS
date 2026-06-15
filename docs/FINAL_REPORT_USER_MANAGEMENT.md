@@ -2,7 +2,8 @@
 
 **Module:** User Management (Admin)  
 **Branch:** `test3/kiruthiyan`  
-**Status:** Delivered (admin CRUD + review flows working)
+**Status:** Delivered (admin CRUD + staff registry integration)  
+**Last updated:** June 2026
 
 ---
 
@@ -16,6 +17,7 @@ Administrator provisioning and lifecycle for all VFMS user roles:
 - Edit profile and role-specific fields
 - Soft delete, restore, activate / deactivate
 - Staff (`SYSTEM_USER`) tied to employee registry
+- Admin employee registry list and create
 
 Requires authenticated **ADMIN** role.
 
@@ -23,7 +25,7 @@ Requires authenticated **ADMIN** role.
 
 ## 2. Backend
 
-### Controller
+### User controller
 
 `backend/src/main/java/com/vfms/admin/controller/AdminUserController.java`  
 Base: `/api/admin/users` · Class: `@PreAuthorize("hasRole('ADMIN')")`
@@ -43,16 +45,48 @@ Base: `/api/admin/users` · Class: `@PreAuthorize("hasRole('ADMIN')")`
 | PATCH | `/api/admin/users/{userId}/toggle-status` | APPROVED ↔ DEACTIVATED |
 | PUT | `/api/admin/users/{userId}` | Update user |
 
+Staff directory lookup accepts optional `?excludeUserId=` when editing an existing user.
+
+### Employee registry controller (new)
+
+`backend/src/main/java/com/vfms/admin/controller/AdminEmployeeRegistryController.java`  
+Base: `/api/admin/employee-registry` · `@PreAuthorize("hasRole('ADMIN')")`
+
+| Method | Path | Action |
+|--------|------|--------|
+| GET | `/api/admin/employee-registry` | List all registry records (sorted by employee ID) |
+| POST | `/api/admin/employee-registry` | Create registry record |
+
+Service: `AdminEmployeeRegistryService` — normalizes employee ID (uppercase), email (lowercase), NIC, phone; rejects duplicate employee ID and email.
+
+DTOs: `CreateEmployeeRegistryRequest`, `EmployeeRegistrySummaryResponse`.
+
 ### Service highlights (`AdminUserService`)
 
 **Create**
 
 - Validates unique email among non-deleted users
 - Role-specific validation (driver license, approver level, etc.)
-- `SYSTEM_USER`: loads verified `employee_registry` record; applies registry fields
+- `SYSTEM_USER`: loads verified `employee_registry` via `findVerifiedStaffRecordForProvisioning`; applies registry fields
 - Generates secure temp password (`vfms.user.temp-password.*` config)
 - Sets `APPROVED`, `emailVerified=true`, `passwordChangeRequired=true`, `createdByAdmin=true`
 - Sends welcome email with temp password
+
+**Staff lookup vs provisioning (duplicate fix)**
+
+| Operation | Method | Behavior |
+|-----------|--------|----------|
+| Lookup | `getVerifiedStaffProfile` → `findActiveRegistryRecord` | Returns registry data + conflict flags; **does not throw** on email/employeeId conflict |
+| Create / update SYSTEM_USER | `findVerifiedStaffRecordForProvisioning` → `assertNoStaffProvisioningConflicts` | **Blocks** duplicate VFMS accounts with role-aware field errors |
+
+**`VerifiedStaffProfileResponse`** (`admin/dto/VerifiedStaffProfileResponse.java`):
+
+- Registry fields: `employeeId`, `fullName`, `email`, `phone`, `nic`, `department`, `designation`, `officeLocation`
+- Conflict fields: `accountAlreadyExists`, `existingAccountId`, `existingAccountRole`
+
+Conflict detection uses `UserRepository.findByEmployeeIdAndDeletedAtIsNull` and `findByEmailAndDeletedAtIsNull`, respecting `excludeUserId` on edit.
+
+Provisioning errors include existing role label (e.g. `ADMIN`) and direct admin to review **All Users** (conflicting account may not appear in Staff filter).
 
 **Review**
 
@@ -65,14 +99,28 @@ Base: `/api/admin/users` · Class: `@PreAuthorize("hasRole('ADMIN')")`
 - Sets `deletedAt`, `deletedReason`, `deletedBy`
 - Preserves prior status in `statusBeforeDeletion`
 - Sets `DEACTIVATED`, blocks login
+- Blocks self-delete and last active admin
 
 **Restore**
 
 - Clears delete fields; restores previous status or `APPROVED`
+- Requires `assertActorCanManageUsers()`
 
 **Toggle status**
 
 - `APPROVED` ↔ `DEACTIVATED` only (non-deleted)
+- Blocks self-modification and last active admin deactivation
+
+**Update**
+
+- Blocks self role changes
+- `SYSTEM_USER` role uses same provisioning duplicate checks as create
+
+**Re-audit guards**
+
+- Self delete / deactivate / toggle / role-change blocked
+- Last active admin protected via `countByRoleAndStatusAndDeletedAtIsNull(Role.ADMIN, UserStatus.APPROVED)`
+- Removed broken `syncDriverRecord` / `DriverRepository` from admin user flow
 
 ### Roles and statuses
 
@@ -91,13 +139,14 @@ Base: `/api/admin/users` · Class: `@PreAuthorize("hasRole('ADMIN')")`
 ### Employee registry
 
 - CSV template: `backend/src/main/resources/data/employee-registry.csv`
-- Entity: `employee_registry` table
+- Entity: `employee_registry` table (`EmployeeRegistryRecord`)
 - Staff create/edit must match active registry row (employee ID, email, NIC, phone)
+- Admin can add records via API/UI (see Frontend)
 
 ### Security
 
 - HTTP: `SecurityConfig` → `/api/admin/**` requires `ROLE_ADMIN`
-- Method: `@PreAuthorize` on controller
+- Method: `@PreAuthorize` on controllers
 
 ### DataSeeder alignment
 
@@ -114,25 +163,32 @@ Base: `/api/admin/users` · Class: `@PreAuthorize("hasRole('ADMIN')")`
 | `/admin/users` | Overview — counts, recent users |
 | `/admin/users/all` | Full table + status filter + review actions |
 | `/admin/users/create` | Create user form |
+| `/admin/users/registry` | Staff registry list + add record form |
 | `/admin/users/deleted` | Deleted users + restore |
 
 No separate `/admin/users/pending` page — use **All Users** filter `PENDING_APPROVAL`.
 
 ### Components
 
-| Component | File |
-|-----------|------|
-| Create form | `components/admin/users/create-user-form.tsx` |
-| User table | `components/admin/users/user-table.tsx` |
-| Edit dialog | `components/admin/users/edit-user-dialog.tsx` |
-| Delete dialog | `components/admin/users/delete-user-dialog.tsx` |
-| Review dialog | `components/admin/users/review-dialog.tsx` |
-| Nav | `components/admin/users/user-management-nav.tsx` |
-| Role/status badges | `user-role-badge.tsx`, `user-status-badge.tsx` |
+| Component | File | Notes |
+|-----------|------|-------|
+| Create form | `components/admin/users/create-user-form.tsx` | Staff lookup; conflict banner; submit disabled on conflict; link to All Users |
+| Edit dialog | `components/admin/users/edit-user-dialog.tsx` | Same conflict UX; `excludeUserId` on staff lookup |
+| Registry form | `components/admin/users/employee-registry-form.tsx` | Add registry record |
+| User table | `components/admin/users/user-table.tsx` | Self delete/deactivate/toggle disabled |
+| Delete dialog | `components/admin/users/delete-user-dialog.tsx` | Soft delete with reason |
+| Review dialog | `components/admin/users/review-dialog.tsx` | Approve/reject pending users |
+| Nav | `components/admin/users/user-management-nav.tsx` | 5 sections incl. Staff Registry |
+| Role/status badges | `user-role-badge.tsx`, `user-status-badge.tsx` | Display helpers |
 
 ### API client
 
-`frontend/src/lib/api/admin.ts` — all CRUD + review + registry lookup (no wrapper for `GET /pending`; use filtered list).
+`frontend/src/lib/api/admin.ts`:
+
+- User CRUD, review, counts, registry lookup
+- `VerifiedStaffProfile` with `accountAlreadyExists`, `existingAccountId`, `existingAccountRole`
+- `getEmployeeRegistryApi`, `createEmployeeRegistryApi`
+- No wrapper for `GET /pending`; use filtered `getAllUsersApi`
 
 ### Constants
 
@@ -142,6 +198,13 @@ No separate `/admin/users/pending` page — use **All Users** filter `PENDING_AP
 
 - `frontend/src/app/admin/layout.tsx` — `<RoleGuard allowedRole="ADMIN">`
 - `frontend/src/components/layout/admin-shell.tsx` — admin chrome + nav
+
+### Staff provisioning UX
+
+1. Admin adds registry row at `/admin/users/registry` (or via CSV seed).
+2. On create SYSTEM_USER: enter employee ID → **Load Details** → read-only identity from registry.
+3. If `accountAlreadyExists`: red warning shows existing role; explains conflict may not appear in Staff list; link to **All Users**; submit disabled.
+4. Server still enforces `assertNoStaffProvisioningConflicts` on create/update.
 
 ---
 
@@ -163,11 +226,17 @@ Temp password charset in `application-dev.properties` under `vfms.user.temp-pass
 
 ## 5. Tests
 
-- `backend/src/test/java/com/vfms/admin/service/AdminUserServiceTest.java`
+| File | Coverage |
+|------|----------|
+| `AdminUserServiceTest` | 14+ cases — CRUD guards, soft-delete, toggle, normalization, role field clearing, staff lookup-with-warning, create-blocked-on-email-conflict, self/last-admin guards |
+| `AdminEmployeeRegistryServiceTest` | 2 cases — normalized create, duplicate employee ID rejection |
+| `AdminUserControllerSecurityTest` | AuthZ smoke — 401/403/200 for admin routes |
+
+No frontend tests for admin/registry UI yet. No `AdminEmployeeRegistryController` integration tests yet.
 
 ```bash
 cd backend
-./mvnw test -Dtest=AdminUserServiceTest
+./mvnw.cmd test -Dtest=AdminUserServiceTest,AdminEmployeeRegistryServiceTest,AdminUserControllerSecurityTest
 ```
 
 ---
@@ -178,6 +247,10 @@ cd backend
 - `DataSeeder` demo cleanup aligned with admin soft-delete
 - Shared `ROLE_GUIDANCE` constant (deduped from forms)
 - Admin layout + `RoleGuard` on `/admin/*`
+- **Staff email duplicate fix:** lookup succeeds with conflict flags; create/update blocked with role-aware messages
+- **Staff Registry admin API + UI** at `/admin/users/registry`
+- **Admin self-modification and last-admin protections**
+- **User table:** self delete/deactivate/toggle disabled
 
 ---
 
@@ -185,10 +258,12 @@ cd backend
 
 | Item | Notes |
 |------|-------|
+| Registry edit/delete/deactivate API | Entity has `active` flag; UI shows status read-only; no admin toggle yet |
+| No frontend tests | Admin user/registry UI untested in Vitest |
 | Dedicated pending page | Optional UX; filter on All Users works |
 | `GET /pending` API wrapper | Backend exists; frontend uses filtered `getAllUsersApi` |
-| Employee registry data | Template CSV only — add real rows for staff signup/create |
 | Welcome email | Depends on SMTP in `.env` |
+| Registry duplicate email test | `AdminEmployeeRegistryServiceTest` covers employee ID only |
 
 ---
 
@@ -196,8 +271,11 @@ cd backend
 
 1. Login as ADMIN.
 2. Open `/admin/users` — confirm counts load.
-3. Create DRIVER and SYSTEM_USER (with registry row).
-4. Self-register staff → appears pending → approve/reject from All Users.
-5. Soft delete → appears on Deleted → restore.
-6. Toggle deactivate on approved user → login blocked.
-7. Login as non-admin → `/admin/users` redirects away.
+3. Add registry row at `/admin/users/registry`.
+4. Create DRIVER and SYSTEM_USER (with registry row).
+5. **Duplicate scenario:** if registry email matches existing ADMIN account, staff profile loads with warning; submit disabled; conflicting user visible at `/admin/users/all`.
+6. Attempt create via API with conflict → 400 with role in email error.
+7. Self-register staff → appears pending → approve/reject from All Users.
+8. Soft delete → appears on Deleted → restore.
+9. Toggle deactivate on approved user → login blocked.
+10. Login as non-admin → `/admin/users` redirects away.

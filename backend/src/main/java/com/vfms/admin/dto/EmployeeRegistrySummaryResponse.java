@@ -1,6 +1,5 @@
 package com.vfms.admin.dto;
 
-import com.vfms.common.enums.Role;
 import lombok.Builder;
 import lombok.Value;
 
@@ -8,7 +7,8 @@ import java.util.UUID;
 
 @Value
 @Builder
-public class VerifiedStaffProfileResponse {
+public class EmployeeRegistrySummaryResponse {
+    UUID id;
     String employeeId;
     String fullName;
     String email;
@@ -17,7 +17,5 @@ public class VerifiedStaffProfileResponse {
     String department;
     String designation;
     String officeLocation;
-    boolean accountAlreadyExists;
-    UUID existingAccountId;
-    Role existingAccountRole;
+    boolean active;
 }

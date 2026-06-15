@@ -2,7 +2,8 @@
 
 **Module:** User Authentication  
 **Branch:** `test3/kiruthiyan`  
-**Status:** Delivered (core flows working)
+**Status:** Delivered (core flows working; session hardening completed in re-audit)  
+**Last updated:** June 2026
 
 ---
 
@@ -32,6 +33,7 @@ Out of scope: OTP-first signup (legacy endpoints remain), non-auth modules.
 | Security | `backend/src/main/java/com/vfms/security/` |
 | User profile | `backend/src/main/java/com/vfms/user/` |
 | Admin seed | `backend/src/main/java/com/vfms/config/DataSeeder.java` |
+| Exception handling | `backend/src/main/java/com/vfms/common/exception/GlobalExceptionHandler.java` |
 
 ### Public API (`permitAll`)
 
@@ -88,10 +90,12 @@ Requires `MAIL_USERNAME` / `MAIL_PASSWORD` in `.env`.
 
 Enabled when `ADMIN_SEED_ENABLED=true` and all seed fields set. Creates one `ADMIN` if none exists. Optional `ADMIN_SEED_CLEANUP_DEMO_USERS=true` soft-deletes other active users.
 
-### Login hardening
+### Login and JWT hardening
 
-- Rejects users with `deletedAt != null` (`CustomUserDetailsService`, `AuthService`)
+- Rejects users with `deletedAt != null` (`CustomUserDetailsService`, `AuthService.validateLoginStatus`)
 - Invalid credentials return generic message (no email enumeration on login)
+- **`JwtAuthenticationFilter`:** returns early **401 JSON** for invalid/expired Bearer tokens, disabled/locked accounts, and user-load failures — no silent pass-through to unauthenticated handlers
+- **`GlobalExceptionHandler`:** returns 400 for malformed UUID path parameters and missing required search parameters (shared with other modules)
 
 ---
 
@@ -115,12 +119,42 @@ Enabled when `ADMIN_SEED_ENABLED=true` and all seed fields set. Creates one `ADM
 
 | File | Role |
 |------|------|
-| `frontend/src/store/auth-store.ts` | Zustand session (persisted) |
-| `frontend/src/lib/api.ts` | Axios + Bearer + 401 refresh |
-| `frontend/src/lib/api/auth.ts` | Auth API wrappers |
-| `frontend/src/components/auth/role-guard.tsx` | Route protection |
+| `frontend/src/store/auth-store.ts` | Zustand session (persisted); `syncSessionFromServer` on rehydrate |
+| `frontend/src/lib/api.ts` | Axios + Bearer + 401 refresh queue |
+| `frontend/src/lib/api/auth.ts` | Auth API wrappers + `AuthApiError` |
+| `frontend/src/components/auth/role-guard.tsx` | Client route protection |
 | `frontend/src/lib/auth-session-routing.ts` | Status-based redirects |
-| `frontend/src/lib/rbac.ts` | Role → dashboard paths |
+| `frontend/src/lib/rbac.ts` | Role → dashboard paths; `vfms-token` / `vfms-role` cookies |
+| `frontend/src/lib/role-context.tsx` | Dashboard RBAC context (`isAdmin`, `canApprove`, etc.) |
+| `frontend/src/lib/roleContext.tsx` | Trips module user context (auth-derived) |
+| `frontend/src/components/providers/dashboard-role-provider.tsx` | Wraps `role-context` in dashboard layout |
+| `frontend/src/proxy.ts` | Cookie-based edge guard logic (see Edge routing below) |
+
+### Session store (`auth-store.ts`)
+
+On Zustand rehydrate, `syncSessionFromServer()` calls `GET /api/user/me`:
+
+- **Success:** updates user/role in store and refreshes cookies
+- **401:** clears session via `clearAuth()`
+- **Other errors (network/5xx):** marks `hydrated: true` but keeps persisted session
+
+`isAuthenticated()` requires token **and** `status === "APPROVED"`.
+
+Duplicate `authStore.ts` removed; all consumers use `auth-store.ts`.
+
+### Role context and demo mode
+
+- `role-context.tsx` — effective role from auth store; demo role override only when `NEXT_PUBLIC_ENABLE_DEMO_ROLE=true`
+- `Topbar.tsx` — hides demo role picker when demo mode is disabled (production default)
+- Trips pages use `roleContext.tsx` separately from dashboard RBAC
+
+### Edge routing (`proxy.ts` vs middleware)
+
+`frontend/src/proxy.ts` implements cookie checks for `/admin` and `/dashboards` (redirect to login when `vfms-token` missing; role mismatch redirect).
+
+**There is no active `middleware.ts`** (only `middleware.ts.bak`). `proxy.ts` is not wired as Next.js middleware.
+
+**Primary protection is client-side:** `role-guard.tsx` + `auth-session-routing.ts` + cookies set after login/`syncSessionFromServer`.
 
 ### Session redirects
 
@@ -157,6 +191,9 @@ OTP_VALIDITY_MINUTES=5
 ADMIN_SEED_ENABLED=true
 ADMIN_SEED_EMAIL=...
 ADMIN_SEED_PASSWORD=...
+
+# Optional — dev/demo only
+NEXT_PUBLIC_ENABLE_DEMO_ROLE=false
 ```
 
 ---
@@ -165,18 +202,27 @@ ADMIN_SEED_PASSWORD=...
 
 ### Backend
 
-- `AuthControllerTest` — OTP validation
-- `AuthServiceTest` — login, register, staff verify, email verify
-- `PasswordServiceTest` — change password validation
+| File | Coverage |
+|------|----------|
+| `AuthControllerTest` | Legacy OTP validation/normalization |
+| `AuthServiceTest` | Login, register, staff verify, email auto-approve |
+| `PasswordServiceTest` | Change-password validation |
+
+No dedicated `JwtAuthenticationFilter` or `SecurityConfig` integration tests yet.
 
 ```bash
 cd backend
-./mvnw test -Dtest=AuthControllerTest,AuthServiceTest,PasswordServiceTest
+./mvnw.cmd test -Dtest=AuthControllerTest,AuthServiceTest,PasswordServiceTest
 ```
 
 ### Frontend
 
-- `auth-store.test.ts`, `auth-api.test.ts`, `api.test.ts`, `signup-schema.test.ts`
+| File | Coverage |
+|------|----------|
+| `src/__tests__/store/auth-store.test.ts` | setAuth, clearAuth, approval gate, `syncSessionFromServer` success + 401 (6 cases) |
+| `src/__tests__/lib/auth-api.test.ts` | Login error mapping, signup field errors |
+| `src/__tests__/lib/api.test.ts` | Interceptors, auth store integration |
+| `src/__tests__/lib/signup-schema.test.ts` | Signup Zod validation |
 
 ```bash
 cd frontend
@@ -187,13 +233,20 @@ npm test
 
 ## 6. Completed fixes (this branch)
 
-- JWT injection + 401 refresh in `api.ts`
-- Legacy `/dashboard/**` removed; catch-all redirect only
-- Demo `RoleProvider` removed from root layout
-- `passwordChangeRequired` enforced in login + guards
-- Deleted-user login blocked
-- Consolidated role redirect maps (`ROLE_HOME` in `rbac.ts`)
-- Button `Slot` fix; Zod v4 + `@hookform/resolvers` v5 for forms
+| Fix | Detail |
+|-----|--------|
+| JWT injection + 401 refresh | `api.ts` single-flight refresh queue |
+| Legacy `/dashboard/**` | Catch-all redirect only |
+| Demo `RoleProvider` | Removed from root layout |
+| `passwordChangeRequired` | Enforced in login + guards |
+| Deleted-user login | Blocked at service and `UserDetailsService` layers |
+| Role redirect maps | Consolidated `ROLE_HOME` in `rbac.ts` |
+| Form stack | Button `Slot` fix; Zod v4 + `@hookform/resolvers` v5 |
+| **Session sync bug** | `syncSessionFromServer` no longer calls `clearAuth()` after successful `/me` |
+| **JWT 401 handling** | Invalid token returns JSON 401 before controller |
+| **Demo role safety** | Env-gated demo role override in `role-context.tsx` |
+| **Auth store tests** | Vitest coverage for hydration + 401 sync path |
+| **Store consolidation** | Removed duplicate `authStore.ts` |
 
 ---
 
@@ -201,10 +254,13 @@ npm test
 
 | Item | Notes |
 |------|-------|
+| Edge middleware not wired | `proxy.ts` exists but no active `middleware.ts`; direct URL access relies on client guards + cookies |
+| Dual role contexts | `role-context.tsx` (dashboard RBAC) vs `roleContext.tsx` (trips) |
 | Legacy OTP signup | Endpoints exist; signup UI uses registry flow |
 | `/api/auth/logout` public | Works without Bearer; refresh cleared when authenticated |
-| `/api/**` permitAll fallback | Other modules still open — see SECURITY_REMEDIATION.md |
-| Email OTP copy vs config | Frontend `email-config.ts` still hardcodes 5 min text |
+| `/api/**` permitAll fallback | Vehicles, trips, maintenance, rental, etc. still open at HTTP layer |
+| Email OTP copy vs config | Frontend may hardcode 5 min text while backend uses `OTP_VALIDITY_MINUTES` |
+| `syncSessionFromServer` non-401 errors | Network/5xx keeps stale persisted session |
 
 ---
 
@@ -213,5 +269,7 @@ npm test
 1. Start backend with `backend/.env` (Supabase + JWT + seed).
 2. Start frontend: `cd frontend && npm run dev`.
 3. Login admin → forced password change if seeded.
-4. Register staff with row in `employee-registry.csv` imported to DB.
+4. Register staff with row in `employee_registry` (via admin registry UI or CSV import).
 5. Check email verification and admin approval path.
+6. **Rehydrate test:** login → hard refresh → session persists and `/me` refreshes user/role.
+7. **Invalid token test:** corrupt or remove `vfms-token` cookie → API returns 401 and session clears on next sync.

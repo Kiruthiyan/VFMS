@@ -26,6 +26,7 @@ import { EditUserDialog } from "./edit-user-dialog";
 import { ReviewDialog } from "./review-dialog";
 import { UserRoleBadge } from "./user-role-badge";
 import { UserStatusBadge } from "./user-status-badge";
+import { useAuthStore } from "@/store/auth-store";
 
 interface UserTableProps {
   users: UserSummary[];
@@ -72,6 +73,9 @@ export function UserTable({
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const currentUserId = useAuthStore((state) => state.user?.userId);
+
+  const isSelf = (user: UserSummary) => user.id === currentUserId;
 
   const handleToggleStatus = async (user: UserSummary) => {
     setTogglingId(user.id);
@@ -248,16 +252,18 @@ export function UserTable({
                           <button
                             type="button"
                             onClick={() => handleToggleStatus(user)}
-                            disabled={togglingId === user.id}
+                            disabled={togglingId === user.id || isSelf(user)}
                             className={`rounded-xl p-2 transition-colors disabled:opacity-40 ${
                               user.status === "APPROVED"
                                 ? "text-amber-600 hover:bg-amber-50"
                                 : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
                             }`}
                             title={
-                              user.status === "APPROVED"
-                                ? "Deactivate"
-                                : "Reactivate"
+                              isSelf(user)
+                                ? "You cannot change your own status"
+                                : user.status === "APPROVED"
+                                  ? "Deactivate"
+                                  : "Reactivate"
                             }
                           >
                             {user.status === "APPROVED" ? (
@@ -272,8 +278,13 @@ export function UserTable({
                           <button
                             type="button"
                             onClick={() => setDeletingUser(user)}
-                            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                            title="Delete"
+                            disabled={isSelf(user)}
+                            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                            title={
+                              isSelf(user)
+                                ? "You cannot delete your own account"
+                                : "Delete"
+                            }
                           >
                             <Trash2 size={14} />
                           </button>

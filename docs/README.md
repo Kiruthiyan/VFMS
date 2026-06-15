@@ -7,6 +7,16 @@
 | [FINAL_REPORT_USER_AUTHENTICATION.md](FINAL_REPORT_USER_AUTHENTICATION.md) | Auth module — final delivery report |
 | [FINAL_REPORT_USER_MANAGEMENT.md](FINAL_REPORT_USER_MANAGEMENT.md) | Admin user management — final delivery report |
 | [FINAL_REPORT_FUEL_MANAGEMENT.md](FINAL_REPORT_FUEL_MANAGEMENT.md) | Fuel module — final delivery report |
-| [FINAL_REPORT_SUMMARY.md](FINAL_REPORT_SUMMARY.md) | Cross-module summary and checklist |
+| FINAL_REPORT_SUMMARY.md | Cross-module summary *(planned — not yet written)* |
+
+**Last updated:** June 2026
 
 Branch: `test3/kiruthiyan` · Stack: Spring Boot 3.4 + Next.js · DB: Supabase PostgreSQL
+
+### Module status (quick reference)
+
+| Module | Status |
+|--------|--------|
+| User Authentication | Delivered — core flows + session/JWT hardening |
+| User Management | Delivered — admin CRUD + staff registry integration |
+| Fuel Management | Delivered — backend complete; frontend partial (no edit UI) |

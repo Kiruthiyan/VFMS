@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { LoaderCircle, SearchCheck } from "lucide-react";
+import Link from "next/link";
 
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -78,6 +79,7 @@ export function CreateUserForm({
   const showDriverFields = selectedRole === "DRIVER";
   const showStaffFields = selectedRole === "SYSTEM_USER";
   const showApproverFields = selectedRole === "APPROVER";
+  const staffAccountConflict = staffProfile?.accountAlreadyExists ?? false;
   const normalizedEmployeeId = watchedEmployeeId?.trim().toUpperCase() ?? "";
 
   const setStaffFormValues = useCallback((profile: VerifiedStaffProfile | null) => {
@@ -183,6 +185,13 @@ export function CreateUserForm({
         type: "manual",
         message: "Load the verified staff profile before creating this account.",
       });
+      return;
+    }
+
+    if (showStaffFields && staffAccountConflict) {
+      setServerError(
+        "This staff member already has an active VFMS account. Review the existing account in All Users before creating a duplicate."
+      );
       return;
     }
 
@@ -296,6 +305,29 @@ export function CreateUserForm({
               <p className="mt-1 text-sm text-amber-900">
                 Review the registry details below before creating the user account.
               </p>
+            </div>
+          )}
+
+          {staffAccountConflict && staffProfile?.existingAccountRole && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-sm font-semibold text-red-950">
+                Active account already exists for this staff member
+              </p>
+              <p className="mt-1 text-sm leading-6 text-red-900">
+                VFMS found an existing{" "}
+                <span className="font-semibold">
+                  {ROLE_LABELS[staffProfile.existingAccountRole]}
+                </span>{" "}
+                account using this employee identity. Staff accounts are separate from
+                admin, driver, and approver accounts, so the conflicting account may not
+                appear in the Staff list.
+              </p>
+              <Link
+                href="/admin/users/all"
+                className="mt-3 inline-flex text-sm font-semibold text-red-950 underline underline-offset-2 hover:text-red-800"
+              >
+                Review all users
+              </Link>
             </div>
           )}
 
@@ -595,7 +627,7 @@ export function CreateUserForm({
         )}
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || staffAccountConflict}
           className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting && <LoadingSpinner size={14} />}

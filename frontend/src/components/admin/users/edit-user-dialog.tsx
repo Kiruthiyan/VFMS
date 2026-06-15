@@ -1,6 +1,7 @@
 "use client";
 
 import { LoaderCircle, SearchCheck, X } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -55,6 +56,9 @@ export function EditUserDialog({
           department: user.department ?? "",
           designation: user.designation ?? "",
           officeLocation: user.officeLocation ?? "",
+          accountAlreadyExists: false,
+          existingAccountId: null,
+          existingAccountRole: null,
         }
       : null
   );
@@ -96,6 +100,7 @@ export function EditUserDialog({
   const showDriverFields = selectedRole === "DRIVER";
   const showStaffFields = selectedRole === "SYSTEM_USER";
   const showApproverFields = selectedRole === "APPROVER";
+  const staffAccountConflict = staffProfile?.accountAlreadyExists ?? false;
   const normalizedEmployeeId = watchedEmployeeId?.trim().toUpperCase() ?? "";
 
   const setStaffFormValues = useCallback((profile: VerifiedStaffProfile | null) => {
@@ -232,6 +237,13 @@ export function EditUserDialog({
       return;
     }
 
+    if (showStaffFields && staffAccountConflict) {
+      setServerError(
+        "Another active VFMS account already uses this staff identity. Review the existing account in All Users before saving."
+      );
+      return;
+    }
+
     try {
       const updated = await updateUserApi(user.id, data);
       toast.success("User details updated.");
@@ -364,6 +376,27 @@ export function EditUserDialog({
                   <p className="mt-1 text-sm text-emerald-800">
                     Confirm these registry details before saving the updated account.
                   </p>
+                </div>
+              )}
+
+              {staffAccountConflict && staffProfile?.existingAccountRole && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                  <p className="text-sm font-semibold text-red-950">
+                    Another active account already uses this staff identity
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-red-900">
+                    VFMS found an existing{" "}
+                    <span className="font-semibold">
+                      {ROLE_LABELS[staffProfile.existingAccountRole]}
+                    </span>{" "}
+                    account for this employee. Review All Users before reassigning this staff record.
+                  </p>
+                  <Link
+                    href="/admin/users/all"
+                    className="mt-3 inline-flex text-sm font-semibold text-red-950 underline underline-offset-2 hover:text-red-800"
+                  >
+                    Review all users
+                  </Link>
                 </div>
               )}
 
@@ -619,7 +652,7 @@ export function EditUserDialog({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || staffAccountConflict}
               className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0B1736] text-sm font-bold text-white shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)] transition-colors hover:bg-[#122347] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting && <LoadingSpinner size={14} />}
