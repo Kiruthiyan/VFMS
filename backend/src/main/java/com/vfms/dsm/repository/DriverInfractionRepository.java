@@ -8,11 +8,11 @@ import java.util.UUID;
 
 public interface DriverInfractionRepository extends JpaRepository<DriverInfraction, Long> {
 
-    List<DriverInfraction> findByDriverIdOrderByCreatedAtDesc(UUID driverId);
+    List<DriverInfraction> findByUserIdOrderByCreatedAtDesc(UUID driverId);
 
-    List<DriverInfraction> findByDriverIdAndResolutionStatusOrderByCreatedAtDesc(UUID driverId, DriverInfraction.ResolutionStatus status);
+    List<DriverInfraction> findByUserIdAndResolutionStatusOrderByCreatedAtDesc(UUID driverId, DriverInfraction.ResolutionStatus status);
 
-    long countByDriverIdAndSeverityAndResolutionStatusNot(
+    long countByUserIdAndSeverityAndResolutionStatusNot(
             UUID driverId,
             DriverInfraction.Severity severity,
             DriverInfraction.ResolutionStatus status

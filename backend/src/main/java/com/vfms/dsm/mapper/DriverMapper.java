@@ -1,69 +1,43 @@
 package com.vfms.dsm.mapper;
 
 import com.vfms.dsm.dto.*;
-import com.vfms.dsm.entity.Driver;
+import com.vfms.user.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DriverMapper {
-    public Driver toEntity(DriverRequest r) {
-        return Driver.builder()
-            .employeeId(r.getEmployeeId())
-            .firstName(r.getFirstName())
-            .lastName(r.getLastName())
-            .nic(r.getNic())
-            .dateOfBirth(r.getDateOfBirth())
-            .phone(r.getPhone())
-            .licenseNumber(r.getLicenseNumber())
-            .licenseExpiryDate(r.getLicenseExpiryDate())
-            .email(r.getEmail())
-            .address(r.getAddress())
-            .emergencyContactName(r.getEmergencyContactName())
-            .emergencyContactPhone(r.getEmergencyContactPhone())
-            .department(r.getDepartment())
-            .designation(r.getDesignation())
-            .dateOfJoining(r.getDateOfJoining())
-            .build();
+
+    public DriverResponse toResponse(User d) {
+        return toResponseFromUser(d);
     }
 
-    public DriverResponse toResponse(Driver d) {
+    public DriverResponse toResponseFromUser(User user) {
+        String firstName = user.getFullName() != null ? user.getFullName().trim() : "Driver";
+        String lastName = "";
+        int lastSpaceIdx = firstName.lastIndexOf(' ');
+        if (lastSpaceIdx > 0) {
+            lastName = firstName.substring(lastSpaceIdx + 1);
+            firstName = firstName.substring(0, lastSpaceIdx);
+        }
+
         return DriverResponse.builder()
-            .id(d.getId())
-            .employeeId(d.getEmployeeId())
-            .firstName(d.getFirstName())
-            .lastName(d.getLastName())
-            .nic(d.getNic())
-            .dateOfBirth(d.getDateOfBirth())
-            .phone(d.getPhone())
-            .licenseNumber(d.getLicenseNumber())
-            .licenseExpiryDate(d.getLicenseExpiryDate())
-            .email(d.getEmail())
-            .address(d.getAddress())
-            .emergencyContactName(d.getEmergencyContactName())
-            .emergencyContactPhone(d.getEmergencyContactPhone())
-            .department(d.getDepartment())
-            .designation(d.getDesignation())
-            .dateOfJoining(d.getDateOfJoining())
-            .photoUrl(d.getPhotoUrl())
-            .status(d.getStatus())
-                .createdAt(d.getCreatedAt())
-                .updatedAt(d.getUpdatedAt())
+            .id(user.getId())
+            .employeeId(user.getEmployeeId())
+            .firstName(firstName)
+            .lastName(lastName)
+            .nic(user.getNic())
+            .phone(user.getPhone())
+            .licenseNumber(user.getLicenseNumber())
+            .licenseExpiryDate(user.getLicenseExpiryDate())
+            .email(user.getEmail())
+            .address(user.getAddress())
+            .emergencyContactName(user.getEmergencyContactName())
+            .emergencyContactPhone(user.getEmergencyContactPhone())
+            .department(user.getDepartment())
+            .designation(user.getDesignation())
+            .photoUrl(user.getPhotoUrl())
+            .createdAt(user.getCreatedAt())
+            .updatedAt(user.getUpdatedAt())
             .build();
-    }
-
-    public void updateEntity(Driver d, DriverRequest r) {
-        d.setFirstName(r.getFirstName());
-        d.setLastName(r.getLastName());
-        d.setDateOfBirth(r.getDateOfBirth());
-        d.setPhone(r.getPhone());
-        d.setLicenseNumber(r.getLicenseNumber());
-        d.setLicenseExpiryDate(r.getLicenseExpiryDate());
-        d.setEmail(r.getEmail());
-        d.setAddress(r.getAddress());
-        d.setEmergencyContactName(r.getEmergencyContactName());
-        d.setEmergencyContactPhone(r.getEmergencyContactPhone());
-        d.setDepartment(r.getDepartment());
-        d.setDesignation(r.getDesignation());
-        d.setDateOfJoining(r.getDateOfJoining());
     }
 }

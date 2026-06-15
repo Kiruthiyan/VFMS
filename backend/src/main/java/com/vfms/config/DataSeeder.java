@@ -38,7 +38,6 @@ public class DataSeeder implements ApplicationRunner {
     private final EmployeeRegistryRepository employeeRegistryRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdminSeedProperties adminSeedProperties;
-    private final com.vfms.dsm.repository.DriverRepository driverRepository;
     private final com.vfms.vehicle.VehicleRepository vehicleRepository;
 
     @Value("${vfms.seed.team-users.enabled:false}")
@@ -73,24 +72,6 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedDriverAndVehicle() {
-        // Seed driver entity
-        if (!driverRepository.existsByEmployeeId("EMP016")) {
-            com.vfms.dsm.entity.Driver d = com.vfms.dsm.entity.Driver.builder()
-                    .employeeId("EMP016")
-                    .firstName("Kavishanth")
-                    .lastName("Driver")
-                    .fullName("Kavishanth Driver")
-                    .nic("990161616V")
-                    .phone("0771234516")
-                    .licenseNumber("L9901616")
-                    .licenseExpiryDate(LocalDate.now().plusYears(5))
-                    .email("kavishanthn16@gmail.com")
-                    .status(com.vfms.dsm.entity.Driver.DriverStatus.ACTIVE)
-                    .build();
-            driverRepository.save(d);
-            log.info("[SEED] Seeded driver entity for Kavishanth");
-        }
-
         // Seed vehicle entity
         if (!vehicleRepository.existsByPlateNumber("WP-CAB-1234")) {
             com.vfms.vehicle.Vehicle v = com.vfms.vehicle.Vehicle.builder()

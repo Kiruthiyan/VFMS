@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DriverDocumentRepository extends JpaRepository<DriverDocument, Long> {
-    List<DriverDocument> findByDriverIdOrderByCreatedAtDesc(UUID driverId);
+    List<DriverDocument> findByUserIdOrderByCreatedAtDesc(UUID driverId);
 
-    List<DriverDocument> findByDriverIdAndEntityTypeOrderByCreatedAtDesc(UUID driverId, DriverDocument.DocumentEntityType entityType);
+    List<DriverDocument> findByUserIdAndEntityTypeOrderByCreatedAtDesc(UUID driverId, DriverDocument.DocumentEntityType entityType);
 }

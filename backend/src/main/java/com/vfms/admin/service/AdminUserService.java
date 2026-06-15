@@ -20,8 +20,7 @@ import com.vfms.employee.repository.EmployeeRegistryRepository;
 import com.vfms.security.SecurityContextProvider;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
-import com.vfms.dsm.entity.Driver;
-import com.vfms.dsm.repository.DriverRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,7 +49,8 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
     private final UserManagementProperties userManagementProperties;
     private final EmployeeRegistryRepository employeeRegistryRepository;
-    private final DriverRepository driverRepository;
+//
+  private final DriverRepository driverRepository;
     private final RefreshTokenService refreshTokenService;
 
     @Transactional
@@ -115,9 +115,6 @@ public class AdminUserService {
             applyRoleSpecificCreateFields(user, request);
         }
         userRepository.save(user);
-
-        syncDriverRecord(user, null, null);
-
 
         log.info("[ADMIN-CREATE] User created: {} ({}) as {}",
                 user.getFullName(), user.getEmail(), user.getRole());
@@ -218,8 +215,6 @@ public class AdminUserService {
             user.setRejectionReason(null);
             userRepository.save(user);
 
-            syncDriverRecord(user, oldRole, oldEmployeeId);
-
             emailService.sendApprovalEmail(
                     user.getEmail(),
                     user.getFullName(),
@@ -237,8 +232,6 @@ public class AdminUserService {
             user.setRejectionReason(rejectionReason);
             user.setReviewedAt(LocalDateTime.now());
             userRepository.save(user);
-
-            syncDriverRecord(user, oldRole, oldEmployeeId);
 
             emailService.sendRejectionEmail(
                     user.getEmail(),
@@ -275,7 +268,7 @@ public class AdminUserService {
         user.setDeletedBy(SecurityContextProvider.getCurrentUserEmail());
         user.setStatus(UserStatus.DEACTIVATED);
         userRepository.save(user);
-
+//
         revokeUserSessions(user);
 
         syncDriverRecord(user, oldRole, oldEmployeeId);
@@ -306,8 +299,6 @@ public class AdminUserService {
         user.setStatusBeforeDeletion(null);
         user.setRestoredBy(SecurityContextProvider.getCurrentUserEmail());
         userRepository.save(user);
-
-        syncDriverRecord(user, oldRole, oldEmployeeId);
 
         log.info("[ADMIN-RESTORE] User restored: {} ({}) to status: {}",
                 user.getFullName(), user.getEmail(), restoredStatus);
@@ -342,8 +333,6 @@ public class AdminUserService {
         }
 
         userRepository.save(user);
-
-        syncDriverRecord(user, oldRole, oldEmployeeId);
     }
 
     @Transactional
@@ -426,8 +415,6 @@ public class AdminUserService {
                 user.getApprovalLevel());
 
         userRepository.save(user);
-
-        syncDriverRecord(user, oldRole, oldEmployeeId);
 
         return toSummary(user);
     }
@@ -793,59 +780,5 @@ public class AdminUserService {
                 .build();
     }
 
-    private void syncDriverRecord(User user, Role oldRole, String oldEmployeeId) {
-        if (user.getRole() == Role.DRIVER) {
-            // Generate driver ID if not present
-            if (user.getEmployeeId() == null) {
-                user.setEmployeeId(generateNextDriverId());
-                userRepository.save(user);
-            }
 
-            // Find or create Driver record
-            Driver driver = null;
-            if (user.getEmployeeId() != null) {
-                driver = driverRepository.findByEmployeeId(user.getEmployeeId()).orElse(null);
-            }
-            if (driver == null && user.getEmail() != null && !user.getEmail().isBlank()) {
-                driver = driverRepository.findByEmail(user.getEmail()).orElse(null);
-            }
-            if (driver == null && user.getNic() != null && !user.getNic().isBlank()) {
-                driver = driverRepository.findByNic(user.getNic()).orElse(null);
-            }
-            if (driver == null) {
-                driver = Driver.builder().employeeId(user.getEmployeeId()).build();
-            }
-
-            // Set employeeId on the driver if it is null or doesn't match
-            if (driver.getEmployeeId() == null || !driver.getEmployeeId().equals(user.getEmployeeId())) {
-                driver.setEmployeeId(user.getEmployeeId());
-            }
-
-            String fullName = user.getFullName() != null ? user.getFullName().trim() : "Driver";
-            String firstName = fullName;
-            String lastName = "";
-            int lastSpaceIdx = fullName.lastIndexOf(' ');
-            if (lastSpaceIdx > 0) {
-                firstName = fullName.substring(0, lastSpaceIdx);
-                lastName = fullName.substring(lastSpaceIdx + 1);
-            }
-
-            driver.setFirstName(firstName);
-            driver.setLastName(lastName);
-            driver.setFullName(fullName);
-            driver.setNic(user.getNic() != null && !user.getNic().isBlank() ? user.getNic() : "TEMP-NIC-" + user.getId());
-            driver.setEmail(user.getEmail());
-            driver.setPhone(user.getPhone() != null ? user.getPhone() : "PENDING");
-            driver.setLicenseNumber(user.getLicenseNumber() != null ? user.getLicenseNumber() : "PENDING");
-            driver.setLicenseExpiryDate(user.getLicenseExpiryDate() != null ? user.getLicenseExpiryDate() : LocalDate.now().plusYears(1));
-            driver.setStatus(user.getStatus() == UserStatus.APPROVED && user.getDeletedAt() == null ? Driver.DriverStatus.ACTIVE : Driver.DriverStatus.INACTIVE);
-            driverRepository.save(driver);
-        } else if (oldRole == Role.DRIVER && oldEmployeeId != null) {
-            // Role changed away from DRIVER - deactivate
-            driverRepository.findByEmployeeId(oldEmployeeId).ifPresent(driver -> {
-                driver.setStatus(Driver.DriverStatus.INACTIVE);
-                driverRepository.save(driver);
-            });
-        }
-    }
 }

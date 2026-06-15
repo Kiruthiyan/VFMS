@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   User, Mail, Phone, Calendar, CreditCard,
-  Shield, Camera, Loader2, Badge,
+  Shield, Camera, Loader2, Badge, Trash2
 } from 'lucide-react';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import {
-  getMyProfile, uploadProfilePicture,
+  getMyProfile, uploadProfilePicture, removeProfilePicture,
   type DriverProfileResponse,
 } from '@/lib/api/driver-portal';
 import { resolveBackendAssetUrl } from '@/lib/api';
@@ -76,6 +76,21 @@ export default function DriverProfilePage() {
     }
   };
 
+  const handlePhotoRemove = async () => {
+    if (!profile?.photoUrl) return;
+    setUploadingPic(true);
+    try {
+      await removeProfilePicture();
+      const updated = await getMyProfile();
+      setProfile(updated);
+      toast.success('Profile picture removed');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to remove photo');
+    } finally {
+      setUploadingPic(false);
+    }
+  };
+
   const avatarSrc = profile?.photoUrl ? resolveBackendAssetUrl(profile.photoUrl) : null;
 
   return (
@@ -119,6 +134,22 @@ export default function DriverProfilePage() {
                       <User style={{ width: '2rem', height: '2rem', color: '#fff' }} />
                     </div>
                   )}
+                  {avatarSrc && (
+                    <button
+                      onClick={handlePhotoRemove}
+                      disabled={uploadingPic}
+                      aria-label="Remove profile picture"
+                      style={{
+                        position: 'absolute', bottom: '0', left: '0',
+                        width: '1.5rem', height: '1.5rem', borderRadius: '50%',
+                        background: 'hsl(0 84% 60%)', border: '2px solid hsl(var(--background))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', zIndex: 10
+                      }}
+                    >
+                      <Trash2 style={{ width: '0.625rem', height: '0.625rem', color: '#fff' }} />
+                    </button>
+                  )}
                   {/* Upload overlay */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
@@ -129,7 +160,7 @@ export default function DriverProfilePage() {
                       width: '1.5rem', height: '1.5rem', borderRadius: '50%',
                       background: 'hsl(42 100% 50%)', border: '2px solid hsl(var(--background))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer',
+                      cursor: 'pointer', zIndex: 10
                     }}
                   >
                     {uploadingPic
@@ -149,11 +180,6 @@ export default function DriverProfilePage() {
 
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <StatusPill status={profile.status} />
-                  {profile.availabilityStatus && (
-                    <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '9999px', background: 'hsl(220 20% 90%)', color: 'hsl(220 20% 35%)' }}>
-                      {profile.availabilityStatus.replace('_', ' ')}
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

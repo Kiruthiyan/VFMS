@@ -67,6 +67,20 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
     }
   };
 
+  const isNavItemActive = (href: string) => {
+    if (href === '/drivers') {
+      return (
+        pathname === href ||
+        (pathname.startsWith('/drivers/') &&
+          !pathname.startsWith('/drivers/assignment-readiness') &&
+          !pathname.startsWith('/drivers/leave-requests') &&
+          !pathname.startsWith('/drivers/service-requests'))
+      );
+    }
+
+    return pathname === href || (href !== fallbackHref && pathname.startsWith(href + '/'));
+  };
+
   return (
     <aside className="flex h-full flex-col">
       <div className="border-b border-white/10 px-5 py-5">
@@ -89,8 +103,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
               </h2>
               <nav className="space-y-1">
                 {section.items.map((item) => {
-                  // Precise active state logic
-                  const isActive = pathname === item.href || (item.href !== fallbackHref && pathname.startsWith(item.href + '/'));
+                  const isActive = isNavItemActive(item.href);
                   
                   return (
                     <Link
@@ -203,10 +216,18 @@ function getNavSectionsByRole(role?: string) {
       ]
     });
     sections.push({
+      title: "Drivers",
+      items: [
+        { label: 'Drivers', href: '/drivers', icon: Users },
+        { label: 'Assignment Readiness', href: '/drivers/assignment-readiness', icon: CheckSquare },
+        { label: 'Leave Requests', href: '/drivers/leave-requests', icon: Calendar },
+        { label: 'Service Requests', href: '/drivers/service-requests', icon: Wrench },
+      ]
+    });
+    sections.push({
       title: "Fleet Management",
       items: [
         { label: 'Vehicles', href: '/dashboards/fleet/vehicles', icon: Car },
-        { label: 'Drivers', href: '/drivers', icon: Users },
         { label: 'Staff', href: '/staff', icon: Users },
         { label: 'Maintenance', href: '/dashboards/fleet/maintenance', icon: Wrench },
         { label: 'Rentals', href: '/dashboards/fleet/rentals', icon: FileText },

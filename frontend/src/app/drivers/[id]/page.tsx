@@ -5,14 +5,13 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ArrowLeft, UserRound } from 'lucide-react';
 import { apiFetch, getErrorMessage, resolveBackendAssetUrl } from '@/lib/api';
-import { DriverAvailability, DriverDocument } from '@/types';
+import { DriverDocument } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
 
 import { DriverLicensesTab } from '@/components/drivers/DriverLicensesTab';
 import { DriverCertificationsTab } from '@/components/drivers/DriverCertificationsTab';
 import { DriverDocumentsTab } from '@/components/drivers/DriverDocumentsTab';
-import { DriverAvailabilityTab } from '@/components/drivers/DriverAvailabilityTab';
 import { DriverInfractionsTab } from '@/components/drivers/DriverInfractionsTab';
 import { DriverTripsTab } from '@/components/drivers/DriverTripsTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,13 +44,12 @@ export default function DriverDetailsPage() {
 	const searchParams = useSearchParams();
 	const id = params?.id; // This is the USER id from the users table
 	const requestedTab = searchParams.get('tab') || 'overview';
-	const initialTab = ['overview', 'licenses', 'certifications', 'documents', 'availability', 'infractions', 'trips'].includes(requestedTab)
+	const initialTab = ['overview', 'licenses', 'certifications', 'documents', 'infractions', 'trips'].includes(requestedTab)
 		? requestedTab
 		: 'overview';
 
 	const [driverUser, setDriverUser] = useState<DriverUserDetail | null>(null);
 	const [profilePicture, setProfilePicture] = useState<DriverDocument | null>(null);
-	const [availability, setAvailability] = useState<DriverAvailability | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const profilePictureUrl = profilePicture?.fileUrl ? resolveBackendAssetUrl(profilePicture.fileUrl) : '';
@@ -81,13 +79,6 @@ export default function DriverDetailsPage() {
 				} catch (e) {
 					setProfilePicture(null);
 				}
-
-				try {
-					const availabilityData = await apiFetch<DriverAvailability>(`/api/drivers/${data.driverId}/availability`);
-					setAvailability(availabilityData);
-				} catch (e) {
-					setAvailability(null);
-				}
 			}
 		} catch (e) {
 			setError(getErrorMessage(e));
@@ -101,17 +92,17 @@ export default function DriverDetailsPage() {
 	}, [id]);
 
 	return (
-		<div className="p-6 space-y-4 animate-fade-in">
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-3">
-					<div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'hsl(var(--primary))' }}>
+		<div className="p-6 md:p-8 space-y-6 animate-fade-in">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+				<div className="flex items-center gap-4">
+					<div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
 						<UserRound className="w-5 h-5" style={{ color: 'hsl(var(--primary-foreground))' }} />
 					</div>
 					<div>
-						<h1 className="text-xl font-semibold text-foreground">
+						<h1 className="text-2xl font-bold tracking-tight text-foreground">
 							Driver Profile {driverUser && !loading && `- ${driverUser.fullName}`}
 						</h1>
-						<p className="text-sm text-muted-foreground">
+						<p className="text-sm font-medium text-muted-foreground mt-1">
 							{driverUser && !loading ? `${driverUser.email}` : 'Driver details view'}
 						</p>
 					</div>
@@ -131,9 +122,9 @@ export default function DriverDetailsPage() {
 
 			<div className="flex flex-col gap-6 xl:flex-row xl:items-start">
 				<div className="min-w-0 flex-1">
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-base">Driver Monitoring</CardTitle>
+					<Card className="shadow-sm border-muted">
+						<CardHeader className="pb-4">
+							<CardTitle className="text-base font-semibold">Driver Monitoring</CardTitle>
 						</CardHeader>
 						<CardContent>
 							{loading && <p className="text-sm text-muted-foreground">Loading driver...</p>}
@@ -146,23 +137,22 @@ export default function DriverDetailsPage() {
 
 							{!loading && !error && driverUser && id && (
 								<Tabs defaultValue={initialTab} className="w-full">
-									<div className="w-full overflow-x-auto">
-										<TabsList className="flex gap-2 w-max whitespace-nowrap px-2">
-											<TabsTrigger value="overview" className="px-4 py-2 rounded-md inline-flex">Overview</TabsTrigger>
-											<TabsTrigger value="licenses" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Licenses</TabsTrigger>
-											<TabsTrigger value="certifications" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Certs</TabsTrigger>
-											<TabsTrigger value="documents" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Documents</TabsTrigger>
-											<TabsTrigger value="availability" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Availability</TabsTrigger>
-											<TabsTrigger value="infractions" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Infractions</TabsTrigger>
-											<TabsTrigger value="trips" className="px-4 py-2 rounded-md inline-flex" disabled={!linkedDriverId}>Trips</TabsTrigger>
+									<div className="w-full overflow-x-auto border-b border-border mb-4 pb-px">
+										<TabsList className="flex gap-2 w-max whitespace-nowrap bg-transparent h-auto p-0">
+											<TabsTrigger value="overview" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Overview</TabsTrigger>
+											<TabsTrigger value="licenses" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Licenses</TabsTrigger>
+											<TabsTrigger value="certifications" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Certs</TabsTrigger>
+											<TabsTrigger value="documents" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Documents</TabsTrigger>
+											<TabsTrigger value="infractions" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Infractions</TabsTrigger>
+											<TabsTrigger value="trips" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Trips</TabsTrigger>
 										</TabsList>
 									</div>
 
-									<TabsContent value="overview">
-										<div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
+									<TabsContent value="overview" className="mt-0">
+										<div className="grid grid-cols-1 gap-6 text-sm md:grid-cols-3 bg-muted/20 p-6 rounded-lg border border-border">
 											{profilePicture && (
 												<div className="md:col-span-1 flex flex-col items-center">
-													<div className="mb-3 h-32 w-32 overflow-hidden rounded-lg bg-muted flex items-center justify-center">
+													<div className="mb-4 h-32 w-32 overflow-hidden rounded-full border-4 border-background shadow-sm bg-muted flex items-center justify-center">
 														<img
 															src={profilePictureUrl}
 															alt="Driver Profile Picture"
@@ -172,11 +162,11 @@ export default function DriverDetailsPage() {
 															}}
 														/>
 													</div>
-													<p className="text-center text-xs font-medium text-muted-foreground">{driverUser.fullName}</p>
+													<p className="text-center text-xs font-semibold text-muted-foreground">{driverUser.fullName}</p>
 												</div>
 											)}
 											<div className={profilePicture ? 'md:col-span-2' : 'md:col-span-3'}>
-												<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+												<div className="grid grid-cols-1 gap-y-5 gap-x-8 md:grid-cols-2">
 													<Detail label="Driver ID" value={driverUser.employeeId ?? undefined} />
 													<Detail label="Full Name" value={driverUser.fullName} />
 													<Detail label="NIC" value={driverUser.nic} />
@@ -186,9 +176,9 @@ export default function DriverDetailsPage() {
 													<Detail label="License Expiry Date" value={driverUser.licenseExpiryDate ?? undefined} />
 													<Detail label="Certifications" value={driverUser.certifications ?? undefined} />
 													<Detail label="Experience (Years)" value={driverUser.experienceYears != null ? String(driverUser.experienceYears) : undefined} />
-													<div className="space-y-1">
-														<p className="text-xs font-medium text-muted-foreground">Status</p>
-														<StatusBadge status={availability?.status ?? driverUser.status} />
+													<div className="space-y-1.5">
+														<p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</p>
+														<StatusBadge status={driverUser.status} />
 													</div>
 												</div>
 											</div>
@@ -217,10 +207,6 @@ export default function DriverDetailsPage() {
 														}
 													}}
 												/>
-											</TabsContent>
-
-											<TabsContent value="availability">
-												<DriverAvailabilityTab driverId={linkedDriverId} onUpdated={setAvailability} />
 											</TabsContent>
 
 											<TabsContent value="infractions">
@@ -257,8 +243,8 @@ export default function DriverDetailsPage() {
 function Detail({ label, value, className }: { label: string; value?: string; className?: string }) {
 	return (
 		<div className={className}>
-			<p className="text-xs font-medium text-muted-foreground">{label}</p>
-			<p className="text-sm text-foreground">{value || '-'}</p>
+			<p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+			<p className="text-sm font-medium text-foreground mt-1">{value || '-'}</p>
 		</div>
 	);
 }

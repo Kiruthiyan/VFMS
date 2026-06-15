@@ -1,6 +1,6 @@
 package com.vfms.fuel.entity;
 
-import com.vfms.dsm.entity.Driver;
+import com.vfms.user.entity.User;
 import com.vfms.vehicle.Vehicle;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,6 +19,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -41,6 +43,7 @@ public class FuelRecord {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Vehicle vehicle;
 
     @ManyToOne(fetch = FetchType.LAZY)

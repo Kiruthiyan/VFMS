@@ -2,6 +2,7 @@ package com.vfms.user.repository;
 
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
+import com.vfms.fuel.dto.FuelMetadataDriverProjection;
 import com.vfms.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,8 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByEmployeeId(String employeeId);
 
     boolean existsByRoleAndDeletedAtIsNull(Role role);
 
@@ -50,6 +53,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Page<User> findByRoleAndDeletedAtIsNull(Role role, Pageable pageable);
 
+    List<User> findByRoleInAndDeletedAtIsNull(List<Role> roles);
+
     @Query("SELECT u.employeeId FROM User u WHERE u.employeeId LIKE :prefix%")
     List<String> findAllEmployeeIdsByPrefix(@org.springframework.data.repository.query.Param("prefix") String prefix);
+
+    @Query("""
+            select u.id as id, u.fullName as fullName
+            from User u
+            where u.role = com.vfms.common.enums.Role.DRIVER
+              and u.status = com.vfms.common.enums.UserStatus.APPROVED
+              and u.deletedAt is null
+            """)
+    List<FuelMetadataDriverProjection> findFuelMetadataDrivers();
 }

@@ -19,7 +19,6 @@ export interface Driver {
   dateOfJoining?: string;
   photoUrl?: string;
   status: DriverStatus;
-  availabilityStatus?: AvailabilityStatus;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -65,27 +64,12 @@ export interface PageResponse<T> {
   size: number;
 }
 
-export type AvailabilityStatus =
-  | 'AVAILABLE'
-  | 'ON_TRIP'
-  | 'ON_LEAVE'
-  | 'INACTIVE';
-
-export interface DriverAvailability {
-  driverId: string;
-  status: AvailabilityStatus;
-  updatedAt: string;
-  updatedBy?: string;
-  reason?: string;
-}
-
 export interface DriverReadinessCache {
   driverId: string;
   licenseValid: boolean;
   allCertsValid: boolean;
   onLeaveToday?: boolean;
   notReadyReason?: string;
-  availabilityStatus: AvailabilityStatus;
   lastRefreshed: string;
   ready?: boolean;
 }

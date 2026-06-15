@@ -1,88 +1,81 @@
 package com.vfms.dsm.service;
 
-import static java.util.Objects.requireNonNull;
-
-import com.vfms.dsm.dto.*;
-import com.vfms.dsm.entity.Staff;
-import com.vfms.dsm.exception.ResourceNotFoundException;
-import com.vfms.dsm.exception.DuplicateResourceException;
-import com.vfms.dsm.repository.StaffRepository;
+import com.vfms.admin.dto.UserSummaryResponse;
+import com.vfms.common.enums.Role;
+import com.vfms.common.exception.ResourceNotFoundException;
+import com.vfms.user.entity.User;
+import com.vfms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service @RequiredArgsConstructor @Transactional
-public class StaffService {
-    private final StaffRepository staffRepository;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-    public StaffResponse createStaff(@NonNull StaffRequest request) {
-        if (staffRepository.existsByEmployeeId(request.getEmployeeId()))
-            throw new DuplicateResourceException("Employee ID already exists");
-        Staff staff = Staff.builder()
-            .employeeId(request.getEmployeeId())
-            .firstName(request.getFirstName())
-            .lastName(request.getLastName())
-            .nic(request.getNic())
-            .email(request.getEmail())
-            .phone(request.getPhone())
-            .department(request.getDepartment())
-            .designation(request.getDesignation())
-            .dateOfJoining(request.getDateOfJoining())
-            .role(request.getRole() != null ? request.getRole() : Staff.StaffRole.SYSTEM_USER)
-            .build();
-        Staff saved = staffRepository.save(requireNonNull(staff));
-        return toResponse(saved);
+/**
+ * Provides staff-related data sourced exclusively from the `users` table.
+ * Staff are users with role SYSTEM_USER or APPROVER.
+ * The legacy `staff` table is no longer used.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class StaffService {
+
+    private final UserRepository userRepository;
+
+    private static final List<Role> STAFF_ROLES = Arrays.asList(Role.SYSTEM_USER, Role.APPROVER);
+
+    public Page<UserSummaryResponse> getAllStaff(@NonNull Pageable pageable) {
+        List<User> users = userRepository.findByRoleInAndDeletedAtIsNull(STAFF_ROLES);
+        List<UserSummaryResponse> all = users.stream()
+                .sorted((a, b) -> {
+                    if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
+                    if (a.getCreatedAt() == null) return 1;
+                    if (b.getCreatedAt() == null) return -1;
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), all.size());
+        List<UserSummaryResponse> page = start >= all.size() ? List.of() : all.subList(start, end);
+        return new PageImpl<>(page, pageable, all.size());
     }
 
-    @Transactional(readOnly = true)
-    public StaffResponse getStaff(@NonNull Long id) {
+    public UserSummaryResponse getStaff(@NonNull UUID id) {
         return toResponse(findById(id));
     }
 
-    @Transactional(readOnly = true)
-    public Page<StaffResponse> getAllStaff(@NonNull Pageable pageable) {
-        Pageable sortedPageable = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Direction.DESC, "createdAt")
-        );
-        return staffRepository.findAll(sortedPageable).map(this::toResponse);
+    public User findById(@NonNull UUID id) {
+        return userRepository.findById(id)
+                .filter(u -> STAFF_ROLES.contains(u.getRole()) && u.getDeletedAt() == null)
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found: " + id));
     }
 
-    public StaffResponse updateStaff(@NonNull Long id, @NonNull StaffRequest request) {
-        Staff staff = findById(id);
-        staff.setFirstName(request.getFirstName());
-        staff.setLastName(request.getLastName());
-        staff.setEmail(request.getEmail());
-        staff.setPhone(request.getPhone());
-        staff.setDepartment(request.getDepartment());
-        staff.setDesignation(request.getDesignation());
-        staff.setDateOfJoining(request.getDateOfJoining());
-        if (request.getRole() != null) staff.setRole(request.getRole());
-        return toResponse(staffRepository.save(staff));
-    }
-
-    public void deactivateStaff(@NonNull Long id) {
-        Staff staff = findById(id);
-        staff.setStatus(Staff.StaffStatus.INACTIVE);
-        staffRepository.save(staff);
-    }
-
-    public Staff findById(@NonNull Long id) {
-        return staffRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Staff not found: " + id));
-    }
-
-    private StaffResponse toResponse(Staff s) {
-        return StaffResponse.builder()
-            .id(s.getId()).employeeId(s.getEmployeeId())
-            .firstName(s.getFirstName()).lastName(s.getLastName())
-            .nic(s.getNic()).email(s.getEmail()).phone(s.getPhone())
-            .department(s.getDepartment()).designation(s.getDesignation())
-            .dateOfJoining(s.getDateOfJoining()).role(s.getRole())
-            .status(s.getStatus()).createdAt(s.getCreatedAt())
-            .build();
+    private UserSummaryResponse toResponse(User u) {
+        return UserSummaryResponse.builder()
+                .id(u.getId())
+                .fullName(u.getFullName())
+                .email(u.getEmail())
+                .phone(u.getPhone())
+                .nic(u.getNic())
+                .role(u.getRole())
+                .status(u.getStatus())
+                .emailVerified(u.isEmailVerified())
+                .createdAt(u.getCreatedAt())
+                .updatedAt(u.getUpdatedAt())
+                .employeeId(u.getEmployeeId())
+                .department(u.getDepartment())
+                .officeLocation(u.getOfficeLocation())
+                .designation(u.getDesignation())
+                .build();
     }
 }

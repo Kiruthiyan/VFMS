@@ -65,6 +65,10 @@ export async function uploadStaffProfilePicture(file: File): Promise<StaffProfil
   return res.data;
 }
 
+export async function removeStaffProfilePicture(): Promise<void> {
+  await api.delete('/api/staff-profile/picture');
+}
+
 export async function getStaffList(): Promise<UserSummaryResponse[]> {
   const res = await api.get<UserSummaryResponse[]>('/api/staff-profile/list');
   return res.data;

@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { apiFetch } from '@/lib/api';
+import { getStaffList, UserSummaryResponse } from '@/lib/api/staff-profile';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,11 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Plus, Wrench, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageResponse, Staff } from '@/types';
 import { FormErrorSummary } from '@/components/forms/FormErrorSummary';
 
 type RequestFormData = {
-  staffId?: number;
+  staffId?: string;
   vehicleId?: number;
   requestType: 'FAULT_REPORT' | 'SERVICE_REQUEST' | 'INSPECTION_REQUEST';
   description: string;
@@ -30,7 +30,7 @@ type VehicleOption = {
 
 interface ServiceRequest {
   id: number;
-  staffId?: number;
+  staffId?: string;
   requesterId?: string;
   vehicleId?: number;
   requestType: string;
@@ -48,7 +48,7 @@ const urgencyLeftBorder: Record<string, string> = {
 
 export default function ServiceRequestsPage() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
-  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [staffList, setStaffList] = useState<UserSummaryResponse[]>([]);
   const [open, setOpen] = useState(false);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [loadingVehicles, setLoadingVehicles] = useState(false);
@@ -76,8 +76,8 @@ export default function ServiceRequestsPage() {
       .catch((e: Error) => toast.error(e.message));
 
   const fetchStaff = () =>
-    apiFetch<PageResponse<Staff>>('/api/staff?page=0&size=200')
-      .then((data) => setStaffList(data.content.filter((staff) => staff.status === 'ACTIVE')))
+    getStaffList()
+      .then((data) => setStaffList(data.filter((s) => s.status === 'APPROVED')))
       .catch((e: Error) => toast.error(e.message));
 
   const fetchVehicles = async () => {
@@ -174,22 +174,22 @@ export default function ServiceRequestsPage() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Employee ID *</Label>
+                      <Label className="text-xs text-muted-foreground">Employee *</Label>
                       <Controller
                         name="staffId"
                         control={control}
                         render={({ field }) => (
                           <Select
                             onValueChange={field.onChange}
-                            value={field.value ? String(field.value) : undefined}
+                            value={field.value ?? undefined}
                           >
                             <SelectTrigger className="mt-1 h-9 text-sm">
-                              <SelectValue placeholder="Select employee ID" />
+                              <SelectValue placeholder="Select staff member" />
                             </SelectTrigger>
                             <SelectContent>
-                              {staffList.map((staff) => (
-                                <SelectItem key={staff.id} value={String(staff.id)}>
-                                  {staff.employeeId} - {staff.firstName} {staff.lastName}
+                              {staffList.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.employeeId ? `${s.employeeId} - ` : ''}{s.fullName}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -209,7 +209,7 @@ export default function ServiceRequestsPage() {
                             disabled={loadingVehicles}
                           >
                             <SelectTrigger className="mt-1 h-9 text-sm">
-                              <SelectValue placeholder={loadingVehicles ? 'Loading vehicle IDs...' : 'Select vehicle ID'} />
+                              <SelectValue placeholder={loadingVehicles ? 'Loading...' : 'Select vehicle ID'} />
                             </SelectTrigger>
                             <SelectContent>
                               {vehicles.map((vehicle) => (

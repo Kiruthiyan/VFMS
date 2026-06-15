@@ -33,7 +33,7 @@ public class CertificationExpiryScheduler {
         for (DriverCertification cert : expired) {
             cert.setStatus(DriverCertification.CertStatus.EXPIRED);
             saveNotification(
-                    cert.getDriver().getId(),
+                    cert.getUser().getId(),
                     "CERT_EXPIRED",
                     "Certification '" + cert.getCertName() + "' has expired."
             );
@@ -44,7 +44,7 @@ public class CertificationExpiryScheduler {
             if (cert.getStatus() != DriverCertification.CertStatus.EXPIRED) {
                 cert.setStatus(DriverCertification.CertStatus.EXPIRING_SOON);
                 saveNotification(
-                        cert.getDriver().getId(),
+                        cert.getUser().getId(),
                         "CERT_EXPIRING_SOON",
                         "Certification '" + cert.getCertName() + "' expires on " + cert.getExpiryDate()
                 );

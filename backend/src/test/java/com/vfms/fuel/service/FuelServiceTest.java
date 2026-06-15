@@ -2,8 +2,8 @@ package com.vfms.fuel.service;
 
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
-import com.vfms.dsm.entity.Driver;
-import com.vfms.dsm.repository.DriverRepository;
+import com.vfms.common.enums.Role;
+import com.vfms.common.enums.UserStatus;
 import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelMetadataDriverProjection;
@@ -11,8 +11,11 @@ import com.vfms.fuel.dto.FuelMetadataVehicleProjection;
 import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
+import com.vfms.user.entity.User;
+import com.vfms.user.repository.UserRepository;
 import com.vfms.vehicle.Vehicle;
 import com.vfms.vehicle.VehicleRepository;
+import com.vfms.vehicle.VehicleStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +41,7 @@ class FuelServiceTest {
 
     @Mock private FuelRecordRepository fuelRecordRepository;
     @Mock private VehicleRepository vehicleRepository;
-    @Mock private DriverRepository driverRepository;
+    @Mock private UserRepository userRepository;
     @Mock private VehicleApiClient vehicleApiClient;
     @Mock private FuelStorageService fuelStorageService;
     @Mock private FuelMisuseService fuelMisuseService;
@@ -72,11 +75,11 @@ class FuelServiceTest {
                 .model("Camry")
                 .odometerReading(900.0)
                 .build();
-        Driver driver = Driver.builder().id(req.getDriverId()).fullName("Test Driver").build();
+        User driver = testDriver(req.getDriverId(), "Test Driver");
 
         when(userDetails.getUsername()).thenReturn("admin@vfms.com");
         when(vehicleRepository.findById(Long.valueOf(req.getVehicleId()))).thenReturn(Optional.of(vehicle));
-        when(driverRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
+        when(userRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
         when(fuelMisuseService.checkForMisuse(any(), any())).thenReturn(null);
         when(fuelRecordRepository.save(any())).thenAnswer(inv -> {
             FuelRecord r = inv.getArgument(0);
@@ -143,6 +146,30 @@ class FuelServiceTest {
     }
 
     @Test
+    @DisplayName("toResponse should tolerate missing related vehicle and driver")
+    void toResponse_shouldTolerateMissingRelations() {
+        FuelRecord record = FuelRecord.builder()
+                .id(UUID.randomUUID())
+                .vehicle(null)
+                .driver(null)
+                .fuelDate(LocalDate.now())
+                .quantity(BigDecimal.TEN)
+                .costPerLitre(BigDecimal.TEN)
+                .totalCost(BigDecimal.TEN)
+                .odometerReading(10.0)
+                .build();
+
+        var response = fuelService.toResponse(record);
+
+        assertEquals(record.getId(), response.getId());
+        assertNull(response.getVehicleId());
+        assertNull(response.getVehiclePlate());
+        assertNull(response.getVehicleMakeModel());
+        assertNull(response.getDriverId());
+        assertNull(response.getDriverName());
+    }
+
+    @Test
     @DisplayName("deleteFuelRecord should throw 404 when record missing")
     void deleteFuelRecord_shouldThrowWhenMissing() {
         UUID id = UUID.randomUUID();
@@ -175,11 +202,11 @@ class FuelServiceTest {
                 .model("X")
                 .build();
 
-        Driver driver = Driver.builder().id(req.getDriverId()).fullName("D").build();
+        User driver = testDriver(req.getDriverId(), "D");
 
         when(fuelRecordRepository.findById(id)).thenReturn(Optional.of(record));
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
-        when(driverRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
+        when(userRepository.findById(req.getDriverId())).thenReturn(Optional.of(driver));
         when(fuelMisuseService.checkForMisuse(any(), any())).thenReturn(null);
         when(fuelRecordRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -228,7 +255,7 @@ class FuelServiceTest {
 
         when(vehicleRepository.findFuelMetadataVehicles())
                 .thenReturn(List.of(vehicleWithNoDisplayFields, vehicleWithMissingNames));
-        when(driverRepository.findFuelMetadataDrivers())
+        when(userRepository.findFuelMetadataDrivers())
                 .thenReturn(List.of(unnamedDriver, namedDriver));
 
         var metadata = fuelService.getFormMetadata();
@@ -352,6 +379,19 @@ class FuelServiceTest {
         req.setFuelStation("Station");
         req.setNotes("Notes");
         return req;
+    }
+
+    private User testDriver(UUID id, String fullName) {
+        return User.builder()
+                .id(id)
+                .fullName(fullName)
+                .email(id + "@drivers.test")
+                .password("password")
+                .phone("0712345678")
+                .nic("123456789")
+                .role(Role.DRIVER)
+                .status(UserStatus.APPROVED)
+                .build();
     }
 
     private FuelMetadataVehicleProjection fuelMetadataVehicle(

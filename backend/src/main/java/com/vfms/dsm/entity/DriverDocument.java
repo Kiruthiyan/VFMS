@@ -1,5 +1,7 @@
 package com.vfms.dsm.entity;
 
+import com.vfms.user.entity.User;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -19,9 +21,9 @@ public class DriverDocument extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
-    private Driver driver;
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "entity_type", nullable = false)

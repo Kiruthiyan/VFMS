@@ -1,12 +1,12 @@
 package com.vfms.dsm.service;
 
-import com.vfms.dsm.dto.AvailabilityUpdateRequest;
+import com.vfms.user.entity.User;
+
 import com.vfms.dsm.dto.LeaveApprovalRequest;
 import com.vfms.dsm.dto.LeaveRequest;
-import com.vfms.dsm.entity.Driver;
-import com.vfms.dsm.entity.DriverAvailability;
+
 import com.vfms.dsm.entity.DriverLeave;
-import com.vfms.dsm.exception.ResourceNotFoundException;
+import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.dsm.repository.DriverLeaveRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,13 +24,12 @@ public class DriverLeaveService {
 
     private final DriverLeaveRepository leaveRepository;
     private final DriverService driverService;
-    private final DriverAvailabilityService availabilityService;
 
     public DriverLeave requestLeave(LeaveRequest request) {
-        Driver driver = driverService.findById(request.getDriverId());
+        User user = driverService.findById(request.getDriverId());
 
         DriverLeave leave = DriverLeave.builder()
-                .driver(driver)
+                .user(user)
                 .leaveType(request.getLeaveType())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
@@ -48,19 +47,12 @@ public class DriverLeaveService {
         leave.setApprovedBy(approvedBy);
         leave.setApprovalNotes(request.getApprovalNotes());
 
-        if (request.getStatus() == DriverLeave.LeaveStatus.APPROVED) {
-            AvailabilityUpdateRequest availabilityUpdate = new AvailabilityUpdateRequest(
-                    DriverAvailability.AvailabilityStatus.ON_LEAVE,
-                    "Leave approved");
-            availabilityService.updateAvailability(leave.getDriver().getId(), availabilityUpdate, approvedBy);
-        }
-
         return leaveRepository.save(leave);
     }
 
     @Transactional(readOnly = true)
     public List<DriverLeave> getLeavesByDriver(UUID driverId) {
-        return leaveRepository.findByDriverIdOrderByCreatedAtDesc(driverId);
+        return leaveRepository.findByUserIdOrderByCreatedAtDesc(driverId);
     }
 
     @Transactional(readOnly = true)
@@ -70,13 +62,7 @@ public class DriverLeaveService {
 
     @Scheduled(cron = "0 0 7 * * *")
     public void restoreAvailabilityAfterLeave() {
-        List<DriverLeave> endingToday = leaveRepository.findLeavesEndingToday(LocalDate.now());
-
-        for (DriverLeave leave : endingToday) {
-            AvailabilityUpdateRequest availabilityUpdate = new AvailabilityUpdateRequest(
-                    DriverAvailability.AvailabilityStatus.AVAILABLE,
-                    "Leave period ended");
-            availabilityService.updateAvailability(leave.getDriver().getId(), availabilityUpdate, "SYSTEM");
-        }
+        // Readiness cache cron will handle daily updates
+        // No manual availability status to restore
     }
 }

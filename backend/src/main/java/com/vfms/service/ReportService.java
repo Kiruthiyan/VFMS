@@ -1,7 +1,7 @@
 package com.vfms.service;
 
 import com.vfms.dto.*;
-import com.vfms.dsm.repository.DriverRepository;
+import com.vfms.user.repository.UserRepository;
 import com.vfms.fuel.repository.FuelRecordRepository;
 import com.vfms.maintenance.MaintenanceRepository;
 import com.vfms.trip.repository.TripRequestRepository;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class ReportService {
 
     private final VehicleRepository vehicleRepository;
-    private final DriverRepository driverRepository;
+    private final UserRepository userRepository;
     private final TripRequestRepository tripRequestRepository;
     private final MaintenanceRepository maintenanceRepository;
     private final FuelRecordRepository fuelRecordRepository;
@@ -79,7 +79,7 @@ public class ReportService {
     }
 
     public List<DriverPerformanceDTO> getDriverPerformance() {
-        return driverRepository.findAll().stream().map(driver ->
+        return userRepository.findAll().stream().map(driver ->
             DriverPerformanceDTO.builder()
                     .driverId(driver.getId())
                     .driverName(driver.getFullName())

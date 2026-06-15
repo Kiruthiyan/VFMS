@@ -28,7 +28,6 @@ export interface DriverProfileResponse {
   dateOfJoining?: string;
   photoUrl?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-  availabilityStatus?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -169,6 +168,10 @@ export async function uploadProfilePicture(file: File): Promise<DocumentItem> {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return res.data;
+}
+
+export async function removeProfilePicture(): Promise<void> {
+  await api.delete('/api/driver/profile/picture');
 }
 
 // ── Licenses ──────────────────────────────────────────────────────────────────
