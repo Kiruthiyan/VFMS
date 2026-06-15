@@ -54,8 +54,8 @@ export default function DriverDetailsPage() {
 	const [error, setError] = useState<string | null>(null);
 	const profilePictureUrl = profilePicture?.fileUrl ? resolveBackendAssetUrl(profilePicture.fileUrl) : '';
 
-	// The linked driver-table ID for sub-resource tabs
-	const linkedDriverId = driverUser?.driverId ?? null;
+	/** User UUID — same value used for all driver sub-resource APIs */
+	const driverResourceId = id;
 
 	const fetchDriverUser = async () => {
 		if (!id) {
@@ -71,10 +71,10 @@ export default function DriverDetailsPage() {
 			const data = await apiFetch<DriverUserDetail>(`/api/drivers/from-users/${id}`);
 			setDriverUser(data);
 
-			// If there's a linked driver record, fetch profile picture and availability
-			if (data.driverId) {
+			// Fetch profile picture using user UUID
+			if (data.id) {
 				try {
-					const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${data.driverId}/profile-picture`);
+					const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${data.id}/profile-picture`);
 					setProfilePicture(profilePic);
 				} catch (e) {
 					setProfilePicture(null);
@@ -140,11 +140,11 @@ export default function DriverDetailsPage() {
 									<div className="w-full overflow-x-auto border-b border-border mb-4 pb-px">
 										<TabsList className="flex gap-2 w-max whitespace-nowrap bg-transparent h-auto p-0">
 											<TabsTrigger value="overview" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Overview</TabsTrigger>
-											<TabsTrigger value="licenses" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Licenses</TabsTrigger>
-											<TabsTrigger value="certifications" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Certs</TabsTrigger>
-											<TabsTrigger value="documents" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Documents</TabsTrigger>
-											<TabsTrigger value="infractions" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Infractions</TabsTrigger>
-											<TabsTrigger value="trips" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex" disabled={!linkedDriverId}>Trips</TabsTrigger>
+											<TabsTrigger value="licenses" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Licenses</TabsTrigger>
+											<TabsTrigger value="certifications" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Certs</TabsTrigger>
+											<TabsTrigger value="documents" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Documents</TabsTrigger>
+											<TabsTrigger value="infractions" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Infractions</TabsTrigger>
+											<TabsTrigger value="trips" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Trips</TabsTrigger>
 										</TabsList>
 									</div>
 
@@ -185,47 +185,35 @@ export default function DriverDetailsPage() {
 										</div>
 									</TabsContent>
 
-									{linkedDriverId ? (
-										<>
-											<TabsContent value="licenses">
-												<DriverLicensesTab driverId={linkedDriverId} />
-											</TabsContent>
+									<TabsContent value="licenses">
+										<DriverLicensesTab driverId={driverResourceId} />
+									</TabsContent>
 
-											<TabsContent value="certifications">
-												<DriverCertificationsTab driverId={linkedDriverId} />
-											</TabsContent>
+									<TabsContent value="certifications">
+										<DriverCertificationsTab driverId={driverResourceId} />
+									</TabsContent>
 
-											<TabsContent value="documents">
-												<DriverDocumentsTab
-													driverId={linkedDriverId}
-													onProfilePictureUpload={async () => {
-														try {
-															const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${linkedDriverId}/profile-picture`);
-															setProfilePicture(profilePic);
-														} catch (e) {
-															setProfilePicture(null);
-														}
-													}}
-												/>
-											</TabsContent>
+									<TabsContent value="documents">
+										<DriverDocumentsTab
+											driverId={driverResourceId}
+											onProfilePictureUpload={async () => {
+												try {
+													const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${driverResourceId}/profile-picture`);
+													setProfilePicture(profilePic);
+												} catch (e) {
+													setProfilePicture(null);
+												}
+											}}
+										/>
+									</TabsContent>
 
-											<TabsContent value="infractions">
-												<DriverInfractionsTab driverId={linkedDriverId} />
-											</TabsContent>
+									<TabsContent value="infractions">
+										<DriverInfractionsTab driverId={driverResourceId} />
+									</TabsContent>
 
-											<TabsContent value="trips">
-												<DriverTripsTab driverId={linkedDriverId} />
-											</TabsContent>
-										</>
-									) : (
-										<div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-											<p className="font-medium">No linked driver record found</p>
-											<p className="mt-1 text-xs text-amber-600">
-												This user has been created as a Driver but has not yet logged in to the Driver Portal.
-												Licenses, certifications, documents, and other tabs will become available once the driver logs in and their driver record is created.
-											</p>
-										</div>
-									)}
+									<TabsContent value="trips">
+										<DriverTripsTab driverId={driverResourceId} />
+									</TabsContent>
 								</Tabs>
 							)}
 						</CardContent>

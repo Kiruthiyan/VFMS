@@ -56,6 +56,13 @@ public class DriverLeaveService {
     }
 
     @Transactional(readOnly = true)
+    public List<DriverLeave> getAllLeaves() {
+        return leaveRepository.findAll(
+                org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+    }
+
+    @Transactional(readOnly = true)
     public List<DriverLeave> getPendingLeaves() {
         return leaveRepository.findByStatusOrderByCreatedAtDesc(DriverLeave.LeaveStatus.PENDING);
     }

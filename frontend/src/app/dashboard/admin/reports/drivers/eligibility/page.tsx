@@ -13,7 +13,7 @@ import {
     ShieldCheck,
     Briefcase
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
@@ -32,8 +32,8 @@ export default function EligibilityAnalytics() {
     const loadData = async () => {
         try {
             const [rData, dData] = await Promise.all([
-                reportService.getDriverReadiness(),
-                reportService.getDriverPerformance()
+                dsmReports.getDriverReadiness(),
+                dsmReports.getDriverPerformance()
             ]);
             setReadiness(rData);
             setDrivers(dData);

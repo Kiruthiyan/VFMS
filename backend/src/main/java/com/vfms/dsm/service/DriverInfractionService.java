@@ -39,6 +39,13 @@ public class DriverInfractionService {
     }
 
     @Transactional(readOnly = true)
+    public List<DriverInfraction> getAllInfractions() {
+        return infractionRepository.findAll(
+                org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+    }
+
+    @Transactional(readOnly = true)
     public List<DriverInfraction> getInfractionsByDriver(UUID driverId) {
         return infractionRepository.findByUserIdOrderByCreatedAtDesc(driverId);
     }

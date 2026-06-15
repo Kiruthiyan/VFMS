@@ -8,12 +8,7 @@ import java.util.UUID;
 
 /**
  * DTO that exposes driver-relevant fields from the users table.
- * Used by the Drivers module listing page, which shows data that was
- * entered during the admin "Create User (Driver)" workflow.
- *
- * Includes the linked driverId (from the drivers table) so that
- * the profile page can fetch driver-specific sub-resources (licenses,
- * certifications, documents, infractions, trips, etc.).
+ * Drivers are users with {@code Role.DRIVER}; {@code driverId} is the same UUID as {@code id}.
  */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class DriverUserResponse {
@@ -33,6 +28,6 @@ public class DriverUserResponse {
     /** Auto-generated driver ID in the format DRV-XXXX */
     private String employeeId;
 
-    /** The UUID of the linked Driver record (from the drivers table), resolved by email. May be null if no driver record exists yet. */
+    /** Same UUID as {@link #id} — used by sub-resource APIs (licenses, documents, etc.). */
     private UUID driverId;
 }

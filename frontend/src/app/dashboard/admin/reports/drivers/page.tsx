@@ -15,7 +15,7 @@ import {
     FileCheck,
     TrendingUp
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line
@@ -37,9 +37,9 @@ export default function DriverAnalyticsOverview() {
     const loadData = async () => {
         try {
             const [dData, iData, cData] = await Promise.all([
-                reportService.getDriverPerformance(),
-                reportService.getDriverInfractions(),
-                reportService.getDriverCompliance()
+                dsmReports.getDriverPerformance(),
+                dsmReports.getDriverInfractions(),
+                dsmReports.getDriverCompliance()
             ]);
             setDrivers(dData);
             setInfractions(iData);
@@ -56,7 +56,7 @@ export default function DriverAnalyticsOverview() {
     // KPI Calculations
     const totalDrivers = drivers.length;
     const highRiskDrivers = drivers.filter(d => d.safetyScore < 80).length;
-    const criticalViolations = infractions.filter(i => i.severity === 'High' && i.status === 'Pending').length;
+    const criticalViolations = infractions.filter(i => (i.severity === 'High' || i.severity === 'Critical') && i.status === 'Pending').length;
     const expiringSoon = compliance.filter(c => {
         const expiry = new Date(c.licenseExpiry);
         const soon = new Date();
@@ -169,7 +169,7 @@ export default function DriverAnalyticsOverview() {
                 {[
                     { label: 'Performance', href: '/reports/drivers/performance' },
                     { label: 'Infractions', href: '/reports/drivers/infractions' },
-                    { label: 'Availability', href: '/reports/drivers/availability' },
+                    { label: 'Readiness', href: '/dashboard/admin/reports/drivers/eligibility' },
                     { label: 'Compliance', href: '/reports/drivers/compliance' },
                     { label: 'Eligibility', href: '/reports/drivers/eligibility' },
                     { label: 'Profile', href: '/reports/drivers/profile' },

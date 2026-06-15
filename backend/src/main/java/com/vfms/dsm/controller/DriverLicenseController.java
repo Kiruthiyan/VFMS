@@ -5,11 +5,13 @@ import com.vfms.dsm.service.DriverLicenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
 @RestController @RequestMapping("/api/drivers") @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
 public class DriverLicenseController {
     private final DriverLicenseService licenseService;
 

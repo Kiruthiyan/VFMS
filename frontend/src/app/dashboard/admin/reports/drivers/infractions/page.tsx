@@ -12,7 +12,7 @@ import {
     History,
     Search
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -30,7 +30,7 @@ export default function InfractionAnalytics() {
 
     const loadData = async () => {
         try {
-            const result = await reportService.getDriverInfractions();
+            const result = await dsmReports.getDriverInfractions();
             setInfractions(result);
         } catch (error) {
             console.error("Failed to load infractions", error);
