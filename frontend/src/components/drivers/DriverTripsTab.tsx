@@ -1,37 +1,54 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Calendar, MapPin, Truck } from 'lucide-react';
+import { Calendar, MapPin, Truck, ArrowRight, Users, Car } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiFetch } from '@/lib/api';
-import { TripRequest, TripStatus } from '@/types';
+
+interface Trip {
+  id: string;
+  purpose: string;
+  destination: string;
+  departureTime: string;
+  returnTime: string;
+  status: string;
+  passengerCount: number;
+  assignedVehicleId: string | null;
+}
+
+const TRIP_STATUSES = [
+  'NEW', 'SUBMITTED', 'APPROVED', 'DRIVER_CONFIRMED',
+  'DRIVER_REJECTED', 'ONGOING', 'COMPLETED', 'REJECTED', 'CANCELLED'
+];
+
+const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+  NEW: { bg: 'hsl(210 40% 96%)', text: 'hsl(215 25% 27%)', border: 'hsl(214 32% 91%)' },
+  SUBMITTED: { bg: 'hsl(35 100% 97%)', text: 'hsl(31 92% 34%)', border: 'hsl(36 95% 85%)' },
+  APPROVED: { bg: 'hsl(142 76% 94%)', text: 'hsl(142 71% 45%)', border: 'hsl(142 71% 70%)' },
+  DRIVER_CONFIRMED: { bg: 'hsl(175 70% 95%)', text: 'hsl(175 70% 35%)', border: 'hsl(175 70% 80%)' },
+  DRIVER_REJECTED: { bg: 'hsl(25 100% 95%)', text: 'hsl(25 100% 45%)', border: 'hsl(25 100% 80%)' },
+  ONGOING: { bg: 'hsl(260 100% 97%)', text: 'hsl(263 83% 53%)', border: 'hsl(263 83% 74%)' },
+  COMPLETED: { bg: 'hsl(218 100% 97%)', text: 'hsl(221 83% 53%)', border: 'hsl(221 83% 74%)' },
+  REJECTED: { bg: 'hsl(0 84% 97%)', text: 'hsl(0 84% 60%)', border: 'hsl(0 84% 74%)' },
+  CANCELLED: { bg: 'hsl(0 0% 96%)', text: 'hsl(0 0% 40%)', border: 'hsl(0 0% 85%)' },
+};
 
 type DriverTripsTabProps = {
   driverId: string;
 };
 
-const TRIP_STATUSES: TripStatus[] = ['SCHEDULED', 'DRIVER_CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
-
-const statusColors: Record<TripStatus, { bg: string; text: string; border: string }> = {
-  SCHEDULED: { bg: 'hsl(218 100% 97%)', text: 'hsl(221 83% 53%)', border: 'hsl(221 83% 74%)' },
-  DRIVER_CONFIRMED: { bg: 'hsl(260 100% 97%)', text: 'hsl(263 83% 53%)', border: 'hsl(263 83% 74%)' },
-  IN_PROGRESS: { bg: 'hsl(47 100% 97%)', text: 'hsl(38 92% 50%)', border: 'hsl(38 92% 72%)' },
-  COMPLETED: { bg: 'hsl(142 76% 94%)', text: 'hsl(142 71% 45%)', border: 'hsl(142 71% 70%)' },
-  CANCELLED: { bg: 'hsl(0 84% 97%)', text: 'hsl(0 84% 60%)', border: 'hsl(0 84% 74%)' },
-};
-
 export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
-  const [trips, setTrips] = useState<TripRequest[]>([]);
-  const [filteredTrips, setFilteredTrips] = useState<TripRequest[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const allTrips = await apiFetch<TripRequest[]>(`/api/trips/driver/${driverId}`);
+      const allTrips = await apiFetch<Trip[]>(`/api/trips/driver/${driverId}`);
       setTrips(allTrips);
       setFilteredTrips(allTrips);
     } catch (e: any) {
@@ -54,19 +71,14 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
   }, [filterStatus, trips]);
 
   const formatDateTime = (dateTime: string) => {
-    return new Date(dateTime).toLocaleString();
+    return new Date(dateTime).toLocaleString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
   };
 
-  const formatDate = (dateTime: string) => {
-    return new Date(dateTime).toLocaleDateString();
-  };
-
-  const formatTime = (dateTime: string) => {
-    return new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getStatusBadgeStyle = (status: TripStatus) => {
-    const colors = statusColors[status];
+  const getStatusBadgeStyle = (status: string) => {
+    const colors = statusColors[status] || statusColors.NEW;
     return {
       backgroundColor: colors.bg,
       color: colors.text,
@@ -74,9 +86,9 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
     };
   };
 
-  const activeTrips = trips.filter((t) => t.status === 'IN_PROGRESS' || t.status === 'SCHEDULED' || t.status === 'DRIVER_CONFIRMED');
+  const activeTrips = trips.filter((t) => ['APPROVED', 'DRIVER_CONFIRMED', 'ONGOING'].includes(t.status));
   const completedTrips = trips.filter((t) => t.status === 'COMPLETED');
-  const cancelledTrips = trips.filter((t) => t.status === 'CANCELLED');
+  const cancelledTrips = trips.filter((t) => ['CANCELLED', 'REJECTED', 'DRIVER_REJECTED'].includes(t.status));
 
   return (
     <div className="space-y-4">
@@ -90,7 +102,7 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 px-4">
-            <p className="text-2xl font-bold" style={{ color: 'hsl(38 92% 50%)' }}>
+            <p className="text-2xl font-bold" style={{ color: 'hsl(263 83% 53%)' }}>
               {activeTrips.length}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">Active Trips</p>
@@ -98,7 +110,7 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 px-4">
-            <p className="text-2xl font-bold" style={{ color: 'hsl(142 71% 45%)' }}>
+            <p className="text-2xl font-bold" style={{ color: 'hsl(221 83% 53%)' }}>
               {completedTrips.length}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">Completed</p>
@@ -106,10 +118,10 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4 px-4">
-            <p className="text-2xl font-bold" style={{ color: 'hsl(0 84% 60%)' }}>
+            <p className="text-2xl font-bold" style={{ color: 'hsl(0 0% 40%)' }}>
               {cancelledTrips.length}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Cancelled</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Cancelled / Rejected</p>
           </CardContent>
         </Card>
       </div>
@@ -153,59 +165,59 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
           ) : (
             <div className="divide-y divide-border/50">
               {filteredTrips.map((trip) => {
-                const status = trip.status as TripStatus;
-                const statusColors = getStatusBadgeStyle(status);
+                const statusColors = getStatusBadgeStyle(trip.status);
                 return (
                   <div key={trip.id} className="p-4 hover:bg-muted/30 transition-colors">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
-                        {/* Route Info */}
-                        {(trip.origin || trip.destination) && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <MapPin className="h-3.5 w-3.5" />
-                            <span>
-                              {trip.origin || 'Unknown'} → {trip.destination || 'Unknown'}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Departure Time */}
-                        <div className="flex items-center gap-2 text-xs">
-                          <Calendar className="h-3.5 w-3.5" style={{ color: 'hsl(var(--primary))' }} />
-                          <span>
-                            <span className="font-medium">Departure:</span> {formatDateTime(trip.departureTime)}
-                          </span>
+                        {/* Destination */}
+                        <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                          <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
+                          {trip.destination}
                         </div>
+                        
+                        {/* Purpose */}
+                        <p className="text-xs text-muted-foreground ml-6">
+                          {trip.purpose}
+                        </p>
 
-                        {/* Completion Time */}
-                        {trip.completionTime && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <Calendar className="h-3.5 w-3.5" style={{ color: 'hsl(var(--success))' }} />
+                        {/* Details row */}
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs mt-2 ml-6 text-slate-600">
+                          {/* Departure to Return */}
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="font-medium text-slate-700">{formatDateTime(trip.departureTime)}</span>
+                            <ArrowRight className="h-3 w-3 text-slate-300" />
+                            <span className="font-medium text-slate-700">{formatDateTime(trip.returnTime)}</span>
+                          </div>
+                          
+                          {/* Passengers */}
+                          <div className="flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5 text-slate-400" />
+                            <span><strong className="text-slate-700">{trip.passengerCount}</strong> pax</span>
+                          </div>
+
+                          {/* Assigned Vehicle */}
+                          <div className="flex items-center gap-1.5">
+                            <Car className="h-3.5 w-3.5 text-slate-400" />
                             <span>
-                              <span className="font-medium">Completed:</span> {formatDateTime(trip.completionTime)}
+                              {trip.assignedVehicleId ? `Vehicle #${trip.assignedVehicleId}` : 'No vehicle assigned'}
                             </span>
                           </div>
-                        )}
-
-                        {/* Notes */}
-                        {trip.notes && (
-                          <div className="text-xs text-muted-foreground mt-2 italic">
-                            <span className="font-medium">Notes:</span> {trip.notes}
-                          </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* Status Badge */}
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-2 shrink-0">
                         <div
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border"
                           style={statusColors}
                         >
                           <Truck className="h-3 w-3" />
-                          {status.replace(/_/g, ' ')}
+                          {trip.status.replace(/_/g, ' ')}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          #{trip.id}
+                        <div className="text-[10px] text-muted-foreground font-mono bg-slate-100 px-1.5 py-0.5 rounded">
+                          {trip.id.substring(0, 8)}...
                         </div>
                       </div>
                     </div>
