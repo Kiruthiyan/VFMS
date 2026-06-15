@@ -104,8 +104,7 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
           ) : filteredDrivers.length > 0 ? (
             <div className="space-y-2">
               {filteredDrivers.map((driver) => {
-                // Compare by linked driverId (driver table UUID) since activeDriverId is a driver table ID
-                const isActive = driver.driverId === activeDriverId;
+                const isActive = driver.id === activeDriverId || driver.driverId === activeDriverId;
                 const nameParts = driver.fullName.split(' ');
                 const initials = nameParts.length >= 2
                   ? `${nameParts[0]?.[0] || ''}${nameParts[nameParts.length - 1]?.[0] || ''}`.toUpperCase()

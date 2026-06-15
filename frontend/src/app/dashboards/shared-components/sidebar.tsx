@@ -198,6 +198,7 @@ function getNavSectionsByRole(role?: string) {
       title: "Trips & Fleet",
       items: [
         { label: 'My Trips', href: '/dashboards/driver/trips', icon: Briefcase },
+        { label: 'Vehicles', href: '/dashboards/driver/vehicles', icon: Car },
       ]
     });
     sections.push({

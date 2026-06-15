@@ -56,6 +56,7 @@ export default function DriverDetailsPage() {
 
 	/** User UUID — same value used for all driver sub-resource APIs */
 	const driverResourceId = id;
+	const linkedDriverId = driverUser?.driverId ?? null;
 
 	const fetchDriverUser = async () => {
 		if (!id) {
@@ -220,8 +221,8 @@ export default function DriverDetailsPage() {
 					</Card>
 				</div>
 
-				{driverUser && !loading && !error && linkedDriverId && (
-					<DriverQuickList activeDriverId={linkedDriverId} />
+				{driverUser && !loading && !error && (
+					<DriverQuickList activeDriverId={linkedDriverId ?? driverUser.id} />
 				)}
 			</div>
 		</div>
