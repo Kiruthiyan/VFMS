@@ -31,7 +31,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByEmailAndDeletedAtIsNull(String email);
 
+    Optional<User> findByEmailAndDeletedAtIsNull(String email);
+
     boolean existsByEmployeeIdAndDeletedAtIsNull(String employeeId);
+
+    Optional<User> findByEmployeeIdAndDeletedAtIsNull(String employeeId);
 
     boolean existsByEmailAndDeletedAtIsNullAndIdNot(String email, UUID id);
 
@@ -44,6 +48,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     long countByDeletedAtIsNotNull();
 
     long countByRoleAndDeletedAtIsNull(Role role);
+
+    long countByRoleAndStatusAndDeletedAtIsNull(Role role, UserStatus status);
 
     List<User> findByDeletedAtIsNotNullOrderByDeletedAtDesc();
 

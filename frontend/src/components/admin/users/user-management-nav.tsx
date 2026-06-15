@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, LayoutDashboard, UserPlus, Users } from "lucide-react";
+import { Archive, BookUser, LayoutDashboard, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -23,6 +23,11 @@ const USER_MANAGEMENT_ITEMS = [
     icon: UserPlus,
   },
   {
+    href: "/admin/users/registry",
+    label: "Staff Registry",
+    icon: BookUser,
+  },
+  {
     href: "/admin/users/deleted",
     label: "Archived",
     icon: Archive,
@@ -37,7 +42,7 @@ export function UserManagementNav() {
       aria-label="User management sections"
       className="rounded-[28px] border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur"
     >
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
         {USER_MANAGEMENT_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

@@ -60,6 +60,33 @@ export interface VerifiedStaffProfile {
   department: string;
   designation: string;
   officeLocation: string;
+  accountAlreadyExists: boolean;
+  existingAccountId: string | null;
+  existingAccountRole: UserRole | null;
+}
+
+export interface EmployeeRegistryRecord {
+  id: string;
+  employeeId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  nic: string;
+  department: string;
+  designation: string;
+  officeLocation: string;
+  active: boolean;
+}
+
+export interface CreateEmployeeRegistryRequest {
+  employeeId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  nic: string;
+  department: string;
+  designation: string;
+  officeLocation: string;
 }
 
 export interface ReviewUserRequest {
@@ -364,4 +391,38 @@ export function getErrorMessage(error: unknown): string {
   }
 
   return apiGetErrorMessage(error);
+}
+
+export async function getEmployeeRegistryApi(): Promise<EmployeeRegistryRecord[]> {
+  const response = await api.get<EmployeeRegistryRecord[]>("/api/admin/employee-registry");
+  return response.data;
+}
+
+export async function createEmployeeRegistryApi(
+  data: CreateEmployeeRegistryRequest
+): Promise<EmployeeRegistryRecord> {
+  try {
+    const payload: CreateEmployeeRegistryRequest = {
+      ...data,
+      employeeId: data.employeeId.trim().toUpperCase(),
+      fullName: data.fullName.trim(),
+      email: data.email.trim().toLowerCase(),
+      phone: data.phone.trim(),
+      nic: data.nic.trim(),
+      department: data.department.trim(),
+      designation: data.designation.trim(),
+      officeLocation: data.officeLocation.trim(),
+    };
+
+    const response = await api.post<EmployeeRegistryRecord>(
+      "/api/admin/employee-registry",
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    throw buildAdminApiError(
+      error,
+      "Failed to add employee registry record. Please check the form and try again."
+    );
+  }
 }

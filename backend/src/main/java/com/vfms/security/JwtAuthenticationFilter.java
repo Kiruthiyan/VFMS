@@ -1,11 +1,14 @@
 package com.vfms.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vfms.common.dto.ErrorResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -47,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userEmail = jwtService.extractUsername(jwt);
         } catch (Exception e) {
             log.warn("JWT parsing failed for request {}: {}", requestPath, e.getMessage());
-            filterChain.doFilter(request, response);
+            writeUnauthorized(response);
             return;
         }
 
@@ -57,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
                     log.warn("Rejected JWT for inactive account: {} on path: {}", userEmail, requestPath);
-                    filterChain.doFilter(request, response);
+                    writeUnauthorized(response);
                     return;
                 }
 
@@ -74,13 +78,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 } else {
                     log.warn("JWT token validation failed for user: {} on path: {}",
                             userEmail, requestPath);
+                    writeUnauthorized(response);
+                    return;
                 }
             } catch (Exception e) {
                 log.warn("Failed to load user details for email: {}: {}",
                         userEmail, e.getMessage());
+                writeUnauthorized(response);
+                return;
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void writeUnauthorized(HttpServletResponse response) throws IOException {
+        ErrorResponse body = ErrorResponse.builder()
+                .success(false)
+                .status(HttpServletResponse.SC_UNAUTHORIZED)
+                .message("Authentication required.")
+                .build();
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        objectMapper.writeValue(response.getOutputStream(), body);
     }
 }

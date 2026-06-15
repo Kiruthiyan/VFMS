@@ -6,12 +6,12 @@ import com.vfms.admin.dto.ReviewDecision;
 import com.vfms.admin.dto.ReviewUserRequest;
 import com.vfms.admin.dto.SoftDeleteRequest;
 import com.vfms.admin.dto.UpdateUserRequest;
+import com.vfms.admin.dto.VerifiedStaffProfileResponse;
 import com.vfms.auth.service.EmailService;
 import com.vfms.auth.service.RefreshTokenService;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.ValidationException;
-import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.employee.entity.EmployeeRegistryRecord;
 import com.vfms.employee.repository.EmployeeRegistryRepository;
 import com.vfms.user.entity.User;
@@ -55,9 +55,6 @@ class AdminUserServiceTest {
 
     @Mock
     private EmployeeRegistryRepository employeeRegistryRepository;
-
-    @Mock
-    private DriverRepository driverRepository;
 
     @Mock
     private RefreshTokenService refreshTokenService;
@@ -170,6 +167,67 @@ class AdminUserServiceTest {
         assertEquals(UserStatus.APPROVED, user.getStatusBeforeDeletion());
         assertEquals(UserStatus.DEACTIVATED, user.getStatus());
         verify(userRepository).save(user);
+        verify(refreshTokenService).deleteByUser(user);
+    }
+
+    @Test
+    @DisplayName("softDeleteUser should reject last active administrator")
+    void softDeleteUser_shouldRejectLastActiveAdmin() {
+        UUID id = UUID.randomUUID();
+        User admin = baseApprovedUser(id);
+        admin.setRole(Role.ADMIN);
+
+        SoftDeleteRequest req = new SoftDeleteRequest();
+        req.setReason("Cleanup");
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(admin));
+        when(userRepository.countByRoleAndStatusAndDeletedAtIsNull(Role.ADMIN, UserStatus.APPROVED))
+                .thenReturn(1L);
+
+        assertThrows(ValidationException.class, () -> adminUserService.softDeleteUser(id, req));
+        verify(userRepository, never()).save(any(User.class));
+        verify(refreshTokenService, never()).deleteByUser(any());
+    }
+
+    @Test
+    @DisplayName("toggleUserStatus should block self-modification")
+    void toggleUserStatus_shouldBlockSelfModification() {
+        User actor = User.builder()
+                .id(actorId)
+                .fullName("Admin Actor")
+                .email("admin@vfms.com")
+                .nic("200099999999")
+                .role(Role.ADMIN)
+                .status(UserStatus.APPROVED)
+                .enabled(true)
+                .build();
+
+        when(userRepository.findById(actorId)).thenReturn(Optional.of(actor));
+
+        assertThrows(ValidationException.class, () -> adminUserService.toggleUserStatus(actorId));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("updateUser should block self role changes")
+    void updateUser_shouldBlockSelfRoleChange() {
+        User actor = User.builder()
+                .id(actorId)
+                .fullName("Admin Actor")
+                .email("admin@vfms.com")
+                .nic("200099999999")
+                .role(Role.ADMIN)
+                .status(UserStatus.APPROVED)
+                .enabled(true)
+                .build();
+
+        UpdateUserRequest req = new UpdateUserRequest();
+        req.setRole(Role.SYSTEM_USER);
+
+        when(userRepository.findById(actorId)).thenReturn(Optional.of(actor));
+
+        assertThrows(ValidationException.class, () -> adminUserService.updateUser(actorId, req));
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -286,8 +344,8 @@ class AdminUserServiceTest {
                         .active(true)
                         .build()
         ));
-        when(userRepository.existsByEmployeeIdAndDeletedAtIsNullAndIdNot("EMP001", id)).thenReturn(false);
-        when(userRepository.existsByEmailAndDeletedAtIsNullAndIdNot("staff@vfms.com", id)).thenReturn(false);
+        when(userRepository.findByEmployeeIdAndDeletedAtIsNull("EMP001")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndDeletedAtIsNull("staff@vfms.com")).thenReturn(Optional.empty());
 
         adminUserService.updateUser(id, req);
 
@@ -298,6 +356,91 @@ class AdminUserServiceTest {
         assertNull(user.getExperienceYears());
         assertEquals("EMP001", user.getEmployeeId());
         assertEquals("Operations", user.getDepartment());
+    }
+
+    @Test
+    @DisplayName("getVerifiedStaffProfile should return registry profile even when email is used by another role")
+    void getVerifiedStaffProfile_shouldReturnProfileWithExistingAccountWarning() {
+        EmployeeRegistryRecord registryRecord = EmployeeRegistryRecord.builder()
+                .employeeId("EMP001")
+                .email("shared@vfms.com")
+                .fullName("Staff User")
+                .phone("0771234567")
+                .nic("200012345678")
+                .department("Operations")
+                .designation("Coordinator")
+                .officeLocation("Colombo")
+                .active(true)
+                .build();
+
+        UUID existingUserId = UUID.randomUUID();
+        User existingAdmin = User.builder()
+                .id(existingUserId)
+                .fullName("Admin User")
+                .email("shared@vfms.com")
+                .nic("200099999999")
+                .role(Role.ADMIN)
+                .status(UserStatus.APPROVED)
+                .build();
+
+        when(employeeRegistryRepository.findByEmployeeIdIgnoreCase("EMP001"))
+                .thenReturn(Optional.of(registryRecord));
+        when(userRepository.findByEmployeeIdAndDeletedAtIsNull("EMP001"))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndDeletedAtIsNull("shared@vfms.com"))
+                .thenReturn(Optional.of(existingAdmin));
+
+        VerifiedStaffProfileResponse profile =
+                adminUserService.getVerifiedStaffProfile("EMP001", null);
+
+        assertEquals("EMP001", profile.getEmployeeId());
+        assertTrue(profile.isAccountAlreadyExists());
+        assertEquals(existingUserId, profile.getExistingAccountId());
+        assertEquals(Role.ADMIN, profile.getExistingAccountRole());
+    }
+
+    @Test
+    @DisplayName("createUser should reject staff provisioning when registry email is used by another role")
+    void createUser_shouldRejectStaffWhenRegistryEmailUsedByAnotherRole() {
+        CreateUserRequest req = new CreateUserRequest();
+        req.setRole(Role.SYSTEM_USER);
+        req.setEmployeeId("EMP001");
+        req.setFullName("Placeholder");
+        req.setEmail("placeholder@vfms.com");
+        req.setPhone("0771234567");
+        req.setNic("200012345678");
+
+        EmployeeRegistryRecord registryRecord = EmployeeRegistryRecord.builder()
+                .employeeId("EMP001")
+                .email("shared@vfms.com")
+                .fullName("Staff User")
+                .phone("0771234567")
+                .nic("200012345678")
+                .department("Operations")
+                .designation("Coordinator")
+                .officeLocation("Colombo")
+                .active(true)
+                .build();
+
+        when(employeeRegistryRepository.findByEmployeeIdIgnoreCase("EMP001"))
+                .thenReturn(Optional.of(registryRecord));
+        when(userRepository.findByEmployeeIdAndDeletedAtIsNull("EMP001"))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndDeletedAtIsNull("shared@vfms.com"))
+                .thenReturn(Optional.of(User.builder()
+                        .id(UUID.randomUUID())
+                        .fullName("Admin User")
+                        .email("shared@vfms.com")
+                        .nic("200099999999")
+                        .role(Role.ADMIN)
+                        .status(UserStatus.APPROVED)
+                        .build()));
+
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> adminUserService.createUser(req));
+
+        assertTrue(exception.getErrors().get("email").contains("existing role: ADMIN"));
+        verify(userRepository, never()).save(any(User.class));
     }
 
     private static User basePendingUser(UUID id) {

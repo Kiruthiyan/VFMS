@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { getMeApi, type AuthResponse } from "@/lib/api/auth";
+import { getMeApi, AuthApiError, type AuthResponse } from "@/lib/api/auth";
 import type { UserRole, UserStatus } from "@/lib/auth";
 import { clearAuthCookies, setAuthCookies } from "@/lib/rbac";
 
@@ -81,7 +81,19 @@ export const useAuthStore = create<AuthState>()(
           if (nextAccessToken) {
             setAuthCookies(nextAccessToken, profile.role);
           }
-          get().clearAuth();
+        } catch (error) {
+          const unauthorized =
+            (error instanceof AuthApiError && error.status === 401) ||
+            (typeof error === "object" &&
+              error !== null &&
+              "status" in error &&
+              (error as { status?: number }).status === 401);
+
+          if (unauthorized) {
+            get().clearAuth();
+          } else {
+            set({ hydrated: true });
+          }
         }
       },
 
