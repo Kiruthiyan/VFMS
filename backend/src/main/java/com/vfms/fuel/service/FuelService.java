@@ -28,8 +28,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -167,16 +170,22 @@ public class FuelService {
 
     @Transactional(readOnly = true)
     public List<FuelRecordResponse> getByDateRange(String from, String to, Long vehicleId, UUID driverId) {
+        LocalDate fromDate = parseFuelSearchDate(from, "from");
+        LocalDate toDate = parseFuelSearchDate(to, "to");
+        if (fromDate.isAfter(toDate)) {
+            throw new ValidationException(
+                    "Invalid date range.",
+                    Map.of("from", "Start date must not be after end date.")
+            );
+        }
+
         List<FuelRecord> records;
         if (vehicleId != null) {
-            records = fuelRecordRepository.findByVehicleAndDateRange(vehicleId,
-                    java.time.LocalDate.parse(from), java.time.LocalDate.parse(to));
+            records = fuelRecordRepository.findByVehicleAndDateRange(vehicleId, fromDate, toDate);
         } else if (driverId != null) {
-            records = fuelRecordRepository.findByDriverAndDateRange(driverId,
-                    java.time.LocalDate.parse(from), java.time.LocalDate.parse(to));
+            records = fuelRecordRepository.findByDriverAndDateRange(driverId, fromDate, toDate);
         } else {
-            records = fuelRecordRepository.findByDateRange(
-                    java.time.LocalDate.parse(from), java.time.LocalDate.parse(to));
+            records = fuelRecordRepository.findByDateRange(fromDate, toDate);
         }
 
         return records.stream()
@@ -419,17 +428,25 @@ public class FuelService {
         }
     }
 
-    FuelRecordResponse toResponse(FuelRecord record) {
-        Vehicle vehicle = record.getVehicle();
-        User driver = record.getDriver();
+    private record DriverFields(UUID id, String name) {}
 
+    private DriverFields resolveDriverFields(FuelRecord record) {
+        Driver driver = record.getDriver();
+        if (driver == null) {
+            return new DriverFields(null, null);
+        }
+        return new DriverFields(driver.getId(), driver.getFullName());
+    }
+
+    FuelRecordResponse toResponse(FuelRecord record) {
+//        DriverFields driverFields = resolveDriverFields(record);
         return FuelRecordResponse.builder()
                 .id(record.getId())
-                .vehicleId(vehicle != null ? String.valueOf(vehicle.getId()) : null)
-                .vehiclePlate(vehicle != null ? vehicle.getPlateNumber() : null)
-                .vehicleMakeModel(vehicle != null ? joinNonBlank(vehicle.getBrand(), vehicle.getModel()) : null)
-                .driverId(driver != null ? driver.getId() : null)
-                .driverName(driver != null ? driver.getFullName() : null)
+                .vehicleId(String.valueOf(record.getVehicle().getId()))
+                .vehiclePlate(record.getVehicle().getPlateNumber())
+                .vehicleMakeModel(record.getVehicle().getBrand() + " " + record.getVehicle().getModel())
+                .driverId(driverFields.id())
+                .driverName(driverFields.name())
                 .fuelDate(record.getFuelDate())
                 .quantity(record.getQuantity())
                 .costPerLitre(record.getCostPerLitre())
@@ -448,20 +465,17 @@ public class FuelService {
 
     public FuelRecordResponse toResponseWithRealTimeData(FuelRecord record) {
         try {
-            Vehicle vehicle = record.getVehicle();
-            if (vehicle == null) {
-                return toResponse(record);
-            }
-
-            User driver = record.getDriver();
-            VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(vehicle.getId());
+          //
+            VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(record.getVehicle().getId());
+            DriverFields driverFields = resolveDriverFields(record);
             return FuelRecordResponse.builder()
                     .id(record.getId())
                     .vehicleId(String.valueOf(vehicle.getId()))
                     .vehiclePlate(vehicleDetail.getPlateNumber())
                     .vehicleMakeModel(vehicleDetail.getMake() + " " + vehicleDetail.getModel())
-                    .driverId(driver != null ? driver.getId() : null)
-                    .driverName(driver != null ? driver.getFullName() : null)
+//
+              .driverId(driverFields.id())
+                    .driverName(driverFields.name())
                     .fuelDate(record.getFuelDate())
                     .quantity(record.getQuantity())
                     .costPerLitre(record.getCostPerLitre())
@@ -505,6 +519,23 @@ public class FuelService {
         }
 
         return response;
+    }
+
+    private LocalDate parseFuelSearchDate(String value, String param) {
+        if (value == null || value.isBlank()) {
+            throw new ValidationException(
+                    "Invalid date range.",
+                    Map.of(param, "Date is required.")
+            );
+        }
+        try {
+            return LocalDate.parse(value.trim());
+        } catch (DateTimeParseException ex) {
+            throw new ValidationException(
+                    "Invalid date range.",
+                    Map.of(param, "Use ISO date format (yyyy-MM-dd).")
+            );
+        }
     }
 
     private Long parseVehicleId(String rawVehicleId) {

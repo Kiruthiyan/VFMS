@@ -43,6 +43,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     long countByDeletedAtIsNotNull();
 
+    long countByRoleAndDeletedAtIsNull(Role role);
+
     List<User> findByDeletedAtIsNotNullOrderByDeletedAtDesc();
 
     List<User> findByStatus(UserStatus status);

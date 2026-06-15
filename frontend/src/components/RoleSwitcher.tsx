@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { useRole, User } from "@/lib/roleContext";
 import { ChevronDown, Loader2, Check } from "lucide-react";
 
+const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
+
 const ROLE_CONFIG: Record<string, {
     label: string;
     active: string;
@@ -138,6 +140,10 @@ function RoleGroup({ role, users, currentUser, onSelect, isLoading }: RoleGroupP
 
 export default function RoleSwitcher() {
     const { currentUser, setCurrentUser, fixedUsers, drivers, driversLoading } = useRole();
+
+    if (!DEMO_ROLE_ENABLED) {
+        return null;
+    }
 
     const groupedUsers: Record<string, User[]> = {
         SYSTEM_USER: fixedUsers.filter(u => u.role === "SYSTEM_USER"),

@@ -1,5 +1,7 @@
 package com.vfms.security;
 
+import com.vfms.common.enums.Role;
+import com.vfms.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -12,10 +14,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
 public class JwtService {
+
+    public static final String CLAIM_USER_ID = "userId";
+    public static final String CLAIM_ROLE = "role";
 
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
@@ -27,6 +33,16 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public UUID extractUserId(String token) {
+        String userId = extractClaim(token, claims -> claims.get(CLAIM_USER_ID, String.class));
+        return userId == null ? null : UUID.fromString(userId);
+    }
+
+    public Role extractRole(String token) {
+        String role = extractClaim(token, claims -> claims.get(CLAIM_ROLE, String.class));
+        return role == null ? null : Role.valueOf(role);
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -34,6 +50,13 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(CLAIM_USER_ID, user.getId().toString());
+        claims.put(CLAIM_ROLE, user.getRole().name());
+        return generateToken(claims, user);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

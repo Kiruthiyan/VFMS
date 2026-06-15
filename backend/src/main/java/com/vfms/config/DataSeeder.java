@@ -9,6 +9,7 @@ import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,11 +40,19 @@ public class DataSeeder implements ApplicationRunner {
     private final AdminSeedProperties adminSeedProperties;
     private final com.vfms.vehicle.VehicleRepository vehicleRepository;
 
+    @Value("${vfms.seed.team-users.enabled:false}")
+    private boolean teamUsersSeedEnabled;
+
     @Override
     public void run(ApplicationArguments args) {
         logEmployeeRegistryState();
-        seedTeamUsers();
-        seedDriverAndVehicle();
+
+        if (teamUsersSeedEnabled) {
+            seedTeamUsers();
+            seedDriverAndVehicle();
+        } else {
+            log.info("[SEED] Team user seeding disabled - skipping demo accounts.");
+        }
 
         if (!adminSeedProperties.isEnabled()) {
             log.info("[SEED] Admin seeding disabled - skipping.");
@@ -139,14 +148,7 @@ public class DataSeeder implements ApplicationRunner {
             userRepository.save(user);
             log.info("[SEED] Seeded team user: {} with role: {}", normalizedEmail, role);
         } else {
-            // Update password and status if user already exists but might have wrong credentials or deactivated status
-            User user = userRepository.findByEmail(normalizedEmail).get();
-            user.setPassword(passwordEncoder.encode(password));
-            user.setStatus(UserStatus.APPROVED);
-            user.setEnabled(true);
-            user.setEmailVerified(true);
-            userRepository.save(user);
-            log.info("[SEED] Updated password and activated existing team user: {}", normalizedEmail);
+            log.info("[SEED] Team user already exists - skipping: {}", normalizedEmail);
         }
     }
 

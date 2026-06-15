@@ -19,6 +19,8 @@ const roleBadgeColors: Record<string, string> = {
   DRIVER: "bg-amber-100 text-amber-800",
 };
 
+const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
+
 // Build readable breadcrumb from pathname
 function getBreadcrumb(pathname: string): string {
   const segments = pathname
@@ -63,48 +65,58 @@ export function Topbar() {
         {/* Divider */}
         <div className="h-5 w-px bg-slate-200" />
 
-        {/* Demo Role Switcher */}
+        {/* Role badge (demo switcher only when explicitly enabled) */}
         <div className="relative">
-          <button
-            onClick={() => setShowRolePicker((v) => !v)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
-          >
+          {DEMO_ROLE_ENABLED ? (
+            <>
+              <button
+                onClick={() => setShowRolePicker((v) => !v)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
+              >
+                <span
+                  className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadgeColors[role]}`}
+                >
+                  {ROLES.find((r) => r.value === role)?.label}
+                </span>
+                <span className="text-[10px] text-slate-400 hidden sm:block">
+                  Demo Role
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              </button>
+
+              {showRolePicker && (
+                <div className="absolute right-0 top-10 w-44 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 pt-2 pb-1">
+                    Switch Role
+                  </p>
+                  {ROLES.map((r) => (
+                    <button
+                      key={r.value}
+                      onClick={() => {
+                        setRole(r.value);
+                        setShowRolePicker(false);
+                      }}
+                      className={`w-full text-left text-sm px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${
+                        role === r.value
+                          ? "text-blue-700 font-semibold bg-blue-50"
+                          : "text-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${role === r.value ? "bg-blue-500" : "bg-slate-200"}`}
+                      />
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
             <span
               className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadgeColors[role]}`}
             >
               {ROLES.find((r) => r.value === role)?.label}
             </span>
-            <span className="text-[10px] text-slate-400 hidden sm:block">
-              Demo Role
-            </span>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-          </button>
-
-          {showRolePicker && (
-            <div className="absolute right-0 top-10 w-44 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 pt-2 pb-1">
-                Switch Role
-              </p>
-              {ROLES.map((r) => (
-                <button
-                  key={r.value}
-                  onClick={() => {
-                    setRole(r.value);
-                    setShowRolePicker(false);
-                  }}
-                  className={`w-full text-left text-sm px-3 py-2 hover:bg-slate-50 transition-colors flex items-center gap-2 ${
-                    role === r.value
-                      ? "text-blue-700 font-semibold bg-blue-50"
-                      : "text-slate-700"
-                  }`}
-                >
-                  <span
-                    className={`h-2 w-2 rounded-full ${role === r.value ? "bg-blue-500" : "bg-slate-200"}`}
-                  />
-                  {r.label}
-                </button>
-              ))}
-            </div>
           )}
         </div>
 

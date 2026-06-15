@@ -271,6 +271,103 @@ class FuelServiceTest {
         assertEquals("Zara Driver", metadata.getDrivers().get(1).getLabel());
     }
 
+    @Test
+    @DisplayName("getAllRecords should map fuel records ordered by fuel date")
+    void getAllRecords_shouldReturnMappedRecords() {
+        UUID recordId = UUID.randomUUID();
+        UUID driverId = UUID.randomUUID();
+        FuelRecord record = FuelRecord.builder()
+                .id(recordId)
+                .vehicle(Vehicle.builder().id(101L).plateNumber("ABC-1234").brand("Toyota").model("Camry").build())
+                .driver(Driver.builder().id(driverId).fullName("Test Driver").build())
+                .fuelDate(LocalDate.of(2026, 6, 10))
+                .quantity(new BigDecimal("40.00"))
+                .costPerLitre(new BigDecimal("350.00"))
+                .totalCost(new BigDecimal("14000.00"))
+                .odometerReading(1500.0)
+                .createdBy("admin@vfms.com")
+                .build();
+
+        when(fuelRecordRepository.findAllByOrderByFuelDateDesc()).thenReturn(List.of(record));
+
+        var records = fuelService.getAllRecords();
+
+        assertEquals(1, records.size());
+        assertEquals(recordId, records.get(0).getId());
+        assertEquals(driverId, records.get(0).getDriverId());
+        assertEquals("Test Driver", records.get(0).getDriverName());
+        assertEquals("101", records.get(0).getVehicleId());
+    }
+
+    @Test
+    @DisplayName("getAllRecords should tolerate records without a driver")
+    void getAllRecords_shouldTolerateMissingDriver() {
+        FuelRecord record = FuelRecord.builder()
+                .id(UUID.randomUUID())
+                .vehicle(Vehicle.builder().id(202L).plateNumber("XYZ-9999").brand("Honda").model("Civic").build())
+                .driver(null)
+                .fuelDate(LocalDate.of(2026, 6, 11))
+                .quantity(new BigDecimal("20.00"))
+                .costPerLitre(new BigDecimal("300.00"))
+                .totalCost(new BigDecimal("6000.00"))
+                .odometerReading(2200.0)
+                .createdBy("admin@vfms.com")
+                .build();
+
+        when(fuelRecordRepository.findAllByOrderByFuelDateDesc()).thenReturn(List.of(record));
+
+        var records = fuelService.getAllRecords();
+
+        assertEquals(1, records.size());
+        assertNull(records.get(0).getDriverId());
+        assertNull(records.get(0).getDriverName());
+    }
+
+    @Test
+    @DisplayName("getFlaggedRecords should return only flagged records")
+    void getFlaggedRecords_shouldReturnFlaggedRecords() {
+        UUID recordId = UUID.randomUUID();
+        FuelRecord record = FuelRecord.builder()
+                .id(recordId)
+                .vehicle(Vehicle.builder().id(303L).plateNumber("FLG-1111").brand("Ford").model("Ranger").build())
+                .fuelDate(LocalDate.of(2026, 6, 12))
+                .quantity(new BigDecimal("80.00"))
+                .costPerLitre(new BigDecimal("320.00"))
+                .totalCost(new BigDecimal("25600.00"))
+                .odometerReading(5000.0)
+                .flaggedForMisuse(true)
+                .flagReason("Excessive volume")
+                .createdBy("admin@vfms.com")
+                .build();
+
+        when(fuelRecordRepository.findAllFlaggedRecords()).thenReturn(List.of(record));
+
+        var records = fuelService.getFlaggedRecords();
+
+        assertEquals(1, records.size());
+        assertEquals(recordId, records.get(0).getId());
+        assertTrue(records.get(0).isFlaggedForMisuse());
+        assertEquals("Excessive volume", records.get(0).getFlagReason());
+    }
+
+    @Test
+    @DisplayName("getByDateRange should reject invalid date format")
+    void getByDateRange_shouldRejectInvalidDateFormat() {
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> fuelService.getByDateRange("not-a-date", "2024-01-31", null, null));
+        assertTrue(ex.getErrors().containsKey("from"));
+        verify(fuelRecordRepository, never()).findByDateRange(any(), any());
+    }
+
+    @Test
+    @DisplayName("getByDateRange should reject when start date is after end date")
+    void getByDateRange_shouldRejectInvertedRange() {
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> fuelService.getByDateRange("2024-02-01", "2024-01-01", null, null));
+        assertTrue(ex.getErrors().containsKey("from"));
+        verify(fuelRecordRepository, never()).findByDateRange(any(), any());
+    }
+
     private CreateFuelRecordRequest baseCreateRequest() {
         CreateFuelRecordRequest req = new CreateFuelRecordRequest();
         req.setVehicleId("101");
