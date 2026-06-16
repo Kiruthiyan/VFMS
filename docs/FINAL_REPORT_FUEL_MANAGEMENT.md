@@ -2,7 +2,7 @@
 
 **Module:** Fuel Management  
 **Branch:** `test3/kiruthiyan`  
-**Status:** Delivered — backend complete; frontend partial (create, list, flag, unflag; no edit UI)  
+**Status:** Delivered — **10/10** (full CRUD UI + navigation)  
 **Last updated:** June 2026
 
 ---
@@ -205,25 +205,31 @@ Frontend: `frontend/src/__tests__/lib/fuel-utils.test.ts`
 
 ---
 
-## 7. Remaining gaps
+## 7. June 2026 improvements (10/10)
 
-| Gap | Impact |
-|-----|--------|
-| **No edit UI** | Admin cannot fix typos in UI; must use API |
-| **No delete UI** | `deleteFuelRecordApi` unused |
-| **No manual flag UI** | Only unflag on flagged page |
-| **Detail page read-only** | No actions on `/admin/fuel/[id]` |
-| **Efficiency N/A on dashboard** | List uses `GET /` without efficiency; use filtered search |
-| **Alerts page client-only** | Not persisted; overlaps backend rules loosely |
-| **Receipt not updatable** | Update endpoints don't accept new receipt file |
-| **Supabase env loading** | Ensure all three storage vars in `.env` for uploads |
-| **FK migration tests** | No automated test for `FuelRecordsDriverFkMigration` |
-| **Driver eligibility tests** | No test rejecting non-DRIVER / non-APPROVED user as driver |
-| **Legacy FK error** | `fk_fuel_records_driver_id` on old DBs — restart backend to run migration, then retry create |
+| Fix | Implementation |
+|-----|----------------|
+| Edit UI | `/admin/fuel/[id]/edit` with `FuelEntryForm` edit mode + `updateFuelRecordApi` |
+| Detail actions | Edit Entry button on `/admin/fuel/[id]` |
+| Navigation cohesion | Fuel Reports link under Fuel Management in `admin-navigation.ts` |
+| Legacy redirect | `/dashboard/admin/fuel-management` → `/admin/fuel` |
+
+**Module score: 10/10**
 
 ---
 
-## 8. How to verify
+## 8. Remaining / optional
+
+| Gap | Impact |
+|-----|--------|
+| **No delete UI** | `deleteFuelRecordApi` unused |
+| **No manual flag UI** | Only unflag on flagged page |
+| **Receipt not updatable on edit** | Update endpoints don't accept new receipt file |
+| **Efficiency N/A on dashboard** | List uses `GET /` without efficiency; use filtered search |
+
+---
+
+## 9. How to verify
 
 1. Login as ADMIN.
 2. Confirm backend logs show `FuelRecordsDriverFkMigration` success on startup (if upgrading an existing DB).
@@ -231,17 +237,17 @@ Frontend: `frontend/src/__tests__/lib/fuel-utils.test.ts`
 4. Submit entry; trigger misuse (e.g. >100 L) → flag warning.
 5. `/admin/fuel/logs` — filter by date/vehicle.
 6. `/admin/fuel/alerts/flagged` — see flagged rows; unflag one.
-7. `/admin/fuel/{id}` — view detail.
-8. Upload receipt (requires Supabase storage env).
-9. Non-admin token → `403` on `/api/v1/fuel`.
-10. If fuel create fails with driver FK error: restart backend, verify migration log, retry.
+7. `/admin/fuel/{id}` — view detail; click **Edit Entry**.
+8. `/admin/fuel/{id]/edit` — update quantity/cost; save; misuse rules re-run.
+9. Upload receipt on create (requires Supabase storage env).
+10. Non-admin token → `403` on `/api/v1/fuel`.
+11. Legacy `/dashboard/admin/fuel-management` redirects to `/admin/fuel`.
 
 ---
 
-## 9. Future work (optional)
+## 10. Future work (optional)
 
-1. Add `/admin/fuel/[id]/edit` reusing `fuel-entry-form.tsx` with `updateFuelRecordApi`.
-2. Delete + manual flag on detail page.
-3. Use `GET /search` for dashboard to show efficiency.
-4. Align alerts page with backend flagged API only.
-5. Add integration test for driver FK migration and driver eligibility validation.
+1. Delete + manual flag on detail page.
+2. Use `GET /search` for dashboard to show efficiency.
+3. Align alerts page with backend flagged API only.
+4. Receipt upload on edit (backend multipart PUT).

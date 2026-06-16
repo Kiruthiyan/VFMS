@@ -3,6 +3,7 @@ package com.vfms.auth.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vfms.auth.dto.SendOtpRequest;
 import com.vfms.auth.dto.VerifyOtpRequest;
+import com.vfms.auth.service.AuthRateLimitService;
 import com.vfms.auth.service.AuthService;
 import com.vfms.auth.service.OtpService;
 import com.vfms.common.exception.GlobalExceptionHandler;
@@ -32,12 +33,16 @@ class AuthControllerTest {
     @Mock
     private OtpService otpService;
 
+    @Mock
+    private AuthRateLimitService authRateLimitService;
+
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService, otpService))
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                        new AuthController(authService, otpService, authRateLimitService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();

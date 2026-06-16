@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { LoaderCircle, SearchCheck } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +18,10 @@ import {
 } from "@/lib/api/admin";
 import { ADMIN_MANAGED_ROLE_OPTIONS, ROLE_LABELS } from "@/lib/auth";
 import { ROLE_GUIDANCE } from "@/lib/constants/user-management";
+import {
+  createUserSchema,
+  type CreateUserFormValues,
+} from "@/lib/validators/admin/create-user-schema";
 
 interface CreateUserFormProps {
   onCancel?: () => void;
@@ -62,7 +67,8 @@ export function CreateUserForm({
     clearErrors,
     setValue,
     formState: { isSubmitting, errors },
-  } = useForm<CreateUserRequest>({
+  } = useForm<CreateUserFormValues>({
+    resolver: zodResolver(createUserSchema) as Resolver<CreateUserFormValues>,
     shouldUnregister: true,
     defaultValues: {
       fullName: "",
@@ -176,7 +182,7 @@ export function CreateUserForm({
     }
   };
 
-  const onSubmit = async (data: CreateUserRequest) => {
+  const onSubmit = async (data: CreateUserFormValues) => {
     setServerError(null);
     clearErrors();
 
@@ -196,7 +202,7 @@ export function CreateUserForm({
     }
 
     try {
-      await createUserApi(data);
+      await createUserApi(data as CreateUserRequest);
       toast.success(
         "User created successfully. A welcome email with a temporary password has been sent."
       );
@@ -225,7 +231,7 @@ export function CreateUserForm({
         <div>
           <label className={labelClass}>Role *</label>
           <select
-            {...register("role", { required: "Role is required." })}
+            {...register("role")}
             disabled={isSubmitting}
             className={inputClass}
           >
@@ -337,7 +343,7 @@ export function CreateUserForm({
               <input
                 type="text"
                 placeholder="Full name will appear here"
-                {...register("fullName", { required: "Full name is required." })}
+                {...register("fullName")}
                 readOnly
                 disabled={isSubmitting}
                 className={readOnlyInputClass}
@@ -352,7 +358,7 @@ export function CreateUserForm({
               <input
                 type="email"
                 placeholder="Email will appear here"
-                {...register("email", { required: "Email address is required." })}
+                {...register("email")}
                 readOnly
                 disabled={isSubmitting}
                 className={readOnlyInputClass}
@@ -369,7 +375,7 @@ export function CreateUserForm({
               <input
                 type="tel"
                 placeholder="Phone will appear here"
-                {...register("phone", { required: "Phone number is required." })}
+                {...register("phone")}
                 readOnly
                 disabled={isSubmitting}
                 className={readOnlyInputClass}
@@ -382,7 +388,7 @@ export function CreateUserForm({
               <input
                 type="text"
                 placeholder="NIC will appear here"
-                {...register("nic", { required: "NIC is required." })}
+                {...register("nic")}
                 readOnly
                 disabled={isSubmitting}
                 className={readOnlyInputClass}
@@ -456,7 +462,7 @@ export function CreateUserForm({
                 <input
                   type="text"
                   placeholder="Enter full name"
-                  {...register("fullName", { required: "Full name is required." })}
+                  {...register("fullName")}
                   disabled={isSubmitting}
                   className={inputClass}
                 />
@@ -471,7 +477,7 @@ export function CreateUserForm({
                 <input
                   type="email"
                   placeholder="name@company.com"
-                  {...register("email", { required: "Email address is required." })}
+                  {...register("email")}
                   disabled={isSubmitting}
                   className={inputClass}
                 />
@@ -489,7 +495,7 @@ export function CreateUserForm({
               <input
                 type="tel"
                 placeholder="07XXXXXXXX"
-                {...register("phone", { required: "Phone number is required." })}
+                {...register("phone")}
                 disabled={isSubmitting}
                 className={inputClass}
               />
@@ -502,7 +508,7 @@ export function CreateUserForm({
               <input
                 type="text"
                 placeholder="NIC number"
-                {...register("nic", { required: "NIC is required." })}
+                {...register("nic")}
                 disabled={isSubmitting}
                 className={inputClass}
               />

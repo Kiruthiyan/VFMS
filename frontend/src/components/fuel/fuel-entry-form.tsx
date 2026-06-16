@@ -13,8 +13,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   createFuelRecordApi,
   getErrorMessage,
+  updateFuelRecordApi,
 } from "@/lib/api/fuel";
 import { todayStr } from "@/lib/fuel-utils";
+import { cn } from "@/lib/utils";
 import {
   fuelEntrySchema,
   type FuelEntryFormValues,
@@ -39,6 +41,10 @@ interface FuelEntryFormProps {
   drivers?: { id: string; label: string }[];
   driverId?: string;
   driverName?: string;
+  mode?: "create" | "edit";
+  recordId?: string;
+  initialValues?: Partial<FuelEntryFormValues>;
+  submitLabel?: string;
   onSuccess?: () => void;
 }
 
@@ -47,6 +53,10 @@ export function FuelEntryForm({
   drivers = [],
   driverId,
   driverName,
+  mode = "create",
+  recordId,
+  initialValues,
+  submitLabel,
   onSuccess,
 }: FuelEntryFormProps) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -64,10 +74,20 @@ export function FuelEntryForm({
   } = useForm<FuelEntryFormValues>({
     resolver: zodResolver(fuelEntrySchema) as Resolver<FuelEntryFormValues>,
     defaultValues: {
-      fuelDate: todayStr(),
-      driverId: driverId ?? "",
+      fuelDate: initialValues?.fuelDate ?? todayStr(),
+      driverId: initialValues?.driverId ?? driverId ?? "",
+      vehicleId: initialValues?.vehicleId ?? "",
+      quantity: initialValues?.quantity,
+      costPerLitre: initialValues?.costPerLitre,
+      odometerReading: initialValues?.odometerReading,
+      fuelStation: initialValues?.fuelStation ?? "",
+      notes: initialValues?.notes ?? "",
     },
   });
+
+  const isEditMode = mode === "edit";
+  const resolvedSubmitLabel =
+    submitLabel ?? (isEditMode ? "Update Fuel Entry" : "Save Fuel Entry");
 
   const quantity = useWatch({ control, name: "quantity" });
   const costPerLitre = useWatch({ control, name: "costPerLitre" });
@@ -108,32 +128,44 @@ export function FuelEntryForm({
     setFlagWarning(null);
 
     try {
-      const result = await createFuelRecordApi(
-        {
-          vehicleId: data.vehicleId,
-          driverId: data.driverId || undefined,
-          fuelDate: data.fuelDate,
-          quantity: data.quantity,
-          costPerLitre: data.costPerLitre,
-          odometerReading: data.odometerReading,
-          fuelStation: data.fuelStation,
-          notes: data.notes,
-        },
-        receiptFile ?? undefined
-      );
+      const payload = {
+        vehicleId: data.vehicleId,
+        driverId: data.driverId || undefined,
+        fuelDate: data.fuelDate,
+        quantity: data.quantity,
+        costPerLitre: data.costPerLitre,
+        odometerReading: data.odometerReading,
+        fuelStation: data.fuelStation,
+        notes: data.notes,
+      };
+
+      const result =
+        isEditMode && recordId
+          ? await updateFuelRecordApi(recordId, payload)
+          : await createFuelRecordApi(payload, receiptFile ?? undefined);
 
       if (result.flaggedForMisuse && result.flagReason) {
         setFlagWarning(`Entry saved but flagged: ${result.flagReason}`);
-        toast.warning("Fuel entry saved with a misuse flag.");
+        toast.warning(
+          isEditMode
+            ? "Fuel entry updated with a misuse flag."
+            : "Fuel entry saved with a misuse flag."
+        );
       } else {
-        toast.success("Fuel entry recorded successfully.");
+        toast.success(
+          isEditMode
+            ? "Fuel entry updated successfully."
+            : "Fuel entry recorded successfully."
+        );
       }
 
-      reset({
-        fuelDate: todayStr(),
-        driverId: driverId ?? "",
-      });
-      resetReceiptSelection();
+      if (!isEditMode) {
+        reset({
+          fuelDate: todayStr(),
+          driverId: driverId ?? "",
+        });
+        resetReceiptSelection();
+      }
       onSuccess?.();
     } catch (err) {
       setServerError(getErrorMessage(err));
@@ -354,7 +386,11 @@ export function FuelEntryForm({
               Receipt (Optional)
             </label>
 
-            {receiptFile ? (
+            {isEditMode ? (
+              <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Receipt uploads are only supported when creating a new fuel entry.
+              </p>
+            ) : receiptFile ? (
               <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
                 <div className="flex items-center gap-3 text-sm text-slate-900">
                   <FileText size={18} className="font-semibold text-slate-950" />
@@ -427,26 +463,35 @@ export function FuelEntryForm({
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button
-          type="button"
-          onClick={() => {
-            reset({
-              fuelDate: todayStr(),
-              driverId: driverId ?? "",
-            });
-            resetReceiptSelection();
-          }}
-          className="h-11 flex-1 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 transition-all hover:bg-slate-50"
-        >
-          Clear Form
-        </button>
+        {!isEditMode && (
+          <button
+            type="button"
+            onClick={() => {
+              reset({
+                fuelDate: todayStr(),
+                driverId: driverId ?? "",
+              });
+              resetReceiptSelection();
+            }}
+            className="h-11 flex-1 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 transition-all hover:bg-slate-50"
+          >
+            Clear Form
+          </button>
+        )}
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex h-11 flex-1 items-center justify-center gap-2"
+          className={cn(
+            "flex h-11 items-center justify-center gap-2",
+            isEditMode ? "w-full" : "flex-1"
+          )}
         >
           {isSubmitting && <LoadingSpinner size={14} />}
-          {isSubmitting ? "Saving..." : "Save Fuel Entry"}
+          {isSubmitting
+            ? isEditMode
+              ? "Updating..."
+              : "Saving..."
+            : resolvedSubmitLabel}
         </Button>
       </div>
     </form>

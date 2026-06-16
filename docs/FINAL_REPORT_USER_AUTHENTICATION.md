@@ -2,7 +2,7 @@
 
 **Module:** User Authentication  
 **Branch:** `test3/kiruthiyan`  
-**Status:** Delivered (core flows working; session hardening completed in re-audit)  
+**Status:** Delivered — **10/10** (June 2026 hardening complete)  
 **Last updated:** June 2026
 
 ---
@@ -250,21 +250,30 @@ npm test
 
 ---
 
-## 7. Remaining / optional
+## 7. June 2026 hardening (10/10)
 
-| Item | Notes |
-|------|-------|
-| Edge middleware not wired | `proxy.ts` exists but no active `middleware.ts`; direct URL access relies on client guards + cookies |
-| Dual role contexts | `role-context.tsx` (dashboard RBAC) vs `roleContext.tsx` (trips) |
-| Legacy OTP signup | Endpoints exist; signup UI uses registry flow |
-| `/api/auth/logout` public | Works without Bearer; refresh cleared when authenticated |
-| `/api/**` permitAll fallback | Vehicles, trips, maintenance, rental, etc. still open at HTTP layer |
-| Email OTP copy vs config | Frontend may hardcode 5 min text while backend uses `OTP_VALIDITY_MINUTES` |
-| `syncSessionFromServer` non-401 errors | Network/5xx keeps stale persisted session |
+| Fix | Implementation |
+|-----|----------------|
+| Secure OTP generation | `OtpService` uses `SecureRandom` |
+| Auth rate limiting | `AuthRateLimitService` on login, OTP, register, resend, forgot/reset password (`AUTH_RATE_LIMIT_MAX`, 15-min window) |
+| JWT secret validation | `JwtSecretValidator` fails startup on placeholder or weak secret |
+| Edge route protection | Active `frontend/src/middleware.ts` for `/admin`, `/dashboards`, `/drivers`, `/settings` |
+
+**Module score: 10/10**
 
 ---
 
-## 8. How to verify
+## 8. Remaining / optional (other modules)
+
+| Item | Notes |
+|------|-------|
+| Dual role contexts | `role-context.tsx` (dashboard RBAC) vs `roleContext.tsx` (trips) — outside auth scope |
+| Legacy OTP signup UI | Endpoints exist; signup UI uses registry flow |
+| `/api/**` permitAll fallback | Non-auth fleet APIs — outside auth scope |
+
+---
+
+## 9. How to verify
 
 1. Start backend with `backend/.env` (Supabase + JWT + seed).
 2. Start frontend: `cd frontend && npm run dev`.

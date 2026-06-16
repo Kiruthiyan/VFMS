@@ -155,6 +155,13 @@ export const adminNavigationSections: AdminNavSection[] = [
         exact: true,
         description: "Resolve flagged fuel activity",
       },
+      {
+        href: "/dashboard/admin/reports/fuel",
+        label: "Fuel Reports",
+        icon: BarChart3,
+        exact: false,
+        description: "Fuel consumption and cost analysis",
+      },
     ],
   },
   {
@@ -273,6 +280,9 @@ export function getAdminPageTitle(pathname: string): string {
   }
 
   if (pathname.startsWith("/admin/fuel/")) {
+    if (pathname.endsWith("/edit")) {
+      return "Edit Fuel Record";
+    }
     return "Fuel Record Details";
   }
 

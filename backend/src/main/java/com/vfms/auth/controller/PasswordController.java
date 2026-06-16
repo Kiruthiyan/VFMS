@@ -3,9 +3,11 @@ package com.vfms.auth.controller;
 import com.vfms.auth.dto.ChangePasswordRequest;
 import com.vfms.auth.dto.ForgotPasswordRequest;
 import com.vfms.auth.dto.ResetPasswordRequest;
+import com.vfms.auth.service.AuthRateLimitService;
 import com.vfms.auth.service.PasswordService;
 import com.vfms.common.dto.ApiResponse;
 import com.vfms.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PasswordController {
 
     private final PasswordService passwordService;
+    private final AuthRateLimitService authRateLimitService;
 
     /**
      * Starts the password reset flow without revealing whether an email address
@@ -29,7 +32,9 @@ public class PasswordController {
      */
     @PostMapping("/api/auth/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
-            @Valid @RequestBody ForgotPasswordRequest request) {
+            @Valid @RequestBody ForgotPasswordRequest request,
+            HttpServletRequest httpRequest) {
+        authRateLimitService.check(httpRequest, "forgot-password");
         passwordService.forgotPassword(request);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -43,7 +48,9 @@ public class PasswordController {
      */
     @PostMapping("/api/auth/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
-            @Valid @RequestBody ResetPasswordRequest request) {
+            @Valid @RequestBody ResetPasswordRequest request,
+            HttpServletRequest httpRequest) {
+        authRateLimitService.check(httpRequest, "reset-password");
         passwordService.resetPassword(request);
         return ResponseEntity.ok(
                 ApiResponse.success(

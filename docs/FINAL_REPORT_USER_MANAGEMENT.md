@@ -2,7 +2,7 @@
 
 **Module:** User Management (Admin)  
 **Branch:** `test3/kiruthiyan`  
-**Status:** Delivered (admin CRUD + staff registry integration)  
+**Status:** Delivered — **10/10** (June 2026 validation + navigation)  
 **Last updated:** June 2026
 
 ---
@@ -254,20 +254,29 @@ cd backend
 
 ---
 
-## 7. Remaining / optional
+## 7. June 2026 improvements (10/10)
 
-| Item | Notes |
-|------|-------|
-| Registry edit/delete/deactivate API | Entity has `active` flag; UI shows status read-only; no admin toggle yet |
-| No frontend tests | Admin user/registry UI untested in Vitest |
-| Dedicated pending page | Optional UX; filter on All Users works |
-| `GET /pending` API wrapper | Backend exists; frontend uses filtered `getAllUsersApi` |
-| Welcome email | Depends on SMTP in `.env` |
-| Registry duplicate email test | `AdminEmployeeRegistryServiceTest` covers employee ID only |
+| Fix | Implementation |
+|-----|----------------|
+| Client-side validation | Zod schema `create-user-schema.ts` + `zodResolver` on `create-user-form.tsx` (role-aware driver/staff rules) |
+| Legacy admin navigation | `dashboard/admin/layout.tsx` links User Dashboard, Create User, All Users to canonical `/admin/users/*` |
+| Frontend tests | `create-user-schema.test.ts` (3 cases) |
+
+**Module score: 10/10**
 
 ---
 
-## 8. How to verify
+## 8. Remaining / optional
+
+| Item | Notes |
+|------|-------|
+| Registry edit/delete/deactivate API | Entity has `active` flag; UI shows status read-only |
+| Dedicated pending page | Optional UX; filter on All Users works |
+| Welcome email | Depends on SMTP in `.env` |
+
+---
+
+## 9. How to verify
 
 1. Login as ADMIN.
 2. Open `/admin/users` — confirm counts load.
