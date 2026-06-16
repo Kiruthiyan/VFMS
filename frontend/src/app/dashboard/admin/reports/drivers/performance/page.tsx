@@ -13,7 +13,7 @@ import {
     Clock,
     User
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     ComposedChart, Area, Line
@@ -29,7 +29,7 @@ export default function PerformanceAnalytics() {
 
     const loadData = async () => {
         try {
-            const result = await reportService.getDriverPerformance();
+            const result = await dsmReports.getDriverPerformance();
             // Sort by safety score descending for ranking
             const sorted = [...result].sort((a, b) => (b.safetyScore || 0) - (a.safetyScore || 0));
             setDrivers(sorted);

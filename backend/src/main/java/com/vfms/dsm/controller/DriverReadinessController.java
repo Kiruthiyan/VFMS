@@ -4,6 +4,7 @@ import com.vfms.dsm.entity.DriverReadinessCache;
 import com.vfms.dsm.service.DriverReadinessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/drivers")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
 public class DriverReadinessController {
 
     private final DriverReadinessService readinessService;

@@ -13,7 +13,7 @@ import {
     Activity,
     Clock
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     LineChart, Line, XAxis, YAxis, CartesianGrid
@@ -33,8 +33,8 @@ export default function LeaveAnalytics() {
     const loadData = async () => {
         try {
             const [lData, dData] = await Promise.all([
-                reportService.getDriverLeaves(),
-                reportService.getDriverPerformance()
+                dsmReports.getDriverLeaves(),
+                dsmReports.getDriverPerformance()
             ]);
             setLeaves(lData);
             setDrivers(dData);

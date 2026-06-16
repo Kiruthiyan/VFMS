@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/drivers")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
 public class DriverLeaveController {
 
     private final DriverLeaveService leaveService;
@@ -33,9 +35,14 @@ public class DriverLeaveController {
         return ResponseEntity.ok(leaveService.processLeave(leaveId, request, userId));
     }
 
-    @GetMapping("/{driverId}/leaves")
+    @GetMapping("/{driverId:[0-9a-fA-F\\-]{36}}/leaves")
     public ResponseEntity<List<DriverLeave>> getLeavesByDriver(@PathVariable UUID driverId) {
         return ResponseEntity.ok(leaveService.getLeavesByDriver(driverId));
+    }
+
+    @GetMapping("/leaves")
+    public ResponseEntity<List<DriverLeave>> getAllLeaves() {
+        return ResponseEntity.ok(leaveService.getAllLeaves());
     }
 
     @GetMapping("/leaves/pending")

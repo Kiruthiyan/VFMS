@@ -12,7 +12,7 @@ import {
     BarChart,
     Users
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -27,6 +27,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AvailabilityAnalytics() {
     const [drivers, setDrivers] = useState<any[]>([]);
+    const [readiness, setReadiness] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -35,8 +36,12 @@ export default function AvailabilityAnalytics() {
 
     const loadData = async () => {
         try {
-            const result = await reportService.getDriverPerformance();
-            setDrivers(result);
+            const [readiness, drivers] = await Promise.all([
+                dsmReports.getDriverReadiness(),
+                dsmReports.getDriverPerformance(),
+            ]);
+            setDrivers(drivers);
+            setReadiness(readiness);
         } catch (error) {
             console.error("Failed to load availability data", error);
         } finally {
@@ -46,13 +51,16 @@ export default function AvailabilityAnalytics() {
 
     if (loading) return <div className="p-8">Loading availability data...</div>;
 
-    // Simulated status data based on the driver list
+    const readyCount = readiness.filter((r) => r.ready || r.isEligible).length;
+    const onLeaveCount = readiness.filter((r) => r.onLeaveToday).length;
+    const notReadyCount = Math.max(0, readiness.length - readyCount - onLeaveCount);
+
     const statusData = [
-        { name: 'Available', value: Math.ceil(drivers.length * 0.35) },
-        { name: 'On-Trip', value: Math.ceil(drivers.length * 0.50) },
-        { name: 'Leave', value: Math.ceil(drivers.length * 0.10) },
-        { name: 'Off-Duty', value: Math.ceil(drivers.length * 0.05) },
-    ];
+        { name: 'Available', value: readyCount },
+        { name: 'On-Trip', value: notReadyCount },
+        { name: 'Leave', value: onLeaveCount },
+        { name: 'Off-Duty', value: Math.max(0, drivers.length - readiness.length) },
+    ].filter((s) => s.value > 0);
 
     const utilizationTrend = [
         { day: 'Mon', rate: 75 }, { day: 'Tue', rate: 82 }, { day: 'Wed', rate: 88 },
@@ -164,7 +172,14 @@ export default function AvailabilityAnalytics() {
                 <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {drivers.map((driver, index) => {
-                            const status = index % 4 === 0 ? 'Leave' : index % 3 === 0 ? 'Available' : 'On-Trip';
+                            const readinessRow = readiness.find(
+                                (r) => r.driverId === driver.id || r.driverId === driver.driverId
+                            );
+                            const status = readinessRow?.onLeaveToday
+                                ? 'Leave'
+                                : readinessRow?.ready || readinessRow?.isEligible
+                                  ? 'Available'
+                                  : 'On-Trip';
                             const name = driver.driverName || driver.name || 'Unknown';
                             return (
                                 <div key={driver.id || index} className="p-4 rounded-xl bg-white border border-slate-100 hover:shadow-md transition-all flex items-center gap-4">

@@ -14,7 +14,7 @@ import {
     CheckCircle2,
     Building2
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
@@ -32,7 +32,7 @@ export default function ProfileAnalytics() {
 
     const loadData = async () => {
         try {
-            const result = await reportService.getDriverPerformance();
+            const result = await dsmReports.getDriverPerformance();
             setDrivers(result);
         } catch (error) {
             console.error("Failed to load profile data", error);

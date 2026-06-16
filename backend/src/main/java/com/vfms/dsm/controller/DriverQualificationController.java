@@ -4,11 +4,13 @@ import com.vfms.dsm.dto.QualificationCheckResponse;
 import com.vfms.dsm.service.DriverQualificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 @RestController @RequestMapping("/api/drivers") @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
 public class DriverQualificationController {
     private final DriverQualificationService qualificationService;
 

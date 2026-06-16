@@ -14,7 +14,7 @@ import {
     FolderKanban,
     AlertTriangle
 } from "lucide-react";
-import { reportService } from "@/services/reportService";
+import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -31,8 +31,8 @@ export default function DocumentTracking() {
     const loadData = async () => {
         try {
             const [cData, dData] = await Promise.all([
-                reportService.getDriverCompliance(),
-                reportService.getDriverPerformance()
+                dsmReports.getDriverCompliance(),
+                dsmReports.getDriverPerformance()
             ]);
             setCompliance(cData);
             setDrivers(dData);
