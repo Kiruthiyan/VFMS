@@ -2,15 +2,18 @@
 
 import { RoleGuard } from "@/components/auth/role-guard";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { BarChart3, Calendar, Droplet, FileText, Map, Truck, Users, Wrench } from "lucide-react";
+import { BarChart3, Calendar, Droplet, FileText, Map, ShieldCheck, Truck, UserPlus, Users, Wrench } from "lucide-react";
 
 const adminMenu = [
-  { label: "Dashboard Home", href: "/dashboard/admin", icon: BarChart3 },
+  { label: "Dashboard Home", href: "/dashboards/admin", icon: BarChart3 },
+  { label: "User Dashboard", href: "/admin/users", icon: Users },
+  { label: "Create User", href: "/admin/users/create", icon: UserPlus },
+  { label: "All Users", href: "/admin/users/all", icon: ShieldCheck },
   { label: "Maintenance", href: "/dashboard/admin/maintenance", icon: Wrench },
   { label: "Rentals", href: "/dashboard/admin/rentals", icon: Calendar },
   { label: "Trip", href: "/dashboard/admin/trip", icon: Map },
   { label: "Driver & Staff", href: "/dashboard/admin/driver-and-staff", icon: Users },
-  { label: "Fuel Management", href: "/dashboard/admin/fuel-management", icon: Droplet },
+  { label: "Fuel Management", href: "/admin/fuel", icon: Droplet },
   {
     label: "Reports",
     href: "/dashboard/admin/reports",

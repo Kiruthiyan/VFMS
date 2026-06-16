@@ -10,12 +10,14 @@ import com.vfms.auth.dto.StaffEmailCheckRequest;
 import com.vfms.auth.dto.StaffVerificationRequest;
 import com.vfms.auth.dto.VerifyOtpRequest;
 import com.vfms.auth.dto.VerifyOtpResponse;
+import com.vfms.auth.service.AuthRateLimitService;
 import com.vfms.auth.service.AuthService;
 import com.vfms.auth.service.OtpService;
 import com.vfms.common.dto.ApiResponse;
 import com.vfms.common.enums.UserStatus;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -38,14 +40,19 @@ public class AuthController {
 
     private final AuthService authService;
     private final OtpService otpService;
+    private final AuthRateLimitService authRateLimitService;
 
     /**
      * Sends an email verification code for OTP-based flows that still depend on
      * the legacy verification service.
      */
     @PostMapping("/send-otp")
-    public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
+    public ResponseEntity<ApiResponse<Void>> sendOtp(
+            @Valid @RequestBody SendOtpRequest request,
+            HttpServletRequest httpRequest
+    ) {
         try {
+            authRateLimitService.check(httpRequest, "send-otp");
             otpService.sendOtp(request.getEmail().trim().toLowerCase());
             return ResponseEntity.ok(
                     ApiResponse.success(
@@ -68,9 +75,11 @@ public class AuthController {
      */
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse<VerifyOtpResponse>> verifyOtp(
-            @Valid @RequestBody VerifyOtpRequest request
+            @Valid @RequestBody VerifyOtpRequest request,
+            HttpServletRequest httpRequest
     ) {
         try {
+            authRateLimitService.check(httpRequest, "verify-otp");
             otpService.verifyOtp(request.getEmail().trim().toLowerCase(), request.getOtp().trim());
             return ResponseEntity.ok(
                     ApiResponse.success(
@@ -91,8 +100,10 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
-            @Valid @RequestBody LoginRequest request
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest
     ) {
+        authRateLimitService.check(httpRequest, "login");
         return ResponseEntity.ok(
                 ApiResponse.success("Login successful", authService.login(request))
         );
@@ -155,8 +166,10 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Void>> register(
-            @Valid @RequestBody RegisterRequest request
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest
     ) {
+        authRateLimitService.check(httpRequest, "register");
         authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse.success(
@@ -186,8 +199,10 @@ public class AuthController {
      */
     @PostMapping("/resend-verification")
     public ResponseEntity<ApiResponse<Void>> resendVerification(
-            @Valid @RequestBody ResendVerificationRequest request
+            @Valid @RequestBody ResendVerificationRequest request,
+            HttpServletRequest httpRequest
     ) {
+        authRateLimitService.check(httpRequest, "resend-verification");
         authService.resendVerification(request);
         return ResponseEntity.ok(
                 ApiResponse.success("Verification email sent. Please check your inbox.", null)

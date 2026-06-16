@@ -11,6 +11,7 @@ import {
   Droplets,
   FileText,
   Gauge,
+  Pencil,
   type LucideIcon,
   MapPin,
   ShieldAlert,
@@ -197,18 +198,28 @@ export default function AdminFuelDetailPage() {
             Back to Fuel Management
           </Link>
 
-          {record?.receiptUrl && (
-            <Button asChild variant="outline" size="sm">
-              <a
-                href={record.receiptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText />
-                View Receipt
-              </a>
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {record && (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/admin/fuel/${record.id}/edit`}>
+                  <Pencil />
+                  Edit Entry
+                </Link>
+              </Button>
+            )}
+            {record?.receiptUrl && (
+              <Button asChild variant="outline" size="sm">
+                <a
+                  href={record.receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FileText />
+                  View Receipt
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
 
         {loading ? (

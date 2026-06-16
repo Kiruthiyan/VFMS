@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Random;
 
 @Slf4j
 @Service
@@ -22,6 +22,7 @@ public class OtpService {
     private final EmailService emailService;
 
     private static final int OTP_LENGTH = 6;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Value("${vfms.auth.otp.validity-minutes:5}")
     private int otpValidityMinutes;
@@ -136,8 +137,7 @@ public class OtpService {
      * Generate random 6-digit OTP
      */
     private String generateOtp() {
-        Random random = new Random();
-        int otp = 100000 + random.nextInt(900000);
+        int otp = 100000 + SECURE_RANDOM.nextInt(900000);
         return String.valueOf(otp);
     }
 }
