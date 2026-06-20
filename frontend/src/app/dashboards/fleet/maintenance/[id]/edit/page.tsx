@@ -1,16 +1,23 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, type Resolver, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { getErrorMessage } from "@/lib/api";
+import { documentDisplayName, openAuthenticatedDocument } from "@/lib/fleet-documents";
 import {
   maintenanceApi,
   MaintenanceFormData,
+  MaintenanceRequest,
   MaintenanceType,
 } from "@/lib/api/maintenance";
 import { Vehicle, vehicleApi } from "@/lib/api/vehicle";
+import { maintenanceFormSchema } from "@/lib/validators/fleet-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
 import {
   Select,
   SelectContent,
@@ -21,8 +28,6 @@ import {
 import { Wrench, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-type FieldErrors = { [key: string]: string };
-
 export default function EditMaintenancePage({
   params,
 }: {
@@ -31,62 +36,75 @@ export default function EditMaintenancePage({
   const { id } = use(params);
   const router = useRouter();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [request, setRequest] = useState<MaintenanceRequest | null>(null);
+  const [quotationFile, setQuotationFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [form, setForm] = useState<MaintenanceFormData>({
-    vehicleId: 0,
-    maintenanceType: "ROUTINE_SERVICE",
-    description: "",
-    estimatedCost: undefined,
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<MaintenanceFormData>({
+    resolver: zodResolver(maintenanceFormSchema) as Resolver<MaintenanceFormData>,
+    defaultValues: {
+      vehicleId: 0,
+      maintenanceType: "ROUTINE_SERVICE",
+      description: "",
+      estimatedCost: undefined,
+    },
   });
 
   useEffect(() => {
     Promise.all([vehicleApi.getAll(), maintenanceApi.getById(Number(id))])
       .then(([vehiclesRes, requestRes]) => {
         setVehicles(vehiclesRes.data);
-        const r = requestRes.data;
-        setForm({
-          vehicleId: r.vehicleId,
-          maintenanceType: r.maintenanceType,
-          description: r.description,
-          estimatedCost: r.estimatedCost || undefined,
+        const loadedRequest = requestRes.data;
+        setRequest(loadedRequest);
+        reset({
+          vehicleId: loadedRequest.vehicleId,
+          maintenanceType: loadedRequest.maintenanceType,
+          description: loadedRequest.description,
+          estimatedCost: loadedRequest.estimatedCost || undefined,
         });
       })
       .catch(() => toast.error("Failed to load data"))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, reset]);
 
-  const validate = (): boolean => {
-    const errs: FieldErrors = {};
-    if (!form.description.trim()) errs.description = "Description is required";
-    if (form.estimatedCost !== undefined && form.estimatedCost <= 0)
-      errs.estimatedCost = "Cost must be greater than 0";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const fieldClass = (field: keyof MaintenanceFormData) =>
+    `text-slate-900 ${errors[field] ? "border-red-400 focus:ring-red-400" : ""}`;
 
-  const clearError = (field: string) => {
-    if (errors[field]) setErrors({ ...errors, [field]: "" });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSaving(true);
+  const onSubmit = async (data: MaintenanceFormData) => {
     try {
-      await maintenanceApi.update(Number(id), form);
-      toast.success("Request updated");
+      const updated = await maintenanceApi.update(Number(id), data);
+
+      if (quotationFile) {
+        const withQuotation = await maintenanceApi.uploadQuotation(Number(id), quotationFile);
+        setRequest(withQuotation.data);
+        toast.success("Request updated with quotation");
+      } else {
+        setRequest(updated.data);
+        toast.success("Request updated");
+      }
+
       router.push(`/dashboards/fleet/maintenance/${id}`);
-    } catch {
-      toast.error("Failed to update request");
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   };
 
-  const fieldClass = (field: string) =>
-    `text-slate-900 ${errors[field] ? "border-red-400 focus:ring-red-400" : ""}`;
+  const handleOpenQuotation = async () => {
+    if (!request?.quotationUrl) {
+      return;
+    }
+
+    try {
+      await openAuthenticatedDocument(request.quotationUrl);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
 
   if (loading) {
     return (
@@ -117,53 +135,58 @@ export default function EditMaintenancePage({
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-1.5 block">
                   Vehicle *
                 </label>
-                <Select
-                  value={String(form.vehicleId)}
-                  onValueChange={(v) =>
-                    setForm({ ...form, vehicleId: Number(v) })
-                  }
-                >
-                  <SelectTrigger className="bg-white text-slate-900">
-                    <SelectValue placeholder="Select a vehicle" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-slate-900">
-                    {vehicles.map((v) => (
-                      <SelectItem key={v.id} value={String(v.id)}>
-                        {v.brand} {v.model} — {v.plateNumber}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="vehicleId"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ? String(field.value) : ""}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                    >
+                      <SelectTrigger className="bg-white text-slate-900">
+                        <SelectValue placeholder="Select a vehicle" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white text-slate-900">
+                        {vehicles.map((vehicle) => (
+                          <SelectItem key={vehicle.id} value={String(vehicle.id)}>
+                            {vehicle.brand} {vehicle.model} - {vehicle.plateNumber}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-1.5 block">
                   Maintenance Type *
                 </label>
-                <Select
-                  value={form.maintenanceType}
-                  onValueChange={(v) =>
-                    setForm({ ...form, maintenanceType: v as MaintenanceType })
-                  }
-                >
-                  <SelectTrigger className="bg-white text-slate-900">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-slate-900">
-                    <SelectItem value="BREAKDOWN">Breakdown</SelectItem>
-                    <SelectItem value="ROUTINE_SERVICE">
-                      Routine Service
-                    </SelectItem>
-                    <SelectItem value="ACCIDENT_DAMAGE">
-                      Accident Damage
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="maintenanceType"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value as MaintenanceType)}
+                    >
+                      <SelectTrigger className="bg-white text-slate-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white text-slate-900">
+                        <SelectItem value="BREAKDOWN">Breakdown</SelectItem>
+                        <SelectItem value="ROUTINE_SERVICE">Routine Service</SelectItem>
+                        <SelectItem value="ACCIDENT_DAMAGE">Accident Damage</SelectItem>
+                        <SelectItem value="INSPECTION_REPAIR">Inspection Repair</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div>
@@ -171,18 +194,14 @@ export default function EditMaintenancePage({
                   Description *
                 </label>
                 <textarea
+                  {...register("description")}
                   className={`w-full border rounded-lg p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? "border-red-400" : "border-slate-200"}`}
                   rows={4}
-                  value={form.description}
-                  onChange={(e) => {
-                    setForm({ ...form, description: e.target.value });
-                    clearError("description");
-                  }}
                   required
                 />
                 {errors.description && (
                   <p className="text-red-500 text-xs mt-1">
-                    {errors.description}
+                    {errors.description.message}
                   </p>
                 )}
               </div>
@@ -193,32 +212,44 @@ export default function EditMaintenancePage({
                 </label>
                 <Input
                   type="number"
-                  value={form.estimatedCost || ""}
-                  onChange={(e) => {
-                    setForm({
-                      ...form,
-                      estimatedCost: e.target.value
-                        ? Number(e.target.value)
-                        : undefined,
-                    });
-                    clearError("estimatedCost");
-                  }}
+                  {...register("estimatedCost", {
+                    setValueAs: (value) => value === "" ? undefined : Number(value),
+                  })}
                   className={fieldClass("estimatedCost")}
                 />
                 {errors.estimatedCost && (
                   <p className="text-red-500 text-xs mt-1">
-                    {errors.estimatedCost}
+                    {errors.estimatedCost.message}
                   </p>
                 )}
+              </div>
+
+              <div className="pt-5 border-t border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                  Documents
+                </h3>
+                <FleetFileDropzone
+                  title="Quotation"
+                  file={quotationFile}
+                  existingFileName={
+                    request?.quotationUrl
+                      ? documentDisplayName(request.quotationUrl, "View quotation")
+                      : undefined
+                  }
+                  onFileChange={setQuotationFile}
+                  onOpenExisting={handleOpenQuotation}
+                  uploadLabel="Upload"
+                  replaceLabel="Replace"
+                />
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-slate-200">
                 <Button
                   type="submit"
                   className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
-                  disabled={saving}
+                  disabled={isSubmitting}
                 >
-                  {saving ? "Saving..." : "Save Changes"}
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
                 <Button
                   type="button"

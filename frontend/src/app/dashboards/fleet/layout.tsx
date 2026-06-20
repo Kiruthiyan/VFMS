@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { RoleGuard } from "@/components/auth/role-guard";
+import { FleetAccessGuard } from "@/components/auth/fleet-access-guard";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 /**
@@ -21,11 +21,11 @@ export default function FleetDashboardLayout({
 }) {
   return (
     <Suspense>
-      <RoleGuard allowedRoles={["ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER"]}>
+      <FleetAccessGuard>
         <DashboardShell>
           {children}
         </DashboardShell>
-      </RoleGuard>
+      </FleetAccessGuard>
     </Suspense>
   );
 }

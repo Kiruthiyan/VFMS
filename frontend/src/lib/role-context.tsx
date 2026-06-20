@@ -9,9 +9,18 @@ import {
   useMemo,
 } from "react";
 
+import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 
 export type Role = "ADMIN" | "SYSTEM_USER" | "APPROVER" | "DRIVER";
+export type UserRole = Role;
+
+export interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+  employeeId?: string;
+}
 
 const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
 
@@ -24,6 +33,11 @@ function isValidRole(value: string): value is Role {
 interface RoleContextType {
   role: Role;
   setRole: (role: Role) => void;
+  currentUser: User;
+  setCurrentUser: (user: User) => void;
+  fixedUsers: User[];
+  drivers: User[];
+  driversLoading: boolean;
   isAdmin: boolean;
   isSystemUser: boolean;
   isApprover: boolean;
@@ -33,7 +47,19 @@ interface RoleContextType {
   canAdmin: boolean;
 }
 
-function buildRoleContext(role: Role): RoleContextType {
+function mapAuthUserToTripUser(
+  userId: string,
+  fullName: string,
+  role: string
+): User {
+  return {
+    id: userId,
+    name: fullName,
+    role: isValidRole(role) ? role : "SYSTEM_USER",
+  };
+}
+
+function buildPermissionContext(role: Role) {
   return {
     role,
     setRole: () => {},
@@ -47,13 +73,28 @@ function buildRoleContext(role: Role): RoleContextType {
   };
 }
 
-const defaultContext = buildRoleContext("SYSTEM_USER");
+const defaultUser: User = {
+  id: "anonymous",
+  name: "Guest",
+  role: "SYSTEM_USER",
+};
+
+const defaultContext: RoleContextType = {
+  ...buildPermissionContext("SYSTEM_USER"),
+  currentUser: defaultUser,
+  setCurrentUser: () => {},
+  fixedUsers: [],
+  drivers: [],
+  driversLoading: false,
+};
 
 const RoleContext = createContext<RoleContextType>(defaultContext);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const authUser = useAuthStore((state) => state.user);
   const [demoRole, setDemoRoleState] = useState<Role | null>(null);
+  const [drivers, setDrivers] = useState<User[]>([]);
+  const [driversLoading, setDriversLoading] = useState(true);
 
   useEffect(() => {
     if (!DEMO_ROLE_ENABLED) {
@@ -85,9 +126,51 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     return "SYSTEM_USER";
   }, [authUser, demoRole]);
 
+  const currentUser = useMemo<User>(() => {
+    if (!authUser) {
+      return defaultUser;
+    }
+
+    return mapAuthUserToTripUser(
+      authUser.userId,
+      authUser.fullName,
+      effectiveRole
+    );
+  }, [authUser, effectiveRole]);
+
+  const fixedUsers = authUser ? [currentUser] : [];
+
+  useEffect(() => {
+    api
+      .get("/trips/all-drivers")
+      .then((res) => {
+        const driverUsers: User[] = res.data.map(
+          (d: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            employeeId: string;
+          }) => ({
+            id: d.id,
+            name: `${d.firstName} ${d.lastName}`,
+            role: "DRIVER" as UserRole,
+            employeeId: d.employeeId,
+          })
+        );
+        setDrivers(driverUsers);
+      })
+      .catch(() => setDrivers([]))
+      .finally(() => setDriversLoading(false));
+  }, []);
+
   const value: RoleContextType = {
-    ...buildRoleContext(effectiveRole),
+    ...buildPermissionContext(effectiveRole),
     setRole,
+    currentUser,
+    setCurrentUser: () => {},
+    fixedUsers,
+    drivers,
+    driversLoading,
   };
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;

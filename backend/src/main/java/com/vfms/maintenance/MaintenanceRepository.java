@@ -12,4 +12,6 @@ public interface MaintenanceRepository extends JpaRepository<MaintenanceRequest,
     List<MaintenanceRequest> findByVehicleId(Long vehicleId);
 
     List<MaintenanceRequest> findByStatusIn(List<MaintenanceStatus> statuses);
+
+    List<MaintenanceRequest> findByVehicleIdAndStatusIn(Long vehicleId, List<MaintenanceStatus> statuses);
 }

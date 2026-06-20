@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, type Resolver, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { VehicleFormData } from "@/lib/api/vehicle";
+import { getErrorMessage } from "@/lib/api";
+import { FuelType, VehicleFormData, VehicleType } from "@/lib/api/vehicle";
+import { vehicleFormSchema } from "@/lib/validators/fleet-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +18,6 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Car } from "lucide-react";
 import { toast } from "sonner";
-
-type FieldErrors = { [key: string]: string };
 
 interface Props {
   title: string;
@@ -36,51 +37,31 @@ const DEFAULT_FORM: VehicleFormData = {
   seatingCapacity: undefined,
   insuranceExpiryDate: "",
   revenueLicenseExpiryDate: "",
+  odometerReading: undefined,
 };
 
 export function VehicleForm({ title, initialData, onSubmit }: Props) {
   const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<VehicleFormData>(
-    initialData || DEFAULT_FORM,
-  );
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<VehicleFormData>({
+    resolver: zodResolver(vehicleFormSchema) as Resolver<VehicleFormData>,
+    defaultValues: initialData || DEFAULT_FORM,
+  });
 
-  const handleChange = (
-    field: keyof VehicleFormData,
-    value: string | number,
-  ) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors({ ...errors, [field]: "" });
-  };
+  const fieldClass = (field: keyof VehicleFormData) =>
+    `bg-white text-slate-900 ${errors[field] ? "border-red-400 focus:ring-red-400" : ""}`;
 
-  const validate = (): boolean => {
-    const errs: FieldErrors = {};
-    if (!form.plateNumber.trim()) errs.plateNumber = "Plate number is required";
-    if (!form.brand.trim()) errs.brand = "Brand is required";
-    if (!form.model.trim()) errs.model = "Model is required";
-    if (form.year < 1980 || form.year > new Date().getFullYear() + 1)
-      errs.year =
-        "Year must be between 1980 and " + (new Date().getFullYear() + 1);
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const submitForm = async (data: VehicleFormData) => {
     try {
-      setSaving(true);
-      await onSubmit(form);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Something went wrong");
-    } finally {
-      setSaving(false);
+      await onSubmit(data);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   };
-
-  const fieldClass = (field: string) =>
-    `bg-white text-slate-900 ${errors[field] ? "border-red-400 focus:ring-red-400" : ""}`;
 
   return (
     <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
@@ -101,20 +82,21 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit(submitForm)} className="space-y-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
                   Plate Number *
                 </label>
                 <Input
-                  value={form.plateNumber}
-                  onChange={(e) => handleChange("plateNumber", e.target.value)}
-                  placeholder="e.g. WP-CAB-1234"
+                  {...register("plateNumber")}
+                  placeholder="e.g. CP-NBM-4567"
                   className={fieldClass("plateNumber")}
                 />
                 {errors.plateNumber && (
-                  <p className="text-red-500 text-xs">{errors.plateNumber}</p>
+                  <p className="text-red-500 text-xs">
+                    {errors.plateNumber.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
@@ -122,13 +104,12 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                   Brand *
                 </label>
                 <Input
-                  value={form.brand}
-                  onChange={(e) => handleChange("brand", e.target.value)}
+                  {...register("brand")}
                   placeholder="e.g. Toyota"
                   className={fieldClass("brand")}
                 />
                 {errors.brand && (
-                  <p className="text-red-500 text-xs">{errors.brand}</p>
+                  <p className="text-red-500 text-xs">{errors.brand.message}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -136,13 +117,12 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                   Model *
                 </label>
                 <Input
-                  value={form.model}
-                  onChange={(e) => handleChange("model", e.target.value)}
+                  {...register("model")}
                   placeholder="e.g. Aqua"
                   className={fieldClass("model")}
                 />
                 {errors.model && (
-                  <p className="text-red-500 text-xs">{errors.model}</p>
+                  <p className="text-red-500 text-xs">{errors.model.message}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -151,56 +131,67 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                 </label>
                 <Input
                   type="number"
-                  value={form.year}
-                  onChange={(e) =>
-                    handleChange("year", parseInt(e.target.value))
-                  }
                   min={1980}
                   max={2100}
+                  {...register("year", {
+                    setValueAs: (value) => value === "" ? undefined : Number(value),
+                  })}
                   className={fieldClass("year")}
                 />
                 {errors.year && (
-                  <p className="text-red-500 text-xs">{errors.year}</p>
+                  <p className="text-red-500 text-xs">{errors.year.message}</p>
                 )}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
                   Vehicle Type *
                 </label>
-                <Select
-                  value={form.vehicleType}
-                  onValueChange={(v) => handleChange("vehicleType", v)}
-                >
-                  <SelectTrigger className="bg-white text-slate-900">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-slate-900">
-                    <SelectItem value="CAR">Car</SelectItem>
-                    <SelectItem value="VAN">Van</SelectItem>
-                    <SelectItem value="SUV">SUV</SelectItem>
-                    <SelectItem value="BUS">Bus</SelectItem>
-                    <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="vehicleType"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value as VehicleType)}
+                    >
+                      <SelectTrigger className="bg-white text-slate-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white text-slate-900">
+                        <SelectItem value="CAR">Car</SelectItem>
+                        <SelectItem value="VAN">Van</SelectItem>
+                        <SelectItem value="SUV">SUV</SelectItem>
+                        <SelectItem value="BUS">Bus</SelectItem>
+                        <SelectItem value="MOTORCYCLE">Motorcycle</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
                   Fuel Type *
                 </label>
-                <Select
-                  value={form.fuelType}
-                  onValueChange={(v) => handleChange("fuelType", v)}
-                >
-                  <SelectTrigger className="bg-white text-slate-900">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-slate-900">
-                    <SelectItem value="PETROL">Petrol</SelectItem>
-                    <SelectItem value="DIESEL">Diesel</SelectItem>
-                    <SelectItem value="HYBRID">Hybrid</SelectItem>
-                    <SelectItem value="ELECTRIC">Electric</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="fuelType"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value as FuelType)}
+                    >
+                      <SelectTrigger className="bg-white text-slate-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white text-slate-900">
+                        <SelectItem value="PETROL">Petrol</SelectItem>
+                        <SelectItem value="DIESEL">Diesel</SelectItem>
+                        <SelectItem value="HYBRID">Hybrid</SelectItem>
+                        <SelectItem value="ELECTRIC">Electric</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -209,31 +200,28 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                 <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <Input
-                value={form.department || ""}
-                onChange={(e) => handleChange("department", e.target.value)}
+                {...register("department")}
                 placeholder="e.g. IT Department"
-                className="bg-white text-slate-900"
+                className={fieldClass("department")}
               />
             </div>
 
-            {/* ── Additional Details ── */}
             <div className="pt-2 pb-1">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Additional Details
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
                   Color{" "}
                   <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <Input
-                  value={form.color || ""}
-                  onChange={(e) => handleChange("color", e.target.value)}
+                  {...register("color")}
                   placeholder="e.g. White, Silver"
-                  className="bg-white text-slate-900"
+                  className={fieldClass("color")}
                 />
               </div>
               <div className="space-y-2">
@@ -245,27 +233,47 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                   type="number"
                   min={1}
                   max={100}
-                  value={form.seatingCapacity || ""}
-                  onChange={(e) =>
-                    handleChange(
-                      "seatingCapacity",
-                      e.target.value ? parseInt(e.target.value) : "",
-                    )
-                  }
+                  {...register("seatingCapacity", {
+                    setValueAs: (value) => value === "" ? undefined : Number(value),
+                  })}
                   placeholder="e.g. 5"
-                  className="bg-white text-slate-900"
+                  className={fieldClass("seatingCapacity")}
                 />
+                {errors.seatingCapacity && (
+                  <p className="text-red-500 text-xs">
+                    {errors.seatingCapacity.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Odometer Reading{" "}
+                  <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  {...register("odometerReading", {
+                    setValueAs: (value) => value === "" ? undefined : Number(value),
+                  })}
+                  placeholder="e.g. 45200"
+                  className={fieldClass("odometerReading")}
+                />
+                {errors.odometerReading && (
+                  <p className="text-red-500 text-xs">
+                    {errors.odometerReading.message}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* ── Compliance Dates ── */}
             <div className="pt-2 pb-1">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Compliance & Expiry Dates
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
                   Insurance Expiry{" "}
@@ -273,11 +281,10 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                 </label>
                 <Input
                   type="date"
-                  value={form.insuranceExpiryDate || ""}
-                  onChange={(e) =>
-                    handleChange("insuranceExpiryDate", e.target.value)
-                  }
-                  className="bg-white text-slate-900"
+                  {...register("insuranceExpiryDate", {
+                    setValueAs: (value) => value === "" ? undefined : value,
+                  })}
+                  className={fieldClass("insuranceExpiryDate")}
                 />
               </div>
               <div className="space-y-2">
@@ -287,21 +294,20 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                 </label>
                 <Input
                   type="date"
-                  value={form.revenueLicenseExpiryDate || ""}
-                  onChange={(e) =>
-                    handleChange("revenueLicenseExpiryDate", e.target.value)
-                  }
-                  className="bg-white text-slate-900"
+                  {...register("revenueLicenseExpiryDate", {
+                    setValueAs: (value) => value === "" ? undefined : value,
+                  })}
+                  className={fieldClass("revenueLicenseExpiryDate")}
                 />
               </div>
             </div>
             <div className="flex gap-3 pt-4">
               <Button
                 type="submit"
-                disabled={saving}
+                disabled={isSubmitting}
                 className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
               >
-                {saving
+                {isSubmitting
                   ? "Saving..."
                   : title.includes("Edit")
                     ? "Update Vehicle"
@@ -321,4 +327,3 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
     </div>
   );
 }
-

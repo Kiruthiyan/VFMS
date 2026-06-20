@@ -138,6 +138,10 @@ api.interceptors.request.use(
       config.url = `/api${config.url.startsWith("/") ? "" : "/"}${config.url}`;
     }
 
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
+
     if (isPublicAuthPath(config.url)) {
       return config;
     }

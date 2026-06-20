@@ -170,18 +170,4 @@ public class DriverSelfController {
         return ResponseEntity.noContent().build();
     }
 
-    // ── Service Requests ─────────────────────────────────────────────────────
-
-    @GetMapping("/service-requests")
-    public ResponseEntity<List<DriverServiceRequest>> getMyServiceRequests(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(selfService.getMyServiceRequests(user.getEmail()));
-    }
-
-    @PostMapping("/service-requests")
-    public ResponseEntity<DriverServiceRequest> submitServiceRequest(
-            @AuthenticationPrincipal User user,
-            @Valid @RequestBody DriverSelfServiceRequestDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(selfService.submitServiceRequest(user.getEmail(), dto));
-    }
 }

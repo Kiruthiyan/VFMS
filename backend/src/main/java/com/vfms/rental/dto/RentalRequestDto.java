@@ -25,6 +25,7 @@ public class RentalRequestDto {
     private String vehicleType;
 
     @NotBlank(message = "Plate number is required")
+    @Size(max = 20, message = "Plate number must be 20 characters or fewer")
     private String plateNumber;
 
     @NotNull(message = "Start date is required") 

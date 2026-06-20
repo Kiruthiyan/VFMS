@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 /**
  * Admin Dashboard Layout
@@ -18,7 +19,7 @@ export default function AdminDashboardLayout({
   return (
     <Suspense>
       <RoleGuard allowedRole="ADMIN">
-        {children}
+        <DashboardShell>{children}</DashboardShell>
       </RoleGuard>
     </Suspense>
   );

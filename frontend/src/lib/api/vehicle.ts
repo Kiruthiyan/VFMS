@@ -19,6 +19,7 @@ export interface Vehicle {
   seatingCapacity?: number;
   insuranceExpiryDate?: string;
   revenueLicenseExpiryDate?: string;
+  odometerReading?: number;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +37,7 @@ export interface VehicleFormData {
   seatingCapacity?: number;
   insuranceExpiryDate?: string;
   revenueLicenseExpiryDate?: string;
+  odometerReading?: number;
 }
 
 interface ApiResponse<T> {

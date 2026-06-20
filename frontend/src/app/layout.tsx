@@ -5,7 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/components/providers/ToastProvider";
-import { RoleProvider as TripsRoleProvider } from "@/lib/roleContext";
+import { RoleProvider } from "@/lib/role-context";
 const inter = Inter({ subsets: ["latin"] });
 
 const geistSans = Geist({
@@ -32,9 +32,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
 
       <body className={`${inter.className} antialiased`}>
-        <TripsRoleProvider>
+        <RoleProvider>
           {children}
-        </TripsRoleProvider>
+        </RoleProvider>
         <Toaster />
         <ToastProvider />
       </body>

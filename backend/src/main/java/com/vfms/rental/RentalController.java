@@ -1,12 +1,12 @@
 package com.vfms.rental;
 
 import com.vfms.common.dto.ApiResponse;
+import com.vfms.common.file.SafeFileStorage;
 import com.vfms.rental.dto.RentalRequestDto;
 import com.vfms.rental.dto.RentalResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -69,13 +69,13 @@ public class RentalController {
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadAgreement(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
-            // Prefixing with rental ID ensures filenames stay unique across rentals and makes it easy to trace back which rental a file belongs to
-            String fileName = "agreement_" + id + "_" + file.getOriginalFilename();
-            Path uploadDir = Paths.get("uploads/rental");
+            String fileName = SafeFileStorage.buildStoredFileName("agreement", id, file);
+            Path uploadDir = Paths.get("uploads/rental").toAbsolutePath().normalize();
+            Path filePath = uploadDir.resolve(fileName).normalize();
 
             // Directory is created lazily so the app doesn't require manual setup on new environments or after a clean deployment
             Files.createDirectories(uploadDir);
-            file.transferTo(uploadDir.resolve(fileName).toFile());
+            file.transferTo(filePath.toFile());
 
             String fileUrl = "/api/rentals/files/" + fileName;
             RentalResponseDto response = rentalService.uploadAgreement(id, fileUrl);
@@ -89,11 +89,11 @@ public class RentalController {
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadInvoice(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
-            // Same naming convention as agreements so file management stays consistent
-            String fileName = "invoice_" + id + "_" + file.getOriginalFilename();
-            Path uploadDir = Paths.get("uploads/rental");
+            String fileName = SafeFileStorage.buildStoredFileName("invoice", id, file);
+            Path uploadDir = Paths.get("uploads/rental").toAbsolutePath().normalize();
+            Path filePath = uploadDir.resolve(fileName).normalize();
             Files.createDirectories(uploadDir);
-            file.transferTo(uploadDir.resolve(fileName).toFile());
+            file.transferTo(filePath.toFile());
 
             String fileUrl = "/api/rentals/files/" + fileName;
             RentalResponseDto response = rentalService.uploadInvoice(id, fileUrl);
@@ -106,18 +106,18 @@ public class RentalController {
     @GetMapping("/files/{fileName}")
     public ResponseEntity<Resource> getFile(@PathVariable String fileName) {
         try {
-            Path filePath = Paths.get("uploads/rental").resolve(fileName);
-            Resource resource = new UrlResource(filePath.toUri());
+            Path filePath = SafeFileStorage.resolveDownloadPath(Paths.get("uploads/rental"), fileName);
+            Resource resource = SafeFileStorage.loadResource(filePath);
 
             // PDF files are served inline so clients can preview them in the browser without forcing a download, improving the user experience for document review
-            String contentType = fileName.endsWith(".pdf")
-                    ? "application/pdf"
-                    : "application/octet-stream";
+            String contentType = SafeFileStorage.contentTypeFor(fileName);
 
             return ResponseEntity.ok()
                     .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
                     .header("Content-Type", contentType)
                     .body(resource);
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("File not found: " + e.getMessage());
         }

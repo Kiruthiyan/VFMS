@@ -1,7 +1,8 @@
 package com.vfms.maintenance;
 
 public enum MaintenanceType {
-    BREAKDOWN,
     ROUTINE_SERVICE,
-    ACCIDENT_DAMAGE
+    BREAKDOWN,
+    ACCIDENT_DAMAGE,
+    INSPECTION_REPAIR
 }

@@ -4,7 +4,8 @@ import api from "../api";
 export type MaintenanceType =
   | "BREAKDOWN"
   | "ROUTINE_SERVICE"
-  | "ACCIDENT_DAMAGE";
+  | "ACCIDENT_DAMAGE"
+  | "INSPECTION_REPAIR";
 export type MaintenanceStatus =
   | "NEW"
   | "SUBMITTED"
@@ -103,13 +104,7 @@ export const maintenanceApi = {
     const formData = new FormData();
     formData.append("file", file);
     return api
-      .post<ApiResponse<MaintenanceRequest>>(
-        `/api/maintenance/${id}/quotation`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      )
+      .post<ApiResponse<MaintenanceRequest>>(`/api/maintenance/${id}/quotation`, formData)
       .then((r) => r.data);
   },
 
@@ -117,13 +112,7 @@ export const maintenanceApi = {
     const formData = new FormData();
     formData.append("file", file);
     return api
-      .post<ApiResponse<MaintenanceRequest>>(
-        `/api/maintenance/${id}/invoice`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      )
+      .post<ApiResponse<MaintenanceRequest>>(`/api/maintenance/${id}/invoice`, formData)
       .then((r) => r.data);
   },
 

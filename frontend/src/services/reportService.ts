@@ -1,7 +1,5 @@
-import axios from 'axios';
+import api from '@/lib/api';
 import { getAllFuelRecordsApi } from '@/lib/api/fuel';
-
-const API_BASE_URL = 'http://localhost:8080/api';
 
 export interface DashboardStats {
     totalFuelCost: number;
@@ -45,10 +43,24 @@ export interface TripStats {
     cancelled: number;
 }
 
+type ApiEnvelope<T> = {
+    success?: boolean;
+    message?: string;
+    data?: T;
+};
+
+function unwrapApiData<T>(payload: T | ApiEnvelope<T>): T {
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+        return (payload as ApiEnvelope<T>).data as T;
+    }
+
+    return payload as T;
+}
+
 export const reportService = {
     getDashboardStats: async (): Promise<DashboardStats> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/reports/dashboard`);
+            const response = await api.get<DashboardStats>('/api/reports/dashboard');
             return response.data;
         } catch (error) {
             console.error("Error fetching dashboard stats:", error);
@@ -65,7 +77,7 @@ export const reportService = {
 
     getCostAnalysis: async (startDate?: string, endDate?: string): Promise<CostAnalysis> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/reports/costs`, {
+            const response = await api.get<CostAnalysis>('/api/reports/costs', {
                 params: { startDate, endDate }
             });
             return response.data;
@@ -82,7 +94,7 @@ export const reportService = {
 
     getVehicleUtilization: async (): Promise<VehicleUtilization[]> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/reports/utilization`);
+            const response = await api.get<VehicleUtilization[]>('/api/reports/utilization');
             return response.data;
         } catch (error) {
             console.error("Error fetching vehicle utilization:", error);
@@ -92,7 +104,7 @@ export const reportService = {
 
     getDriverPerformance: async (): Promise<any[]> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/drivers`);
+            const response = await api.get<any[]>('/api/reports/driver-performance');
             return response.data;
         } catch (error) {
             console.error("Error fetching driver performance:", error);
@@ -102,8 +114,8 @@ export const reportService = {
 
     getMaintenanceAnalytics: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/maintenance/requests`);
-            return response.data;
+            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/maintenance');
+            return unwrapApiData<any[]>(response.data);
         } catch (error) {
             console.error("Error fetching maintenance analytics:", error);
             return [];
@@ -112,8 +124,8 @@ export const reportService = {
 
     getRentalAnalytics: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/rentals`);
-            return response.data;
+            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/rentals');
+            return unwrapApiData<any[]>(response.data);
         } catch (error) {
             console.error("Error fetching rental analytics:", error);
             return [];
@@ -122,8 +134,8 @@ export const reportService = {
 
     getVehicles: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/vehicles`);
-            return response.data;
+            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/vehicles');
+            return unwrapApiData<any[]>(response.data);
         } catch (error) {
             console.error("Error fetching vehicles:", error);
             return [];
@@ -132,8 +144,9 @@ export const reportService = {
 
     getVehicleTotalCount: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/vehicles/total`);
-            return response.data;
+            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/vehicles');
+            const vehicles = unwrapApiData<any[]>(response.data);
+            return vehicles.length;
         } catch (error) {
             console.error("Error fetching vehicle count:", error);
             return 0;
@@ -142,7 +155,7 @@ export const reportService = {
 
     getDriverInfractions: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/drivers/infractions`);
+            const response = await api.get<any[]>('/api/drivers/infractions');
             return response.data;
         } catch (error) {
             console.error("Error fetching driver infractions:", error);
@@ -152,7 +165,7 @@ export const reportService = {
 
     getDriverCompliance: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/drivers/compliance`);
+            const response = await api.get<any[]>('/api/drivers/compliance');
             return response.data;
         } catch (error) {
             console.error("Error fetching driver compliance:", error);
@@ -162,7 +175,7 @@ export const reportService = {
 
     getDriverReadiness: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/drivers/readiness`);
+            const response = await api.get<any[]>('/api/drivers/readiness');
             return response.data;
         } catch (error) {
             console.error("Error fetching driver readiness:", error);
@@ -171,18 +184,12 @@ export const reportService = {
     },
 
     getStaffRequests: async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/staff/requests`);
-            return response.data;
-        } catch (error) {
-            console.error("Error fetching staff requests:", error);
-            return [];
-        }
+        return [];
     },
 
     getDriverLeaves: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/drivers/leaves`);
+            const response = await api.get<any[]>('/api/drivers/leaves');
             return response.data;
         } catch (error) {
             console.error("Error fetching driver leaves:", error);
@@ -212,7 +219,7 @@ export const reportService = {
 
     getTripStats: async (): Promise<TripStats> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/reports/trips/stats`);
+            const response = await api.get<TripStats>('/api/reports/trips/stats');
             return response.data;
         } catch (error) {
             console.error("Error fetching trip stats:", error);
@@ -230,15 +237,12 @@ export const reportService = {
 
     getRentals: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/rentals`);
-            return response.data;
+            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/rentals');
+            return unwrapApiData<any[]>(response.data);
         } catch (error) {
             console.error("Error fetching rentals:", error);
             return [];
         }
     },
 
-    getExportUrl: (type: string, format: 'pdf' | 'excel') => {
-        return `${API_BASE_URL}/reports/export/${type}?format=${format}`;
-    }
 };

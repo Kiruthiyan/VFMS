@@ -1,8 +1,6 @@
 import Link from "next/link";
 import {
-  Car,
   CalendarDays,
-  Wrench,
   MapPin,
   UserCircle,
   ShieldCheck,
@@ -31,13 +29,6 @@ const summaryCards = [
     description:
       "Submit and track your leave applications. View approval status and upcoming leave history.",
     icon: CalendarDays,
-  },
-  {
-    title: "Service Requests",
-    value: "Reported",
-    description:
-      "Report vehicle faults and request maintenance services directly from your driver workspace.",
-    icon: Wrench,
   },
 ];
 
@@ -84,19 +75,13 @@ const quickLinks = [
     href: DRIVER_PORTAL_ROUTES.LEAVE_REQUESTS,
     icon: CalendarDays,
   },
-  {
-    label: "Service Requests",
-    description: "Report vehicle faults or request maintenance.",
-    href: DRIVER_PORTAL_ROUTES.SERVICE_REQUESTS,
-    icon: Wrench,
-  },
 ];
 
 export default function DriverDashboardPage() {
   return (
     <DashboardShell
       title="Driver Dashboard"
-      description="Your personal driver workspace — manage trips, leave, service requests, and your profile from one place."
+      description="Your personal driver workspace — manage trips, leave, and your profile from one place."
     >
       {/* Summary Cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -141,7 +126,7 @@ export default function DriverDashboardPage() {
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 Your driver dashboard gives you centralized access to trip
-                schedules, leave management, vehicle service requests, and your
+                schedules, leave management, and your
                 personal driver profile — all in one consistent workspace
                 designed for clarity and speed.
               </p>
@@ -157,7 +142,6 @@ export default function DriverDashboardPage() {
             {[
               "View and track your assigned trips and schedules",
               "Submit leave requests and monitor approval status",
-              "Report vehicle faults and request maintenance",
               "Manage licenses, certifications, and personal documents",
               "Report and track infractions and incident history",
               "Access your full driver profile from the dashboard",

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
 
 import com.vfms.vehicle.FuelType;
@@ -57,4 +58,7 @@ public class VehicleRequestDto {
     private LocalDate insuranceExpiryDate;
 
     private LocalDate revenueLicenseExpiryDate;
+
+    @PositiveOrZero(message = "Odometer reading cannot be negative")
+    private Double odometerReading;
 }

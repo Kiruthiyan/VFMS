@@ -130,25 +130,6 @@ export interface LeaveRequestPayload {
   reason?: string;
 }
 
-export interface ServiceRequestItem {
-  id: number;
-  requestType: string;
-  vehicleId?: number;
-  description?: string;
-  urgency: string;
-  status: string;
-  driverId?: string;
-  requesterId?: string;
-  createdAt?: string;
-}
-
-export interface ServiceRequestPayload {
-  requestType: string;
-  vehicleId?: number;
-  description?: string;
-  urgency?: string;
-}
-
 // ── Profile ───────────────────────────────────────────────────────────────────
 
 export async function getMyProfile(): Promise<DriverProfileResponse> {
@@ -264,14 +245,4 @@ export async function deleteLeaveRequest(id: number): Promise<void> {
   await api.delete(`/api/driver/leave-requests/${id}`);
 }
 
-// ── Service Requests ──────────────────────────────────────────────────────────
-
-export async function getMyServiceRequests(): Promise<ServiceRequestItem[]> {
-  const res = await api.get<ServiceRequestItem[]>('/api/driver/service-requests');
-  return res.data;
-}
-
-export async function submitServiceRequest(data: ServiceRequestPayload): Promise<ServiceRequestItem> {
-  const res = await api.post<ServiceRequestItem>('/api/driver/service-requests', data);
-  return res.data;
-}
+// End of driver portal API helpers.

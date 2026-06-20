@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { Menu, Sparkles } from "lucide-react";
 
 import { DashboardSidebar } from "@/app/dashboards/shared-components/sidebar";
@@ -29,7 +29,9 @@ export function DashboardShell({
       )}
 
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 overflow-hidden bg-slate-900 xl:w-[17rem] lg:block">
-        <DashboardSidebar />
+        <Suspense fallback={null}>
+          <DashboardSidebar />
+        </Suspense>
       </aside>
 
       <aside
@@ -38,7 +40,9 @@ export function DashboardShell({
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <DashboardSidebar onNavigate={() => setMobileOpen(false)} />
+        <Suspense fallback={null}>
+          <DashboardSidebar onNavigate={() => setMobileOpen(false)} />
+        </Suspense>
       </aside>
 
       <div className="lg:pl-64 xl:pl-[17rem]">

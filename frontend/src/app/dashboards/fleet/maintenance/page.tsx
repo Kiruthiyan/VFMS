@@ -33,18 +33,20 @@ function MaintenanceList() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { canCreate } = useRole();
+  const statusParam = searchParams.get("status");
+  const isPendingApprovalsView = statusParam === "SUBMITTED";
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(
-    searchParams.get("status") ?? "ALL",
+    statusParam ?? "ALL",
   );
 
   // Sync filter if URL param changes (e.g. sidebar nav)
   useEffect(() => {
-    const param = searchParams.get("status") ?? "ALL";
+    const param = isPendingApprovalsView ? "SUBMITTED" : statusParam ?? "ALL";
     setStatusFilter(param);
-  }, [searchParams]);
+  }, [isPendingApprovalsView, statusParam]);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -75,9 +77,9 @@ function MaintenanceList() {
   });
 
   const pageTitle =
-    statusFilter === "SUBMITTED" ? "Pending Approvals" : "Maintenance Requests";
+    isPendingApprovalsView ? "Pending Approvals" : "Maintenance Requests";
   const pageSubtitle =
-    statusFilter === "SUBMITTED"
+    isPendingApprovalsView
       ? "Review and action submitted requests"
       : "Track and manage vehicle maintenance";
 
@@ -103,7 +105,7 @@ function MaintenanceList() {
                 className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
               />
             </Button>
-            {(canCreate || useRole().role === "DRIVER") && (
+            {canCreate && (
               <Button
                 className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 onClick={() => router.push("/dashboards/fleet/maintenance/create")}
@@ -125,20 +127,24 @@ function MaintenanceList() {
               className="pl-9 border-none bg-transparent focus-visible:ring-0 text-slate-900"
             />
           </div>
-          <div className="h-6 w-px bg-slate-200" />
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48 bg-white text-slate-900">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent className="bg-white text-slate-900">
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="NEW">New</SelectItem>
-              <SelectItem value="SUBMITTED">Submitted</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-              <SelectItem value="CLOSED">Closed</SelectItem>
-            </SelectContent>
-          </Select>
+          {!isPendingApprovalsView && (
+            <>
+              <div className="h-6 w-px bg-slate-200" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48 bg-white text-slate-900">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white text-slate-900">
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                  <SelectItem value="NEW">New</SelectItem>
+                  <SelectItem value="SUBMITTED">Submitted</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                  <SelectItem value="CLOSED">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
 
         {/* Table */}

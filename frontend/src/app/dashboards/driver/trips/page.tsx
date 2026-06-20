@@ -19,7 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import api from '@/lib/api';
-import { useRole } from '@/lib/roleContext';
+import { useRole } from '@/lib/role-context';
 
 interface Trip {
   id: string;

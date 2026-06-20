@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { getErrorMessage } from "@/lib/api";
+import { documentDisplayName, openAuthenticatedDocument } from "@/lib/fleet-documents";
 import { rentalApi, RentalRecord } from "@/lib/api/rental";
 import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
+import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,8 +15,6 @@ import {
   Edit,
   CheckCircle,
   XCircle,
-  Upload,
-  ExternalLink,
   Car,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -69,36 +70,36 @@ export default function RentalDetailPage() {
     }
   };
 
-  const handleUploadAgreement = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
+  const handleUploadAgreement = async (file: File | null) => {
     if (file) {
       try {
         await rentalApi.uploadAgreement(Number(id), file);
         toast.success("Agreement uploaded");
         fetchRental();
-      } catch {
-        toast.error("Failed to upload agreement");
+      } catch (error) {
+        toast.error(getErrorMessage(error));
       }
     }
-    e.target.value = "";
   };
 
-  const handleUploadInvoice = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
+  const handleUploadInvoice = async (file: File | null) => {
     if (file) {
       try {
         await rentalApi.uploadInvoice(Number(id), file);
         toast.success("Invoice uploaded");
         fetchRental();
-      } catch {
-        toast.error("Failed to upload invoice");
+      } catch (error) {
+        toast.error(getErrorMessage(error));
       }
     }
-    e.target.value = "";
+  };
+
+  const handleOpenDocument = async (url: string) => {
+    try {
+      await openAuthenticatedDocument(url);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   if (loading) {
@@ -187,7 +188,7 @@ export default function RentalDetailPage() {
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Vendor's Daily Rate
+                  Vendor&apos;s Daily Rate
                 </p>
                 <p className="text-sm font-semibold text-slate-900">
                   Rs.{rental.costPerDay.toLocaleString()}
@@ -226,60 +227,43 @@ export default function RentalDetailPage() {
               <h3 className="text-sm font-semibold text-slate-700 mb-3">
                 Documents
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                  <p className="text-xs text-slate-500 mb-2">
-                    Rental Agreement
-                  </p>
-                  {rental.agreementUrl ? (
-                    <a
-                      href={`http://localhost:8080${rental.agreementUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      <ExternalLink className="h-4 w-4" /> View Agreement
-                    </a>
-                  ) : (
-                    <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
-                      <Upload className="h-3 w-3" /> Upload Agreement
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.png"
-                        className="hidden"
-                        onChange={handleUploadAgreement}
-                      />
-                    </label>
-                  )}
-                </div>
-                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                  <p className="text-xs text-slate-500 mb-2">Invoice</p>
-                  {rental.invoiceUrl ? (
-                    <a
-                      href={`http://localhost:8080${rental.invoiceUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      <ExternalLink className="h-4 w-4" /> View Invoice
-                    </a>
-                  ) : rental.status === "RETURNED" ||
-                    rental.status === "CLOSED" ? (
-                    <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
-                      <Upload className="h-3 w-3" /> Upload Invoice
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.png"
-                        className="hidden"
-                        onChange={handleUploadInvoice}
-                      />
-                    </label>
-                  ) : (
-                    <span className="text-xs text-slate-400">
-                      Available after return
-                    </span>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FleetFileDropzone
+                  title="Rental Agreement"
+                  readonly={Boolean(rental.agreementUrl) || !canCreate || rental.status !== "ACTIVE"}
+                  file={null}
+                  existingFileName={
+                    rental.agreementUrl
+                      ? documentDisplayName(rental.agreementUrl, "View agreement")
+                      : undefined
+                  }
+                  onFileChange={handleUploadAgreement}
+                  onOpenExisting={() => handleOpenDocument(rental.agreementUrl!)}
+                  emptyLabel="No agreement uploaded"
+                  uploadLabel="Upload Agreement"
+                />
+                <FleetFileDropzone
+                  title="Invoice"
+                  readonly={
+                    Boolean(rental.invoiceUrl) ||
+                    !canCreate ||
+                    (rental.status !== "RETURNED" && rental.status !== "CLOSED")
+                  }
+                  file={null}
+                  existingFileName={
+                    rental.invoiceUrl
+                      ? documentDisplayName(rental.invoiceUrl, "View invoice")
+                      : undefined
+                  }
+                  onFileChange={handleUploadInvoice}
+                  onOpenExisting={() => handleOpenDocument(rental.invoiceUrl!)}
+                  emptyLabel={
+                    rental.status === "RETURNED" || rental.status === "CLOSED"
+                      ? "No invoice uploaded"
+                      : "Available after return"
+                  }
+                  uploadLabel="Upload Invoice"
+                />
               </div>
             </div>
 

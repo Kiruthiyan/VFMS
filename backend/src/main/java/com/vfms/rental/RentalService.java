@@ -22,6 +22,9 @@ public class RentalService {
 
     @Transactional
     public RentalResponseDto createRental(RentalRequestDto request) {
+        validateRentalDates(request);
+        ensureNoOverlappingActiveRental(request.getPlateNumber(), request.getStartDate(), request.getEndDate(), null);
+
         Vendor vendor = vendorRepository
                 .findById(request.getVendorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor", request.getVendorId()));
@@ -35,14 +38,6 @@ public class RentalService {
                 .costPerDay(request.getCostPerDay())
                 .purpose(request.getPurpose())
                 .build();
-
-        
-        // 1. First, check if the dates make sense (The Security Gate)
-        if (request.getEndDate() != null && request.getEndDate().isBefore(request.getStartDate())) {
-            throw new IllegalArgumentException("End date cannot be before the start date!");
-        }
-
-        // 2. If they make sense, then calculate the cost
         if (request.getEndDate() != null) {
             rental.calculateTotalCost();
         }
@@ -60,6 +55,8 @@ public class RentalService {
         if (rental.getStatus() != RentalStatus.ACTIVE) {
             throw new IllegalStateException("Can only edit ACTIVE rentals");
         }
+        validateRentalDates(request);
+        ensureNoOverlappingActiveRental(request.getPlateNumber(), request.getStartDate(), request.getEndDate(), id);
 
         Vendor vendor = vendorRepository
                 .findById(request.getVendorId())
@@ -232,5 +229,44 @@ public class RentalService {
                 .createdAt(r.getCreatedAt())
                 .updatedAt(r.getUpdatedAt())
                 .build();
+    }
+
+    private void validateRentalDates(RentalRequestDto request) {
+        if (request.getEndDate() != null && request.getEndDate().isBefore(request.getStartDate())) {
+            throw new IllegalArgumentException("End date cannot be before the start date.");
+        }
+    }
+
+    private void ensureNoOverlappingActiveRental(
+            String plateNumber,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long currentRentalId
+    ) {
+        boolean overlaps = rentalRepository
+                .findByPlateNumberIgnoreCaseAndStatus(plateNumber, RentalStatus.ACTIVE)
+                .stream()
+                .filter(rental -> currentRentalId == null || !rental.getId().equals(currentRentalId))
+                .anyMatch(rental -> dateRangesOverlap(
+                        startDate,
+                        endDate,
+                        rental.getStartDate(),
+                        rental.getEndDate()));
+
+        if (overlaps) {
+            throw new IllegalStateException(
+                    "This rental plate already has an overlapping active rental period.");
+        }
+    }
+
+    private boolean dateRangesOverlap(
+            LocalDate firstStart,
+            LocalDate firstEnd,
+            LocalDate secondStart,
+            LocalDate secondEnd
+    ) {
+        boolean firstStartsBeforeSecondEnds = secondEnd == null || !firstStart.isAfter(secondEnd);
+        boolean secondStartsBeforeFirstEnds = firstEnd == null || !secondStart.isAfter(firstEnd);
+        return firstStartsBeforeSecondEnds && secondStartsBeforeFirstEnds;
     }
 }

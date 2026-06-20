@@ -21,7 +21,7 @@ import { useRole } from "@/lib/role-context";
 export default function VendorDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { canCreate, canAdmin } = useRole();
+  const { canAdmin } = useRole();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
@@ -156,7 +156,7 @@ export default function VendorDetailPage() {
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-6 mt-2 border-t border-slate-200 flex-wrap">
-              {canCreate && (
+              {canAdmin && (
                 <Button
                   className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                   onClick={() =>

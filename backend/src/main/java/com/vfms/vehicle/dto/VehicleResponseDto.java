@@ -30,6 +30,7 @@ public class VehicleResponseDto {
     private Integer seatingCapacity;
     private LocalDate insuranceExpiryDate;
     private LocalDate revenueLicenseExpiryDate;
+    private Double odometerReading;
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

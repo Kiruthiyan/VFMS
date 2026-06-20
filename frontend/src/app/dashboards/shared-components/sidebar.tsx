@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { 
   KeyRound, 
   LayoutDashboard, 
@@ -48,6 +48,7 @@ const workspaceLabelByRole: Record<string, string> = {
 
 export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
@@ -68,17 +69,26 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
   };
 
   const isNavItemActive = (href: string) => {
+    const [hrefPath, hrefQuery] = href.split('?');
+
     if (href === '/drivers') {
       return (
         pathname === href ||
         (pathname.startsWith('/drivers/') &&
           !pathname.startsWith('/drivers/assignment-readiness') &&
-          !pathname.startsWith('/drivers/leave-requests') &&
-          !pathname.startsWith('/drivers/service-requests'))
+          !pathname.startsWith('/drivers/leave-requests'))
       );
     }
 
-    return pathname === href || (href !== fallbackHref && pathname.startsWith(href + '/'));
+    if (hrefQuery) {
+      return pathname === hrefPath && searchParams.toString() === hrefQuery;
+    }
+
+    if (pathname === hrefPath) {
+      return searchParams.toString() === '';
+    }
+
+    return hrefPath !== fallbackHref && pathname.startsWith(hrefPath + '/');
   };
 
   return (
@@ -195,17 +205,15 @@ function getNavSectionsByRole(role?: string) {
       ]
     });
     sections.push({
-      title: "Trips & Fleet",
+      title: "Trips",
       items: [
         { label: 'My Trips', href: '/dashboards/driver/trips', icon: Briefcase },
-        { label: 'Vehicles', href: '/dashboards/driver/vehicles', icon: Car },
       ]
     });
     sections.push({
       title: "Self Service",
       items: [
         { label: 'Leave Requests', href: '/dashboards/driver/leave-requests', icon: Calendar },
-        { label: 'Service Requests', href: '/dashboards/driver/service-requests', icon: Wrench },
       ]
     });
   }
@@ -222,17 +230,15 @@ function getNavSectionsByRole(role?: string) {
         { label: 'Drivers', href: '/drivers', icon: Users },
         { label: 'Assignment Readiness', href: '/drivers/assignment-readiness', icon: CheckSquare },
         { label: 'Leave Requests', href: '/drivers/leave-requests', icon: Calendar },
-        { label: 'Service Requests', href: '/drivers/service-requests', icon: Wrench },
       ]
     });
     sections.push({
-      title: "Fleet Management",
+      title: "Fleet Review",
       items: [
-        { label: 'Vehicles', href: '/dashboards/fleet/vehicles', icon: Car },
-        { label: 'Staff', href: '/staff', icon: Users },
-        { label: 'Maintenance', href: '/dashboards/fleet/maintenance', icon: Wrench },
-        { label: 'Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
-        { label: 'Vendors', href: '/dashboards/fleet/vendors', icon: Store },
+        { label: 'Pending Maintenance Approvals', href: '/dashboards/fleet/maintenance?status=SUBMITTED', icon: CheckSquare },
+        { label: 'All Maintenance Requests', href: '/dashboards/fleet/maintenance', icon: Wrench },
+        { label: 'Vehicle Registry', href: '/dashboards/fleet/vehicles', icon: Car },
+        { label: 'Vehicle Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
       ]
     });
   }
@@ -254,10 +260,10 @@ function getNavSectionsByRole(role?: string) {
     sections.push({
       title: "Fleet Management",
       items: [
-        { label: 'Vehicles', href: '/dashboards/fleet/vehicles', icon: Car },
-        { label: 'Maintenance', href: '/dashboards/fleet/maintenance', icon: Wrench },
-        { label: 'Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
-        { label: 'Vendors', href: '/dashboards/fleet/vendors', icon: Users },
+        { label: 'Vehicle Registry', href: '/dashboards/fleet/vehicles', icon: Car },
+        { label: 'Maintenance Requests', href: '/dashboards/fleet/maintenance', icon: Wrench },
+        { label: 'Vehicle Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
+        { label: 'Vendors', href: '/dashboards/fleet/vendors', icon: Store },
       ]
     });
   }

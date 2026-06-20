@@ -1,6 +1,7 @@
 package com.vfms.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,9 +29,9 @@ import java.util.List;
 /**
  * HTTP security for VFMS.
  * <p>
- * Scoped modules (auth, admin user management, fuel) are locked down explicitly.
- * {@code /api/**} remains {@code permitAll} for legacy modules (vehicles, trips,
- * maintenance, rental, DSM, reports) until those controllers are migrated — see
+ * Scoped modules (auth, admin user management, fuel, fleet) are locked down explicitly.
+ * {@code /api/**} remains {@code permitAll} for legacy modules that have not
+ * yet been individually secured (trips, DSM, reports, etc.) - see
  * {@link #REMAINING_OPEN_API_RISK}.
  */
 @Configuration
@@ -41,7 +42,7 @@ public class SecurityConfig {
 
   /** Paths still reachable without authentication due to the legacy {@code /api/**} fallback. */
   public static final String REMAINING_OPEN_API_RISK =
-      "Non-scoped modules under /api/** (vehicles, trips, maintenance, rental, drivers, reports, etc.)";
+      "Non-scoped modules under /api/** (trips, drivers, reports, etc.)";
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
@@ -84,6 +85,44 @@ public class SecurityConfig {
                         .requestMatchers("/api/staff-profile/**").authenticated()
                         // --- Driver self-service portal (ROLE_DRIVER only, IDOR-safe) ---
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
+                        // --- Fleet module: vehicles ---
+                        .requestMatchers(HttpMethod.GET, "/api/vehicles/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER")
+                        .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/vehicles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasRole("ADMIN")
+                        // --- Fleet module: maintenance ---
+                        .requestMatchers(HttpMethod.GET, "/api/maintenance/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER")
+                        .requestMatchers(HttpMethod.POST, "/api/maintenance/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.PUT, "/api/maintenance/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/maintenance/*/approve", "/api/maintenance/*/reject")
+                        .hasAnyRole("ADMIN", "APPROVER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/maintenance/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/maintenance/**").hasRole("ADMIN")
+                        // --- Fleet module: rentals ---
+                        .requestMatchers(HttpMethod.GET, "/api/rentals/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER")
+                        .requestMatchers(HttpMethod.POST, "/api/rentals/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.PUT, "/api/rentals/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/rentals/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/rentals/**").hasRole("ADMIN")
+                        // --- Fleet module: vendors ---
+                        .requestMatchers(HttpMethod.GET, "/api/vendors/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/vendors")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.GET, "/api/vendors/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/vendors/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/vendors/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/vendors/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/vendors/**").hasRole("ADMIN")
                         // --- Legacy modules: keep open until individually secured ---
                         .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated()

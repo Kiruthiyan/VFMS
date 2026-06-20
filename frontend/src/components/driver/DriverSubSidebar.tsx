@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CalendarDays, CheckCircle2, ClipboardCheck, ShieldCheck, Wrench } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ClipboardCheck, ShieldCheck } from 'lucide-react';
 
 type DriverSubSidebarProps = {
   className?: string;
@@ -24,11 +24,6 @@ const items = [
     label: 'Leave Requests',
     icon: CalendarDays,
   },
-  {
-    href: '/drivers/service-requests',
-    label: 'Service Requests',
-    icon: Wrench,
-  },
 ] as const;
 
 const profileSections = [
@@ -44,7 +39,6 @@ const profileSections = [
 const moduleRoutes = [
   'assignment-readiness',
   'leave-requests',
-  'service-requests',
 ] as const;
 
 export function DriverSubSidebar({ className }: DriverSubSidebarProps) {

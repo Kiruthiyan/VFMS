@@ -7,4 +7,6 @@ public interface RentalRepository extends JpaRepository<RentalRecord, Long> {
     List<RentalRecord> findByStatus(RentalStatus status);
 
     List<RentalRecord> findByVendorId(Long vendorId);
+
+    List<RentalRecord> findByPlateNumberIgnoreCaseAndStatus(String plateNumber, RentalStatus status);
 }
