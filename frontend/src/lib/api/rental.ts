@@ -121,23 +121,13 @@ export const rentalApi = {
     const formData = new FormData();
     formData.append("file", file);
     return api
-      .post<ApiResponse<RentalRecord>>(
-        `/api/rentals/${id}/agreement`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      )
+      .post<ApiResponse<RentalRecord>>(`/api/rentals/${id}/agreement`, formData)
       .then((r) => r.data);
   },
 
   uploadInvoice: (id: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api
-      .post<ApiResponse<RentalRecord>>(`/api/rentals/${id}/invoice`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((r) => r.data);
+    return api.post<ApiResponse<RentalRecord>>(`/api/rentals/${id}/invoice`, formData).then((r) => r.data);
   },
 };

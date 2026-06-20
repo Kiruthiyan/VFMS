@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   MapPin,
   CalendarDays,
-  Wrench,
   LogOut,
   ChevronRight,
   Car,
@@ -29,7 +28,6 @@ const NAV_ITEMS = [
   { label: 'Infractions',       href: DRIVER_PORTAL_ROUTES.INFRACTIONS,       icon: AlertTriangle },
   { label: 'My Trips',          href: DRIVER_PORTAL_ROUTES.TRIPS,             icon: MapPin },
   { label: 'Leave Requests',    href: DRIVER_PORTAL_ROUTES.LEAVE_REQUESTS,    icon: CalendarDays },
-  { label: 'Service Requests',  href: DRIVER_PORTAL_ROUTES.SERVICE_REQUESTS,  icon: Wrench },
 ];
 
 export function DriverPortalSidebar() {

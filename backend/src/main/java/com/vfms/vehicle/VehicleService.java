@@ -35,6 +35,7 @@ public class VehicleService {
                 .seatingCapacity(request.getSeatingCapacity())
                 .insuranceExpiryDate(request.getInsuranceExpiryDate())
                 .revenueLicenseExpiryDate(request.getRevenueLicenseExpiryDate())
+                .odometerReading(request.getOdometerReading())
                 .build();
 
         return mapToResponse(vehicleRepository.save(vehicle));
@@ -48,10 +49,14 @@ public class VehicleService {
                 .toList();
     }
 
-    // Combines status and active filters so retired vehicles never surface even when querying a specific status
+    // Retired vehicles are hidden from the default list but shown when explicitly requested for audit/history views.
     @Transactional(readOnly = true)
     public List<VehicleResponseDto> getVehiclesByStatus(VehicleStatus status) {
-        return vehicleRepository.findByStatusAndActiveTrue(status).stream()
+        List<Vehicle> vehicles = status == VehicleStatus.RETIRED
+                ? vehicleRepository.findByStatus(status)
+                : vehicleRepository.findByStatusAndActiveTrue(status);
+
+        return vehicles.stream()
                 .map(this::mapToResponse)
                 .toList();
     }
@@ -79,6 +84,7 @@ public class VehicleService {
         vehicle.setSeatingCapacity(request.getSeatingCapacity());
         vehicle.setInsuranceExpiryDate(request.getInsuranceExpiryDate());
         vehicle.setRevenueLicenseExpiryDate(request.getRevenueLicenseExpiryDate());
+        vehicle.setOdometerReading(request.getOdometerReading());
 
         return mapToResponse(vehicleRepository.save(vehicle));
     }
@@ -120,6 +126,7 @@ public class VehicleService {
                 .seatingCapacity(v.getSeatingCapacity())
                 .insuranceExpiryDate(v.getInsuranceExpiryDate())
                 .revenueLicenseExpiryDate(v.getRevenueLicenseExpiryDate())
+                .odometerReading(v.getOdometerReading())
                 .active(v.getActive())
                 .createdAt(v.getCreatedAt())
                 .updatedAt(v.getUpdatedAt())

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRole, User } from "@/lib/roleContext";
+import { useRole, User } from "@/lib/role-context";
 import { ChevronDown, Loader2, Check } from "lucide-react";
 
 const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
@@ -20,13 +20,6 @@ const ROLE_CONFIG: Record<string, {
         dot:      "bg-blue-500",
         dropdown: "text-blue-700",
     },
-    STAFF: {
-        label:    "Staff",
-        active:   "bg-amber-600 text-white border-amber-600",
-        idle:     "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100",
-        dot:      "bg-amber-500",
-        dropdown: "text-amber-700",
-    },
     DRIVER: {
         label:    "Drivers",
         active:   "bg-green-600 text-white border-green-600",
@@ -43,7 +36,7 @@ const ROLE_CONFIG: Record<string, {
     },
 };
 
-const ROLE_ORDER = ["SYSTEM_USER", "STAFF", "DRIVER", "ADMIN"];
+const ROLE_ORDER = ["SYSTEM_USER", "DRIVER", "ADMIN"];
 
 interface RoleGroupProps {
     role: string;
@@ -147,7 +140,6 @@ export default function RoleSwitcher() {
 
     const groupedUsers: Record<string, User[]> = {
         SYSTEM_USER: fixedUsers.filter(u => u.role === "SYSTEM_USER"),
-        STAFF:       fixedUsers.filter(u => u.role === "STAFF"),
         DRIVER:      drivers,
         ADMIN:       fixedUsers.filter(u => u.role === "ADMIN"),
     };

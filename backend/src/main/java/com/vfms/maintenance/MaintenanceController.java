@@ -1,12 +1,12 @@
 package com.vfms.maintenance;
 
 import com.vfms.common.dto.ApiResponse;
+import com.vfms.common.file.SafeFileStorage;
 import com.vfms.maintenance.dto.MaintenanceRequestDto;
 import com.vfms.maintenance.dto.MaintenanceResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -96,13 +96,13 @@ public class MaintenanceController {
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadQuotation(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
-            // Request ID is prefixed to the filename so files from different requests never collide even if the original filename is identical
-            String fileName = "quotation_" + id + "_" + file.getOriginalFilename();
-            Path uploadDir = Paths.get("uploads/maintenance");
+            String fileName = SafeFileStorage.buildStoredFileName("quotation", id, file);
+            Path uploadDir = Paths.get("uploads/maintenance").toAbsolutePath().normalize();
+            Path filePath = uploadDir.resolve(fileName).normalize();
 
             // Directory is created lazily so deployments to fresh environments do not require manual folder setup as a pre-condition
             Files.createDirectories(uploadDir);
-            file.transferTo(uploadDir.resolve(fileName).toFile());
+            file.transferTo(filePath.toFile());
 
             String fileUrl = "/api/maintenance/files/" + fileName;
             MaintenanceResponseDto response = maintenanceService.uploadQuotation(id, fileUrl);
@@ -116,11 +116,11 @@ public class MaintenanceController {
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadInvoice(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
-            // Same naming convention as quotation uploads to keep file management consistent across all document types in this module
-            String fileName = "invoice_" + id + "_" + file.getOriginalFilename();
-            Path uploadDir = Paths.get("uploads/maintenance");
+            String fileName = SafeFileStorage.buildStoredFileName("invoice", id, file);
+            Path uploadDir = Paths.get("uploads/maintenance").toAbsolutePath().normalize();
+            Path filePath = uploadDir.resolve(fileName).normalize();
             Files.createDirectories(uploadDir);
-            file.transferTo(uploadDir.resolve(fileName).toFile());
+            file.transferTo(filePath.toFile());
 
             String fileUrl = "/api/maintenance/files/" + fileName;
             MaintenanceResponseDto response = maintenanceService.uploadInvoice(id, fileUrl);
@@ -133,18 +133,18 @@ public class MaintenanceController {
     @GetMapping("/files/{fileName}")
     public ResponseEntity<Resource> getFile(@PathVariable String fileName) {
         try {
-            Path filePath = Paths.get("uploads/maintenance").resolve(fileName);
-            Resource resource = new UrlResource(filePath.toUri());
+            Path filePath = SafeFileStorage.resolveDownloadPath(Paths.get("uploads/maintenance"), fileName);
+            Resource resource = SafeFileStorage.loadResource(filePath);
 
             // PDFs are served inline so reviewers can preview documents directly in the browser without being forced to download them first
-            String contentType = fileName.endsWith(".pdf")
-                    ? "application/pdf"
-                    : "application/octet-stream";
+            String contentType = SafeFileStorage.contentTypeFor(fileName);
 
             return ResponseEntity.ok()
                     .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
                     .header("Content-Type", contentType)
                     .body(resource);
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("File not found: " + e.getMessage());
         }

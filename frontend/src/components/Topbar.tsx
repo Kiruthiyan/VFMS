@@ -24,7 +24,7 @@ const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
 // Build readable breadcrumb from pathname
 function getBreadcrumb(pathname: string): string {
   const segments = pathname
-    .replace("/dashboard", "")
+    .replace("/dashboards", "")
     .split("/")
     .filter(Boolean);
   if (segments.length === 0) return "Dashboard Overview";

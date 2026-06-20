@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, MapPin, Users, Loader2, FileText, AlertTriangle } from "lucide-react";
 import api from "@/lib/api";
-import { useRole } from "@/lib/roleContext";
+import { useRole } from "@/lib/role-context";
 
 const MAX_PASSENGERS = 54;
 const MIN_PASSENGERS = 1;

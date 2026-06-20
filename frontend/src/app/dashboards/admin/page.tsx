@@ -13,7 +13,6 @@ import {
 
 import { getErrorMessage, getUserCountsApi, type UserCounts } from "@/lib/api/admin";
 import { getAllFuelRecordsApi, type FuelRecord } from "@/lib/api/fuel";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -122,8 +121,7 @@ export default function AdminDashboardPage() {
   );
 
   return (
-    <DashboardShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title="Admin Dashboard"
           description="Manage users, fuel workflows, and operational visibility from one consistent FleetPro workspace."
@@ -300,7 +298,6 @@ export default function AdminDashboardPage() {
             </section>
           </>
         )}
-      </div>
-    </DashboardShell>
+    </div>
   );
 }

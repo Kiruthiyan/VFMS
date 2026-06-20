@@ -2,8 +2,11 @@
 
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getErrorMessage } from "@/lib/api";
+import { documentDisplayName, openAuthenticatedDocument } from "@/lib/fleet-documents";
 import { MaintenanceRequest, maintenanceApi } from "@/lib/api/maintenance";
 import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
+import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,8 +18,6 @@ import {
   Clock,
   FileText,
   Loader2,
-  Upload,
-  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
@@ -119,36 +120,36 @@ export default function MaintenanceDetailPage({
     }
   };
 
-  const handleUploadQuotation = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
+  const handleUploadQuotation = async (file: File | null) => {
     if (file) {
       try {
         await maintenanceApi.uploadQuotation(Number(id), file);
         toast.success("Quotation uploaded");
         fetchRequest();
-      } catch {
-        toast.error("Failed to upload quotation");
+      } catch (error) {
+        toast.error(getErrorMessage(error));
       }
     }
-    e.target.value = "";
   };
 
-  const handleUploadInvoice = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
+  const handleUploadInvoice = async (file: File | null) => {
     if (file) {
       try {
         await maintenanceApi.uploadInvoice(Number(id), file);
         toast.success("Invoice uploaded");
         fetchRequest();
-      } catch {
-        toast.error("Failed to upload invoice");
+      } catch (error) {
+        toast.error(getErrorMessage(error));
       }
     }
-    e.target.value = "";
+  };
+
+  const handleOpenDocument = async (url: string) => {
+    try {
+      await openAuthenticatedDocument(url);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   if (loading) {
@@ -288,58 +289,45 @@ export default function MaintenanceDetailPage({
               <h3 className="text-sm font-semibold text-slate-700 mb-3">
                 Documents
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                  <p className="text-xs text-slate-500 mb-2">Quotation</p>
-                  {request.quotationUrl ? (
-                    <a
-                      href={`http://localhost:8080${request.quotationUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      <ExternalLink className="h-4 w-4" /> View Quotation
-                    </a>
-                  ) : (
-                    <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
-                      <Upload className="h-3 w-3" /> Upload Quotation
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.png"
-                        className="hidden"
-                        onChange={handleUploadQuotation}
-                      />
-                    </label>
-                  )}
-                </div>
-                <div className="p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                  <p className="text-xs text-slate-500 mb-2">Invoice</p>
-                  {request.invoiceUrl ? (
-                    <a
-                      href={`http://localhost:8080${request.invoiceUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      <ExternalLink className="h-4 w-4" /> View Invoice
-                    </a>
-                  ) : request.status === "APPROVED" ||
-                    request.status === "CLOSED" ? (
-                    <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
-                      <Upload className="h-3 w-3" /> Upload Invoice
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.png"
-                        className="hidden"
-                        onChange={handleUploadInvoice}
-                      />
-                    </label>
-                  ) : (
-                    <span className="text-xs text-slate-400">
-                      Available after approval
-                    </span>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FleetFileDropzone
+                  title="Quotation"
+                  readonly={Boolean(request.quotationUrl) || !canCreate || request.status !== "NEW"}
+                  file={null}
+                  existingFileName={
+                    request.quotationUrl
+                      ? documentDisplayName(request.quotationUrl, "View quotation")
+                      : undefined
+                  }
+                  onFileChange={handleUploadQuotation}
+                  onOpenExisting={() => handleOpenDocument(request.quotationUrl!)}
+                  emptyLabel="No quotation uploaded"
+                  uploadLabel="Upload Quotation"
+                />
+                <FleetFileDropzone
+                  title="Invoice"
+                  readonly={
+                    Boolean(request.invoiceUrl) ||
+                    !canCreate ||
+                    request.status === "NEW" ||
+                    request.status === "SUBMITTED" ||
+                    request.status === "REJECTED"
+                  }
+                  file={null}
+                  existingFileName={
+                    request.invoiceUrl
+                      ? documentDisplayName(request.invoiceUrl, "View invoice")
+                      : undefined
+                  }
+                  onFileChange={handleUploadInvoice}
+                  onOpenExisting={() => handleOpenDocument(request.invoiceUrl!)}
+                  emptyLabel={
+                    request.status === "APPROVED" || request.status === "CLOSED"
+                      ? "No invoice uploaded"
+                      : "Available after approval"
+                  }
+                  uploadLabel="Upload Invoice"
+                />
               </div>
             </div>
 

@@ -38,7 +38,6 @@ public class DriverSelfService {
     private final DriverDocumentRepository documentRepository;
     private final DriverInfractionRepository infractionRepository;
     private final DriverLeaveRepository leaveRepository;
-    private final DriverServiceRequestRepository serviceRequestRepository;
     private final DriverReadinessService readinessService;
     private final DriverMapper driverMapper;
 
@@ -251,26 +250,6 @@ public class DriverSelfService {
         }
         
         leaveRepository.delete(leave);
-    }
-
-    // ── Service Requests ─────────────────────────────────────────────────────
-
-    @Transactional(readOnly = true)
-    public List<DriverServiceRequest> getMyServiceRequests(String email) {
-        User user = resolveUser(email);
-        return serviceRequestRepository.findByUser_IdOrderByCreatedAtDesc(user.getId());
-    }
-
-    public DriverServiceRequest submitServiceRequest(String email, DriverSelfServiceRequestDto dto) {
-        User user = resolveUser(email);
-        DriverServiceRequest request = DriverServiceRequest.builder()
-                .user(user)
-                .vehicleId(dto.getVehicleId())
-                .requestType(dto.getRequestType())
-                .description(dto.getDescription())
-                .urgency(dto.getUrgency() != null ? dto.getUrgency() : DriverServiceRequest.Urgency.MEDIUM)
-                .build();
-        return serviceRequestRepository.save(request);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

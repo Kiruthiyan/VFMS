@@ -71,7 +71,6 @@ export const DRIVER_PORTAL_ROUTES = {
   INFRACTIONS: '/dashboards/driver/infractions',
   TRIPS: '/dashboards/driver/trips',
   LEAVE_REQUESTS: '/dashboards/driver/leave-requests',
-  SERVICE_REQUESTS: '/dashboards/driver/service-requests',
 } as const;
 
 export const UNPROTECTED_ROUTES = [

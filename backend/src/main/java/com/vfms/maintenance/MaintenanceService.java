@@ -23,11 +23,18 @@ public class MaintenanceService {
 
     private final MaintenanceRepository maintenanceRepository;
     private final VehicleRepository vehicleRepository;
+    private static final List<MaintenanceStatus> OPEN_MAINTENANCE_STATUSES = List.of(
+            MaintenanceStatus.NEW,
+            MaintenanceStatus.SUBMITTED,
+            MaintenanceStatus.APPROVED,
+            MaintenanceStatus.REJECTED);
 
     @Transactional
     public MaintenanceResponseDto createRequest(MaintenanceRequestDto request) {
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", request.getVehicleId()));
+        ensureVehicleCanReceiveMaintenance(vehicle);
+        ensureNoOpenMaintenanceForVehicle(vehicle.getId(), null);
 
         MaintenanceRequest mr = MaintenanceRequest.builder()
                 .vehicle(vehicle)
@@ -51,6 +58,8 @@ public class MaintenanceService {
 
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", request.getVehicleId()));
+        ensureVehicleCanReceiveMaintenance(vehicle);
+        ensureNoOpenMaintenanceForVehicle(vehicle.getId(), id);
 
         mr.setVehicle(vehicle);
         mr.setMaintenanceType(request.getMaintenanceType());
@@ -287,5 +296,23 @@ public class MaintenanceService {
                 .createdAt(mr.getCreatedAt())
                 .updatedAt(mr.getUpdatedAt())
                 .build();
+    }
+
+    private void ensureVehicleCanReceiveMaintenance(Vehicle vehicle) {
+        if (vehicle.getStatus() == VehicleStatus.RETIRED || Boolean.FALSE.equals(vehicle.getActive())) {
+            throw new IllegalStateException("Cannot create maintenance for a retired vehicle.");
+        }
+    }
+
+    private void ensureNoOpenMaintenanceForVehicle(Long vehicleId, Long currentRequestId) {
+        boolean hasOpenRequest = maintenanceRepository
+                .findByVehicleIdAndStatusIn(vehicleId, OPEN_MAINTENANCE_STATUSES)
+                .stream()
+                .anyMatch(request -> currentRequestId == null || !request.getId().equals(currentRequestId));
+
+        if (hasOpenRequest) {
+            throw new IllegalStateException(
+                    "This vehicle already has an open maintenance request. Close it before creating another.");
+        }
     }
 }

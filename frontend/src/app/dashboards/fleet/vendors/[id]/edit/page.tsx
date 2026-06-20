@@ -1,28 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type Resolver, useForm } from "react-hook-form";
 import { useParams, useRouter } from "next/navigation";
+import { getErrorMessage } from "@/lib/api";
 import { vendorApi, Vendor, VendorFormData } from "@/lib/api/rental";
+import { vendorFormSchema } from "@/lib/validators/fleet-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, ArrowLeft, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-type FieldErrors = { [key: string]: string };
-
 export default function EditVendorPage() {
   const { id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [form, setForm] = useState<VendorFormData>({
-    name: "",
-    contactPerson: "",
-    phone: "",
-    email: "",
-    address: "",
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<VendorFormData>({
+    resolver: zodResolver(vendorFormSchema) as Resolver<VendorFormData>,
+    defaultValues: {
+      name: "",
+      contactPerson: "",
+      phone: "",
+      email: "",
+      address: "",
+    },
   });
 
   useEffect(() => {
@@ -30,7 +38,7 @@ export default function EditVendorPage() {
       .getById(Number(id))
       .then((res) => {
         const v: Vendor = res.data;
-        setForm({
+        reset({
           name: v.name,
           contactPerson: v.contactPerson,
           phone: v.phone,
@@ -40,41 +48,18 @@ export default function EditVendorPage() {
       })
       .catch(() => toast.error("Failed to load vendor"))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, reset]);
 
-  const fieldClass = (field: string) =>
+  const fieldClass = (field: keyof VendorFormData) =>
     `text-slate-900 ${errors[field] ? "border-red-400 focus:ring-red-400" : ""}`;
 
-  const validate = (): boolean => {
-    const errs: FieldErrors = {};
-    if (!form.name.trim()) errs.name = "Vendor name is required";
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email))
-      errs.email = "Enter a valid email";
-    if (form.phone && !/^07\d{8}$/.test(form.phone.replace(/[\s-]/g, "")))
-      errs.phone = "Enter a valid Sri Lankan number (e.g. 0771234567)";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSubmitting(true);
+  const onSubmit = async (data: VendorFormData) => {
     try {
-      const payload = {
-        name: form.name,
-        contactPerson: form.contactPerson?.trim() || undefined,
-        phone: form.phone?.trim() || undefined,
-        email: form.email?.trim() || undefined,
-        address: form.address?.trim() || undefined,
-      };
-      await vendorApi.update(Number(id), payload);
+      await vendorApi.update(Number(id), data);
       toast.success("Vendor updated successfully");
       router.push(`/dashboards/fleet/vendors/${id}`);
-    } catch {
-      toast.error("Failed to update vendor");
-    } finally {
-      setSubmitting(false);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   };
 
@@ -108,23 +93,21 @@ export default function EditVendorPage() {
           </CardHeader>
 
           <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-1.5 block">
                     Vendor Name *
                   </label>
                   <Input
-                    value={form.name}
-                    onChange={(e) => {
-                      setForm({ ...form, name: e.target.value });
-                      setErrors({ ...errors, name: "" });
-                    }}
+                    {...register("name")}
                     placeholder="City Rentals"
                     className={fieldClass("name")}
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -135,10 +118,7 @@ export default function EditVendorPage() {
                     </span>
                   </label>
                   <Input
-                    value={form.contactPerson || ""}
-                    onChange={(e) =>
-                      setForm({ ...form, contactPerson: e.target.value })
-                    }
+                    {...register("contactPerson")}
                     placeholder="John Doe"
                     className="text-slate-900"
                   />
@@ -153,16 +133,14 @@ export default function EditVendorPage() {
                     </span>
                   </label>
                   <Input
-                    value={form.phone || ""}
-                    onChange={(e) => {
-                      setForm({ ...form, phone: e.target.value });
-                      setErrors({ ...errors, phone: "" });
-                    }}
+                    {...register("phone")}
                     placeholder="e.g. 0771234567"
                     className={fieldClass("phone")}
                   />
                   {errors.phone && (
-                    <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.phone.message}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -173,16 +151,14 @@ export default function EditVendorPage() {
                     </span>
                   </label>
                   <Input
-                    value={form.email || ""}
-                    onChange={(e) => {
-                      setForm({ ...form, email: e.target.value });
-                      setErrors({ ...errors, email: "" });
-                    }}
+                    {...register("email")}
                     placeholder="vendor@email.com"
                     className={fieldClass("email")}
                   />
                   {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.email.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -192,10 +168,7 @@ export default function EditVendorPage() {
                   <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <Input
-                  value={form.address || ""}
-                  onChange={(e) =>
-                    setForm({ ...form, address: e.target.value })
-                  }
+                  {...register("address")}
                   placeholder="123 Main St, Colombo"
                   className="text-slate-900"
                 />
@@ -204,10 +177,10 @@ export default function EditVendorPage() {
                 <Button
                   type="submit"
                   className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
-                  disabled={submitting}
+                  disabled={isSubmitting}
                 >
                   <Save className="mr-2 h-4 w-4" />{" "}
-                  {submitting ? "Saving..." : "Update Vendor"}
+                  {isSubmitting ? "Saving..." : "Update Vendor"}
                 </Button>
                 <Button
                   type="button"

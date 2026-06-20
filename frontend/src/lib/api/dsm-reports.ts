@@ -1,6 +1,6 @@
 /**
  * DSM report API — typed calls to driver/staff management endpoints.
- * Used by admin driver analytics pages under /dashboard/admin/reports/drivers/.
+ * Used by admin driver analytics pages under /dashboards/admin/reports/drivers/.
  */
 import { apiFetch } from '@/lib/api';
 
@@ -74,18 +74,6 @@ export interface DriverReadinessRow {
   ready: boolean;
 }
 
-export interface DriverServiceRequestRow {
-  id: number;
-  driverId?: string;
-  requesterId?: string;
-  vehicleId?: number;
-  requestType: string;
-  description?: string;
-  urgency: string;
-  status: string;
-  createdAt?: string;
-}
-
 interface PageResponse<T> {
   content: T[];
   totalElements: number;
@@ -157,10 +145,6 @@ export async function getDriverReadinessReport(): Promise<DriverReadinessRow[]> 
   }));
 }
 
-export async function getOpenDriverServiceRequests(): Promise<DriverServiceRequestRow[]> {
-  return apiFetch<DriverServiceRequestRow[]>('/api/drivers/service-requests/open');
-}
-
 /** @deprecated Use getDriverUsersForReports — kept for pages that still call getDriverPerformance naming */
 export const getDriverPerformance = getDriverUsersForReports;
 
@@ -168,4 +152,3 @@ export const getDriverInfractions = getAllDriverInfractions;
 export const getDriverCompliance = getDriverComplianceReport;
 export const getDriverLeaves = getAllDriverLeaves;
 export const getDriverReadiness = getDriverReadinessReport;
-export const getDriverServiceRequests = getOpenDriverServiceRequests;

@@ -32,8 +32,9 @@ export default function EditVehiclePage({
           department: v.department,
           color: v.color,
           seatingCapacity: v.seatingCapacity,
-          insuranceExpiryDate: v.insuranceExpiryDate,
-          revenueLicenseExpiryDate: v.revenueLicenseExpiryDate,
+          insuranceExpiryDate: v.insuranceExpiryDate ?? "",
+          revenueLicenseExpiryDate: v.revenueLicenseExpiryDate ?? "",
+          odometerReading: v.odometerReading,
         });
       } catch {
         toast.error("Failed to load vehicle");

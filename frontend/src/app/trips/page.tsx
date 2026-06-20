@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Plus, MapPin, Calendar, Loader2, X, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRole } from "@/lib/roleContext";
+import { useRole } from "@/lib/role-context";
 import api from "@/lib/api";
 
 interface Trip {

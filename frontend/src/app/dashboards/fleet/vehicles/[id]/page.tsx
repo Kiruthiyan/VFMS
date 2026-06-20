@@ -25,6 +25,7 @@ import {
   Users,
   ShieldCheck,
   FileCheck,
+  Gauge,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
@@ -36,7 +37,7 @@ export default function VehicleDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { canAdmin } = useRole();
+  const { canAdmin, canCreate } = useRole();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [maintenanceHistory, setMaintenanceHistory] = useState<
     MaintenanceRequest[]
@@ -211,6 +212,17 @@ export default function VehicleDetailPage({
                       <p className="text-xs text-slate-500">Year</p>
                       <p className="font-semibold text-slate-900">
                         {vehicle.year}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+                    <Gauge className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <p className="text-xs text-slate-500">Odometer</p>
+                      <p className="font-semibold text-slate-900">
+                        {vehicle.odometerReading != null
+                          ? `${vehicle.odometerReading.toLocaleString()} km`
+                          : "Not recorded"}
                       </p>
                     </div>
                   </div>
@@ -449,15 +461,17 @@ export default function VehicleDetailPage({
                     <p className="text-sm font-medium">
                       No maintenance records found for this vehicle.
                     </p>
-                    <Button
-                      size="sm"
-                      className="bg-blue-950 hover:bg-blue-900 text-white mt-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
-                      onClick={() =>
-                        router.push("/dashboards/fleet/maintenance/create")
-                      }
-                    >
-                      <Wrench className="mr-2 h-4 w-4" /> Create First Request
-                    </Button>
+                    {canCreate && vehicle.status !== "RETIRED" && (
+                      <Button
+                        size="sm"
+                        className="bg-blue-950 hover:bg-blue-900 text-white mt-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                        onClick={() =>
+                          router.push("/dashboards/fleet/maintenance/create")
+                        }
+                      >
+                        <Wrench className="mr-2 h-4 w-4" /> Create First Request
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div className="rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">

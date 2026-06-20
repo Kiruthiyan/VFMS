@@ -27,7 +27,9 @@ export default function VendorsPage() {
   const fetchVendors = async () => {
     setLoading(true);
     try {
-      const res = await vendorApi.getAllIncludingInactive();
+      const res = canAdmin
+        ? await vendorApi.getAllIncludingInactive()
+        : await vendorApi.getAll();
       setVendors(res.data);
     } catch {
       toast.error("Failed to load vendors");
@@ -38,7 +40,7 @@ export default function VendorsPage() {
 
   useEffect(() => {
     fetchVendors();
-  }, []);
+  }, [canAdmin]);
 
   const filtered = vendors.filter((v) => {
     const q = search.toLowerCase();
@@ -100,16 +102,18 @@ export default function VendorsPage() {
             />
           </div>
           <div className="h-6 w-px bg-slate-200" />
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40 bg-white text-slate-900">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent className="bg-white text-slate-900">
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="INACTIVE">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+          {canAdmin && (
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40 bg-white text-slate-900">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent className="bg-white text-slate-900">
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* Table */}
@@ -190,16 +194,20 @@ export default function VendorsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-900 opacity-80 group-hover:opacity-100 transition-opacity"
-                        onClick={() =>
-                          router.push(`/dashboards/fleet/vendors/${v.id}`)
-                        }
-                      >
-                        View
-                      </Button>
+                      {canAdmin ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-900 opacity-80 group-hover:opacity-100 transition-opacity"
+                          onClick={() =>
+                            router.push(`/dashboards/fleet/vendors/${v.id}`)
+                          }
+                        >
+                          View
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-slate-400">View only</span>
+                      )}
                     </td>
                   </tr>
                 ))}
