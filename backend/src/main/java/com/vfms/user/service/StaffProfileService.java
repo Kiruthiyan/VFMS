@@ -9,6 +9,7 @@ import com.vfms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class StaffProfileService {
 
     private final UserRepository userRepository;
+    private final StaffSupabaseStorageService storageService;
 
     @Transactional(readOnly = true)
     public StaffProfileResponse getProfile(User user) {
@@ -36,9 +38,28 @@ public class StaffProfileService {
     }
 
     @Transactional
-    public void updateProfilePicture(User user, String photoUrl) {
-        user.setPhotoUrl(photoUrl);
+    public StaffProfileResponse replaceProfilePicture(User user, MultipartFile file) {
+        String oldPhotoUrl = user.getPhotoUrl();
+        StaffSupabaseStorageService.StoredObject storedObject = storageService.uploadProfilePicture(user.getId(), file);
+        String newPhotoReference = storageService.toStorageReference(storedObject);
+
+        try {
+            user.setPhotoUrl(newPhotoReference);
+            User saved = userRepository.save(user);
+            storageService.deleteObjectForReferenceQuietly(oldPhotoUrl);
+            return mapToProfileResponse(saved);
+        } catch (RuntimeException e) {
+            storageService.deleteObjectForReferenceQuietly(newPhotoReference);
+            throw e;
+        }
+    }
+
+    @Transactional
+    public void removeProfilePicture(User user) {
+        String oldPhotoUrl = user.getPhotoUrl();
+        user.setPhotoUrl(null);
         userRepository.save(user);
+        storageService.deleteObjectForReferenceQuietly(oldPhotoUrl);
     }
 
     @Transactional(readOnly = true)
@@ -66,7 +87,7 @@ public class StaffProfileService {
                 .department(user.getDepartment())
                 .designation(user.getDesignation())
                 .officeLocation(user.getOfficeLocation())
-                .photoUrl(user.getPhotoUrl())
+                .photoUrl(resolvePhotoUrl(user.getPhotoUrl()))
                 .address(user.getAddress())
                 .emergencyContactName(user.getEmergencyContactName())
                 .emergencyContactPhone(user.getEmergencyContactPhone())
@@ -104,5 +125,15 @@ public class StaffProfileService {
         if (fullName == null || fullName.trim().isEmpty()) return "";
         String[] parts = fullName.trim().split("\\s+");
         return parts.length > 1 ? parts[parts.length - 1] : "";
+    }
+
+    private String resolvePhotoUrl(String photoUrl) {
+        if (photoUrl == null || photoUrl.isBlank()) {
+            return photoUrl;
+        }
+        if (!storageService.isSupabaseReference(photoUrl)) {
+            return photoUrl;
+        }
+        return storageService.createSignedUrlFromReference(photoUrl);
     }
 }

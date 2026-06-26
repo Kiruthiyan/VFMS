@@ -6,10 +6,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   ArrowRight,
-  CreditCard,
-  Award,
   FileText,
-  AlertTriangle,
 } from "lucide-react";
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
@@ -35,21 +32,9 @@ const summaryCards = [
 const quickLinks = [
   {
     label: "My Profile",
-    description: "View your driver profile, identity and contact details.",
+    description: "Manage your profile, documents, certifications, infractions, and leave.",
     href: DRIVER_PORTAL_ROUTES.PROFILE,
     icon: UserCircle,
-  },
-  {
-    label: "Licenses",
-    description: "View your primary driving license and expiry status.",
-    href: DRIVER_PORTAL_ROUTES.LICENSES,
-    icon: CreditCard,
-  },
-  {
-    label: "Certifications",
-    description: "Manage your training certifications and qualifications.",
-    href: DRIVER_PORTAL_ROUTES.CERTIFICATIONS,
-    icon: Award,
   },
   {
     label: "Documents",
@@ -58,22 +43,10 @@ const quickLinks = [
     icon: FileText,
   },
   {
-    label: "Infractions",
-    description: "View infraction history and submit incident reports.",
-    href: DRIVER_PORTAL_ROUTES.INFRACTIONS,
-    icon: AlertTriangle,
-  },
-  {
     label: "My Trips",
     description: "View your assigned and completed trips.",
     href: DRIVER_PORTAL_ROUTES.TRIPS,
     icon: MapPin,
-  },
-  {
-    label: "Leave Requests",
-    description: "Submit and track leave applications.",
-    href: DRIVER_PORTAL_ROUTES.LEAVE_REQUESTS,
-    icon: CalendarDays,
   },
 ];
 
@@ -142,7 +115,7 @@ export default function DriverDashboardPage() {
             {[
               "View and track your assigned trips and schedules",
               "Submit leave requests and monitor approval status",
-              "Manage licenses, certifications, and personal documents",
+              "Manage certifications and personal documents",
               "Report and track infractions and incident history",
               "Access your full driver profile from the dashboard",
             ].map((item) => (

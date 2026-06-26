@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Driver and staff management in VFMS uses a **unified user model**: drivers are `users` with `Role.DRIVER`; staff are `users` with `Role.SYSTEM_USER` or `APPROVER`, pre-provisioned via `employee_registry`. Legacy `drivers` and `staff` tables are no longer used by application code.
+Driver and staff management in VFMS uses a **unified identity model**: authentication remains in `users`, while all driver operational data is consolidated into one physical `drivers` table. Staff are `users` with `Role.SYSTEM_USER` or `APPROVER`, pre-provisioned via `employee_registry`.
 
 This audit identified broken report wiring, dead staff service-request UI, unsecured approver APIs, and orphaned schema files. All in-scope issues were fixed without modifying trip, fuel, auth, or global security config modules.
 
@@ -18,11 +18,15 @@ This audit identified broken report wiring, dead staff service-request UI, unsec
 
 | Concept | Implementation |
 |---------|----------------|
-| Driver identity | `users` row, `role = DRIVER` |
+| Driver identity | `users` row, `role = DRIVER`, linked one-to-one to `drivers.user_id` |
 | Staff identity | `users` row, `role = SYSTEM_USER` or `APPROVER` |
 | Staff pre-registration | `employee_registry` table |
-| Driver sub-resources | `driver_licenses`, `driver_certifications`, `driver_documents`, `driver_infractions`, `driver_leaves`, `driver_service_requests`, `driver_readiness_cache` — all `user_id → users(id)` |
-| Approver APIs | `/api/drivers/**`, `/api/staff` |
+| Driver operational data | One physical `drivers` table; licenses, certifications, documents, infractions, leaves, performance, and readiness are JSONB-backed aggregate fields |
+| Backend persistence | `DriverAggregate` maps directly to `drivers`; `DriverRepository` is the JSONB aggregate facade and `DriverAggregateRepository` is the real Spring Data repository |
+| DSM controllers | `DriverController` for APPROVER/ADMIN and `DriverSelfController` for ROLE_DRIVER |
+| DSM API contracts | Requests and responses are grouped in `DriverRequests` and `DriverResponses` without changing JSON fields |
+| DSM services | Five focused services: identity, credentials, records, readiness, and assessment (including compliance, eligibility, and performance) |
+| Approver APIs | `/api/drivers/**`, `/api/staff-profile/list` |
 | Driver self-portal | `/api/driver/**` (ROLE_DRIVER) |
 | Staff self-profile | `/api/staff-profile/**` (SYSTEM_USER / APPROVER list) |
 
@@ -51,9 +55,9 @@ This audit identified broken report wiring, dead staff service-request UI, unsec
 | Stale `DriverUserResponse` Javadoc | Updated to reflect user-centric model |
 | Legacy `Staff` type in `types/index.ts` | Removed unused interface |
 
-### Driver reports requests page
+### Service-request cleanup
 
-Repointed from staff requests to **driver service requests** (`GET /api/drivers/service-requests/open`).
+The duplicate driver service-request flow and its reports page were removed. Fleet maintenance requests are handled by the Fleet Management module.
 
 ---
 
@@ -69,11 +73,13 @@ Repointed from staff requests to **driver service requests** (`GET /api/drivers/
 - `GET /api/drivers/compliance` — per-driver compliance scores
 
 ### Existing sub-resources (secured)
-Licenses, certifications, documents, infractions, leaves, service requests, readiness, eligibility, qualification, performance — unchanged paths under `/api/drivers/**`.
+Licenses, certifications, documents, infractions, leaves, readiness, eligibility, qualification, and performance use paths under `/api/drivers/**`.
 
 ### Staff
-- `GET /api/staff`, `GET /api/staff/{id}` — read-only staff directory (APPROVER/ADMIN)
-- `/api/staff-profile/**` — unchanged (staff self-service)
+- `GET /api/staff-profile/list` — read-only staff directory (APPROVER/ADMIN)
+- `GET`, `PUT /api/staff-profile/me` — staff self-profile (SYSTEM_USER)
+- `POST`, `DELETE /api/staff-profile/picture` — staff profile picture (SYSTEM_USER)
+- Removed the duplicate `GET /api/staff` and `GET /api/staff/{id}` endpoints together with `StaffController` and `StaffService`.
 
 ---
 
@@ -82,11 +88,11 @@ Licenses, certifications, documents, infractions, leaves, service requests, read
 | Endpoint group | Roles |
 |----------------|-------|
 | `/api/drivers/**` | APPROVER, ADMIN |
-| `/api/staff` | APPROVER, ADMIN |
 | `/api/driver/**` | DRIVER (SecurityConfig) |
-| `/api/staff-profile/**` | Authenticated + method security |
+| `/api/staff-profile/list` | APPROVER, ADMIN |
+| `/api/staff-profile/me`, `/api/staff-profile/picture` | SYSTEM_USER |
 
-Unauthenticated requests to DSM approver endpoints return **403 Forbidden** (method security on `permitAll` paths).
+DSM approver authorization remains enforced by method security. The legacy global exception mapping currently converts some authorization failures on `permitAll` paths to HTTP 500; this remains a global security backlog item rather than a DSM routing change.
 
 ---
 
@@ -94,12 +100,36 @@ Unauthenticated requests to DSM approver endpoints return **403 Forbidden** (met
 
 - Production: Supabase PostgreSQL via `DB_URL` in `backend/.env`
 - Schema reference: [`backend/scripts/dsm-supabase-schema.sql`](../backend/scripts/dsm-supabase-schema.sql)
-- Hibernate `ddl-auto=update` continues to sync JPA entities at runtime
+- Production Hibernate uses `ddl-auto=validate`; schema changes are migration-controlled
+- `V21__drop_unused_driver_tables.sql` removes availability and service-request remnants
+- `V22__consolidate_driver_tables.sql` migrates all `driver_*` table data into the physical `drivers` aggregate
+- `V23__remove_driver_compatibility_views.sql` removes the temporary `driver_*` views and write-through functions after the direct aggregate cutover
+- `DriverAggregate` uses JSON mapping plus optimistic locking; resource mutations also acquire a pessimistic row lock to prevent lost concurrent updates
+- A `users` synchronization trigger creates and updates the consolidated row for DRIVER accounts
+- Three readiness-cache records belonging to non-driver users are intentionally excluded as invalid derived data
 - Removed misleading migration files: `V1__create_drivers`, `V2__create_staff`, `V11__create_staff_service_requests`, `V13__create_driver_availability`, `V18__remove_driver_availability`
+
+### Driver file storage
+
+- Driver profile pictures, licence documents, certification documents, and other Driver documents use private Supabase Object Storage only.
+- Driver document/profile response paths no longer serve local `/uploads/**` metadata for these Driver uploads.
+- PostgreSQL stores document metadata only in the `drivers.documents` JSONB field. It does not store file bytes or permanent signed URLs.
+- Supabase records store metadata such as original file name, bucket name, storage path, MIME type, file size, document type, upload timestamp, and storage provider.
+- Signed URLs are generated only after backend authorization succeeds and are short-lived.
+- The private bucket must be created manually in Supabase. Default bucket: `driver-documents`.
+- Required backend environment variables:
+  - `SUPABASE_STORAGE_URL`
+  - `SUPABASE_SERVICE_KEY`
+  - `DRIVER_SUPABASE_STORAGE_BUCKET` (optional; defaults to `driver-documents`)
+  - `DRIVER_SUPABASE_SIGNED_URL_TTL_SECONDS` (optional; defaults to `300`)
+- Supabase service-role/secret keys must remain in backend environment variables and must never be committed or exposed to the frontend.
 
 ---
 
 ## Tests Added/Updated
+
+- `DriverEndpointContractTest` — exhaustive preservation check for every DSM HTTP method/path mapping
+- `DriverAggregatePersistenceTest` — JSONB resources and flattened readiness through the consolidated repository facade
 
 - `DriverControllerMvcTest` — auth + aggregate endpoint smoke tests
 - `DriverComplianceServiceTest` — compliance score computation
@@ -111,12 +141,10 @@ Unauthenticated requests to DSM approver endpoints return **403 Forbidden** (met
 
 | ID | Module | Issue |
 |----|--------|-------|
-| X1 | Trip | `TripRequestService` still queries legacy `drivers` table for assignment dropdowns |
 | X2 | Security | Global `/api/**` `permitAll` in `SecurityConfig` |
 | X3 | Reports | `ReportService.getDriverPerformance()` returns stub data for all users |
 | X4 | Config | H2 in-memory fallback when `DB_URL` unset |
 | X5 | Trip | `GET /api/driver/trips` stub in driver self-portal |
-| Optional | DSM | Migrate driver document uploads from local disk to Supabase Storage |
 
 ---
 
@@ -146,4 +174,4 @@ Unauthenticated requests to DSM approver endpoints return **403 Forbidden** (met
 | Tests | 4/10 | 8/10 |
 | **Overall** | **6/10** | **9/10** |
 
-Remaining 1 point: trip module integration (X1, X5) requires separate approval.
+Remaining 1 point: the driver self-portal trip endpoint (X5) remains a stub.

@@ -18,10 +18,12 @@ interface Trip {
   assignedVehicleId: string | null;
 }
 
-const TRIP_STATUSES = [
-  'NEW', 'SUBMITTED', 'APPROVED', 'DRIVER_CONFIRMED',
-  'DRIVER_REJECTED', 'ONGOING', 'COMPLETED', 'REJECTED', 'CANCELLED'
-];
+const TRIP_FILTERS = [
+  { value: 'ALL', label: 'All' },
+  { value: 'DRIVER_CONFIRMED', label: 'Confirmed' },
+  { value: 'DRIVER_REJECTED', label: 'Rejected' },
+  { value: 'ONGOING', label: 'Ongoing' },
+] as const;
 
 const statusColors: Record<string, { bg: string; text: string; border: string }> = {
   NEW: { bg: 'hsl(210 40% 96%)', text: 'hsl(215 25% 27%)', border: 'hsl(214 32% 91%)' },
@@ -51,8 +53,8 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
       const allTrips = await apiFetch<Trip[]>(`/api/trips/driver/${driverId}`);
       setTrips(allTrips);
       setFilteredTrips(allTrips);
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to load trips');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to load trips');
     } finally {
       setLoading(false);
     }
@@ -86,63 +88,23 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
     };
   };
 
-  const activeTrips = trips.filter((t) => ['APPROVED', 'DRIVER_CONFIRMED', 'ONGOING'].includes(t.status));
-  const completedTrips = trips.filter((t) => t.status === 'COMPLETED');
-  const cancelledTrips = trips.filter((t) => ['CANCELLED', 'REJECTED', 'DRIVER_REJECTED'].includes(t.status));
-
   return (
     <div className="space-y-4">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="pt-4 pb-4 px-4">
-            <p className="text-2xl font-bold">{trips.length}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Total Trips</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 px-4">
-            <p className="text-2xl font-bold" style={{ color: 'hsl(263 83% 53%)' }}>
-              {activeTrips.length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Active Trips</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 px-4">
-            <p className="text-2xl font-bold" style={{ color: 'hsl(221 83% 53%)' }}>
-              {completedTrips.length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Completed</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 px-4">
-            <p className="text-2xl font-bold" style={{ color: 'hsl(0 0% 40%)' }}>
-              {cancelledTrips.length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Cancelled / Rejected</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filter */}
       <Card>
         <CardHeader className="border-b border-border bg-muted/30 px-4 py-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Filter by Status</CardTitle>
+            <CardTitle className="text-sm font-semibold">Filter Trips</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="px-4 py-3">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="h-9 text-sm w-full md:w-48">
-              <SelectValue placeholder="All Statuses" />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              {TRIP_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status.replace(/_/g, ' ')}
+              {TRIP_FILTERS.map((filter) => (
+                <SelectItem key={filter.value} value={filter.value}>
+                  {filter.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -154,7 +116,7 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
       <Card>
         <CardHeader className="border-b border-border bg-muted/30 px-4 py-3">
           <CardTitle className="text-sm font-semibold">
-            {filterStatus === 'ALL' ? 'All Trips' : `${filterStatus.replace(/_/g, ' ')} Trips`}
+            {TRIP_FILTERS.find((filter) => filter.value === filterStatus)?.label ?? 'All'} Trips
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0 py-0">

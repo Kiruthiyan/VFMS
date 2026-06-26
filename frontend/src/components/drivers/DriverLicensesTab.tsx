@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, getErrorMessage, resolveBackendAssetUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Download, FileText } from 'lucide-react';
@@ -9,18 +9,18 @@ import { DriverDocument } from '@/types';
 export function DriverLicensesTab({ driverId }: { driverId: string }) {
   const [licenseDocuments, setLicenseDocuments] = useState<DriverDocument[]>([]);
 
-  const fetchLicenseDocuments = async () => {
+  const fetchLicenseDocuments = useCallback(async () => {
     try {
       const documents = await apiFetch<DriverDocument[]>(`/api/drivers/${driverId}/documents`);
       setLicenseDocuments(documents.filter((document) => document.entityType === 'LICENSE'));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     }
-  };
+  }, [driverId]);
 
   useEffect(() => {
     void fetchLicenseDocuments();
-  }, [driverId]);
+  }, [fetchLicenseDocuments]);
 
   return (
     <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -42,11 +42,23 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
                   <p className="text-xs text-gray-500">{(doc.fileSize / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
-              <a href={resolveBackendAssetUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600">
+              {doc.fileUrl ? (
+                <a href={resolveBackendAssetUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600">
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
+                </a>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled
+                  title="Document access link is unavailable"
+                  className="h-7 w-7 text-muted-foreground"
+                >
                   <Download className="h-3.5 w-3.5" />
                 </Button>
-              </a>
+              )}
             </div>
           ))}
           {licenseDocuments.length === 0 && (

@@ -30,9 +30,12 @@ export interface DriverProfileResponse {
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   createdAt?: string;
   updatedAt?: string;
+  /** Future Trip Scheduling / Staff Dashboard integration value from 0 to 100. */
+  ratingPercentage?: number | null;
 }
 
 export interface DriverProfileUpdatePayload {
+  fullName?: string;
   phone?: string;
   address?: string;
   emergencyContactName?: string;
@@ -65,12 +68,12 @@ export interface DriverLicensePayload {
 
 export interface CertificationItem {
   id: number;
-  certType: string;
-  certName: string;
-  issuedBy?: string;
-  issueDate?: string;
-  expiryDate?: string;
-  createdAt?: string;
+  certType: string | null;
+  certName: string | null;
+  issuedBy?: string | null;
+  issueDate?: string | null;
+  expiryDate?: string | null;
+  createdAt?: string | null;
 }
 
 export interface CertificationPayload {
@@ -92,35 +95,16 @@ export interface DocumentItem {
   createdAt?: string;
 }
 
-export interface InfractionItem {
-  id: number;
-  infractionType: string;
-  severity: string;
-  incidentDate: string;
-  description?: string;
-  resolutionStatus: string;
-  penaltyNotes?: string;
-  createdAt?: string;
-}
-
-export interface InfractionPayload {
-  infractionType: string;
-  severity: string;
-  incidentDate: string;
-  description?: string;
-  penaltyNotes?: string;
-}
-
 export interface LeaveRequestItem {
   id: number;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  reason?: string;
-  status: string;
-  approvedBy?: string;
-  approvalNotes?: string;
-  createdAt?: string;
+  leaveType: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  reason?: string | null;
+  status: string | null;
+  approvedBy?: string | null;
+  approvalNotes?: string | null;
+  createdAt?: string | null;
 }
 
 export interface LeaveRequestPayload {
@@ -128,6 +112,18 @@ export interface LeaveRequestPayload {
   startDate: string;
   endDate: string;
   reason?: string;
+}
+
+export interface InfractionItem {
+  id: number;
+  infractionType: string | null;
+  severity: string | null;
+  incidentDate: string | null;
+  description?: string | null;
+  resolutionStatus: string | null;
+  resolvedAt?: string | null;
+  penaltyNotes?: string | null;
+  createdAt?: string | null;
 }
 
 // ── Profile ───────────────────────────────────────────────────────────────────
@@ -194,12 +190,14 @@ export async function getMyDocuments(): Promise<DocumentItem[]> {
 export async function uploadMyDocument(
   file: File,
   entityType: string,
-  entityId?: number
+  entityId?: number,
+  documentName?: string
 ): Promise<DocumentItem> {
   const form = new FormData();
   form.append('file', file);
   form.append('entityType', entityType);
   if (entityId !== undefined) form.append('entityId', String(entityId));
+  if (documentName?.trim()) form.append('documentName', documentName.trim());
   const res = await api.post<DocumentItem>('/api/driver/documents', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -210,15 +208,8 @@ export async function deleteMyDocument(id: number): Promise<void> {
   await api.delete(`/api/driver/documents/${id}`);
 }
 
-// ── Infractions ───────────────────────────────────────────────────────────────
-
 export async function getMyInfractions(): Promise<InfractionItem[]> {
   const res = await api.get<InfractionItem[]>('/api/driver/infractions');
-  return res.data;
-}
-
-export async function submitMyInfraction(data: InfractionPayload): Promise<InfractionItem> {
-  const res = await api.post<InfractionItem>('/api/driver/infractions', data);
   return res.data;
 }
 

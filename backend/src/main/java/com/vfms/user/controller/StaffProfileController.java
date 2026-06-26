@@ -12,9 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.vfms.dsm.service.DriverSelfService; // Assuming we can reuse Document upload logic
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -23,7 +21,6 @@ import java.util.List;
 public class StaffProfileController {
 
     private final StaffProfileService staffProfileService;
-    private final DriverSelfService driverSelfService; // Using this to upload to supabase for now
 
     @GetMapping("/me")
     @PreAuthorize("hasRole('SYSTEM_USER')")
@@ -43,20 +40,14 @@ public class StaffProfileController {
     @PreAuthorize("hasRole('SYSTEM_USER')")
     public ResponseEntity<StaffProfileResponse> uploadProfilePicture(
             @AuthenticationPrincipal User user,
-            @RequestParam("file") MultipartFile file) throws IOException {
-        
-        // We reuse the driver self service method which uploads documents to Supabase
-        com.vfms.dsm.entity.DriverDocument doc = driverSelfService.uploadMyDocument(
-                user.getEmail(), file, com.vfms.dsm.entity.DriverDocument.DocumentEntityType.PROFILE, null);
-        
-        staffProfileService.updateProfilePicture(user, doc.getFileUrl());
-        return ResponseEntity.ok(staffProfileService.getProfile(user));
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(staffProfileService.replaceProfilePicture(user, file));
     }
 
     @DeleteMapping("/picture")
     @PreAuthorize("hasRole('SYSTEM_USER')")
     public ResponseEntity<Void> removeProfilePicture(@AuthenticationPrincipal User user) {
-        staffProfileService.updateProfilePicture(user, null);
+        staffProfileService.removeProfilePicture(user);
         return ResponseEntity.noContent().build();
     }
 

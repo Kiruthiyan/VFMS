@@ -1,10 +1,6 @@
--- VFMS Driver & Staff Management (DSM) — Supabase PostgreSQL reference schema
--- Canonical identity: users (UUID) + employee_registry for staff pre-provisioning.
--- Apply manually on Supabase; Hibernate ddl-auto=update also maintains these tables at runtime.
---
--- Optional legacy cleanup (run only after confirming no data dependency):
--- DROP TABLE IF EXISTS staff_service_requests, staff, driver_availability_log,
---   driver_availability, drivers CASCADE;
+-- VFMS Driver & Staff Management (DSM) - Supabase PostgreSQL reference schema
+-- Canonical auth identity remains users(id). Driver operational data is stored
+-- in one physical drivers table and mapped directly by DriverAggregate.
 
 -- ---------------------------------------------------------------------------
 -- Employee registry (staff pre-provisioning before self-registration)
@@ -23,123 +19,63 @@ CREATE TABLE IF NOT EXISTS employee_registry (
 );
 
 -- ---------------------------------------------------------------------------
--- Driver sub-resources (all FK → users.id)
+-- Consolidated driver aggregate (the only physical driver data table)
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS driver_licenses (
-    id                BIGSERIAL PRIMARY KEY,
-    user_id           UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    license_number    VARCHAR(50) UNIQUE NOT NULL,
-    category          VARCHAR(10) NOT NULL,
-    issuing_authority VARCHAR(150),
-    issue_date        DATE NOT NULL,
-    expiry_date       DATE NOT NULL,
-    document_url      TEXT,
-    is_primary        BOOLEAN DEFAULT FALSE,
-    status            VARCHAR(20) NOT NULL DEFAULT 'VALID',
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at        TIMESTAMPTZ
+CREATE TABLE IF NOT EXISTS drivers (
+    id UUID PRIMARY KEY,
+    user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT LOCALTIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE,
+    version BIGINT NOT NULL DEFAULT 0,
+    address VARCHAR(255),
+    date_of_birth DATE,
+    date_of_joining DATE,
+    department VARCHAR(255),
+    designation VARCHAR(255),
+    email VARCHAR(255),
+    emergency_contact_name VARCHAR(255),
+    emergency_contact_phone VARCHAR(255),
+    employee_id VARCHAR(255),
+    first_name VARCHAR(255),
+    full_name VARCHAR(255),
+    last_name VARCHAR(255),
+    license_expiry_date DATE,
+    license_number VARCHAR(255),
+    nic VARCHAR(255),
+    phone VARCHAR(255),
+    photo_url VARCHAR(255),
+    status VARCHAR(255) NOT NULL,
+    legacy_unmatched BOOLEAN NOT NULL DEFAULT FALSE,
+    licenses JSONB NOT NULL DEFAULT '[]'::jsonb,
+    certifications JSONB NOT NULL DEFAULT '[]'::jsonb,
+    documents JSONB NOT NULL DEFAULT '[]'::jsonb,
+    infractions JSONB NOT NULL DEFAULT '[]'::jsonb,
+    leaves JSONB NOT NULL DEFAULT '[]'::jsonb,
+    performance_scores JSONB NOT NULL DEFAULT '[]'::jsonb,
+    readiness_license_valid BOOLEAN NOT NULL DEFAULT FALSE,
+    readiness_all_certs_valid BOOLEAN NOT NULL DEFAULT TRUE,
+    readiness_on_leave_today BOOLEAN NOT NULL DEFAULT FALSE,
+    readiness_not_ready_reason VARCHAR(255),
+    readiness_last_refreshed TIMESTAMP WITHOUT TIME ZONE,
+    readiness_availability_status VARCHAR(255),
+    CONSTRAINT drivers_licenses_json_array CHECK (jsonb_typeof(licenses) = 'array'),
+    CONSTRAINT drivers_certifications_json_array CHECK (jsonb_typeof(certifications) = 'array'),
+    CONSTRAINT drivers_documents_json_array CHECK (jsonb_typeof(documents) = 'array'),
+    CONSTRAINT drivers_infractions_json_array CHECK (jsonb_typeof(infractions) = 'array'),
+    CONSTRAINT drivers_leaves_json_array CHECK (jsonb_typeof(leaves) = 'array'),
+    CONSTRAINT drivers_performance_json_array CHECK (jsonb_typeof(performance_scores) = 'array')
 );
 
-CREATE INDEX IF NOT EXISTS idx_driver_licenses_user_id ON driver_licenses(user_id);
-CREATE INDEX IF NOT EXISTS idx_driver_licenses_expiry ON driver_licenses(expiry_date);
+CREATE INDEX IF NOT EXISTS idx_drivers_user_id ON drivers(user_id);
+CREATE INDEX IF NOT EXISTS idx_drivers_employee_id ON drivers(employee_id);
+CREATE INDEX IF NOT EXISTS idx_drivers_status ON drivers(status);
+CREATE INDEX IF NOT EXISTS idx_drivers_licenses_gin ON drivers USING GIN(licenses);
+CREATE INDEX IF NOT EXISTS idx_drivers_certifications_gin ON drivers USING GIN(certifications);
+CREATE INDEX IF NOT EXISTS idx_drivers_documents_gin ON drivers USING GIN(documents);
+CREATE INDEX IF NOT EXISTS idx_drivers_infractions_gin ON drivers USING GIN(infractions);
+CREATE INDEX IF NOT EXISTS idx_drivers_leaves_gin ON drivers USING GIN(leaves);
+CREATE INDEX IF NOT EXISTS idx_drivers_performance_gin ON drivers USING GIN(performance_scores);
 
-CREATE TABLE IF NOT EXISTS driver_certifications (
-    id           BIGSERIAL PRIMARY KEY,
-    user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    cert_type    VARCHAR(50) NOT NULL,
-    cert_name    VARCHAR(150) NOT NULL,
-    issued_by    VARCHAR(150),
-    issue_date   DATE,
-    expiry_date  DATE,
-    status       VARCHAR(20) NOT NULL DEFAULT 'VALID',
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_driver_certifications_user_id ON driver_certifications(user_id);
-
-CREATE TABLE IF NOT EXISTS driver_documents (
-    id          BIGSERIAL PRIMARY KEY,
-    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    entity_type VARCHAR(30) NOT NULL,
-    entity_id   BIGINT,
-    file_name   VARCHAR(255) NOT NULL,
-    file_url    TEXT NOT NULL,
-    mime_type   VARCHAR(100),
-    file_size   BIGINT,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_driver_documents_user_id ON driver_documents(user_id);
-
-CREATE TABLE IF NOT EXISTS driver_infractions (
-    id                BIGSERIAL PRIMARY KEY,
-    user_id           UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    infraction_type   VARCHAR(30) NOT NULL,
-    severity          VARCHAR(20) NOT NULL,
-    incident_date     DATE NOT NULL,
-    description       TEXT,
-    resolution_status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
-    resolved_at       DATE,
-    penalty_notes     TEXT,
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at        TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_driver_infractions_user_id ON driver_infractions(user_id);
-
-CREATE TABLE IF NOT EXISTS driver_leaves (
-    id              BIGSERIAL PRIMARY KEY,
-    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    leave_type      VARCHAR(20) NOT NULL,
-    start_date      DATE NOT NULL,
-    end_date        DATE NOT NULL,
-    reason          TEXT,
-    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    approved_by     VARCHAR(100),
-    approval_notes  TEXT,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_driver_leaves_user_id ON driver_leaves(user_id);
-CREATE INDEX IF NOT EXISTS idx_driver_leaves_status ON driver_leaves(status);
-
-CREATE TABLE IF NOT EXISTS driver_service_requests (
-    id           BIGSERIAL PRIMARY KEY,
-    user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    vehicle_id   BIGINT,
-    request_type VARCHAR(30) NOT NULL,
-    description  TEXT,
-    urgency      VARCHAR(10) NOT NULL DEFAULT 'MEDIUM',
-    status       VARCHAR(20) NOT NULL DEFAULT 'OPEN',
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_driver_service_requests_user_id ON driver_service_requests(user_id);
-CREATE INDEX IF NOT EXISTS idx_driver_service_requests_status ON driver_service_requests(status);
-
-CREATE TABLE IF NOT EXISTS driver_readiness_cache (
-    user_id          UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    license_valid    BOOLEAN NOT NULL DEFAULT FALSE,
-    all_certs_valid  BOOLEAN NOT NULL DEFAULT TRUE,
-    on_leave_today   BOOLEAN NOT NULL DEFAULT FALSE,
-    not_ready_reason TEXT,
-    last_refreshed   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS driver_performance_scores (
-    id           BIGSERIAL PRIMARY KEY,
-    user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    score_type   VARCHAR(50) NOT NULL,
-    score_value  DOUBLE PRECISION NOT NULL,
-    period_start DATE,
-    period_end   DATE,
-    notes        TEXT,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_driver_performance_scores_user_id ON driver_performance_scores(user_id);
+-- Migration validation and the users -> drivers synchronization trigger are
+-- defined by V22. V23 removes the temporary compatibility views used during
+-- the staged cutover.

@@ -1,6 +1,6 @@
 package com.vfms.dsm.mapper;
 
-import com.vfms.dsm.dto.*;
+import com.vfms.dsm.dto.DriverResponses.DriverResponse;
 import com.vfms.user.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +38,7 @@ public class DriverMapper {
             .photoUrl(user.getPhotoUrl())
             .createdAt(user.getCreatedAt())
             .updatedAt(user.getUpdatedAt())
+            .ratingPercentage(null) // populated later by Trip Scheduling / Staff Dashboard integration
             .build();
     }
 }

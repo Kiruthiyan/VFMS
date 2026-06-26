@@ -1,8 +1,8 @@
 package com.vfms.dsm.scheduler;
 
-import com.vfms.dsm.entity.DriverCertification;
+import com.vfms.dsm.entity.DriverAggregate.DriverCertification;
 import com.vfms.dsm.entity.NotificationLog;
-import com.vfms.dsm.repository.DriverCertificationRepository;
+import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.dsm.repository.NotificationLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class CertificationExpiryScheduler {
-    private final DriverCertificationRepository certRepository;
+    private final DriverRepository certRepository;
     private final NotificationLogRepository notificationLogRepository;
 
     @Scheduled(cron = "0 0 6 * * *")
@@ -26,12 +26,13 @@ public class CertificationExpiryScheduler {
     public void checkCertificationExpiry() {
         LocalDate today = LocalDate.now();
 
-        List<DriverCertification> expired = certRepository.findByExpiryDateBeforeAndStatusNot(
+        List<DriverCertification> expired = certRepository.findExpiredCertifications(
                 today,
                 DriverCertification.CertStatus.EXPIRED
         );
         for (DriverCertification cert : expired) {
             cert.setStatus(DriverCertification.CertStatus.EXPIRED);
+            certRepository.saveCertification(cert);
             saveNotification(
                     cert.getUser().getId(),
                     "CERT_EXPIRED",
@@ -39,10 +40,11 @@ public class CertificationExpiryScheduler {
             );
         }
 
-        List<DriverCertification> expiringSoon = certRepository.findExpiringBetween(today, today.plusDays(30));
+        List<DriverCertification> expiringSoon = certRepository.findCertificationsExpiringBetween(today, today.plusDays(30));
         for (DriverCertification cert : expiringSoon) {
             if (cert.getStatus() != DriverCertification.CertStatus.EXPIRED) {
                 cert.setStatus(DriverCertification.CertStatus.EXPIRING_SOON);
+                certRepository.saveCertification(cert);
                 saveNotification(
                         cert.getUser().getId(),
                         "CERT_EXPIRING_SOON",

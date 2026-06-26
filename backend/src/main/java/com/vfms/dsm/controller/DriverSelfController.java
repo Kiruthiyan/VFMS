@@ -1,17 +1,24 @@
 package com.vfms.dsm.controller;
 
-import com.vfms.dsm.dto.*;
-import com.vfms.dsm.entity.*;
-import com.vfms.dsm.service.DriverSelfService;
+import com.vfms.dsm.dto.DriverRequests.*;
+import com.vfms.dsm.dto.DriverResponses.*;
+import com.vfms.dsm.entity.DriverAggregate.DriverCertification;
+import com.vfms.dsm.entity.DriverAggregate.DriverDocument;
+import com.vfms.dsm.entity.DriverAggregate.DriverInfraction;
+import com.vfms.dsm.entity.DriverAggregate.DriverLeave;
+import com.vfms.dsm.service.DriverCredentialService;
+import com.vfms.dsm.service.DriverRecordService;
+import com.vfms.dsm.service.DriverService;
+import com.vfms.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.vfms.user.entity.User;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -26,20 +33,22 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DriverSelfController {
 
-    private final DriverSelfService selfService;
+    private final DriverService driverService;
+    private final DriverCredentialService credentialService;
+    private final DriverRecordService recordService;
 
     // ── Profile ──────────────────────────────────────────────────────────────
 
     @GetMapping("/profile")
     public ResponseEntity<DriverResponse> getMyProfile(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(selfService.getMyProfile(user.getEmail()));
+        return ResponseEntity.ok(driverService.getMyProfile(user.getEmail()));
     }
 
     @PutMapping("/profile")
     public ResponseEntity<DriverResponse> updateMyProfile(
             @AuthenticationPrincipal User user,
             @RequestBody DriverProfileUpdateRequest request) {
-        return ResponseEntity.ok(selfService.updateMyProfile(user.getEmail(), request));
+        return ResponseEntity.ok(driverService.updateMyProfile(user.getEmail(), request));
     }
 
     // ── Profile picture ───────────────────────────────────────────────────────
@@ -47,15 +56,15 @@ public class DriverSelfController {
     @PostMapping(value = "/profile/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DriverDocument> uploadProfilePicture(
             @AuthenticationPrincipal User user,
-            @RequestParam("file") MultipartFile file) throws IOException {
-        DriverDocument doc = selfService.uploadMyDocument(
+            @RequestParam("file") MultipartFile file) {
+        DriverDocument doc = recordService.uploadMyDocument(
                 user.getEmail(), file, DriverDocument.DocumentEntityType.PROFILE, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(doc);
     }
 
     @DeleteMapping("/profile/picture")
     public ResponseEntity<Void> removeProfilePicture(@AuthenticationPrincipal User user) {
-        selfService.removeProfilePicture(user.getEmail());
+        driverService.removeProfilePicture(user.getEmail());
         return ResponseEntity.noContent().build();
     }
 
@@ -63,7 +72,7 @@ public class DriverSelfController {
 
     @GetMapping("/licenses")
     public ResponseEntity<List<DriverLicenseResponse>> getMyLicenses(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(selfService.getMyLicenses(user.getEmail()));
+        return ResponseEntity.ok(credentialService.getMyLicenses(user.getEmail()));
     }
 
     @PostMapping("/licenses")
@@ -71,7 +80,7 @@ public class DriverSelfController {
             @AuthenticationPrincipal User user,
             @Valid @RequestBody DriverLicenseRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(selfService.addMyLicense(user.getEmail(), request));
+                .body(credentialService.addMyLicense(user.getEmail(), request));
     }
 
     @PutMapping("/licenses/{id}")
@@ -79,29 +88,29 @@ public class DriverSelfController {
             @AuthenticationPrincipal User user,
             @PathVariable Long id,
             @Valid @RequestBody DriverLicenseRequest request) {
-        return ResponseEntity.ok(selfService.updateMyLicense(user.getEmail(), id, request));
+        return ResponseEntity.ok(credentialService.updateMyLicense(user.getEmail(), id, request));
     }
 
     // ── Certifications ───────────────────────────────────────────────────────
 
     @GetMapping("/certifications")
     public ResponseEntity<List<DriverCertification>> getMyCertifications(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(selfService.getMyCertifications(user.getEmail()));
+        return ResponseEntity.ok(credentialService.getMyCertifications(user.getEmail()));
     }
 
     @PostMapping("/certifications")
     public ResponseEntity<DriverCertification> addMyCertification(
             @AuthenticationPrincipal User user,
-            @RequestBody com.vfms.dsm.dto.DriverSelfCertificationRequest request) {
+            @RequestBody DriverSelfCertificationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(selfService.addMyCertification(user.getEmail(), request));
+                .body(credentialService.addMyCertification(user.getEmail(), request));
     }
 
     // ── Documents ────────────────────────────────────────────────────────────
 
     @GetMapping("/documents")
     public ResponseEntity<List<DriverDocument>> getMyDocuments(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(selfService.getMyDocuments(user.getEmail()));
+        return ResponseEntity.ok(recordService.getMyDocuments(user.getEmail()));
     }
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -109,16 +118,17 @@ public class DriverSelfController {
             @AuthenticationPrincipal User user,
             @RequestParam("file") MultipartFile file,
             @RequestParam DriverDocument.DocumentEntityType entityType,
-            @RequestParam(required = false) Long entityId) throws IOException {
-        DriverDocument doc = selfService.uploadMyDocument(user.getEmail(), file, entityType, entityId);
+            @RequestParam(required = false) Long entityId,
+            @RequestParam(required = false) String documentName) {
+        DriverDocument doc = recordService.uploadMyDocument(user.getEmail(), file, entityType, entityId, documentName);
         return ResponseEntity.status(HttpStatus.CREATED).body(doc);
     }
 
     @DeleteMapping("/documents/{id}")
     public ResponseEntity<Void> deleteDocument(
             @AuthenticationPrincipal User user,
-            @PathVariable Long id) throws IOException {
-        selfService.deleteMyDocument(user.getEmail(), id);
+            @PathVariable Long id) {
+        recordService.deleteMyDocument(user.getEmail(), id);
         return ResponseEntity.noContent().build();
     }
 
@@ -126,24 +136,13 @@ public class DriverSelfController {
 
     @GetMapping("/infractions")
     public ResponseEntity<List<DriverInfraction>> getMyInfractions(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(selfService.getMyInfractions(user.getEmail()));
+        return ResponseEntity.ok(recordService.getMyInfractions(user.getEmail()));
     }
 
-    @PostMapping("/infractions")
-    public ResponseEntity<DriverInfraction> submitInfraction(
-            @AuthenticationPrincipal User user,
-            @Valid @RequestBody com.vfms.dsm.dto.DriverSelfInfractionRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(selfService.submitMyInfraction(user.getEmail(), request));
-    }
-
-    // ── Trips (read-only; stub returns empty list if no trip module present) ──
+    // ── Trips (read-only stub — returns empty list until fleet module integration) ──
 
     @GetMapping("/trips")
     public ResponseEntity<List<?>> getMyTrips(@AuthenticationPrincipal User user) {
-        // Trip data is managed by a separate fleet module.
-        // This endpoint is kept as a placeholder and returns an empty list
-        // until the fleet trip module is integrated with the driver portal.
         return ResponseEntity.ok(List.of());
     }
 
@@ -151,23 +150,22 @@ public class DriverSelfController {
 
     @GetMapping("/leave-requests")
     public ResponseEntity<List<DriverLeave>> getMyLeaveRequests(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(selfService.getMyLeaveRequests(user.getEmail()));
+        return ResponseEntity.ok(recordService.getMyLeaveRequests(user.getEmail()));
     }
 
     @PostMapping("/leave-requests")
     public ResponseEntity<DriverLeave> submitLeaveRequest(
             @AuthenticationPrincipal User user,
-            @Valid @RequestBody com.vfms.dsm.dto.DriverSelfLeaveRequest request) {
+            @Valid @RequestBody DriverSelfLeaveRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(selfService.submitLeaveRequest(user.getEmail(), request));
+                .body(recordService.submitLeaveRequest(user.getEmail(), request));
     }
 
     @DeleteMapping("/leave-requests/{id}")
     public ResponseEntity<Void> deleteLeaveRequest(
             @AuthenticationPrincipal User user,
             @PathVariable Long id) {
-        selfService.deleteMyLeaveRequest(user.getEmail(), id);
+        recordService.deleteMyLeaveRequest(user.getEmail(), id);
         return ResponseEntity.noContent().build();
     }
-
 }

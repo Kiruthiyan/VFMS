@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import {
   User, Mail, Phone, MapPin, Activity, 
-  Shield, Camera, Loader2, Badge, Briefcase, Building, Trash2
+  Camera, Loader2, Badge, Briefcase, Building, Trash2, X
 } from 'lucide-react';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import {
@@ -49,10 +49,17 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
+  const response = (error as { response?: { data?: { message?: unknown } } }).response;
+  return typeof response?.data?.message === 'string' ? response.data.message : fallback;
+}
+
 export default function StaffProfilePage() {
   const [profile, setProfile] = useState<StaffProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadingPic, setUploadingPic] = useState(false);
+  const [showProfilePicturePreview, setShowProfilePicturePreview] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,7 +76,7 @@ export default function StaffProfilePage() {
           emergencyContactPhone: data.emergencyContactPhone || '',
         });
       })
-      .catch((err) => toast.error(err?.response?.data?.message ?? 'Failed to load profile'))
+      .catch((error: unknown) => toast.error(getApiErrorMessage(error, 'Failed to load profile')))
       .finally(() => setLoading(false));
   }, [reset]);
 
@@ -82,8 +89,8 @@ export default function StaffProfilePage() {
       const updated = await getMyStaffProfile();
       setProfile(updated);
       toast.success('Profile picture updated');
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to upload photo');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to upload photo'));
     } finally {
       setUploadingPic(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -98,8 +105,8 @@ export default function StaffProfilePage() {
       const updated = await getMyStaffProfile();
       setProfile(updated);
       toast.success('Profile picture removed');
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to remove photo');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to remove photo'));
     } finally {
       setUploadingPic(false);
     }
@@ -111,8 +118,8 @@ export default function StaffProfilePage() {
       setProfile(updated);
       toast.success('Profile updated successfully');
       setIsEditing(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Failed to update profile');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to update profile'));
     }
   };
 
@@ -129,26 +136,44 @@ export default function StaffProfilePage() {
           <p>No profile linked to your account. Contact an administrator.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '20rem 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(18rem, 22rem) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start', maxWidth: '74rem', margin: '0 auto', width: '100%' }}>
 
           {/* Left: Avatar + identity card */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Avatar card */}
             <div style={{
-              borderRadius: '1rem', border: '1px solid hsl(var(--border))',
+              borderRadius: '1.25rem', border: '1px solid hsl(var(--border))',
               background: 'hsl(var(--card))', overflow: 'hidden',
+              boxShadow: '0 16px 40px hsl(220 30% 10% / 0.08)',
             }}>
               {/* Gradient banner */}
-              <div style={{ height: '5rem', background: 'linear-gradient(135deg, hsl(220 30% 15%), hsl(42 100% 30%))' }} />
-              <div style={{ padding: '0 1.25rem 1.25rem', position: 'relative' }}>
+              <div style={{ height: '5.5rem', background: 'linear-gradient(135deg, hsl(220 30% 15%), hsl(42 100% 30%))' }} />
+              <div style={{ padding: '0 1.5rem 1.5rem', position: 'relative', textAlign: 'center' }}>
                 {/* Avatar */}
                 <div style={{ position: 'relative', display: 'inline-block', marginTop: '-2.5rem', marginBottom: '0.75rem' }}>
                   {avatarSrc ? (
-                    <img
-                      src={avatarSrc}
-                      alt="Profile"
-                      style={{ width: '5rem', height: '5rem', borderRadius: '50%', objectFit: 'cover', border: '3px solid hsl(var(--background))', display: 'block' }}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowProfilePicturePreview(true)}
+                      aria-label="View uploaded profile picture"
+                      style={{
+                        width: '5rem',
+                        height: '5rem',
+                        borderRadius: '50%',
+                        border: '3px solid hsl(var(--background))',
+                        padding: 0,
+                        overflow: 'hidden',
+                        display: 'block',
+                        background: 'transparent',
+                        cursor: 'zoom-in',
+                      }}
+                    >
+                      <img
+                        src={avatarSrc}
+                        alt="Profile"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                    </button>
                   ) : (
                     <div style={{
                       width: '5rem', height: '5rem', borderRadius: '50%',
@@ -165,14 +190,14 @@ export default function StaffProfilePage() {
                       disabled={uploadingPic}
                       aria-label="Remove profile picture"
                       style={{
-                        position: 'absolute', bottom: '0', left: '0',
+                        position: 'absolute', top: '0.25rem', right: '-2rem',
                         width: '1.5rem', height: '1.5rem', borderRadius: '50%',
-                        background: 'hsl(0 84% 60%)', border: '2px solid hsl(var(--background))',
+                        background: '#fff', border: '1px solid hsl(var(--border))',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', zIndex: 10
+                        cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px hsl(0 0% 0% / 0.12)'
                       }}
                     >
-                      <Trash2 style={{ width: '0.625rem', height: '0.625rem', color: '#fff' }} />
+                      <Trash2 style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(0 84% 45%)' }} />
                     </button>
                   )}
                   {/* Upload overlay */}
@@ -181,16 +206,16 @@ export default function StaffProfilePage() {
                     disabled={uploadingPic}
                     aria-label="Change profile picture"
                     style={{
-                      position: 'absolute', bottom: '0', right: '0',
+                      position: 'absolute', top: avatarSrc ? '2.1rem' : '0.25rem', right: '-2rem',
                       width: '1.5rem', height: '1.5rem', borderRadius: '50%',
-                      background: 'hsl(42 100% 50%)', border: '2px solid hsl(var(--background))',
+                      background: '#fff', border: '1px solid hsl(var(--border))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', zIndex: 10
+                      cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px hsl(0 0% 0% / 0.12)'
                     }}
                   >
                     {uploadingPic
-                      ? <Loader2 style={{ width: '0.625rem', height: '0.625rem', color: '#000', animation: 'spin 1s linear infinite' }} />
-                      : <Camera style={{ width: '0.625rem', height: '0.625rem', color: '#000' }} />
+                      ? <Loader2 style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(var(--foreground))', animation: 'spin 1s linear infinite' }} />
+                      : <Camera style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(var(--foreground))' }} />
                     }
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
@@ -203,14 +228,14 @@ export default function StaffProfilePage() {
                   {profile.designation || 'Staff'}
                 </p>
 
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <StatusPill status={profile.status} />
                 </div>
               </div>
             </div>
 
             {/* Identity card */}
-            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem' }}>
+            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem', boxShadow: '0 8px 24px hsl(220 30% 10% / 0.04)' }}>
               <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>
                 System Identity
               </p>
@@ -221,9 +246,9 @@ export default function StaffProfilePage() {
           </div>
 
           {/* Right: Editable contact info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1.25rem' }}>
-              <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
+            <div style={{ borderRadius: '1.25rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1.5rem', boxShadow: '0 12px 32px hsl(220 30% 10% / 0.06)' }}>
+              <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
                 <div>
                   <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>Personal Information</h3>
                   <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.125rem 0 0' }}>Your contact details and emergency contacts</p>
@@ -270,18 +295,74 @@ export default function StaffProfilePage() {
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Read-only notice */}
-            <div style={{
-              borderRadius: '0.75rem', border: '1px solid hsl(42 100% 50% / 0.3)',
-              background: 'hsl(42 100% 50% / 0.06)', padding: '0.875rem 1rem',
-              display: 'flex', alignItems: 'flex-start', gap: '0.625rem',
-            }}>
-              <Shield style={{ width: '1rem', height: '1rem', color: 'hsl(42 100% 45%)', flexShrink: 0, marginTop: '0.125rem' }} />
-              <p style={{ fontSize: '0.8rem', color: 'hsl(42 100% 35%)', margin: 0, lineHeight: 1.5 }}>
-                <strong>Controlled access</strong> — Your system role, identity, and access permissions can only be modified by a System Administrator.
-              </p>
-            </div>
+      {showProfilePicturePreview && avatarSrc && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Staff profile picture preview"
+          onClick={() => setShowProfilePicturePreview(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 60,
+            background: 'hsl(220 30% 5% / 0.78)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+          }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: 'min(34rem, 92vw)',
+              maxHeight: '86vh',
+              borderRadius: '1.25rem',
+              background: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              boxShadow: '0 24px 80px hsl(220 35% 5% / 0.45)',
+              padding: '0.75rem',
+            }}
+          >
+            <button
+              type="button"
+              aria-label="Close profile picture preview"
+              onClick={() => setShowProfilePicturePreview(false)}
+              style={{
+                position: 'absolute',
+                top: '-0.75rem',
+                right: '-0.75rem',
+                width: '2rem',
+                height: '2rem',
+                borderRadius: '9999px',
+                border: '1px solid hsl(var(--border))',
+                background: '#fff',
+                color: 'hsl(var(--foreground))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px hsl(220 30% 10% / 0.18)',
+              }}
+            >
+              <X style={{ width: '1rem', height: '1rem' }} />
+            </button>
+            <img
+              src={avatarSrc}
+              alt="Staff profile picture preview"
+              style={{
+                display: 'block',
+                width: '100%',
+                maxHeight: '78vh',
+                borderRadius: '0.9rem',
+                objectFit: 'contain',
+              }}
+            />
           </div>
         </div>
       )}

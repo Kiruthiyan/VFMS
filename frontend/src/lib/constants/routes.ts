@@ -65,12 +65,8 @@ export const PROTECTED_ROUTES = [
 
 export const DRIVER_PORTAL_ROUTES = {
   PROFILE: '/dashboards/driver/profile',
-  LICENSES: '/dashboards/driver/licenses',
-  CERTIFICATIONS: '/dashboards/driver/certifications',
   DOCUMENTS: '/dashboards/driver/documents',
-  INFRACTIONS: '/dashboards/driver/infractions',
   TRIPS: '/dashboards/driver/trips',
-  LEAVE_REQUESTS: '/dashboards/driver/leave-requests',
 } as const;
 
 export const UNPROTECTED_ROUTES = [

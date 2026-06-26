@@ -151,7 +151,7 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
                 <div>
                   <p className="text-sm font-medium text-foreground">{cert.certName}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {cert.certType.replace(/_/g, ' ')}
+                    {(cert.certType ?? 'UNKNOWN').replace(/_/g, ' ')}
                     {cert.issuedBy ? ` · ${cert.issuedBy}` : ''}
                   </p>
                   {cert.expiryDate ? (
