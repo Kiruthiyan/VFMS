@@ -1,22 +1,21 @@
 package com.vfms.dsm.service;
 
 import com.vfms.user.entity.User;
+import com.vfms.common.enums.Role;
 
-
-import com.vfms.dsm.entity.DriverCertification;
-import com.vfms.dsm.entity.DriverLicense;
-import com.vfms.dsm.entity.DriverReadinessCache;
+import com.vfms.dsm.entity.DriverAggregate;
+import com.vfms.dsm.entity.DriverAggregate.DriverCertification;
+import com.vfms.dsm.entity.DriverAggregate.DriverLicense;
+import com.vfms.dsm.entity.DriverAggregate.DriverReadinessCache;
 import com.vfms.common.exception.ResourceNotFoundException;
-import com.vfms.dsm.repository.DriverCertificationRepository;
-import com.vfms.dsm.repository.DriverLeaveRepository;
-import com.vfms.dsm.repository.DriverLicenseRepository;
-import com.vfms.dsm.repository.DriverReadinessCacheRepository;
+import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.user.repository.UserRepository;
 import com.vfms.trip.repository.TripRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,42 +28,45 @@ import java.util.UUID;
 @Transactional
 public class DriverReadinessService {
 
-    private final DriverReadinessCacheRepository cacheRepository;
+    private final DriverRepository cacheRepository;
     private final UserRepository userRepository;
-    private final DriverLicenseRepository licenseRepository;
-    private final DriverCertificationRepository certRepository;
+    private final DriverRepository licenseRepository;
+    private final DriverRepository certRepository;
     private final TripRequestRepository tripRequestRepository;
-    private final DriverLeaveRepository leaveRepository;
+    private final DriverRepository leaveRepository;
 
     public DriverReadinessCache getReadiness(UUID driverId) {
-        return cacheRepository.findById(driverId).orElseGet(() -> refreshForDriver(driverId));
+        return cacheRepository.findReadiness(driverId).orElseGet(() -> refreshForDriver(driverId));
     }
 
     public List<DriverReadinessCache> getAvailableReadyDrivers() {
-                return cacheRepository.findAllByOrderByLastRefreshedDesc().stream()
+                return cacheRepository.findAllReadiness().stream()
                                 .filter(DriverReadinessCache::isReady)
                 .toList();
     }
 
-        public List<DriverReadinessCache> getAllReadiness() {
-                                return userRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")).stream()
-                                .map(user -> refreshForDriver(user.getId()))
-                                .toList();
-        }
+    public List<DriverReadinessCache> getAllReadiness() {
+        return driverUsers().stream()
+                .map(user -> refreshForDriver(user.getId()))
+                .toList();
+    }
 
     @Scheduled(cron = "0 */30 * * * *")
     public void refreshAllReadiness() {
-        userRepository.findAll().forEach(d -> refreshForDriver(d.getId()));
+        driverUsers().forEach(driver -> refreshForDriver(driver.getId()));
     }
 
     public DriverReadinessCache refreshForDriver(UUID driverId) {
         User user = userRepository.findById(driverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + driverId));
+        if (user.getRole() != Role.DRIVER || user.getDeletedAt() != null) {
+            throw new ResourceNotFoundException("Driver not found: " + driverId);
+        }
 
         boolean licenseValid = user.getLicenseExpiryDate() != null
             && !user.getLicenseExpiryDate().isBefore(LocalDate.now());
 
-        boolean certsValid = certRepository.findByUser_IdOrderByCreatedAtDesc(driverId).stream()
+        boolean certsValid = certRepository.findCertificationsByDriver(driverId).stream()
                 .noneMatch(c -> c.getStatus() == DriverCertification.CertStatus.EXPIRED);
 
         // Check for approved leave on the current date
@@ -76,7 +78,7 @@ public class DriverReadinessService {
         if (onLeaveToday) reasons.add("On approved leave");
         String notReadyReason = reasons.isEmpty() ? null : String.join(", ", reasons);
 
-        DriverReadinessCache cache = cacheRepository.findById(driverId).orElseGet(() -> {
+        DriverReadinessCache cache = cacheRepository.findReadiness(driverId).orElseGet(() -> {
                 DriverReadinessCache newCache = new DriverReadinessCache();
                 newCache.setUser(user);
                 return newCache;
@@ -88,6 +90,10 @@ public class DriverReadinessService {
         cache.setNotReadyReason(notReadyReason);
         cache.setLastRefreshed(LocalDateTime.now());
 
-        return cacheRepository.saveAndFlush(cache);
+        return cacheRepository.saveReadiness(cache);
+    }
+
+    private List<User> driverUsers() {
+        return userRepository.findByRoleAndDeletedAtIsNull(Role.DRIVER, Pageable.unpaged()).getContent();
     }
 }

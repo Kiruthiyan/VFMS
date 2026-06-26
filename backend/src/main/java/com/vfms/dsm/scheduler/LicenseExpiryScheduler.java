@@ -1,8 +1,8 @@
 package com.vfms.dsm.scheduler;
 
-import com.vfms.dsm.entity.DriverLicense;
+import com.vfms.dsm.entity.DriverAggregate.DriverLicense;
 import com.vfms.dsm.entity.NotificationLog;
-import com.vfms.dsm.repository.DriverLicenseRepository;
+import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.dsm.repository.NotificationLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class LicenseExpiryScheduler {
-    private final DriverLicenseRepository licenseRepository;
+    private final DriverRepository licenseRepository;
     private final NotificationLogRepository notificationLogRepository;
 
     @Scheduled(cron = "0 0 6 * * *")
@@ -26,12 +26,13 @@ public class LicenseExpiryScheduler {
     public void checkLicenseExpiry() {
         LocalDate today = LocalDate.now();
 
-        List<DriverLicense> expiredLicenses = licenseRepository.findByExpiryDateBeforeAndStatusNot(
+        List<DriverLicense> expiredLicenses = licenseRepository.findExpiredLicenses(
                 today,
                 DriverLicense.LicenseStatus.EXPIRED
         );
         for (DriverLicense license : expiredLicenses) {
             license.setStatus(DriverLicense.LicenseStatus.EXPIRED);
+            licenseRepository.saveLicense(license);
             logNotification(
                     license.getUser().getId(),
                     "LICENSE_EXPIRED",
@@ -39,10 +40,11 @@ public class LicenseExpiryScheduler {
             );
         }
 
-        List<DriverLicense> expiringSoon = licenseRepository.findExpiringBetween(today, today.plusDays(30));
+        List<DriverLicense> expiringSoon = licenseRepository.findLicensesExpiringBetween(today, today.plusDays(30));
         for (DriverLicense license : expiringSoon) {
             if (license.getStatus() != DriverLicense.LicenseStatus.EXPIRED) {
                 license.setStatus(DriverLicense.LicenseStatus.EXPIRING_SOON);
+                licenseRepository.saveLicense(license);
                 logNotification(
                         license.getUser().getId(),
                         "LICENSE_EXPIRING_SOON",

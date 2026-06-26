@@ -14,10 +14,8 @@ import {
   Calendar, 
   CheckSquare,
   UserCircle,
-  CreditCard,
-  Award,
-  AlertTriangle,
   Store,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -75,8 +73,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
       return (
         pathname === href ||
         (pathname.startsWith('/drivers/') &&
-          !pathname.startsWith('/drivers/assignment-readiness') &&
-          !pathname.startsWith('/drivers/leave-requests'))
+          !pathname.startsWith('/drivers/leave-requests') &&
+          !pathname.startsWith('/drivers/infractions'))
       );
     }
 
@@ -198,22 +196,13 @@ function getNavSectionsByRole(role?: string) {
       title: "My Profile",
       items: [
         { label: 'Profile', href: '/dashboards/driver/profile', icon: UserCircle },
-        { label: 'Licenses', href: '/dashboards/driver/licenses', icon: CreditCard },
-        { label: 'Certifications', href: '/dashboards/driver/certifications', icon: Award },
-        { label: 'Documents', href: '/dashboards/driver/documents', icon: FileText },
-        { label: 'Infractions', href: '/dashboards/driver/infractions', icon: AlertTriangle },
+        { label: 'Leave Request', href: '/dashboards/driver/leave-requests', icon: Calendar },
       ]
     });
     sections.push({
       title: "Trips",
       items: [
         { label: 'My Trips', href: '/dashboards/driver/trips', icon: Briefcase },
-      ]
-    });
-    sections.push({
-      title: "Self Service",
-      items: [
-        { label: 'Leave Requests', href: '/dashboards/driver/leave-requests', icon: Calendar },
       ]
     });
   }
@@ -228,8 +217,8 @@ function getNavSectionsByRole(role?: string) {
       title: "Drivers",
       items: [
         { label: 'Drivers', href: '/drivers', icon: Users },
-        { label: 'Assignment Readiness', href: '/drivers/assignment-readiness', icon: CheckSquare },
         { label: 'Leave Requests', href: '/drivers/leave-requests', icon: Calendar },
+        { label: 'Infractions', href: '/drivers/infractions', icon: AlertTriangle },
       ]
     });
     sections.push({
@@ -245,12 +234,6 @@ function getNavSectionsByRole(role?: string) {
 
   if (role === 'SYSTEM_USER' || role === 'STAFF') {
     sections.push({
-      title: "My Profile",
-      items: [
-        { label: 'Profile', href: '/dashboards/staff/profile', icon: UserCircle },
-      ]
-    });
-    sections.push({
       title: "Self Service",
       items: [
         { label: 'Request Trip', href: '/trips/create', icon: Briefcase },
@@ -264,6 +247,12 @@ function getNavSectionsByRole(role?: string) {
         { label: 'Maintenance Requests', href: '/dashboards/fleet/maintenance', icon: Wrench },
         { label: 'Vehicle Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
         { label: 'Vendors', href: '/dashboards/fleet/vendors', icon: Store },
+      ]
+    });
+    sections.push({
+      title: "My Profile",
+      items: [
+        { label: 'Profile', href: '/dashboards/staff/profile', icon: UserCircle },
       ]
     });
   }

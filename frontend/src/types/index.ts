@@ -30,7 +30,7 @@ export interface DriverDocument {
   entityType: DocumentEntityType;
   entityId?: number;
   fileName: string;
-  fileUrl: string;
+  fileUrl?: string | null;
   mimeType?: string;
   fileSize: number;
   createdAt?: string;
@@ -60,7 +60,7 @@ export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface DriverLeave {
   id: number;
-  driver: Pick<Driver, 'id' | 'firstName' | 'lastName'>;
+  driver: { fullName: string; employeeId?: string } | null;
   leaveType: LeaveType;
   startDate: string;
   endDate: string;
@@ -85,7 +85,7 @@ export type InfractionResolutionStatus = 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED';
 
 export interface DriverInfraction {
   id: number;
-  driver: Pick<Driver, 'id' | 'firstName' | 'lastName'>;
+  driver: { fullName: string; employeeId?: string } | null;
   infractionType: InfractionType;
   severity: InfractionSeverity;
   incidentDate: string;

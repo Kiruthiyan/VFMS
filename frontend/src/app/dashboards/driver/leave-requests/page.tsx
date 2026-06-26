@@ -1,159 +1,158 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CalendarDays, Loader2, Plus, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { Plus, CalendarDays, Loader2, X, Save, Trash2 } from 'lucide-react';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
-import { getErrorMessage } from '@/lib/api';
-import { getMyLeaveRequests, submitLeaveRequest, deleteLeaveRequest, type LeaveRequestItem, type LeaveRequestPayload } from '@/lib/api/driver-portal';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  deleteLeaveRequest,
+  getMyLeaveRequests,
+  submitLeaveRequest,
+  type LeaveRequestItem,
+  type LeaveRequestPayload,
+} from '@/lib/api/driver-portal';
 
-const LEAVE_TYPES = ['ANNUAL','MEDICAL','EMERGENCY','UNPAID'];
-
-const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  PENDING: { bg:'hsl(42 97% 92%)', text:'hsl(28 88% 28%)', border:'hsl(36 95% 64%)' },
-  APPROVED: { bg:'hsl(145 63% 94%)', text:'hsl(145 63% 25%)', border:'hsl(145 63% 70%)' },
-  REJECTED: { bg:'hsl(360 79% 95%)', text:'hsl(360 79% 30%)', border:'hsl(360 79% 75%)' },
+const LEAVE_TYPES = ['ANNUAL', 'MEDICAL', 'EMERGENCY', 'UNPAID'];
+type LeaveFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
+const EMPTY_FORM: LeaveRequestPayload = { leaveType: 'ANNUAL', startDate: '', endDate: '', reason: '' };
+const STATUS_STYLES: Record<string, string> = {
+  PENDING: 'border-amber-300 bg-amber-50 text-amber-800',
+  APPROVED: 'border-green-300 bg-green-50 text-green-800',
+  REJECTED: 'border-red-300 bg-red-50 text-red-800',
+  CANCELLED: 'border-slate-300 bg-slate-100 text-slate-700',
 };
 
-const EMPTY_FORM: LeaveRequestPayload = { leaveType:'ANNUAL', startDate:'', endDate:'', reason:'' };
+function errorMessage(error: unknown, fallback: string) {
+  if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
+  const response = (error as { response?: { data?: { message?: unknown } } }).response;
+  return typeof response?.data?.message === 'string' ? response.data.message : fallback;
+}
 
 export default function DriverLeaveRequestsPage() {
-  const [items, setItems] = useState<LeaveRequestItem[]>([]);
+  const [requests, setRequests] = useState<LeaveRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<LeaveRequestPayload>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [requestError, setRequestError] = useState('');
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<LeaveRequestPayload>({ ...EMPTY_FORM });
+  const [submitting, setSubmitting] = useState(false);
+  const [filter, setFilter] = useState<LeaveFilter>('ALL');
 
-  const load = () => { setLoading(true); getMyLeaveRequests().then(setItems).catch((e) => toast.error(getErrorMessage(e))).finally(() => setLoading(false)); };
-  useEffect(() => { load(); }, []);
+  const counts: Record<LeaveFilter, number> = {
+    ALL: requests.length,
+    PENDING: requests.filter((request) => (request.status ?? 'PENDING') === 'PENDING').length,
+    APPROVED: requests.filter((request) => request.status === 'APPROVED').length,
+    REJECTED: requests.filter((request) => request.status === 'REJECTED').length,
+  };
+  const filteredRequests = filter === 'ALL'
+    ? requests
+    : requests.filter((request) => (request.status ?? 'PENDING') === filter);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setSaving(true); setRequestError('');
-    try { await submitLeaveRequest(form); toast.success('Leave request submitted'); setShowForm(false); load(); }
-    catch (err: any) { 
-      const msg = getErrorMessage(err);
-      setRequestError(msg);
-      toast.error(msg); 
+  useEffect(() => {
+    getMyLeaveRequests()
+      .then(setRequests)
+      .catch((error) => toast.error(errorMessage(error, 'Failed to load leave requests')))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const added = await submitLeaveRequest(form);
+      setRequests((current) => [added, ...current]);
+      setForm({ ...EMPTY_FORM });
+      setOpen(false);
+      toast.success('Leave request submitted');
+    } catch (error: unknown) {
+      toast.error(errorMessage(error, 'Failed to submit leave request'));
+    } finally {
+      setSubmitting(false);
     }
-    finally { setSaving(false); }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this leave request?')) return;
+  const remove = async (id: number) => {
+    if (!window.confirm('Are you sure you want to cancel this leave request?')) return;
     try {
       await deleteLeaveRequest(id);
-      toast.success('Leave request deleted');
-      load();
-    } catch (err: any) {
-      toast.error(getErrorMessage(err));
+      setRequests((current) => current.filter((request) => request.id !== id));
+      toast.success('Leave request cancelled');
+    } catch (error: unknown) {
+      toast.error(errorMessage(error, 'Failed to cancel leave request'));
     }
   };
 
   return (
-    <DashboardShell title="Leave Requests" description="Request and track your leave applications">
-      <div style={{ maxWidth:'56rem' }}>
-        <div style={{ display:'flex',justifyContent:'flex-end',marginBottom:'1rem' }}>
-          <button onClick={() => { setForm(EMPTY_FORM); setRequestError(''); setShowForm(true); }} style={{ display:'flex',alignItems:'center',gap:'0.375rem',padding:'0.5rem 1rem',borderRadius:'0.5rem',border:'none',background:'hsl(42 100% 50%)',color:'#000',fontWeight:600,fontSize:'0.8125rem',cursor:'pointer' }}>
-            <Plus style={{width:'0.875rem',height:'0.875rem'}}/> Request Leave
-          </button>
-        </div>
-
-        {showForm && (
-          <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center' }}>
-            <div style={{ background:'#fff',color:'#000',borderRadius:'1rem',border:'1px solid #e5e7eb',padding:'1.5rem',width:'28rem',maxWidth:'90vw' }}>
-              <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.25rem' }}>
-                <h2 style={{ fontSize:'0.9375rem',fontWeight:700,margin:0 }}>Request Leave</h2>
-                <button onClick={() => setShowForm(false)} style={{ background:'none',border:'none',cursor:'pointer',color:'hsl(var(--muted-foreground))' }}><X style={{width:'1rem',height:'1rem'}}/></button>
-              </div>
-              <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom:'0.875rem' }}>
-                  <label style={{ display:'block',fontSize:'0.75rem',fontWeight:600,color:'hsl(var(--muted-foreground))',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.05em' }}>Leave Type</label>
-                  <select value={form.leaveType} onChange={(e) => setForm((f) => ({...f,leaveType:e.target.value}))}
-                    style={{ width:'100%',padding:'0.5rem 0.75rem',borderRadius:'0.5rem',border:'1px solid hsl(var(--border))',background:'#fff',color:'#000',fontSize:'0.875rem',boxSizing:'border-box' }}>
-                    {LEAVE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g,' ')}</option>)}
+    <DashboardShell title="Leave Requests" description="Request leave and track its approval status">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between border-b">
+          <CardTitle className="text-base">My Leave Requests ({filteredRequests.length})</CardTitle>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setForm({ ...EMPTY_FORM })}><Plus className="mr-2 h-4 w-4" />Request Leave</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Request Leave</DialogTitle></DialogHeader>
+              <form onSubmit={submit} className="space-y-4">
+                <div>
+                  <Label htmlFor="leave-type">Leave Type</Label>
+                  <select id="leave-type" value={form.leaveType} onChange={(event) => setForm((current) => ({ ...current, leaveType: event.target.value }))} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    {LEAVE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                   </select>
                 </div>
-                {[{ label:'Start Date', key:'startDate' },{ label:'End Date', key:'endDate' }].map(({ label, key }) => (
-                  <div key={key} style={{ marginBottom:'0.875rem' }}>
-                    <label style={{ display:'block',fontSize:'0.75rem',fontWeight:600,color:'hsl(var(--muted-foreground))',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.05em' }}>{label}</label>
-                    <input type="date" required value={(form as any)[key]} onChange={(e) => setForm((f) => ({...f,[key]:e.target.value}))}
-                      style={{ width:'100%',padding:'0.5rem 0.75rem',borderRadius:'0.5rem',border:'1px solid hsl(var(--border))',background:'#fff',color:'#000',fontSize:'0.875rem',boxSizing:'border-box' }}/>
-                  </div>
-                ))}
-                <div style={{ marginBottom:'1rem' }}>
-                  <label style={{ display:'block',fontSize:'0.75rem',fontWeight:600,color:'hsl(var(--muted-foreground))',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.05em' }}>Reason</label>
-                  <textarea value={form.reason ?? ''} onChange={(e) => setForm((f) => ({...f,reason:e.target.value}))} rows={3}
-                    style={{ width:'100%',padding:'0.5rem 0.75rem',borderRadius:'0.5rem',border:'1px solid hsl(var(--border))',background:'#fff',color:'#000',fontSize:'0.875rem',boxSizing:'border-box',resize:'vertical' }}/>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div><Label htmlFor="leave-start">Start Date</Label><Input id="leave-start" type="date" required value={form.startDate} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} className="mt-1" /></div>
+                  <div><Label htmlFor="leave-end">End Date</Label><Input id="leave-end" type="date" required min={form.startDate || undefined} value={form.endDate} onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))} className="mt-1" /></div>
                 </div>
-                {requestError && (
-                  <div style={{ marginBottom:'1rem', padding:'0.75rem', borderRadius:'0.5rem', background:'hsl(360 79% 95%)', color:'hsl(360 79% 30%)', border:'1px solid hsl(360 79% 75%)', fontSize:'0.875rem', fontWeight:500 }}>
-                    {requestError}
-                  </div>
-                )}
-                <div style={{ display:'flex',gap:'0.5rem',justifyContent:'flex-end' }}>
-                  <button type="button" onClick={() => setShowForm(false)} style={{ padding:'0.5rem 1rem',borderRadius:'0.5rem',border:'1px solid hsl(var(--border))',background:'transparent',color:'hsl(var(--foreground))',cursor:'pointer' }}>Cancel</button>
-                  <button type="submit" disabled={saving} style={{ display:'flex',alignItems:'center',gap:'0.375rem',padding:'0.5rem 1rem',borderRadius:'0.5rem',border:'none',background:'hsl(42 100% 50%)',color:'#000',fontWeight:600,cursor:'pointer' }}>
-                    {saving ? <Loader2 style={{width:'0.875rem',height:'0.875rem',animation:'spin 1s linear infinite'}}/> : <Save style={{width:'0.875rem',height:'0.875rem'}}/>} Submit
-                  </button>
-                </div>
+                <div><Label htmlFor="leave-reason">Reason</Label><Textarea id="leave-reason" value={form.reason ?? ''} onChange={(event) => setForm((current) => ({ ...current, reason: event.target.value }))} rows={4} className="mt-1" /></div>
+                <Button type="submit" disabled={submitting} className="w-full">{submitting ? 'Submitting...' : 'Submit Request'}</Button>
               </form>
-            </div>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="mb-5 flex flex-wrap gap-2" aria-label="Filter leave requests by status">
+            {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as LeaveFilter[]).map((option) => (
+              <Button
+                key={option}
+                type="button"
+                size="sm"
+                variant={filter === option ? 'default' : 'outline'}
+                onClick={() => setFilter(option)}
+              >
+                {option.charAt(0) + option.slice(1).toLowerCase()} ({counts[option]})
+              </Button>
+            ))}
           </div>
-        )}
-
-        <div style={{ borderRadius:'1rem',border:'1px solid hsl(var(--border))',background:'hsl(var(--card))',overflow:'hidden' }}>
           {loading ? (
-            <div style={{ display:'flex',alignItems:'center',justifyContent:'center',padding:'4rem',color:'hsl(var(--muted-foreground))' }}>
-              <Loader2 style={{width:'1.5rem',height:'1.5rem',animation:'spin 1s linear infinite'}}/>
-            </div>
-          ) : items.length === 0 ? (
-            <div style={{ textAlign:'center',padding:'4rem',color:'hsl(var(--muted-foreground))' }}>
-              <CalendarDays style={{width:'2rem',height:'2rem',margin:'0 auto 0.75rem',opacity:0.4}}/><p style={{margin:0}}>No leave requests yet.</p>
-            </div>
+            <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="flex flex-col items-center py-16 text-muted-foreground"><CalendarDays className="mb-3 h-9 w-9 opacity-40" /><p>No matching leave requests.</p></div>
           ) : (
-            <table style={{ width:'100%',borderCollapse:'collapse' }}>
-              <thead><tr style={{ background:'hsl(var(--muted)/0.4)' }}>
-                {['Type','Start Date','End Date','Status','Reason','Notes','Actions'].map((h) => (
-                  <th key={h} style={{ padding:'0.75rem 1rem',textAlign:'left',fontSize:'0.7rem',fontWeight:600,color:'hsl(var(--muted-foreground))',textTransform:'uppercase',letterSpacing:'0.06em' }}>{h}</th>
-                ))}
-              </tr></thead>
-              <tbody>
-                {items.map((item) => {
-                  const sc = STATUS_COLORS[item.status] ?? STATUS_COLORS.PENDING;
-                  return (
-                    <tr key={item.id} style={{ borderTop:'1px solid hsl(var(--border))' }}>
-                      <td style={{ padding:'0.875rem 1rem',fontSize:'0.8rem',fontWeight:500 }}>{(item.leaveType||'').replace(/_/g,' ')}</td>
-                      <td style={{ padding:'0.875rem 1rem',fontSize:'0.8rem',color:'hsl(var(--muted-foreground))' }}>{item.startDate}</td>
-                      <td style={{ padding:'0.875rem 1rem',fontSize:'0.8rem',color:'hsl(var(--muted-foreground))' }}>{item.endDate}</td>
-                      <td style={{ padding:'0.875rem 1rem' }}>
-                        <span style={{ padding:'0.2rem 0.6rem',borderRadius:'9999px',fontSize:'0.7rem',fontWeight:600,background:sc.bg,color:sc.text,border:`1px solid ${sc.border}` }}>{item.status}</span>
-                      </td>
-                      <td style={{ padding:'0.875rem 1rem',fontSize:'0.8rem',color:'hsl(var(--muted-foreground))' }}>{item.reason || '—'}</td>
-                      <td style={{ padding:'0.875rem 1rem',fontSize:'0.8rem',color:'hsl(var(--muted-foreground))' }}>{item.approvalNotes || '—'}</td>
-                      <td style={{ padding:'0.875rem 1rem' }}>
-                        {item.status === 'PENDING' && (
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.35rem 0.6rem',
-                              borderRadius: '0.375rem', border: 'none', background: 'hsl(360 79% 95%)',
-                              color: 'hsl(360 79% 30%)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer'
-                            }}
-                          >
-                            <Trash2 style={{ width: '0.8rem', height: '0.8rem' }} /> Delete
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="space-y-3">
+              {filteredRequests.map((request) => {
+                const status = request.status ?? 'PENDING';
+                return (
+                  <div key={request.id} className="rounded-lg border p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <strong className="text-sm">{(request.leaveType ?? 'ANNUAL').replace(/_/g, ' ')}</strong>
+                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[status] ?? STATUS_STYLES.PENDING}`}>{status}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{request.startDate ?? 'Unknown'} — {request.endDate ?? 'Unknown'}</p>
+                    {request.reason && <p className="mt-2 text-sm">{request.reason}</p>}
+                    {request.approvalNotes && <p className="mt-2 text-sm text-muted-foreground">Office note: {request.approvalNotes}</p>}
+                    {status === 'PENDING' && <Button variant="outline" size="sm" onClick={() => void remove(request.id)} className="mt-3 text-red-600"><XCircle className="mr-2 h-4 w-4" />Cancel Request</Button>}
+                  </div>
+                );
+              })}
+            </div>
           )}
-        </div>
-      </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </CardContent>
+      </Card>
     </DashboardShell>
   );
 }

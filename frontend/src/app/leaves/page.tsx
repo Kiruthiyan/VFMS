@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch, getErrorMessage } from '@/lib/api';
@@ -13,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LeavesLog from '@/components/leaves/LeavesLog';
 
 type Decision = 'APPROVED' | 'REJECTED';
 
@@ -57,134 +58,137 @@ export default function LeavesPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-6 animate-fade-in">
-      <PageHeader
-        icon={<CalendarDays className="w-5 h-5" />}
-        title="Leave Requests"
-        subtitle="Pending driver leave approvals"
-        action={
-          <div className="flex items-center gap-2">
-            <Link href="/drivers" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-muted transition-colors">
-              Back
-            </Link>
-          </div>
-        }
-      />
-
-      <Card className="shadow-sm border-muted">
-        <CardHeader className="py-3 px-4 border-b border-border bg-muted/30">
-          <CardTitle className="text-sm font-semibold">Pending ({leaves.length})</CardTitle>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent bg-muted/40">
-                {['Driver', 'Type', 'From', 'To', 'Reason', 'Status', ''].map((header) => (
-                  <TableHead key={header} className="text-xs font-medium text-muted-foreground">
-                    {header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {leaves.map((leave: DriverLeave) => (
-                <TableRow key={leave.id} className="hover:bg-muted/50 transition-colors">
-                  <TableCell className="font-medium text-sm">
-                    {leave.driver.firstName} {leave.driver.lastName}
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-xs text-muted-foreground">{leave.leaveType}</span>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{leave.startDate}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{leave.endDate}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate">
-                    {leave.reason || '—'}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={leave.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <button
-                          className="h-7 px-2.5 text-xs rounded-md font-medium border transition-colors"
-                          style={{
-                            borderColor: 'hsl(var(--secondary))',
-                            color: 'hsl(var(--secondary))',
-                            backgroundColor: 'transparent',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))';
-                            e.currentTarget.style.color = 'hsl(var(--secondary-foreground))';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = 'hsl(var(--secondary))';
-                          }}
-                        >
-                          Process
-                        </button>
-                      </DialogTrigger>
-
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Process Leave Request</DialogTitle>
-                        </DialogHeader>
-
-                        <div className="space-y-3 pt-1">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Decision</Label>
-                            <Select value={approvalStatus} onValueChange={(value) => setApprovalStatus(value as Decision)}>
-                              <SelectTrigger className="mt-1 h-9 text-sm">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="APPROVED">Approve</SelectItem>
-                                <SelectItem value="REJECTED">Reject</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Notes</Label>
-                            <Input
-                              value={approvalNotes}
-                              onChange={(e: { target: { value: string } }) => setApprovalNotes(e.target.value)}
-                              className="mt-1 h-9 text-sm"
-                            />
-                          </div>
-
-                          <button
-                            className="w-full h-9 rounded-md text-sm font-medium"
-                            style={{
-                              backgroundColor: 'hsl(var(--primary))',
-                              color: 'hsl(var(--primary-foreground))',
-                            }}
-                            onClick={() => processLeave(leave.id)}
-                          >
-                            Submit Decision
-                          </button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {leaves.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-16 text-sm">
-                    No pending leave requests
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+    <Tabs defaultValue="pending" className="w-full space-y-6 animate-fade-in">
+      <TabsList className="bg-muted/30 p-1 rounded-lg shadow-sm">
+        <TabsTrigger value="pending" className="data-[state=active]:bg-white data-[state=active]:shadow">
+          Leave Requests
+        </TabsTrigger>
+        <TabsTrigger value="log" className="data-[state=active]:bg-white data-[state=active]:shadow">
+          Leave Requests - Log
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="pending">
+        <div className="p-6 md:p-8 space-y-6">
+          <PageHeader
+            icon={<CalendarDays className="w-5 h-5" />}
+            title="Leave Requests"
+            subtitle="Pending driver leave approvals"
+          />
+          <Card className="shadow-sm border-muted">
+            <CardHeader className="py-3 px-4 border-b border-border bg-muted/30">
+              <CardTitle className="text-sm font-semibold">Pending ({leaves.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent bg-muted/40">
+                    {['Driver', 'Type', 'From', 'To', 'Reason', 'Status', ''].map((header) => (
+                      <TableHead key={header} className="text-xs font-medium text-muted-foreground">
+                        {header}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {leaves.map((leave: DriverLeave) => (
+                    <TableRow key={leave.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="font-medium text-sm">
+                        {leave.driver?.fullName || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-mono text-xs text-muted-foreground">{leave.leaveType}</span>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{leave.startDate}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{leave.endDate}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate">
+                        {leave.reason || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={leave.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <button
+                              className="h-7 px-2.5 text-xs rounded-md font-medium border transition-colors"
+                              style={{
+                                borderColor: 'hsl(var(--secondary))',
+                                color: 'hsl(var(--secondary))',
+                                backgroundColor: 'transparent',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))';
+                                e.currentTarget.style.color = 'hsl(var(--secondary-foreground))';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'hsl(var(--secondary))';
+                              }}
+                            >
+                              Process
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Process Leave Request</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3 pt-1">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Decision</Label>
+                                <Select
+                                  value={approvalStatus}
+                                  onValueChange={(value) => setApprovalStatus(value as Decision)}
+                                >
+                                  <SelectTrigger className="mt-1 h-9 text-sm">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="APPROVED">Approve</SelectItem>
+                                    <SelectItem value="REJECTED">Reject</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Notes</Label>
+                                <Input
+                                  value={approvalNotes}
+                                  onChange={(e) => setApprovalNotes(e.target.value)}
+                                  className="mt-1 h-9 text-sm"
+                                />
+                              </div>
+                              <button
+                                className="w-full h-9 rounded-md text-sm font-medium"
+                                style={{
+                                  backgroundColor: 'hsl(var(--primary))',
+                                  color: 'hsl(var(--primary-foreground))',
+                                }}
+                                onClick={() => processLeave(leave.id)}
+                              >
+                                Submit Decision
+                              </button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {leaves.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-16 text-sm">
+                        No pending leave requests
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+      <TabsContent value="log">
+        <LeavesLog />
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -192,12 +196,10 @@ function PageHeader({
   icon,
   title,
   subtitle,
-  action,
 }: {
   icon: ReactNode;
   title: string;
   subtitle: string;
-  action?: ReactNode;
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -210,7 +212,6 @@ function PageHeader({
           <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
         </div>
       </div>
-      {action}
     </div>
   );
 }

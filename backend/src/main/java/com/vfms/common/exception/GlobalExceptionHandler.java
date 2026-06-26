@@ -89,14 +89,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    @ExceptionHandler(com.vfms.dsm.exception.DuplicateResourceException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateResource(
-            com.vfms.dsm.exception.DuplicateResourceException ex
-    ) {
-        log.warn("Duplicate resource: {}", ex.getMessage());
-        return build(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
         log.error("Unexpected runtime exception", ex);

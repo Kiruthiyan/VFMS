@@ -1,18 +1,15 @@
 'use client';
 
-import { ChangeEvent, MouseEvent, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Eye, Users } from 'lucide-react';
+import { Search, Star, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
-import { PageResponse } from '@/types';
+import { DriverReadinessCache, PageResponse } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { useUser } from '@/lib/useUser';
 
 /** Shape returned by GET /api/drivers/from-users (user-creation data for DRIVER role) */
 interface DriverUser {
@@ -31,6 +28,8 @@ interface DriverUser {
   updatedAt: string | null;
   /** Linked driver-table UUID (resolved by email). Used for sub-resource tabs. */
   driverId: string | null;
+  /** Future Trip Scheduling / Staff Dashboard integration value from 0 to 100. */
+  ratingPercentage?: number | null;
 }
 
 type LicenseAlertLevel = 'VALID' | 'EXPIRING_SOON' | 'EXPIRED' | 'UNKNOWN';
@@ -42,6 +41,16 @@ type LicenseAlertMeta = {
   text: string;
   border: string;
 };
+
+type AvailabilityFilter = 'ALL' | 'AVAILABLE' | 'UNAVAILABLE';
+
+const driverIdCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+function compareDriverIds(left: DriverUser, right: DriverUser) {
+  if (!left.employeeId) return right.employeeId ? 1 : 0;
+  if (!right.employeeId) return -1;
+  return driverIdCollator.compare(left.employeeId, right.employeeId);
+}
 
 function getDaysUntil(expiryDate: string | null): number | null {
   if (!expiryDate) return null;
@@ -97,23 +106,47 @@ function getLicenseAlertMeta(expiryDate: string | null): LicenseAlertMeta {
   };
 }
 
+function getDriverReadiness(driver: DriverUser, readiness: DriverReadinessCache | null) {
+  if (readiness) {
+    const ready = readiness.ready ?? (readiness.licenseValid && !readiness.onLeaveToday);
+    return {
+      ready,
+      reason: ready ? null : readiness.notReadyReason || (readiness.onLeaveToday ? 'On approved leave' : 'License expired'),
+    };
+  }
+
+  if (!driver.licenseExpiryDate) return { ready: false, reason: 'No license expiry date' };
+  const expiry = new Date(`${driver.licenseExpiryDate}T00:00:00`);
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (Number.isNaN(expiry.getTime()) || expiry < todayStart) return { ready: false, reason: 'License expired' };
+  return { ready: true, reason: null };
+}
+
+function getSafeRatingPercentage(ratingPercentage?: number | null) {
+  if (typeof ratingPercentage !== 'number' || Number.isNaN(ratingPercentage)) return null;
+  return Math.min(100, Math.max(0, ratingPercentage));
+}
+
 export default function DriversPage() {
   const router = useRouter();
-  const { isApprover } = useUser();
   const [drivers, setDrivers] = useState<DriverUser[]>([]);
+  const [readinessByDriverId, setReadinessByDriverId] = useState<Record<string, DriverReadinessCache>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>('ALL');
 
   const fetchDrivers = async () => {
     try {
       setLoading(true);
-      const d = await apiFetch<PageResponse<DriverUser>>(`/api/drivers/from-users?page=${page}&size=10`);
-      setDrivers(d.content);
-      setTotalPages(d.totalPages);
-    } catch (e: any) {
-      toast.error(e.message);
+      const [driverPage, readiness] = await Promise.all([
+        apiFetch<PageResponse<DriverUser>>('/api/drivers/from-users?page=0&size=500'),
+        apiFetch<DriverReadinessCache[]>('/api/drivers/readiness').catch(() => []),
+      ]);
+      setDrivers([...driverPage.content].sort(compareDriverIds));
+      setReadinessByDriverId(Object.fromEntries(readiness.map((item) => [item.driverId, item])));
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load drivers');
     } finally {
       setLoading(false);
     }
@@ -121,14 +154,26 @@ export default function DriversPage() {
 
   useEffect(() => {
     fetchDrivers();
-  }, [page]);
+  }, []);
 
-  const filtered = drivers.filter((d) =>
-    `${d.employeeId || ''} ${d.fullName} ${d.email} ${d.nic} ${d.phone}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const readinessFor = (driver: DriverUser) =>
+    getDriverReadiness(driver, driver.driverId ? readinessByDriverId[driver.driverId] ?? null : null);
+
+  const filtered = drivers.filter((driver) => {
+    const matchesSearch = `${driver.employeeId || ''} ${driver.fullName} ${driver.email} ${driver.nic} ${driver.phone}`
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    const ready = readinessFor(driver).ready;
+    if (availabilityFilter === 'AVAILABLE') return ready;
+    if (availabilityFilter === 'UNAVAILABLE') return !ready;
+    return true;
+  });
 
   const expiredCount = filtered.filter((d) => getLicenseAlertMeta(d.licenseExpiryDate).level === 'EXPIRED').length;
   const expiringSoonCount = filtered.filter((d) => getLicenseAlertMeta(d.licenseExpiryDate).level === 'EXPIRING_SOON').length;
+  const readyCount = drivers.filter((driver) => readinessFor(driver).ready).length;
+  const notReadyCount = drivers.length - readyCount;
 
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fade-in">
@@ -136,154 +181,153 @@ export default function DriversPage() {
         icon={<Users className="w-5 h-5" />}
         title="Drivers"
         subtitle="Manage driver profiles"
-        action={
-          isApprover ? (
-            <Link
-              href="/dashboards/approver"
-              className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-            >
-              Back to Approver Dashboard
-            </Link>
-          ) : undefined
-        }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <p className="text-sm font-medium text-muted-foreground">System Status</p>
-            <p className="mt-2 text-xl font-bold tracking-tight text-foreground">License Monitoring</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(360 79% 60%)' }}>
-          <CardContent className="p-5">
-            <p className="text-sm font-medium text-muted-foreground">Expired Licenses</p>
-            <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(360 79% 36%)' }}>
-              {expiredCount}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(36 95% 54%)' }}>
-          <CardContent className="p-5">
-            <p className="text-sm font-medium text-muted-foreground">Expiring in 30 Days</p>
-            <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(31 92% 34%)' }}>
-              {expiringSoonCount}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="shadow-sm border-muted">
-        <CardHeader className="pb-4">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by Driver ID, name, email, NIC or phone..."
-              className="pl-9"
-              value={search}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-              style={{ '--tw-ring-color': 'hsl(var(--ring))' } as React.CSSProperties}
-            />
+      <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(var(--success))' }}>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium text-muted-foreground">Ready to assign</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(var(--success))' }}>{readyCount}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(19 97% 50%)' }}>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium text-muted-foreground">Not ready</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(19 97% 40%)' }}>{notReadyCount}</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
 
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">Loading...</div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent bg-muted/40">
-                    {['Driver ID', 'Full Name', 'Email', 'NIC', 'Phone', 'License Alert', 'Status', ''].map((h) => (
-                      <TableHead key={h} className="text-xs font-medium text-muted-foreground">
-                        {h}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((d) => (
-                      <TableRow
-                        key={d.id}
-                        className="group cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => router.push(`/drivers/${d.id}/overview`)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            router.push(`/drivers/${d.id}/overview`);
-                          }
-                        }}
-                        tabIndex={0}
-                        role="button"
-                      >
-                      <TableCell className="font-semibold text-sm text-foreground">
-                        {d.employeeId || '—'}
-                      </TableCell>
-                      <TableCell className="font-medium text-sm text-foreground">
-                        {d.fullName}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{d.email}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{d.nic}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{d.phone || '-'}</TableCell>
-                      <TableCell>
-                        <LicenseAlertBadge expiryDate={d.licenseExpiryDate} />
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={d.status} />
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/drivers/${d.id}/overview`} onClick={(event) => event.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filtered.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-16 text-sm">
-                        No drivers found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+            <p className="mb-1 text-xs font-medium text-amber-800">A driver is Not Ready if:</p>
+            <ul className="list-inside list-disc space-y-0.5 text-xs text-amber-700">
+              <li>Driver license is expired</li>
+              <li>Driver is on approved leave</li>
+            </ul>
+          </div>
 
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
-                <span className="text-xs text-muted-foreground">
-                  Page {page + 1} of {totalPages || 1}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => p - 1)}
-                    className="border-border text-foreground hover:bg-muted"
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages - 1}
-                    onClick={() => setPage((p) => p + 1)}
-                    className="border-border text-foreground hover:bg-muted"
-                  >
-                    Next
-                  </Button>
-                </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Card className="shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-5">
+                <p className="text-sm font-medium text-muted-foreground">System Status</p>
+                <p className="mt-2 text-xl font-bold tracking-tight text-foreground">License Monitoring</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(360 79% 60%)' }}>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium text-muted-foreground">Expired Licenses</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(360 79% 36%)' }}>
+                  {expiredCount}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm hover:shadow-md transition-shadow border-t-4" style={{ borderTopColor: 'hsl(36 95% 54%)' }}>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium text-muted-foreground">Expiring in 30 Days</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: 'hsl(31 92% 34%)' }}>
+                  {expiringSoonCount}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="shadow-sm border-muted">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Driver ID, name, email, NIC or phone..."
+                  className="pl-9"
+                  value={search}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                  style={{ '--tw-ring-color': 'hsl(var(--ring))' } as React.CSSProperties}
+                />
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                <select
+                  aria-label="Filter drivers by availability"
+                  value={availabilityFilter}
+                  onChange={(event) => setAvailabilityFilter(event.target.value as AvailabilityFilter)}
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="ALL">All Drivers</option>
+                  <option value="AVAILABLE">Available Drivers</option>
+                  <option value="UNAVAILABLE">Unavailable Drivers</option>
+                </select>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">Loading...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent bg-muted/40">
+                      {['Driver ID', 'Full Name', 'NIC', 'Phone', 'Rating', 'License Alert', 'Availability', 'Status'].map((h) => (
+                        <TableHead key={h} className="text-xs font-medium text-muted-foreground">
+                          {h}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((d) => {
+                      const readiness = readinessFor(d);
+                      return (
+                        <TableRow
+                          key={d.id}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => router.push(`/drivers/${d.id}`)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              router.push(`/drivers/${d.id}`);
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                        >
+                        <TableCell className="font-semibold text-sm text-foreground">
+                          {d.employeeId || '—'}
+                        </TableCell>
+                        <TableCell className="font-medium text-sm text-foreground">
+                          {d.fullName}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{d.nic}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{d.phone || '-'}</TableCell>
+                        <TableCell>
+                          <DriverRating ratingPercentage={d.ratingPercentage} />
+                        </TableCell>
+                        <TableCell>
+                          <LicenseAlertBadge expiryDate={d.licenseExpiryDate} />
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-medium ${readiness.ready ? 'border-green-300 bg-green-50 text-green-800' : 'border-orange-300 bg-orange-50 text-orange-800'}`}>
+                            {readiness.ready ? 'Ready to assign' : 'Not ready'}
+                          </span>
+                          {!readiness.ready && readiness.reason && <p className="mt-1 text-xs text-muted-foreground">{readiness.reason}</p>}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={d.status} />
+                        </TableCell>
+                      </TableRow>
+                      );
+                    })}
+                    {filtered.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-16 text-sm">
+                          No drivers found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+      </div>
     </div>
   );
 }
@@ -292,35 +336,26 @@ function PageHeader({
   icon,
   title,
   subtitle,
-  action,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
-  action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-          style={{ backgroundColor: 'hsl(var(--primary))' }}
-        >
-          <span style={{ color: 'hsl(var(--primary-foreground))' }}>{icon}</span>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-          <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
-        </div>
+    <div className="flex items-center gap-4">
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
+        {icon}
       </div>
-      {action}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+        <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
+      </div>
     </div>
   );
 }
 
-function LicenseAlertBadge({ expiryDate }: { expiryDate: string | null }) {
-  const alert = getLicenseAlertMeta(expiryDate);
-
+function LicenseAlertBadge({ expiryDate }: { expiryDate?: string | null }) {
+  const alert = getLicenseAlertMeta(expiryDate ?? null);
   return (
     <span
       className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap"
@@ -332,5 +367,31 @@ function LicenseAlertBadge({ expiryDate }: { expiryDate: string | null }) {
     >
       {alert.label}
     </span>
+  );
+}
+
+function DriverRating({ ratingPercentage }: { ratingPercentage?: number | null }) {
+  const safeRating = getSafeRatingPercentage(ratingPercentage);
+
+  if (safeRating === null) {
+    return <span className="text-xs font-medium text-muted-foreground">Not rated</span>;
+  }
+
+  return (
+    <div className="inline-flex items-center gap-2" title={`${safeRating}% driver rating`}>
+      <div className="relative h-4 w-24" aria-label={`${safeRating}% driver rating`}>
+        <div className="absolute inset-0 flex gap-0.5 text-muted-foreground/35">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Star key={`empty-${index}`} className="h-4 w-4" />
+          ))}
+        </div>
+        <div className="absolute inset-0 flex gap-0.5 overflow-hidden text-amber-500" style={{ width: `${safeRating}%` }}>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Star key={`filled-${index}`} className="h-4 w-4 shrink-0 fill-current" />
+          ))}
+        </div>
+      </div>
+      <span className="text-xs font-semibold text-foreground">{safeRating}%</span>
+    </div>
   );
 }
