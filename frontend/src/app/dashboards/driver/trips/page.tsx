@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, Users, Car, Loader2, ArrowRight, Check, X } from 'lucide-react';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,6 +47,7 @@ const formatDate = (dateStr: string) =>
   });
 
 export default function DriverTripsPage() {
+  const router = useRouter();
   const { currentUser } = useRole();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,61 +189,81 @@ export default function DriverTripsPage() {
                   </div>
                 </div>
 
-                {trip.status === 'APPROVED' && (
-                  <div className="mt-6 pt-6 border-t border-slate-100 flex gap-3">
-                    <Button 
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white" 
-                      onClick={() => handleConfirm(trip.id)}
-                      disabled={actionLoading === trip.id}
-                    >
-                      {actionLoading === trip.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
-                      Confirm
-                    </Button>
-                    <Dialog open={rejectingTripId === trip.id} onOpenChange={(open) => {
-                      if (!open) {
-                        setRejectingTripId(null);
-                        setRejectReason("");
-                      } else {
-                        setRejectingTripId(trip.id);
-                      }
-                    }}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
-                          <X className="w-4 h-4 mr-2" />
-                          Reject
+                {/* Actions & View details */}
+                <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
+                  {trip.status === 'APPROVED' ? (
+                    <>
+                      <div className="flex gap-3">
+                        <Button 
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white" 
+                          onClick={() => handleConfirm(trip.id)}
+                          disabled={actionLoading === trip.id}
+                        >
+                          {actionLoading === trip.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                          Confirm
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Reject Trip</DialogTitle>
-                          <DialogDescription>
-                            Please provide a reason for rejecting this trip.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                          <Label htmlFor="reason" className="sr-only">Reason</Label>
-                          <Textarea 
-                            id="reason"
-                            placeholder="Type your reason here..." 
-                            value={rejectReason}
-                            onChange={(e) => setRejectReason(e.target.value)}
-                            rows={4}
-                          />
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => {
+                        <Dialog open={rejectingTripId === trip.id} onOpenChange={(open) => {
+                          if (!open) {
                             setRejectingTripId(null);
                             setRejectReason("");
-                          }}>Cancel</Button>
-                          <Button variant="destructive" onClick={handleReject} disabled={!rejectReason.trim() || actionLoading === rejectingTripId}>
-                            {actionLoading === rejectingTripId && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Submit Rejection
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                )}
+                          } else {
+                            setRejectingTripId(trip.id);
+                          }
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                              <X className="w-4 h-4 mr-2" />
+                              Reject
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Reject Trip</DialogTitle>
+                              <DialogDescription>
+                                Please provide a reason for rejecting this trip.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                              <Label htmlFor="reason" className="sr-only">Reason</Label>
+                              <Textarea 
+                                id="reason"
+                                placeholder="Type your reason here..." 
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                rows={4}
+                              />
+                            </div>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => {
+                                setRejectingTripId(null);
+                                setRejectReason("");
+                              }}>Cancel</Button>
+                              <Button variant="destructive" onClick={handleReject} disabled={!rejectReason.trim() || actionLoading === rejectingTripId}>
+                                {actionLoading === rejectingTripId && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Submit Rejection
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      <Button
+                        variant="link"
+                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold text-center w-full"
+                        onClick={() => router.push(`/trips/${trip.id}`)}
+                      >
+                        View Full Route & Details →
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 font-semibold"
+                      onClick={() => router.push(`/trips/${trip.id}`)}
+                    >
+                      View Route & Details
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

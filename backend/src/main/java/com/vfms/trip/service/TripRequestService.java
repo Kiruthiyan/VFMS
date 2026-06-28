@@ -239,6 +239,19 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
+    public TripRequest submitDriverFeedback(UUID tripId, Integer rating, String feedback) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.COMPLETED) {
+            throw new ValidationException("Feedback can only be submitted for completed trips");
+        }
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new ValidationException("Rating must be between 1 and 5");
+        }
+        trip.setDriverRating(rating);
+        trip.setDriverFeedback(feedback);
+        return repository.save(trip);
+    }
+
     public TripRequest cancelTrip(UUID tripId, UUID cancelledBy, String reason) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() == TripStatus.COMPLETED ||

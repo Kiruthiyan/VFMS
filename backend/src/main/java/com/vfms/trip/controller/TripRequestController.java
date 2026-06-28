@@ -252,4 +252,19 @@ public class TripRequestController {
             @RequestParam(required = false) UUID requesterId) {
         return ResponseEntity.ok(service.searchTrips(destination, status, requesterId));
     }
+
+    /**
+     * Submits driver rating and feedback for a completed trip.
+     */
+    @PatchMapping("/{id}/feedback")
+    public ResponseEntity<TripRequest> submitDriverFeedback(@PathVariable UUID id, @Valid @RequestBody FeedbackDTO dto) {
+        return ResponseEntity.ok(service.submitDriverFeedback(id, dto.getRating(), dto.getFeedback()));
+    }
+
+    // Static DTO for holding feedback requests
+    @lombok.Data
+    public static class FeedbackDTO {
+        private Integer rating;
+        private String feedback;
+    }
 }

@@ -21,6 +21,8 @@ interface Trip {
     status: string;
     passengerCount: number;
     approvalNotes: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
 }
 
 const statusStyles: Record<string, string> = {
@@ -41,6 +43,17 @@ const statusIcons: Record<string, any> = {
     ONGOING: Clock,
     COMPLETED: CheckCircle,
     CANCELLED: XCircle,
+};
+
+const formatRoute = (dest: string) => {
+    if (!dest) return "";
+    if (dest.includes(" -> ")) {
+        const parts = dest.split(" -> ");
+        const start = parts[0];
+        const end = parts[parts.length - 1];
+        return `${start} → ${end}`;
+    }
+    return dest;
 };
 
 const formatDate = (dateStr: string) =>
@@ -192,14 +205,17 @@ export default function RequesterTripsPage() {
                                             {/* Destination */}
                                             <div className="flex items-center gap-2 text-sm text-slate-600">
                                                 <MapPin className="h-3.5 w-3.5 text-blue-950 shrink-0" />
-                                                {trip.destination}
+                                                {formatRoute(trip.destination)}
                                             </div>
 
                                             {/* Times */}
                                             <div className="flex items-center gap-4 text-xs text-slate-500">
                                                 <span className="flex items-center gap-1">
                                                     <Calendar className="h-3 w-3" />
-                                                    {formatDate(trip.departureTime)}
+                                                    {trip.status === "COMPLETED" ? "Started: " : ""}
+                                                    {trip.status === "COMPLETED" && trip.startTime 
+                                                        ? formatDate(trip.startTime) 
+                                                        : formatDate(trip.departureTime)}
                                                 </span>
                                             </div>
 
@@ -210,11 +226,6 @@ export default function RequesterTripsPage() {
                                                     {trip.approvalNotes}
                                                 </div>
                                             )}
-                                        </div>
-
-                                        {/* Arrow indicator */}
-                                        <div className="text-slate-300 text-lg font-bold shrink-0">
-                                            →
                                         </div>
                                     </div>
                                 </CardContent>

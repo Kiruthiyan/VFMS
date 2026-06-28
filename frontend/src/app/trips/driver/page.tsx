@@ -21,6 +21,8 @@ interface Trip {
     status: string;
     passengerCount: number;
     assignedVehicleId: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
 }
 
 const statusStyles: Record<string, string> = {
@@ -28,6 +30,17 @@ const statusStyles: Record<string, string> = {
     ONGOING: "bg-purple-50 text-purple-700 border-purple-200 font-bold",
     COMPLETED: "bg-blue-50 text-blue-700 border-blue-200 font-bold",
     CANCELLED: "bg-slate-100 text-slate-500 border-slate-300 font-bold",
+};
+
+const formatRoute = (dest: string) => {
+    if (!dest) return "";
+    if (dest.includes(" -> ")) {
+        const parts = dest.split(" -> ");
+        const start = parts[0];
+        const end = parts[parts.length - 1];
+        return `${start} → ${end}`;
+    }
+    return dest;
 };
 
 const formatDate = (dateStr: string) =>
@@ -219,12 +232,15 @@ function TripCard({ trip, actionLoading, onAction, onView }: {
                         <p className="font-bold text-slate-900">{trip.purpose}</p>
                         <div className="flex items-center gap-2 text-sm text-slate-600">
                             <MapPin className="h-3.5 w-3.5 text-blue-950 shrink-0" />
-                            {trip.destination}
+                            {formatRoute(trip.destination)}
                         </div>
                         <div className="flex items-center gap-4 text-xs text-slate-500">
                             <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                {formatDate(trip.departureTime)}
+                                {trip.status === "COMPLETED" ? "Started: " : ""}
+                                {trip.status === "COMPLETED" && trip.startTime 
+                                    ? formatDate(trip.startTime) 
+                                    : formatDate(trip.departureTime)}
                             </span>
                             <span className="flex items-center gap-1">
                                 <Users className="h-3 w-3" />

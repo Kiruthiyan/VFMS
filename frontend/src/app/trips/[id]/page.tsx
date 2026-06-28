@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-    ArrowLeft, Calendar, MapPin, Users, Clock,
+    ArrowLeft, Calendar, MapPin, Users, Clock, Star,
     Loader2, CheckCircle, Play, Square, Ban, AlertTriangle, ThumbsUp, ThumbsDown
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/role-context";
+
+const TripMap = dynamic(() => import("../components/TripMap"), { ssr: false });
 
 interface Trip {
     id: string;
@@ -30,6 +33,8 @@ interface Trip {
     endTime: string | null;
     createdAt: string;
     updatedAt: string;
+    driverRating?: number | null;
+    driverFeedback?: string | null;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -65,6 +70,10 @@ export default function TripDetailPage() {
     const [driverRejectReason, setDriverRejectReason] = useState("");
     const [error, setError] = useState("");
 
+    const [rating, setRating] = useState(5);
+    const [feedback, setFeedback] = useState("");
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
     useEffect(() => {
         fetchTrip();
     }, [id]);
@@ -77,6 +86,23 @@ export default function TripDetailPage() {
             console.error("Failed to fetch trip", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleFeedbackSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmittingFeedback(true);
+        setError("");
+        try {
+            await api.patch(`/trips/${id}/feedback`, {
+                rating,
+                feedback: feedback.trim()
+            });
+            fetchTrip();
+        } catch (err: any) {
+            setError(err.response?.data?.message || "Failed to submit feedback.");
+        } finally {
+            setSubmittingFeedback(false);
         }
     };
 
@@ -123,7 +149,7 @@ export default function TripDetailPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
-            <div className="max-w-2xl mx-auto space-y-4">
+            <div className="max-w-7xl mx-auto space-y-6">
 
                 <button
                     onClick={() => router.push("/trips")}
@@ -160,13 +186,36 @@ export default function TripDetailPage() {
                             <p className="text-slate-900 font-medium">{trip.purpose}</p>
                         </div>
 
-                        {/* Destination */}
-                        <div className="flex items-start gap-2">
-                            <MapPin className="h-4 w-4 text-blue-950 mt-0.5 shrink-0" />
-                            <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Destination</p>
-                                <p className="text-slate-900 font-medium">{trip.destination}</p>
+                        {/* Destination Itinerary Timeline */}
+                        <div className="space-y-2">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Itinerary Route</p>
+                            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-4">
+                                {trip.destination.split(" -> ").map((place: string, idx: number, arr: string[]) => (
+                                    <div key={idx} className="flex gap-4 relative last:pb-0 pb-4">
+                                        {idx < arr.length - 1 && (
+                                            <div className="absolute left-[9px] top-6 bottom-0 w-0.5 bg-slate-200" />
+                                        )}
+                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm shrink-0 z-10 text-[10px] font-black text-white ${
+                                            idx === 0 ? "bg-[#10B981]" :
+                                            idx === arr.length - 1 ? "bg-[#EF4444]" :
+                                            "bg-[#8B5CF6]"
+                                        }`}>
+                                            {idx === 0 ? "A" : idx === arr.length - 1 ? "B" : idx}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                {idx === 0 ? "Start Location" : idx === arr.length - 1 ? "Final Destination" : `Stop ${idx}`}
+                                            </p>
+                                            <p className="text-slate-800 text-sm font-semibold mt-0.5 truncate" title={place}>{place}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+                        </div>
+
+                        {/* Interactive Route Map */}
+                        <div className="mt-2">
+                            <TripMap destination={trip.destination} viewOnly={true} mapHeight="h-[480px]" />
                         </div>
 
                         {/* Times */}
@@ -197,9 +246,12 @@ export default function TripDetailPage() {
                                 </div>
                             </div>
                             {trip.distanceKm && (
-                                <div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Distance</p>
-                                    <p className="text-slate-900 font-medium">{trip.distanceKm} km</p>
+                                <div className="flex items-start gap-2">
+                                    <MapPin className="h-4 w-4 text-blue-950 mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Distance</p>
+                                        <p className="text-slate-900 font-medium">{trip.distanceKm} km</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -244,6 +296,82 @@ export default function TripDetailPage() {
                                         <span className="text-slate-500 font-medium w-24">Trip Ended</span>
                                         <span className="text-slate-900 font-semibold">{formatDate(trip.endTime)}</span>
                                     </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Driver Feedback Section (Only for COMPLETED trips) */}
+                        {trip.status === "COMPLETED" && (
+                            <div className="border-t border-slate-100 pt-5 space-y-4">
+                                {trip.driverRating ? (
+                                    /* Read-only Feedback Summary */
+                                    <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-3">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Driver Performance Feedback</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-slate-500 font-semibold text-sm">Rating:</span>
+                                            <div className="flex text-amber-400">
+                                                {Array.from({ length: 5 }).map((_, i) => (
+                                                    <Star 
+                                                        key={i} 
+                                                        className={`h-4.5 w-4.5 fill-current ${
+                                                            i < (trip.driverRating ?? 0) ? "text-amber-400" : "text-slate-200"
+                                                        }`} 
+                                                    />
+                                                ))}
+                                            </div>
+                                            <span className="font-bold text-slate-700 text-sm ml-1">({trip.driverRating} / 5)</span>
+                                        </div>
+                                        {trip.driverFeedback && (
+                                            <div className="bg-white border border-slate-100 rounded-xl p-3.5 text-slate-700 text-sm italic font-medium shadow-sm">
+                                                "{trip.driverFeedback}"
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    /* Interactive Feedback Form (only for Requester / System User) */
+                                    currentUser.role === "SYSTEM_USER" && currentUser.id === trip.requesterId && (
+                                        <form onSubmit={handleFeedbackSubmit} className="bg-blue-50/40 border border-blue-200/60 rounded-2xl p-5 space-y-4">
+                                            <div>
+                                                <p className="text-sm font-bold text-blue-950">Rate your Driver</p>
+                                                <p className="text-xs text-slate-500 mt-0.5">Please rate your experience with the driver for this completed trip.</p>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Driver Rating:</span>
+                                                <div className="flex gap-1">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <button
+                                                            key={star}
+                                                            type="button"
+                                                            onClick={() => setRating(star)}
+                                                            className="text-amber-400 hover:scale-110 transition-transform focus:outline-none"
+                                                        >
+                                                            <Star className={`h-6 w-6 ${star <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Comments / Feedback</label>
+                                                <textarea
+                                                    placeholder="Tell us about the driver (safe driving, punctuality, politeness)..."
+                                                    value={feedback}
+                                                    onChange={(e) => setFeedback(e.target.value)}
+                                                    rows={3}
+                                                    className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-medium"
+                                                />
+                                            </div>
+
+                                            <Button
+                                                type="submit"
+                                                disabled={submittingFeedback}
+                                                className="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold h-10 shadow-lg shadow-blue-100"
+                                            >
+                                                {submittingFeedback ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Driver Feedback"}
+                                            </Button>
+                                        </form>
+                                    )
                                 )}
                             </div>
                         )}
@@ -313,8 +441,7 @@ export default function TripDetailPage() {
                         )}
 
                         {/* Action Buttons */}
-                        <div className="flex flex-wrap gap-3">
-
+                        <div className="flex flex-wrap gap-3 font-semibold">
                             {/* System User: edit & submit */}
                             {currentUser.role === "SYSTEM_USER" && trip.status === "NEW" && (
                                 <>

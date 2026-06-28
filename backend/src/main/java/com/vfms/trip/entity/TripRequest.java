@@ -75,6 +75,12 @@ public class TripRequest {
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
+    @Column(name = "driver_rating")
+    private Integer driverRating;
+
+    @Column(name = "driver_feedback", length = 1000)
+    private String driverFeedback;
+
     // Automatic audit timestamps managed by Hibernate
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
