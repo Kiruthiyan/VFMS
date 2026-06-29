@@ -37,7 +37,7 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
 
     // Check for vehicle double booking
     @Query("SELECT t FROM TripRequest t WHERE t.assignedVehicleId = :vehicleId " +
-            "AND t.status IN ('APPROVED', 'ONGOING') " +
+            "AND t.status IN ('APPROVED', 'DRIVER_CONFIRMED', 'ONGOING') " +
             "AND t.departureTime < :returnTime " +
             "AND t.returnTime > :departureTime")
     List<TripRequest> findConflictingVehicleBookings(
@@ -47,7 +47,7 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
 
     // Check for driver double booking
     @Query("SELECT t FROM TripRequest t WHERE t.assignedDriverId = :driverId " +
-            "AND t.status IN ('APPROVED', 'ONGOING') " +
+            "AND t.status IN ('APPROVED', 'DRIVER_CONFIRMED', 'ONGOING') " +
             "AND t.departureTime < :returnTime " +
             "AND t.returnTime > :departureTime")
     List<TripRequest> findConflictingDriverBookings(
@@ -60,4 +60,9 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
     java.util.Optional<TripRequest> findActiveTrip(
             @Param("driverId") UUID driverId,
             @Param("now") LocalDateTime now);
+
+    @Query("SELECT DISTINCT t.assignedVehicleId FROM TripRequest t " +
+           "WHERE t.assignedVehicleId IS NOT NULL " +
+           "AND t.status IN :statuses")
+    List<Long> findActiveVehicleIds(@Param("statuses") List<TripStatus> statuses);
 }

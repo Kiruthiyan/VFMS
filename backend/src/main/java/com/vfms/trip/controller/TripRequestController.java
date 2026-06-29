@@ -184,16 +184,35 @@ public class TripRequestController {
      * Marks the trip as successfully completed.
      */
     @PatchMapping("/{id}/complete")
-    public ResponseEntity<TripRequest> completeTrip(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.completeTrip(id));
+    public ResponseEntity<TripRequest> completeTrip(@PathVariable UUID id, @RequestBody(required = false) CompleteRequestDTO dto) {
+        String reason = dto != null ? dto.getReason() : null;
+        return ResponseEntity.ok(service.completeTrip(id, reason));
+    }
+
+    /**
+     * Records the arrival time at the next intermediate stop.
+     */
+    @PatchMapping("/{id}/log-stop")
+    public ResponseEntity<TripRequest> logStopArrival(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.logStopArrival(id));
+    }
+
+    /**
+     * Retrieves the list of vehicle IDs currently assigned to active trips.
+     */
+    @GetMapping("/active-vehicle-ids")
+    public ResponseEntity<List<Long>> getActiveVehicleIds() {
+        return ResponseEntity.ok(service.getActiveVehicleIds());
     }
 
     /**
      * Cancels the trip outright. Extracts approver ID and cancellation notes from the DTO.
      */
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<TripRequest> cancelTrip(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
-        return ResponseEntity.ok(service.cancelTrip(id, dto.getApproverId(), dto.getNotes()));
+    public ResponseEntity<TripRequest> cancelTrip(@PathVariable UUID id, @RequestBody(required = false) ApprovalDTO dto) {
+        UUID approverId = dto != null ? dto.getApproverId() : null;
+        String notes = dto != null ? dto.getNotes() : null;
+        return ResponseEntity.ok(service.cancelTrip(id, approverId, notes));
     }
 
     // ==========================================
@@ -258,7 +277,7 @@ public class TripRequestController {
      */
     @PatchMapping("/{id}/feedback")
     public ResponseEntity<TripRequest> submitDriverFeedback(@PathVariable UUID id, @Valid @RequestBody FeedbackDTO dto) {
-        return ResponseEntity.ok(service.submitDriverFeedback(id, dto.getRating(), dto.getFeedback()));
+        return ResponseEntity.ok(service.submitDriverFeedback(id, dto.getRating(), dto.getFeedback(), dto.getStaffTimelineReason()));
     }
 
     // Static DTO for holding feedback requests
@@ -266,5 +285,12 @@ public class TripRequestController {
     public static class FeedbackDTO {
         private Integer rating;
         private String feedback;
+        private String staffTimelineReason;
+    }
+
+    // Static DTO for holding completion requests
+    @lombok.Data
+    public static class CompleteRequestDTO {
+        private String reason;
     }
 }

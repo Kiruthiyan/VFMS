@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from "@/components/ui/dialog";
+import {
     ArrowLeft, Calendar, MapPin, Users, Clock, Star,
     Loader2, CheckCircle, Play, Square, Ban, AlertTriangle, ThumbsUp, ThumbsDown
 } from "lucide-react";
@@ -35,6 +43,9 @@ interface Trip {
     updatedAt: string;
     driverRating?: number | null;
     driverFeedback?: string | null;
+    driverTimelineReason?: string | null;
+    staffTimelineReason?: string | null;
+    stopArrivalTimes?: string | null;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -72,6 +83,19 @@ export default function TripDetailPage() {
 
     const [rating, setRating] = useState(5);
     const [feedback, setFeedback] = useState("");
+    const [staffTimelineReason, setStaffTimelineReason] = useState("");
+    const [completeReasonMode, setCompleteReasonMode] = useState(false);
+    const [completeReason, setCompleteReason] = useState("");
+    const [cancelReasonMode, setCancelReasonMode] = useState(false);
+    const [cancelReason, setCancelReason] = useState("");
+
+    const checkReturnDeviation = () => {
+        if (!trip) return false;
+        const now = new Date();
+        const returnTime = new Date(trip.returnTime);
+        const diffMs = Math.abs(now.getTime() - returnTime.getTime());
+        return diffMs > 30 * 60 * 1000;
+    };
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
     useEffect(() => {
@@ -96,7 +120,8 @@ export default function TripDetailPage() {
         try {
             await api.patch(`/trips/${id}/feedback`, {
                 rating,
-                feedback: feedback.trim()
+                feedback: feedback.trim(),
+                staffTimelineReason: staffTimelineReason.trim()
             });
             fetchTrip();
         } catch (err: any) {
@@ -190,26 +215,47 @@ export default function TripDetailPage() {
                         <div className="space-y-2">
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Itinerary Route</p>
                             <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-4">
-                                {trip.destination.split(" -> ").map((place: string, idx: number, arr: string[]) => (
-                                    <div key={idx} className="flex gap-4 relative last:pb-0 pb-4">
-                                        {idx < arr.length - 1 && (
-                                            <div className="absolute left-[9px] top-6 bottom-0 w-0.5 bg-slate-200" />
-                                        )}
-                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm shrink-0 z-10 text-[10px] font-black text-white ${
-                                            idx === 0 ? "bg-[#10B981]" :
-                                            idx === arr.length - 1 ? "bg-[#EF4444]" :
-                                            "bg-[#8B5CF6]"
-                                        }`}>
-                                            {idx === 0 ? "A" : idx === arr.length - 1 ? "B" : idx}
+                                {trip.destination.split(" -> ").map((place: string, idx: number, arr: string[]) => {
+                                    const isStop = idx > 0 && idx < arr.length - 1;
+                                    const arrivalTimes = trip.stopArrivalTimes ? trip.stopArrivalTimes.split(",") : [];
+                                    const loggedTime = isStop && arrivalTimes[idx - 1] ? arrivalTimes[idx - 1] : null;
+                                    return (
+                                        <div key={idx} className="flex gap-4 relative last:pb-0 pb-4">
+                                            {idx < arr.length - 1 && (
+                                                <div className="absolute left-[9px] top-6 bottom-0 w-0.5 bg-slate-200" />
+                                            )}
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm shrink-0 z-10 text-[10px] font-black text-white ${
+                                                idx === 0 ? "bg-[#10B981]" :
+                                                idx === arr.length - 1 ? "bg-[#EF4444]" :
+                                                "bg-[#8B5CF6]"
+                                            }`}>
+                                                {idx === 0 ? "A" : idx === arr.length - 1 ? "B" : idx}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                    {idx === 0 ? "Start Location" : idx === arr.length - 1 ? "Final Destination" : `Stop ${idx}`}
+                                                </p>
+                                                <p className="text-slate-800 text-sm font-semibold mt-0.5 truncate" title={place}>{place}</p>
+                                                {isStop && loggedTime && (
+                                                    <p className="text-[11px] text-green-600 font-medium mt-1">
+                                                        ✓ Arrived at: {new Date(loggedTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                                                    </p>
+                                                )}
+                                                {isStop && !loggedTime && trip.status === "ONGOING" && currentUser.role === "DRIVER" && trip.assignedDriverId === currentUser.id && idx === arrivalTimes.length + 1 && (
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => handleAction("log-stop")}
+                                                        disabled={actionLoading === "log-stop"}
+                                                        className="mt-2 bg-purple-600 hover:bg-purple-700 text-white text-[10px] h-7 px-3 py-1 font-bold rounded-lg shadow-sm"
+                                                    >
+                                                        {actionLoading === "log-stop" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                                        Log Arrival at Stop {idx}
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                {idx === 0 ? "Start Location" : idx === arr.length - 1 ? "Final Destination" : `Stop ${idx}`}
-                                            </p>
-                                            <p className="text-slate-800 text-sm font-semibold mt-0.5 truncate" title={place}>{place}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -326,52 +372,88 @@ export default function TripDetailPage() {
                                                 "{trip.driverFeedback}"
                                             </div>
                                         )}
+                                        {trip.driverTimelineReason && (
+                                            <div className="bg-orange-50 border border-orange-100 rounded-xl p-3.5 text-slate-700 text-sm font-medium mt-2">
+                                                <span className="font-bold text-orange-800 uppercase tracking-wider text-[10px] block mb-1">Driver Time Change Reason:</span>
+                                                "{trip.driverTimelineReason}"
+                                            </div>
+                                        )}
+                                        {trip.staffTimelineReason && (
+                                            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3.5 text-slate-700 text-sm font-medium mt-2">
+                                                <span className="font-bold text-amber-800 uppercase tracking-wider text-[10px] block mb-1">Staff Time Change Reason:</span>
+                                                "{trip.staffTimelineReason}"
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     /* Interactive Feedback Form (only for Requester / System User) */
-                                    currentUser.role === "SYSTEM_USER" && currentUser.id === trip.requesterId && (
-                                        <form onSubmit={handleFeedbackSubmit} className="bg-blue-50/40 border border-blue-200/60 rounded-2xl p-5 space-y-4">
-                                            <div>
-                                                <p className="text-sm font-bold text-blue-950">Rate your Driver</p>
-                                                <p className="text-xs text-slate-500 mt-0.5">Please rate your experience with the driver for this completed trip.</p>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Driver Rating:</span>
-                                                <div className="flex gap-1">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <button
-                                                            key={star}
-                                                            type="button"
-                                                            onClick={() => setRating(star)}
-                                                            className="text-amber-400 hover:scale-110 transition-transform focus:outline-none"
-                                                        >
-                                                            <Star className={`h-6 w-6 ${star <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
-                                                        </button>
-                                                    ))}
+                                    currentUser.role === "SYSTEM_USER" && currentUser.id === trip.requesterId && (() => {
+                                        const endDeviates = trip.endTime ? (
+                                            Math.abs(new Date(trip.endTime).getTime() - new Date(trip.returnTime).getTime()) > 30 * 60 * 1000
+                                        ) : false;
+                                        return (
+                                            <form onSubmit={handleFeedbackSubmit} className="bg-blue-50/40 border border-blue-200/60 rounded-2xl p-5 space-y-4">
+                                                <div>
+                                                    <p className="text-sm font-bold text-blue-950">Rate your Driver</p>
+                                                    <p className="text-xs text-slate-500 mt-0.5">Please rate your experience with the driver for this completed trip.</p>
                                                 </div>
-                                            </div>
 
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Comments / Feedback</label>
-                                                <textarea
-                                                    placeholder="Tell us about the driver (safe driving, punctuality, politeness)..."
-                                                    value={feedback}
-                                                    onChange={(e) => setFeedback(e.target.value)}
-                                                    rows={3}
-                                                    className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-medium"
-                                                />
-                                            </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Driver Rating:</span>
+                                                    <div className="flex gap-1">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <button
+                                                                key={star}
+                                                                type="button"
+                                                                onClick={() => setRating(star)}
+                                                                className="text-amber-400 hover:scale-110 transition-transform focus:outline-none"
+                                                            >
+                                                                <Star className={`h-6 w-6 ${star <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
 
-                                            <Button
-                                                type="submit"
-                                                disabled={submittingFeedback}
-                                                className="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold h-10 shadow-lg shadow-blue-100"
-                                            >
-                                                {submittingFeedback ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Driver Feedback"}
-                                            </Button>
-                                        </form>
-                                    )
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Comments / Feedback</label>
+                                                    <textarea
+                                                        placeholder="Tell us about the driver (safe driving, punctuality, politeness)..."
+                                                        value={feedback}
+                                                        onChange={(e) => setFeedback(e.target.value)}
+                                                        rows={3}
+                                                        className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-medium"
+                                                    />
+                                                </div>
+
+                                                {endDeviates && (
+                                                    <div className="space-y-1 bg-amber-50/50 border border-amber-200/60 rounded-xl p-3.5">
+                                                        <label className="text-xs font-bold text-amber-800 uppercase tracking-wider block">
+                                                            Timeline Justification Reason <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <p className="text-[11px] text-amber-600 mb-2">
+                                                            This trip ended outside the 30-minute return window. Please provide a reason for the discrepancy.
+                                                        </p>
+                                                        <textarea
+                                                            placeholder="Provide a reason for the early/late return..."
+                                                            value={staffTimelineReason}
+                                                            onChange={(e) => setStaffTimelineReason(e.target.value)}
+                                                            rows={2}
+                                                            className="flex w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none font-medium"
+                                                            required
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                <Button
+                                                    type="submit"
+                                                    disabled={submittingFeedback || (endDeviates && !staffTimelineReason.trim())}
+                                                    className="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold h-10 shadow-lg shadow-blue-100"
+                                                >
+                                                    {submittingFeedback ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Driver Feedback"}
+                                                </Button>
+                                            </form>
+                                        );
+                                    })()
                                 )}
                             </div>
                         )}
@@ -554,30 +636,120 @@ export default function TripDetailPage() {
 
                             {/* Driver: complete ongoing trip */}
                             {currentUser.role === "DRIVER" && trip.status === "ONGOING" && (
-                                <Button
-                                    onClick={() => handleAction("complete")}
-                                    disabled={actionLoading === "complete"}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                >
-                                    {actionLoading === "complete"
-                                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                                        : <><Square className="mr-2 h-4 w-4" /> Complete Trip</>}
-                                </Button>
+                                <>
+                                    <Button
+                                        onClick={() => {
+                                            if (checkReturnDeviation()) {
+                                                setCompleteReasonMode(true);
+                                            } else {
+                                                handleAction("complete");
+                                            }
+                                        }}
+                                        disabled={actionLoading === "complete"}
+                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                        {actionLoading === "complete"
+                                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                                            : <><Square className="mr-2 h-4 w-4" /> Complete Trip</>}
+                                    </Button>
+
+                                    <Dialog open={completeReasonMode} onOpenChange={(open) => {
+                                        if (!open) {
+                                            setCompleteReasonMode(false);
+                                            setCompleteReason("");
+                                        }
+                                    }}>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Timeline Deviation Reason</DialogTitle>
+                                                <DialogDescription>
+                                                    You are ending this trip more than 30 minutes early or late compared to the scheduled return time ({formatDate(trip.returnTime)}). Please provide a reason for the change.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="py-4">
+                                                <textarea
+                                                    placeholder="e.g. Completed early due to light traffic / Delayed due to vehicle inspection..."
+                                                    value={completeReason}
+                                                    onChange={e => setCompleteReason(e.target.value)}
+                                                    rows={3}
+                                                    className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                />
+                                            </div>
+                                            <DialogFooter>
+                                                <Button variant="outline" onClick={() => { setCompleteReasonMode(false); setCompleteReason(""); }}>Cancel</Button>
+                                                <Button 
+                                                    className="bg-green-600 hover:bg-green-700 text-white font-bold" 
+                                                    disabled={!completeReason.trim() || actionLoading === "complete"}
+                                                    onClick={async () => {
+                                                        await handleAction("complete", { reason: completeReason });
+                                                        setCompleteReasonMode(false);
+                                                        setCompleteReason("");
+                                                    }}
+                                                >
+                                                    {actionLoading === "complete" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                                    Complete Trip
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                </>
                             )}
 
                             {/* Cancel — only SYSTEM_USER and ADMIN, not STAFF or DRIVER */}
                             {["SYSTEM_USER", "ADMIN"].includes(currentUser.role) &&
                                 !TERMINAL_STATUSES.includes(trip.status) && (
-                                <Button
-                                    onClick={() => handleAction("cancel")}
-                                    disabled={actionLoading === "cancel"}
-                                    variant="outline"
-                                    className="border-red-200 text-red-600 hover:bg-red-50"
-                                >
-                                    {actionLoading === "cancel"
-                                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                                        : <><Ban className="mr-2 h-4 w-4" /> Cancel</>}
-                                </Button>
+                                <>
+                                    <Button
+                                        onClick={() => setCancelReasonMode(true)}
+                                        disabled={actionLoading === "cancel"}
+                                        variant="outline"
+                                        className="border-red-200 text-red-600 hover:bg-red-50"
+                                    >
+                                        {actionLoading === "cancel"
+                                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                                            : <><Ban className="mr-2 h-4 w-4" /> Cancel</>}
+                                    </Button>
+
+                                    <Dialog open={cancelReasonMode} onOpenChange={(open) => {
+                                        if (!open) {
+                                            setCancelReasonMode(false);
+                                            setCancelReason("");
+                                        }
+                                    }}>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Cancel Trip Request</DialogTitle>
+                                                <DialogDescription>
+                                                    Please provide a reason for canceling this trip request. This action cannot be undone.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="py-4">
+                                                <textarea
+                                                    placeholder="Reason for cancellation..."
+                                                    value={cancelReason}
+                                                    onChange={e => setCancelReason(e.target.value)}
+                                                    rows={3}
+                                                    className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none font-medium"
+                                                />
+                                            </div>
+                                            <DialogFooter>
+                                                <Button variant="outline" onClick={() => { setCancelReasonMode(false); setCancelReason(""); }}>Go Back</Button>
+                                                <Button 
+                                                    variant="destructive" 
+                                                    disabled={!cancelReason.trim() || actionLoading === "cancel"}
+                                                    onClick={async () => {
+                                                        await handleAction("cancel", { notes: cancelReason, approverId: currentUser.id });
+                                                        setCancelReasonMode(false);
+                                                        setCancelReason("");
+                                                    }}
+                                                >
+                                                    {actionLoading === "cancel" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                                    Confirm Cancel
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                </>
                             )}
                         </div>
                     </CardContent>

@@ -37,7 +37,7 @@ export default function TripMap({
 
     // Parse initial values from serialized destination
     const parseItinerary = (str: string) => {
-        if (!str) return { start: "Colombo Office, Sri Lanka", stops: [], dest: "" };
+        if (!str) return { start: "", stops: [], dest: "" };
         const parts = str.split(" -> ");
         if (parts.length >= 2) {
             return {
@@ -46,7 +46,7 @@ export default function TripMap({
                 dest: parts[parts.length - 1]
             };
         }
-        return { start: "Colombo Office, Sri Lanka", stops: [], dest: str };
+        return { start: "", stops: [], dest: str };
     };
 
     const initial = parseItinerary(destination);

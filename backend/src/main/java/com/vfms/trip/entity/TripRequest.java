@@ -33,7 +33,7 @@ public class TripRequest {
     @Column(name = "purpose", nullable = false, length = 500)
     private String purpose;
 
-    @Column(name = "destination", nullable = false)
+    @Column(name = "destination", nullable = false, columnDefinition = "TEXT")
     private String destination;
 
     @Column(name = "departure_time", nullable = false)
@@ -80,6 +80,15 @@ public class TripRequest {
 
     @Column(name = "driver_feedback", length = 1000)
     private String driverFeedback;
+
+    @Column(name = "driver_timeline_reason", length = 1000)
+    private String driverTimelineReason;
+
+    @Column(name = "staff_timeline_reason", length = 1000)
+    private String staffTimelineReason;
+
+    @Column(name = "stop_arrival_times", length = 2000)
+    private String stopArrivalTimes;
 
     // Automatic audit timestamps managed by Hibernate
     @CreationTimestamp

@@ -278,7 +278,7 @@ export default function ApproveTripPage() {
                                             <option value="">-- Select a vehicle --</option>
                                             {vehicles.map(v => (
                                                 <option key={v.id} value={v.id}>
-                                                    {v.brand} {v.model} — {v.plateNumber}
+                                                    {v.brand} — {v.plateNumber}
                                                 </option>
                                             ))}
                                         </select>
@@ -307,7 +307,7 @@ export default function ApproveTripPage() {
                                             <option value="">-- Select a driver --</option>
                                             {drivers.map(d => (
                                                 <option key={d.id} value={d.id}>
-                                                    {d.firstName} {d.lastName} — {d.employeeId}
+                                                    {d.employeeId} — {d.firstName}
                                                 </option>
                                             ))}
                                         </select>

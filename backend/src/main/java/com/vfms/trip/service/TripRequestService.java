@@ -56,22 +56,39 @@ public class TripRequestService {
     // Using native SQL queries here to efficiently fetch lightweight DTOs directly from cross-domain tables
     @SuppressWarnings("unchecked")
     public List<VehicleOptionDTO> getAvailableVehicles() {
-        List<Object[]> rows = entityManager.createNativeQuery(
+        List<Object[]> rows1 = entityManager.createNativeQuery(
                 "SELECT id, brand, model, plate_number FROM vehicles WHERE status = 'AVAILABLE'"
         ).getResultList();
 
-        return rows.stream().map(row -> new VehicleOptionDTO(
-                ((Number) row[0]).longValue(),
-                (String) row[1],
-                (String) row[2],
-                (String) row[3]
-        )).toList();
+        List<Object[]> rows2 = entityManager.createNativeQuery(
+                "SELECT id, vehicle_type as brand, '' as model, plate_number FROM rental_records WHERE status = 'ACTIVE'"
+        ).getResultList();
+
+        List<VehicleOptionDTO> list = new java.util.ArrayList<>();
+        for (Object[] row : rows1) {
+            list.add(new VehicleOptionDTO(
+                    ((Number) row[0]).longValue(),
+                    (String) row[1],
+                    (String) row[2],
+                    (String) row[3]
+            ));
+        }
+        for (Object[] row : rows2) {
+            list.add(new VehicleOptionDTO(
+                    ((Number) row[0]).longValue() + 100000000L,
+                    (String) row[1],
+                    (String) row[2],
+                    (String) row[3]
+            ));
+        }
+        return list;
     }
 
     @SuppressWarnings("unchecked")
     public List<DriverOptionDTO> getAvailableDrivers() {
         List<Object[]> rows = entityManager.createNativeQuery(
-                "SELECT id::text, first_name, last_name, employee_id FROM drivers WHERE status = 'ACTIVE'"
+                "SELECT id::text, first_name, last_name, employee_id FROM drivers " +
+                "WHERE readiness_license_valid = true"
         ).getResultList();
 
         return rows.stream().map(row -> new DriverOptionDTO(
@@ -105,8 +122,15 @@ public class TripRequestService {
     }
 
     private TripRequest findById(UUID id) {
-        return repository.findById(id)
+        TripRequest trip = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + id));
+        // Auto-expire check during lookup
+        if ((trip.getStatus() == TripStatus.APPROVED || trip.getStatus() == TripStatus.DRIVER_CONFIRMED) &&
+                LocalDateTime.now().isAfter(trip.getDepartureTime().plusMinutes(30))) {
+            trip.setStatus(TripStatus.EXPIRED);
+            trip = repository.save(trip);
+        }
+        return trip;
     }
 
     // --- Trip Lifecycle Management ---
@@ -144,6 +168,29 @@ public class TripRequestService {
         if (trip.getStatus() != TripStatus.SUBMITTED && trip.getStatus() != TripStatus.DRIVER_REJECTED) {
             throw new ValidationException("Only SUBMITTED or DRIVER_REJECTED trips can be approved");
         }
+
+        // Prevent double booking conflicts at approval stage
+        if (dto.getAssignedDriverId() != null) {
+            List<TripRequest> conflicts = repository.findConflictingDriverBookings(
+                    dto.getAssignedDriverId(),
+                    trip.getDepartureTime(),
+                    trip.getReturnTime());
+            conflicts.removeIf(c -> c.getId().equals(tripId));
+            if (!conflicts.isEmpty()) {
+                throw new ValidationException("Driver is already assigned for this time slot");
+            }
+        }
+        if (dto.getAssignedVehicleId() != null) {
+            List<TripRequest> conflicts = repository.findConflictingVehicleBookings(
+                    dto.getAssignedVehicleId(),
+                    trip.getDepartureTime(),
+                    trip.getReturnTime());
+            conflicts.removeIf(c -> c.getId().equals(tripId));
+            if (!conflicts.isEmpty()) {
+                throw new ValidationException("Vehicle is already booked for this time slot");
+            }
+        }
+
         trip.setStatus(TripStatus.APPROVED);
         trip.setApproverId(dto.getApproverId());
         trip.setApprovalNotes(dto.getNotes());
@@ -224,22 +271,68 @@ public class TripRequestService {
         if (trip.getStatus() != TripStatus.DRIVER_CONFIRMED) {
             throw new ValidationException("Only DRIVER_CONFIRMED trips can be started");
         }
+
+        // Validate starting window (+/- 30 minutes of requested departureTime)
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(trip.getDepartureTime().minusMinutes(30)) ||
+                now.isAfter(trip.getDepartureTime().plusMinutes(30))) {
+            if (now.isAfter(trip.getDepartureTime().plusMinutes(30))) {
+                trip.setStatus(TripStatus.EXPIRED);
+                repository.save(trip);
+            }
+            throw new ValidationException("Trip cannot be started");
+        }
+
         trip.setStatus(TripStatus.ONGOING);
-        trip.setStartTime(LocalDateTime.now());
+        trip.setStartTime(now);
         return repository.save(trip);
     }
 
     public TripRequest completeTrip(UUID tripId) {
+        return completeTrip(tripId, null);
+    }
+
+    public TripRequest completeTrip(UUID tripId, String reason) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.ONGOING) {
             throw new ValidationException("Only ONGOING trips can be completed");
         }
+
+        // Validate that all intermediate stops have arrival timestamps recorded
+        if (trip.getDestination() != null && trip.getDestination().contains(" -> ")) {
+            String[] places = trip.getDestination().split(" -> ");
+            int expectedStops = places.length - 2;
+            if (expectedStops > 0) {
+                String currentArrivals = trip.getStopArrivalTimes();
+                int arrivalsCount = (currentArrivals == null || currentArrivals.trim().isEmpty())
+                        ? 0 : currentArrivals.split(",").length;
+                if (arrivalsCount < expectedStops) {
+                    throw new ValidationException("Cannot end trip: all intermediate stops must be logged first.");
+                }
+            }
+        }
+
+        // Require reason if completion time deviates by more than 30 minutes
+        LocalDateTime now = LocalDateTime.now();
+        boolean deviates = now.isBefore(trip.getReturnTime().minusMinutes(30)) ||
+                           now.isAfter(trip.getReturnTime().plusMinutes(30));
+        if (deviates) {
+            if (reason == null || reason.trim().isEmpty()) {
+                throw new ValidationException("Completion time deviates by more than 30 minutes. A reason must be provided.");
+            }
+            trip.setDriverTimelineReason(reason);
+        }
+
         trip.setStatus(TripStatus.COMPLETED);
-        trip.setEndTime(LocalDateTime.now());
+        trip.setEndTime(now);
         return repository.save(trip);
     }
 
     public TripRequest submitDriverFeedback(UUID tripId, Integer rating, String feedback) {
+        return submitDriverFeedback(tripId, rating, feedback, null);
+    }
+
+    public TripRequest submitDriverFeedback(UUID tripId, Integer rating, String feedback, String staffTimelineReason) {
         TripRequest trip = findById(tripId);
         if (trip.getStatus() != TripStatus.COMPLETED) {
             throw new ValidationException("Feedback can only be submitted for completed trips");
@@ -247,9 +340,62 @@ public class TripRequestService {
         if (rating == null || rating < 1 || rating > 5) {
             throw new ValidationException("Rating must be between 1 and 5");
         }
+
+        // Require staff reason if actual completion time was early or late by 30 mins
+        if (trip.getEndTime() != null) {
+            boolean deviates = trip.getEndTime().isBefore(trip.getReturnTime().minusMinutes(30)) ||
+                               trip.getEndTime().isAfter(trip.getReturnTime().plusMinutes(30));
+            if (deviates && (staffTimelineReason == null || staffTimelineReason.trim().isEmpty())) {
+                throw new ValidationException("Trip ended outside the 30-minute return window. Staff must provide a justification reason.");
+            }
+            if (deviates) {
+                trip.setStaffTimelineReason(staffTimelineReason);
+            }
+        }
+
         trip.setDriverRating(rating);
         trip.setDriverFeedback(feedback);
         return repository.save(trip);
+    }
+
+    public TripRequest logStopArrival(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.ONGOING) {
+            throw new ValidationException("Stops can only be logged for ONGOING trips");
+        }
+
+        String dest = trip.getDestination();
+        if (dest == null || !dest.contains(" -> ")) {
+            throw new ValidationException("This trip has no intermediate stops to log");
+        }
+
+        String[] places = dest.split(" -> ");
+        int totalStops = places.length - 2;
+        if (totalStops <= 0) {
+            throw new ValidationException("This trip has no intermediate stops to log");
+        }
+
+        String currentArrivals = trip.getStopArrivalTimes();
+        List<String> arrivalsList = new java.util.ArrayList<>();
+        if (currentArrivals != null && !currentArrivals.trim().isEmpty()) {
+            arrivalsList.addAll(List.of(currentArrivals.split(",")));
+        }
+
+        if (arrivalsList.size() >= totalStops) {
+            throw new ValidationException("All intermediate stops have already been logged");
+        }
+
+        arrivalsList.add(LocalDateTime.now().toString());
+        trip.setStopArrivalTimes(String.join(",", arrivalsList));
+        return repository.save(trip);
+    }
+
+    public List<Long> getActiveVehicleIds() {
+        return repository.findActiveVehicleIds(List.of(
+            TripStatus.APPROVED,
+            TripStatus.DRIVER_CONFIRMED,
+            TripStatus.ONGOING
+        ));
     }
 
     public TripRequest cancelTrip(UUID tripId, UUID cancelledBy, String reason) {
@@ -266,37 +412,55 @@ public class TripRequestService {
     // --- Queries and Reporting ---
 
     public List<TripRequest> getTripsByDriver(UUID driverId) {
-        return repository.findByAssignedDriverIdOrderByDepartureTimeAsc(driverId);
+        List<TripRequest> list = repository.findByAssignedDriverIdOrderByDepartureTimeAsc(driverId);
+        list.forEach(this::checkAndExpireTrip);
+        return list;
     }
 
     public List<TripRequest> getUpcomingTripsByDriver(UUID driverId) {
-        return repository.findByAssignedDriverIdAndStatusOrderByDepartureTimeAsc(
+        List<TripRequest> list = repository.findByAssignedDriverIdAndStatusOrderByDepartureTimeAsc(
                 driverId, TripStatus.APPROVED);
+        list.forEach(this::checkAndExpireTrip);
+        return list;
     }
 
     public List<TripRequest> getRequesterTripHistory(UUID requesterId) {
-        return repository.findByRequesterIdOrderByCreatedAtDesc(requesterId);
+        List<TripRequest> list = repository.findByRequesterIdOrderByCreatedAtDesc(requesterId);
+        list.forEach(this::checkAndExpireTrip);
+        return list;
     }
 
     public List<TripRequest> getRequesterActiveTrips(UUID requesterId) {
-        return repository.findByRequesterIdAndStatusInOrderByDepartureTimeAsc(
+        List<TripRequest> list = repository.findByRequesterIdAndStatusInOrderByDepartureTimeAsc(
                 requesterId, List.of(TripStatus.NEW, TripStatus.SUBMITTED, TripStatus.APPROVED, TripStatus.ONGOING));
+        list.forEach(this::checkAndExpireTrip);
+        return list;
     }
 
     public List<TripRequest> getTripsForCalendar(int year, int month) {
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.plusMonths(1).minusSeconds(1);
-        return repository.findByDepartureTimeBetweenOrderByDepartureTimeAsc(start, end);
+        List<TripRequest> list = repository.findByDepartureTimeBetweenOrderByDepartureTimeAsc(start, end);
+        list.forEach(this::checkAndExpireTrip);
+        return list;
     }
 
     public List<TripRequest> searchTrips(String destination, TripStatus status, UUID requesterId) {
-        // Fetches all records and performs in-memory filtering based on provided parameters
         List<TripRequest> all = repository.findAll();
+        all.forEach(this::checkAndExpireTrip);
         return all.stream()
                 .filter(t -> destination == null || t.getDestination().toLowerCase().contains(destination.toLowerCase()))
                 .filter(t -> status == null || t.getStatus() == status)
                 .filter(t -> requesterId == null || t.getRequesterId().equals(requesterId))
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .toList();
+    }
+
+    private void checkAndExpireTrip(TripRequest trip) {
+        if ((trip.getStatus() == TripStatus.APPROVED || trip.getStatus() == TripStatus.DRIVER_CONFIRMED) &&
+                LocalDateTime.now().isAfter(trip.getDepartureTime().plusMinutes(30))) {
+            trip.setStatus(TripStatus.EXPIRED);
+            repository.save(trip);
+        }
     }
 }
