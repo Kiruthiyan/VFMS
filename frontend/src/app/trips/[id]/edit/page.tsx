@@ -71,6 +71,8 @@ export default function EditTripPage() {
         departureTime: "",
         returnTime: "",
         passengerCount: "1",
+        distanceKm: "",
+    });
     const [errors, setErrors] = useState<FormErrors>({});
 
     const [suggestions, setSuggestions] = useState<any[]>([]);

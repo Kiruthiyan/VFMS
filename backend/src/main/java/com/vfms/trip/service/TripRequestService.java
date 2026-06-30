@@ -25,41 +25,6 @@ public class TripRequestService {
     @PersistenceContext
     private EntityManager entityManager;
     private final TripRequestRepository repository;
-    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
-
-    @jakarta.annotation.PostConstruct
-    public void fixStatusCheckConstraint() {
-        try {
-            // Dynamically find and drop constraints on the status column of trip_requests
-            jdbcTemplate.execute(
-                "DO $$\n" +
-                "DECLARE\n" +
-                "    r RECORD;\n" +
-                "BEGIN\n" +
-                "    FOR r IN \n" +
-                "        SELECT tc.constraint_name \n" +
-                "        FROM information_schema.table_constraints tc\n" +
-                "        JOIN information_schema.constraint_column_usage ccu \n" +
-                "          ON tc.constraint_name = ccu.constraint_name\n" +
-                "        WHERE tc.table_name = 'trip_requests' \n" +
-                "          AND tc.constraint_type = 'CHECK' \n" +
-                "          AND ccu.column_name = 'status'\n" +
-                "          AND tc.table_schema = 'public'\n" +
-                "    LOOP\n" +
-                "        EXECUTE format('ALTER TABLE trip_requests DROP CONSTRAINT IF EXISTS %I', r.constraint_name);\n" +
-                "    END LOOP;\n" +
-                "END $$;"
-            );
-            
-            // Recreate the check constraint to include the new EXPIRED status
-            jdbcTemplate.execute(
-                "ALTER TABLE trip_requests ADD CONSTRAINT trip_requests_status_check \n" +
-                "CHECK (status IN ('NEW', 'SUBMITTED', 'APPROVED', 'DRIVER_CONFIRMED', 'DRIVER_REJECTED', 'REJECTED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'EXPIRED'))"
-            );
-        } catch (Exception e) {
-            System.err.println("Warning: Could not update trip_requests status constraint on startup: " + e.getMessage());
-        }
-    }
 
     public TripRequest createTrip(CreateTripRequestDTO dto) {
         // Validate that the trip spans a valid, logical time window
