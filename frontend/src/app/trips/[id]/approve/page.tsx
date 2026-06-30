@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -10,6 +11,8 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/role-context";
+
+const TripMap = dynamic(() => import("../../components/TripMap"), { ssr: false });
 
 interface Trip {
     id: string;
@@ -68,9 +71,11 @@ export default function ApproveTripPage() {
     }, [currentUser]);
 
     useEffect(() => {
-        fetchTrip();
-        fetchVehicles();
-        fetchDrivers();
+        if (id && id !== "[id]" && id !== "undefined") {
+            fetchTrip();
+            fetchVehicles();
+            fetchDrivers();
+        }
     }, [id]);
 
     const fetchTrip = async () => {
@@ -195,10 +200,38 @@ export default function ApproveTripPage() {
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider w-24 pt-0.5">Purpose</span>
                                 <span className="text-slate-900 font-medium text-sm">{trip.purpose}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-3.5 w-3.5 text-blue-950 shrink-0" />
-                                <span className="text-slate-700 text-sm">{trip.destination}</span>
+                            {/* Destination Itinerary Timeline */}
+                            <div className="space-y-2 pt-2 border-t border-slate-200/60">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Itinerary Route</p>
+                                <div className="bg-white border border-slate-200/60 rounded-2xl p-4 space-y-4">
+                                    {trip.destination.split(" -> ").map((place: string, idx: number, arr: string[]) => (
+                                        <div key={idx} className="flex gap-4 relative last:pb-0 pb-4">
+                                            {idx < arr.length - 1 && (
+                                                <div className="absolute left-[9px] top-6 bottom-0 w-0.5 bg-slate-200" />
+                                            )}
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm shrink-0 z-10 text-[10px] font-black text-white ${
+                                                idx === 0 ? "bg-[#10B981]" :
+                                                idx === arr.length - 1 ? "bg-[#EF4444]" :
+                                                "bg-[#8B5CF6]"
+                                            }`}>
+                                                {idx === 0 ? "A" : idx === arr.length - 1 ? "B" : idx}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                    {idx === 0 ? "Start Location" : idx === arr.length - 1 ? "Final Destination" : `Stop ${idx}`}
+                                                </p>
+                                                <p className="text-slate-800 text-sm font-semibold mt-0.5 truncate" title={place}>{place}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
+
+                            {/* Interactive Route Map */}
+                            <div className="mt-3">
+                                <TripMap destination={trip.destination} viewOnly={true} />
+                            </div>
+
                             <div className="flex items-center gap-2">
                                 <Calendar className="h-3.5 w-3.5 text-blue-950 shrink-0" />
                                 <span className="text-slate-700 text-sm">
@@ -247,7 +280,7 @@ export default function ApproveTripPage() {
                                             <option value="">-- Select a vehicle --</option>
                                             {vehicles.map(v => (
                                                 <option key={v.id} value={v.id}>
-                                                    {v.brand} {v.model} — {v.plateNumber}
+                                                    {v.brand} — {v.plateNumber}
                                                 </option>
                                             ))}
                                         </select>
@@ -276,7 +309,7 @@ export default function ApproveTripPage() {
                                             <option value="">-- Select a driver --</option>
                                             {drivers.map(d => (
                                                 <option key={d.id} value={d.id}>
-                                                    {d.firstName} {d.lastName} — {d.employeeId}
+                                                    {d.employeeId} — {d.firstName}
                                                 </option>
                                             ))}
                                         </select>

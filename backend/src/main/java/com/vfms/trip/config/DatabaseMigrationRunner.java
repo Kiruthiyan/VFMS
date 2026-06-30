@@ -21,22 +21,28 @@ public class DatabaseMigrationRunner {
     }
 
     private void updateTripStatusConstraint() {
-        // SQL query to remove the existing constraint (if it exists) so we can replace it cleanly
-        String dropConstraint = "ALTER TABLE trip_requests DROP CONSTRAINT IF EXISTS trip_requests_status_check";
-
-        // SQL query to define the new constraint with the complete, allowed list of trip statuses
-        String addConstraint = """
-                ALTER TABLE trip_requests ADD CONSTRAINT trip_requests_status_check
-                CHECK (status IN (
-                    'NEW', 'SUBMITTED', 'APPROVED',
-                    'DRIVER_CONFIRMED', 'DRIVER_REJECTED',
-                    'REJECTED', 'ONGOING', 'COMPLETED', 'CANCELLED'
-                ))
-                """;
-
         // Use try-with-resources to automatically close the Connection and Statement, preventing database connection leaks
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
+
+            // 1. Ensure all columns and types exist (replaces the manual sql migration steps)
+            stmt.execute("ALTER TABLE trip_requests ALTER COLUMN destination TYPE TEXT");
+            stmt.execute("ALTER TABLE trip_requests ADD COLUMN IF NOT EXISTS driver_timeline_reason VARCHAR(1000)");
+            stmt.execute("ALTER TABLE trip_requests ADD COLUMN IF NOT EXISTS staff_timeline_reason VARCHAR(1000)");
+            stmt.execute("ALTER TABLE trip_requests ADD COLUMN IF NOT EXISTS stop_arrival_times VARCHAR(2000)");
+
+            // SQL query to remove the existing constraint (if it exists) so we can replace it cleanly
+            String dropConstraint = "ALTER TABLE trip_requests DROP CONSTRAINT IF EXISTS trip_requests_status_check";
+
+            // SQL query to define the new constraint with the complete, allowed list of trip statuses
+            String addConstraint = """
+                    ALTER TABLE trip_requests ADD CONSTRAINT trip_requests_status_check
+                    CHECK (status IN (
+                        'NEW', 'SUBMITTED', 'APPROVED',
+                        'DRIVER_CONFIRMED', 'DRIVER_REJECTED',
+                        'REJECTED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'EXPIRED'
+                    ))
+                    """;
 
             stmt.execute(dropConstraint);
             stmt.execute(addConstraint);
