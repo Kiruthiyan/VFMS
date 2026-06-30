@@ -99,7 +99,9 @@ export default function TripDetailPage() {
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
     useEffect(() => {
-        fetchTrip();
+        if (id && id !== "[id]" && id !== "undefined") {
+            fetchTrip();
+        }
     }, [id]);
 
     const fetchTrip = async () => {

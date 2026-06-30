@@ -122,7 +122,9 @@ export default function EditTripPage() {
     };
 
     useEffect(() => {
-        fetchTrip();
+        if (id && id !== "[id]" && id !== "undefined") {
+            fetchTrip();
+        }
     }, [id]);
 
     const fetchTrip = async () => {

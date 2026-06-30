@@ -71,9 +71,11 @@ export default function ApproveTripPage() {
     }, [currentUser]);
 
     useEffect(() => {
-        fetchTrip();
-        fetchVehicles();
-        fetchDrivers();
+        if (id && id !== "[id]" && id !== "undefined") {
+            fetchTrip();
+            fetchVehicles();
+            fetchDrivers();
+        }
     }, [id]);
 
     const fetchTrip = async () => {
