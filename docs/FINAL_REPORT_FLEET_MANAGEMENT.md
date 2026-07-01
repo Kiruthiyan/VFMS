@@ -52,7 +52,14 @@ This document records the final cleanup and improvement work completed for the F
   - Shared file dropzone UI.
   - Existing uploaded document names are shown.
   - Documents open through authenticated requests.
+- Added support for private Supabase document references:
+  - Old local document links still open through authenticated backend requests.
+  - New `supabase://...` document references open through backend-created signed URLs.
 - Removed duplicate old dashboard route files for fleet pages.
+- Added display-only trip usage status for fleet pages:
+  - Company vehicles show `IN TRIP USE` when the Trip module reports that the available vehicle is assigned to an approved/confirmed/ongoing trip.
+  - Active rentals show `In Trip Use` when the Trip module reports that the rental is assigned to an approved/confirmed/ongoing trip.
+  - This is a derived UI indicator only; it does not change vehicle or rental database statuses.
 
 ## Backend Changes
 
@@ -66,14 +73,42 @@ This document records the final cleanup and improvement work completed for the F
 - Made vendor management Admin-only.
 - Kept active vendor selection available for staff rental flow.
 - Added safe file upload/download handling for maintenance and rental documents.
-- Added filename sanitization for uploaded documents.
-- Blocked unsafe file download paths.
+- Added private Supabase Object Storage support for new fleet PDFs:
+  - Maintenance quotation PDFs.
+  - Maintenance invoice PDFs.
+  - Rental agreement PDFs.
+  - Rental invoice PDFs.
+- Kept old local file-serving endpoints so previously uploaded local documents remain viewable.
+- Added signed access endpoints for private fleet documents:
+  - `/api/maintenance/files/access`
+  - `/api/rentals/files/access`
+- Added filename sanitization and filename length capping for uploaded documents.
+- Blocked unsafe file download paths for local legacy files.
 - Added odometer support through vehicle DTOs and service mapping.
 - Added `INSPECTION_REPAIR` maintenance type.
 - Prevented duplicate open maintenance requests for the same vehicle.
 - Prevented overlapping active rental periods for the same rented plate number.
 - Added backend rental plate number max-length validation.
 - Removed duplicate/overlapping driver service request flow from this module scope.
+
+## Storage Configuration
+
+Fleet maintenance and rental PDFs now use the project-standard private Supabase Object Storage pattern.
+
+Required backend environment variables:
+
+```properties
+SUPABASE_STORAGE_URL=https://your-project.supabase.co/storage/v1
+SUPABASE_SERVICE_KEY=your-service-role-key
+FLEET_SUPABASE_STORAGE_BUCKET=fleet-documents
+```
+
+Safety notes:
+
+- Real Supabase service-role keys must be kept only in backend `.env` or deployment environment variables.
+- Real keys must never be committed to GitHub, frontend code, test files, or documentation.
+- The `fleet-documents` bucket should be created manually in Supabase as a private bucket.
+- Existing local document records continue to work, so no migration is required for old uploaded PDFs.
 
 ## Common Project Changes
 
@@ -108,10 +143,12 @@ These changes were completed as shared project cleanup because they affected nav
   - `AVAILABLE`
   - `UNDER_MAINTENANCE`
   - `RETIRED`
+- `IN TRIP USE` is not stored as a vehicle status. It is a display-only operational indicator derived from Trip Scheduling data.
 - Rental status remains separate:
   - `ACTIVE`
   - `RETURNED`
   - `CLOSED`
+- `In Trip Use` for rentals is not stored as a rental status. It is a display-only operational indicator derived from Trip Scheduling data.
 - Trip double booking and on-trip availability are Trip Scheduling module responsibilities.
 - Renting is allowed even if company vehicles exist, because a rented vehicle may be needed for capacity, purpose, suitability, or timing reasons.
 
@@ -126,6 +163,9 @@ These changes were completed as shared project cleanup because they affected nav
 - Backend tests passed:
   - `mvn test`
   - 109 tests passed.
+- Backend compile passed after the Supabase storage update:
+  - `mvn -DskipTests compile`
+- Targeted frontend lint passed for changed fleet document/status files.
 - Browser console check completed with authenticated Admin session:
   - Vehicles list/add/detail/edit
   - Maintenance list/create/detail/edit
@@ -144,6 +184,9 @@ These changes were completed as shared project cleanup because they affected nav
 - Maintenance quotation and invoice upload/view flow works.
 - Rental create, edit, return, close flow works.
 - Rental agreement and invoice upload/view flow works.
+- New fleet document uploads are stored in private Supabase Object Storage when the required backend environment variables are configured.
+- Existing local fleet document links remain viewable.
+- Vehicle and rental pages show derived trip-use indicators without changing stored statuses.
 - Driver sidebar does not show fleet module pages.
 
 ## Remaining Team-Level Notes
@@ -151,3 +194,23 @@ These changes were completed as shared project cleanup because they affected nav
 - Full project authorization for non-fleet legacy APIs should be handled by the team member responsible for authentication/security integration.
 - Trip Scheduling should handle trip date/time conflicts and vehicle double booking.
 - Final deployment environment values should be configured through environment variables.
+
+## Final Module Score Estimate
+
+Current Fleet Management module score estimate: **9.5 / 10**.
+
+Reason:
+
+- Core vehicle, maintenance, rental, and vendor workflows are complete.
+- Role rules are clearly separated.
+- Direct page and backend access are protected for the fleet module.
+- Duplicate fleet routes and overlapping driver service-request scope were cleaned.
+- Maintenance/rental documents now follow private object-storage practice.
+- Trip-use visibility is integrated safely as a derived display status.
+
+Remaining 0.5 depends on final team-level deployment checks:
+
+- Supabase private bucket exists in the deployment project.
+- Required environment variables are configured outside source control.
+- Trip module keeps the active vehicle endpoint stable.
+- Full-team regression testing is completed after all branches are merged.

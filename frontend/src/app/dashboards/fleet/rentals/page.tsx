@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { rentalApi, RentalRecord, RentalStatus } from "@/lib/api/rental";
+import {
+  rentalTripVehicleId,
+  tripAvailabilityApi,
+} from "@/lib/api/trip-availability";
 import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,25 +28,33 @@ export default function RentalsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [activeTripVehicleIds, setActiveTripVehicleIds] = useState<Set<number>>(
+    new Set(),
+  );
 
-  const fetchRentals = async () => {
+  const fetchRentals = useCallback(async () => {
     setLoading(true);
     try {
-      const res =
+      const rentalsRequest =
         statusFilter !== "ALL"
-          ? await rentalApi.getByStatus(statusFilter as RentalStatus)
-          : await rentalApi.getAll();
+          ? rentalApi.getByStatus(statusFilter as RentalStatus)
+          : rentalApi.getAll();
+      const [res, tripVehicleIds] = await Promise.all([
+        rentalsRequest,
+        tripAvailabilityApi.getActiveVehicleIds().catch((): number[] => []),
+      ]);
       setRentals(res.data);
+      setActiveTripVehicleIds(new Set(tripVehicleIds));
     } catch {
       toast.error("Failed to load rentals");
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchRentals();
-  }, [statusFilter]);
+  }, [fetchRentals]);
 
   const filtered = rentals.filter((r) => {
     const q = search.toLowerCase();
@@ -53,6 +65,12 @@ export default function RentalsPage() {
       (r.purpose && r.purpose.toLowerCase().includes(q))
     );
   });
+
+  const getRentalDisplayStatus = (rental: RentalRecord) =>
+    rental.status === "ACTIVE" &&
+    activeTripVehicleIds.has(rentalTripVehicleId(rental.id))
+      ? "IN_TRIP_USE"
+      : rental.status;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -190,7 +208,7 @@ export default function RentalsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <RentalStatusBadge status={r.status} />
+                      <RentalStatusBadge status={getRentalDisplayStatus(r)} />
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Button

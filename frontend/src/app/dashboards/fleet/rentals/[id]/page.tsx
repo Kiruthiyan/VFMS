@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/api";
 import { documentDisplayName, openAuthenticatedDocument } from "@/lib/fleet-documents";
+import {
+  rentalTripVehicleId,
+  tripAvailabilityApi,
+} from "@/lib/api/trip-availability";
 import { rentalApi, RentalRecord } from "@/lib/api/rental";
 import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
 import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
@@ -26,21 +30,29 @@ export default function RentalDetailPage() {
   const { canCreate } = useRole();
   const [rental, setRental] = useState<RentalRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInTripUse, setIsInTripUse] = useState(false);
 
-  useEffect(() => {
-    fetchRental();
-  }, [id]);
-
-  const fetchRental = async () => {
+  const fetchRental = useCallback(async () => {
     try {
-      const res = await rentalApi.getById(Number(id));
+      const [res, tripVehicleIds] = await Promise.all([
+        rentalApi.getById(Number(id)),
+        tripAvailabilityApi.getActiveVehicleIds().catch((): number[] => []),
+      ]);
       setRental(res.data);
+      setIsInTripUse(
+        res.data.status === "ACTIVE" &&
+          tripVehicleIds.includes(rentalTripVehicleId(res.data.id)),
+      );
     } catch {
       toast.error("Failed to fetch rental");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchRental();
+  }, [fetchRental]);
 
   const handleConfirmReturn = async () => {
     const date = prompt(
@@ -118,6 +130,8 @@ export default function RentalDetailPage() {
     );
   }
 
+  const rentalDisplayStatus = isInTripUse ? "IN_TRIP_USE" : rental.status;
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
@@ -139,7 +153,7 @@ export default function RentalDetailPage() {
                 Rental #{rental.id} — {rental.plateNumber} (from{" "}
                 {rental.vendorName})
               </div>
-              <RentalStatusBadge status={rental.status} />
+              <RentalStatusBadge status={rentalDisplayStatus} />
             </CardTitle>
           </CardHeader>
 

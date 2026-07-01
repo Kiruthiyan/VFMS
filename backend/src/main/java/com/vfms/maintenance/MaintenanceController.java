@@ -2,6 +2,7 @@ package com.vfms.maintenance;
 
 import com.vfms.common.dto.ApiResponse;
 import com.vfms.common.file.SafeFileStorage;
+import com.vfms.fleet.service.FleetDocumentStorageService;
 import com.vfms.maintenance.dto.MaintenanceRequestDto;
 import com.vfms.maintenance.dto.MaintenanceResponseDto;
 import jakarta.validation.Valid;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -25,6 +25,7 @@ import java.util.Map;
 public class MaintenanceController {
 
     private final MaintenanceService maintenanceService;
+    private final FleetDocumentStorageService fleetDocumentStorageService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> createRequest(
@@ -95,39 +96,23 @@ public class MaintenanceController {
     @PostMapping("/{id}/quotation")
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadQuotation(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
-            String fileName = SafeFileStorage.buildStoredFileName("quotation", id, file);
-            Path uploadDir = Paths.get("uploads/maintenance").toAbsolutePath().normalize();
-            Path filePath = uploadDir.resolve(fileName).normalize();
-
-            // Directory is created lazily so deployments to fresh environments do not require manual folder setup as a pre-condition
-            Files.createDirectories(uploadDir);
-            file.transferTo(filePath.toFile());
-
-            String fileUrl = "/api/maintenance/files/" + fileName;
-            MaintenanceResponseDto response = maintenanceService.uploadQuotation(id, fileUrl);
-            return ResponseEntity.ok(ApiResponse.success("Quotation uploaded", response));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to upload quotation: " + e.getMessage());
-        }
+        String fileReference = fleetDocumentStorageService.uploadMaintenanceDocument(id, "quotation", file);
+        MaintenanceResponseDto response = maintenanceService.uploadQuotation(id, fileReference);
+        return ResponseEntity.ok(ApiResponse.success("Quotation uploaded", response));
     }
 
     @PostMapping("/{id}/invoice")
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadInvoice(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
-            String fileName = SafeFileStorage.buildStoredFileName("invoice", id, file);
-            Path uploadDir = Paths.get("uploads/maintenance").toAbsolutePath().normalize();
-            Path filePath = uploadDir.resolve(fileName).normalize();
-            Files.createDirectories(uploadDir);
-            file.transferTo(filePath.toFile());
+        String fileReference = fleetDocumentStorageService.uploadMaintenanceDocument(id, "invoice", file);
+        MaintenanceResponseDto response = maintenanceService.uploadInvoice(id, fileReference);
+        return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
+    }
 
-            String fileUrl = "/api/maintenance/files/" + fileName;
-            MaintenanceResponseDto response = maintenanceService.uploadInvoice(id, fileUrl);
-            return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to upload invoice: " + e.getMessage());
-        }
+    @GetMapping("/files/access")
+    public ResponseEntity<ApiResponse<String>> getFileAccess(@RequestParam("ref") String reference) {
+        String signedUrl = fleetDocumentStorageService.createSignedUrlForMaintenance(reference);
+        return ResponseEntity.ok(ApiResponse.success("Document access link created", signedUrl));
     }
 
     @GetMapping("/files/{fileName}")
