@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Table, BarChart, Car, User, Droplet, Wrench, Calendar, ClipboardList, TrendingUp } from "lucide-react";
@@ -21,9 +21,15 @@ export default function ExportPage() {
     const [selectedMaintenanceVehicle, setSelectedMaintenanceVehicle] = useState<string>('');
     const [selectedRental, setSelectedRental] = useState<string>('');
 
-    // Month/Year filter for category reports
-    const [selectedMonth, setSelectedMonth] = useState<string>('all');
-    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+    // Date range filter for category reports
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const [appliedStartDate, setAppliedStartDate] = useState<string>('');
+    const [appliedEndDate, setAppliedEndDate] = useState<string>('');
+    
+    // Date input refs for triggering picker
+    const startDateInputRef = useRef<HTMLInputElement>(null);
+    const endDateInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const loadData = async () => {
@@ -52,16 +58,34 @@ export default function ExportPage() {
     }, []);
 
     const getDateRange = () => {
-        if (selectedMonth === 'all') return { startDate: undefined, endDate: undefined };
-
-        const monthIndex = parseInt(selectedMonth);
-        const startDate = new Date(selectedYear, monthIndex, 1);
-        const endDate = new Date(selectedYear, monthIndex + 1, 0);
-
         return {
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0]
+            startDate: appliedStartDate || undefined,
+            endDate: appliedEndDate || undefined
         };
+    };
+
+    const handleApplyDateRange = () => {
+        if (startDate || endDate) {
+            setAppliedStartDate(startDate);
+            setAppliedEndDate(endDate);
+        }
+    };
+
+    const handleResetDateRange = () => {
+        setStartDate('');
+        setEndDate('');
+        setAppliedStartDate('');
+        setAppliedEndDate('');
+    };
+
+    const getFormattedDateRange = () => {
+        if (!appliedStartDate && !appliedEndDate) return 'All Time';
+        if (appliedStartDate && appliedEndDate) {
+            return `${new Date(appliedStartDate).toLocaleDateString('en-US')} to ${new Date(appliedEndDate).toLocaleDateString('en-US')}`;
+        }
+        if (appliedStartDate) return `From ${new Date(appliedStartDate).toLocaleDateString('en-US')}`;
+        if (appliedEndDate) return `Until ${new Date(appliedEndDate).toLocaleDateString('en-US')}`;
+        return 'All Time';
     };
 
     const handleExport = async (type: string, format: 'pdf' | 'excel', id?: string) => {
@@ -152,48 +176,83 @@ export default function ExportPage() {
 
             {/* Date Filtering Section */}
             <Card className="border-2 border-indigo-200 bg-white shadow-xl overflow-hidden">
-                <div className="bg-indigo-600 px-6 py-3 flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-white" />
-                    <h2 className="text-white font-bold">Category Date Range Filter</h2>
+                <div className="bg-indigo-600 px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-white" />
+                        <h2 className="text-white font-bold">Select Period</h2>
+                    </div>
                 </div>
                 <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Reporting Month</label>
-                            <select
-                                value={selectedMonth}
-                                onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="w-full h-11 px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 transition-all font-semibold"
-                            >
-                                <option value="all">All Time / Lifetime</option>
-                                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
-                                    <option key={m} value={i}>{m}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Reporting Year</label>
-                            <select
-                                value={selectedYear}
-                                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                className="w-full h-11 px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 transition-all font-semibold"
-                                disabled={selectedMonth === 'all'}
-                            >
-                                {[2026, 2025, 2024, 2023].map(year => (
-                                    <option key={year} value={year}>{year}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-                                <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Active Filter</p>
-                                <p className="text-sm font-black text-indigo-900">
-                                    {selectedMonth === 'all' ? 'LIFETIME AGGREGATE' : `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(selectedMonth)]} ${selectedYear}`}
-                                </p>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Start Date */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Start Date</label>
+                                <div className="relative">
+                                    <input
+                                        ref={startDateInputRef}
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        placeholder="mm/dd/yyyy"
+                                        className="w-full h-11 px-4 py-2 pr-10 bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-semibold text-slate-700 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                    />
+                                    <div
+                                        onClick={() => startDateInputRef.current?.showPicker()}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-slate-200 rounded cursor-pointer transition-colors"
+                                    >
+                                        <Calendar className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+                                    </div>
+                                </div>
                             </div>
-                            {selectedMonth !== 'all' && (
-                                <Button variant="ghost" className="text-red-500 hover:text-red-700 font-bold" onClick={() => setSelectedMonth('all')}>Reset</Button>
-                            )}
+
+                            {/* End Date */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">End Date</label>
+                                <div className="relative">
+                                    <input
+                                        ref={endDateInputRef}
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        placeholder="mm/dd/yyyy"
+                                        className="w-full h-11 px-4 py-2 pr-10 bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-semibold text-slate-700 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                    />
+                                    <div
+                                        onClick={() => endDateInputRef.current?.showPicker()}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-slate-200 rounded cursor-pointer transition-colors"
+                                    >
+                                        <Calendar className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons and Active Filter Display */}
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
+                            <div className="flex gap-3">
+                                <Button 
+                                    type="button"
+                                    variant="outline" 
+                                    className="font-bold text-slate-700 border-slate-300 hover:bg-slate-50"
+                                    onClick={handleResetDateRange}
+                                >
+                                    RESET
+                                </Button>
+                                <Button 
+                                    type="button"
+                                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6"
+                                    onClick={handleApplyDateRange}
+                                >
+                                    APPLY
+                                </Button>
+                            </div>
+
+                            {/* Active Filter Display */}
+                            <div className="flex-1 md:flex-none p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-center md:text-right">
+                                <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Active Filter</p>
+                                <p className="text-sm font-black text-indigo-900">{getFormattedDateRange()}</p>
+                            </div>
                         </div>
                     </div>
                 </CardContent>

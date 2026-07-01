@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { 
     Users, 
-    UserCheck, 
     AlertTriangle, 
     Clock, 
     ShieldAlert, 
     Calendar,
-    BarChart3,
     Trophy,
     FileCheck,
     TrendingUp
@@ -18,16 +15,33 @@ import {
 import * as dsmReports from "@/lib/api/dsm-reports";
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell, LineChart, Line
+    LineChart, Line
 } from 'recharts';
 import Link from "next/link";
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
+type DriverRecord = {
+    driverName?: string;
+    name?: string;
+    safetyScore?: number;
+    feedbackRating?: number;
+    [key: string]: unknown;
+};
+
+type InfractionRecord = {
+    severity?: string;
+    status?: string;
+    [key: string]: unknown;
+};
+
+type ComplianceRecord = {
+    licenseExpiry?: string | Date;
+    [key: string]: unknown;
+};
 
 export default function DriverAnalyticsOverview() {
-    const [drivers, setDrivers] = useState<any[]>([]);
-    const [infractions, setInfractions] = useState<any[]>([]);
-    const [compliance, setCompliance] = useState<any[]>([]);
+    const [drivers, setDrivers] = useState<DriverRecord[]>([]);
+    const [infractions, setInfractions] = useState<InfractionRecord[]>([]);
+    const [compliance, setCompliance] = useState<ComplianceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -75,12 +89,6 @@ export default function DriverAnalyticsOverview() {
         score: d.safetyScore || 0,
         rating: (d.feedbackRating || 0) * 20 // scale to 100
     }));
-
-    const statusDist = [
-        { name: 'Active', value: drivers.length }, // Mocking for now
-        { name: 'On Trip', value: Math.floor(drivers.length * 0.6) },
-        { name: 'Leave', value: Math.floor(drivers.length * 0.1) }
-    ];
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-8 bg-slate-50/50 min-h-screen">
@@ -165,13 +173,9 @@ export default function DriverAnalyticsOverview() {
             </div>
 
             {/* Quick Links Section */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-3">
                 {[
-                    { label: 'Performance', href: '/reports/drivers/performance' },
                     { label: 'Infractions', href: '/reports/drivers/infractions' },
-                    { label: 'Readiness', href: '/dashboards/admin/reports/drivers/eligibility' },
-                    { label: 'Compliance', href: '/reports/drivers/compliance' },
-                    { label: 'Eligibility', href: '/reports/drivers/eligibility' },
                     { label: 'Profile', href: '/reports/drivers/profile' },
                     { label: 'Leaves', href: '/reports/drivers/leaves' },
                     { label: 'Documents', href: '/reports/drivers/documents' },
@@ -187,7 +191,7 @@ export default function DriverAnalyticsOverview() {
             </div>
 
             {/* Main Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
                 <Card className="border-none shadow-sm">
                     <CardHeader>
                         <CardTitle className="text-lg">Top Driver Performance</CardTitle>
@@ -206,34 +210,6 @@ export default function DriverAnalyticsOverview() {
                                 <Bar dataKey="score" fill="#3b82f6" name="Safety Score" radius={[4, 4, 0, 0]} />
                                 <Bar dataKey="rating" fill="#10b981" name="Rating Index" radius={[4, 4, 0, 0]} />
                             </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Fleet Status Availability</CardTitle>
-                        <CardDescription>Real-time driver readiness distribution</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px] flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={statusDist}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={90}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {statusDist.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
-                            </PieChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
