@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Vehicle, vehicleApi, VehicleStatus } from "@/lib/api/vehicle";
+import { tripAvailabilityApi } from "@/lib/api/trip-availability";
 import { VehicleStatusBadge } from "@/components/vehicles/VehicleStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,25 +32,33 @@ export default function VehiclesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [activeTripVehicleIds, setActiveTripVehicleIds] = useState<Set<number>>(
+    new Set(),
+  );
 
-  const fetchVehicles = async () => {
+  const fetchVehicles = useCallback(async () => {
     setLoading(true);
     try {
-      const res =
+      const vehiclesRequest =
         statusFilter !== "ALL"
-          ? await vehicleApi.filterByStatus(statusFilter as VehicleStatus)
-          : await vehicleApi.getAll();
+          ? vehicleApi.filterByStatus(statusFilter as VehicleStatus)
+          : vehicleApi.getAll();
+      const [res, tripVehicleIds] = await Promise.all([
+        vehiclesRequest,
+        tripAvailabilityApi.getActiveVehicleIds().catch((): number[] => []),
+      ]);
       setVehicles(res.data);
+      setActiveTripVehicleIds(new Set(tripVehicleIds));
     } catch {
       toast.error("Failed to load vehicles");
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchVehicles();
-  }, [statusFilter]);
+  }, [fetchVehicles]);
 
   const filtered = vehicles.filter((v) => {
     const q = search.toLowerCase();
@@ -59,6 +68,11 @@ export default function VehiclesPage() {
       v.model.toLowerCase().includes(q)
     );
   });
+
+  const getVehicleDisplayStatus = (vehicle: Vehicle) =>
+    vehicle.status === "AVAILABLE" && activeTripVehicleIds.has(vehicle.id)
+      ? "IN_TRIP_USE"
+      : vehicle.status;
 
   // ── Compliance warning helper ──
   const getComplianceWarning = (
@@ -232,7 +246,9 @@ export default function VehiclesPage() {
                       {vehicle.fuelType}
                     </td>
                     <td className="px-6 py-4">
-                      <VehicleStatusBadge status={vehicle.status} />
+                      <VehicleStatusBadge
+                        status={getVehicleDisplayStatus(vehicle)}
+                      />
                     </td>
                     <td className="px-6 py-4 text-slate-600">
                       {vehicle.department || "—"}

@@ -4,14 +4,23 @@ interface Props {
 
 const STATUS_STYLES: Record<string, string> = {
   AVAILABLE: "bg-green-100 text-green-700",
+  IN_TRIP_USE: "bg-blue-100 text-blue-700",
   UNDER_MAINTENANCE: "bg-red-100 text-red-700",
   RETIRED: "bg-gray-100 text-gray-700",
 };
 
 const STATUS_DOTS: Record<string, string> = {
   AVAILABLE: "bg-green-600",
+  IN_TRIP_USE: "bg-blue-600",
   UNDER_MAINTENANCE: "bg-red-600",
   RETIRED: "bg-gray-600",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  AVAILABLE: "AVAILABLE",
+  IN_TRIP_USE: "IN TRIP USE",
+  UNDER_MAINTENANCE: "UNDER MAINTENANCE",
+  RETIRED: "RETIRED",
 };
 
 export function VehicleStatusBadge({ status }: Props) {
@@ -22,7 +31,7 @@ export function VehicleStatusBadge({ status }: Props) {
       <span
         className={`w-1.5 h-1.5 rounded-full mr-1.5 ${STATUS_DOTS[status] || "bg-gray-600"}`}
       />
-      {status.replace("_", " ")}
+      {STATUS_LABELS[status] || status.replace(/_/g, " ")}
     </span>
   );
 }

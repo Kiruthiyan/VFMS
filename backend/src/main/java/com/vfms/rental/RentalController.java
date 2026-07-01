@@ -2,6 +2,7 @@ package com.vfms.rental;
 
 import com.vfms.common.dto.ApiResponse;
 import com.vfms.common.file.SafeFileStorage;
+import com.vfms.fleet.service.FleetDocumentStorageService;
 import com.vfms.rental.dto.RentalRequestDto;
 import com.vfms.rental.dto.RentalResponseDto;
 import jakarta.validation.Valid;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -25,6 +25,7 @@ import java.util.Map;
 public class RentalController {
 
     private final RentalService rentalService;
+    private final FleetDocumentStorageService fleetDocumentStorageService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<RentalResponseDto>> createRental(
@@ -68,39 +69,23 @@ public class RentalController {
     @PostMapping("/{id}/agreement")
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadAgreement(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
-            String fileName = SafeFileStorage.buildStoredFileName("agreement", id, file);
-            Path uploadDir = Paths.get("uploads/rental").toAbsolutePath().normalize();
-            Path filePath = uploadDir.resolve(fileName).normalize();
-
-            // Directory is created lazily so the app doesn't require manual setup on new environments or after a clean deployment
-            Files.createDirectories(uploadDir);
-            file.transferTo(filePath.toFile());
-
-            String fileUrl = "/api/rentals/files/" + fileName;
-            RentalResponseDto response = rentalService.uploadAgreement(id, fileUrl);
-            return ResponseEntity.ok(ApiResponse.success("Agreement uploaded", response));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to upload agreement: " + e.getMessage());
-        }
+        String fileReference = fleetDocumentStorageService.uploadRentalDocument(id, "agreement", file);
+        RentalResponseDto response = rentalService.uploadAgreement(id, fileReference);
+        return ResponseEntity.ok(ApiResponse.success("Agreement uploaded", response));
     }
 
     @PostMapping("/{id}/invoice")
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadInvoice(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
-            String fileName = SafeFileStorage.buildStoredFileName("invoice", id, file);
-            Path uploadDir = Paths.get("uploads/rental").toAbsolutePath().normalize();
-            Path filePath = uploadDir.resolve(fileName).normalize();
-            Files.createDirectories(uploadDir);
-            file.transferTo(filePath.toFile());
+        String fileReference = fleetDocumentStorageService.uploadRentalDocument(id, "invoice", file);
+        RentalResponseDto response = rentalService.uploadInvoice(id, fileReference);
+        return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
+    }
 
-            String fileUrl = "/api/rentals/files/" + fileName;
-            RentalResponseDto response = rentalService.uploadInvoice(id, fileUrl);
-            return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to upload invoice: " + e.getMessage());
-        }
+    @GetMapping("/files/access")
+    public ResponseEntity<ApiResponse<String>> getFileAccess(@RequestParam("ref") String reference) {
+        String signedUrl = fleetDocumentStorageService.createSignedUrlForRental(reference);
+        return ResponseEntity.ok(ApiResponse.success("Document access link created", signedUrl));
     }
 
     @GetMapping("/files/{fileName}")

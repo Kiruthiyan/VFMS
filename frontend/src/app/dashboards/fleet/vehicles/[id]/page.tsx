@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Vehicle, vehicleApi } from "@/lib/api/vehicle";
+import { tripAvailabilityApi } from "@/lib/api/trip-availability";
 import { MaintenanceRequest, maintenanceApi } from "@/lib/api/maintenance";
 import { VehicleStatusBadge } from "@/components/vehicles/VehicleStatusBadge";
 import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
@@ -46,12 +47,19 @@ export default function VehicleDetailPage({
   const [historyLoading, setHistoryLoading] = useState(true);
   const [retiring, setRetiring] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "history">("details");
+  const [isInTripUse, setIsInTripUse] = useState(false);
 
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
-        const res = await vehicleApi.getById(Number(id));
+        const [res, tripVehicleIds] = await Promise.all([
+          vehicleApi.getById(Number(id)),
+          tripAvailabilityApi.getActiveVehicleIds().catch((): number[] => []),
+        ]);
         setVehicle(res.data);
+        setIsInTripUse(
+          res.data.status === "AVAILABLE" && tripVehicleIds.includes(res.data.id),
+        );
       } catch {
         toast.error("Failed to load vehicle");
       } finally {
@@ -119,6 +127,8 @@ export default function VehicleDetailPage({
     );
   }
 
+  const vehicleDisplayStatus = isInTripUse ? "IN_TRIP_USE" : vehicle.status;
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 max-w-4xl mx-auto animate-in fade-in duration-500">
@@ -139,7 +149,7 @@ export default function VehicleDetailPage({
               </div>
               {vehicle.brand} {vehicle.model}
               <div className="ml-auto">
-                <VehicleStatusBadge status={vehicle.status} />
+                <VehicleStatusBadge status={vehicleDisplayStatus} />
               </div>
             </CardTitle>
           </CardHeader>
