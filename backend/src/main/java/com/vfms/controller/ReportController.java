@@ -45,4 +45,9 @@ public class ReportController {
     public ResponseEntity<TripStatsDTO> getTripStats() {
         return ResponseEntity.ok(reportService.getTripStats());
     }
+
+    @GetMapping("/utilization/summary")
+    public ResponseEntity<List<VehicleUtilizationDTO>> getUtilizationSummary() {
+        return ResponseEntity.ok(reportService.getVehicleUtilization());
+    }
 }

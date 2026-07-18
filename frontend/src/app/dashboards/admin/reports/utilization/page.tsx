@@ -1,42 +1,24 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-    Truck, 
-    Navigation, 
-    CheckCircle2, 
-    Clock, 
-    XCircle, 
-    BarChart3,
-    Calendar,
-    ArrowUpRight,
-    PlayCircle,
-    Activity
-} from "lucide-react";
+import { Truck, CheckCircle2, Clock, Calendar, PlayCircle, XCircle } from "lucide-react";
 import { reportService, VehicleUtilization, TripStats } from "@/services/reportService";
-import { 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell, AreaChart, Area
-} from 'recharts';
-
-const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 export default function UtilizationPage() {
     const [utilizationData, setUtilizationData] = useState<VehicleUtilization[]>([]);
     const [tripStats, setTripStats] = useState<TripStats | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
         try {
             const [uResult, tResult] = await Promise.all([
                 reportService.getVehicleUtilization(),
-                reportService.getTripStats()
+                reportService.getTripStats(),
             ]);
             setUtilizationData(uResult);
             setTripStats(tResult);
@@ -49,50 +31,46 @@ export default function UtilizationPage() {
 
     if (loading || !tripStats) return <div className="p-8">Loading trip analytics...</div>;
 
-    // --- Data Formatting ---
-    const deptData = [
-        { name: 'Logistics', requests: 85 },
-        { name: 'Corporate', requests: 42 },
-        { name: 'Staff Tx', requests: 64 },
-        { name: 'Operations', requests: 38 },
-        { name: 'Marketing', requests: 16 },
-    ];
+    const approvalTotal = tripStats.approved + tripStats.rejected;
+    const approvalRate = approvalTotal > 0 ? (tripStats.approved / approvalTotal) * 100 : 0;
+    const totalFleetTrips = utilizationData.reduce((sum, v) => sum + (v.totalTrips || 0), 0);
+    const maxTrips = utilizationData.length > 0 ? Math.max(...utilizationData.map(v => v.totalTrips || 0)) : 1;
 
+    // Chart 1 - Trip status breakdown from real tripStats
+    const tripStatusData = [
+        { name: "Pending", value: tripStats.pending, fill: "#f59e0b" },
+        { name: "Active", value: tripStats.active, fill: "#3b82f6" },
+        { name: "Completed", value: tripStats.completed, fill: "#10b981" },
+        { name: "Cancelled", value: tripStats.cancelled, fill: "#ef4444" },
+        { name: "Rejected", value: tripStats.rejected, fill: "#6b7280" },
+    ].filter(d => d.value > 0);
+
+    // Chart 2 - Vehicle trip distribution from real utilization data
+    const vehicleBarData = utilizationData.slice(0, 8).map(v => ({
+        name: v.licensePlate || "Unknown",
+        trips: v.totalTrips || 0,
+    }));
+
+    // Chart 3 - Approval data
     const statusData = [
-        { name: 'Approved', value: tripStats.approved },
-        { name: 'Rejected', value: tripStats.rejected },
-    ];
-
-    const completionTrend = [
-        { name: 'Mon', completed: 25, cancelled: 2 },
-        { name: 'Tue', completed: 32, cancelled: 4 },
-        { name: 'Wed', completed: 28, cancelled: 1 },
-        { name: 'Thu', completed: 35, cancelled: 3 },
-        { name: 'Fri', completed: 42, cancelled: 5 },
-        { name: 'Sat', completed: 18, cancelled: 2 },
-        { name: 'Sun', completed: 12, cancelled: 0 },
+        { name: "Approved", value: tripStats.approved },
+        { name: "Rejected", value: tripStats.rejected },
     ];
 
     return (
         <div className="space-y-6 p-8 bg-slate-50/50 min-h-screen animate-in fade-in duration-700">
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Trip Management Analytics</h1>
-                    <p className="text-slate-500 mt-1">Operational lifecycle reporting and vehicle utilization metrics</p>
-                </div>
-                <Badge className="bg-slate-900 text-white px-4 py-1.5 rounded-full flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-amber-400" />
-                    Overall Fleet Utilization: 84%
-                </Badge>
+            <div>
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Vehicle Utilization Analytics</h1>
+                <p className="text-slate-500 mt-1">Fleet workload distribution and trip lifecycle metrics</p>
             </div>
 
-            {/* Trip Lifecycle KPIs */}
+            {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { label: 'Total Requests', value: tripStats.total, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Pending Approval', value: tripStats.pending, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-                    { label: 'Active Trips', value: tripStats.active, icon: PlayCircle, color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: 'Completed', value: tripStats.completed, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50' },
+                    { label: "Total Requests", value: tripStats.total, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50" },
+                    { label: "Pending Approval", value: tripStats.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+                    { label: "Active Trips", value: tripStats.active, icon: PlayCircle, color: "text-green-600", bg: "bg-green-50" },
+                    { label: "Completed", value: tripStats.completed, icon: CheckCircle2, color: "text-purple-600", bg: "bg-purple-50" },
                 ].map((stat, i) => (
                     <Card key={i} className="border-none shadow-sm">
                         <CardContent className="pt-6">
@@ -111,109 +89,126 @@ export default function UtilizationPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Trip Request Analysis - Bar Chart */}
+                {/* Chart 1 - Trip Status Breakdown */}
                 <Card className="border-none shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-lg">Trip Request Distribution</CardTitle>
-                        <CardDescription>Frequency of transport requests by organizational department</CardDescription>
+                        <CardTitle className="text-lg">Trip Status Breakdown</CardTitle>
+                        <CardDescription>Distribution of all trip requests by current status</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[350px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={deptData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                <Tooltip cursor={{fill: 'transparent'}} />
-                                <Bar dataKey="requests" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} name="Total Requests" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {tripStatusData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={tripStatusData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+                                    <Tooltip cursor={{ fill: "transparent" }} />
+                                    <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40} name="Trips">
+                                        {tripStatusData.map((entry, index) => (
+                                            <Cell key={index} fill={entry.fill} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-slate-400">No trip data available</div>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Execution & Trend - Area Chart */}
+                {/* Chart 2 - Vehicle Trip Distribution */}
                 <Card className="border-none shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-lg">Trip Execution Velocity</CardTitle>
-                        <CardDescription>Daily completion vs cancellation patterns over a 7-day window</CardDescription>
+                        <CardTitle className="text-lg">Vehicle Trip Distribution</CardTitle>
+                        <CardDescription>Number of trips assigned per vehicle</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[350px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={completionTrend}>
-                                <defs>
-                                    <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="completed" stroke="#10b981" fillOpacity={1} fill="url(#colorComp)" strokeWidth={3} name="Completed" />
-                                <Area type="monotone" dataKey="cancelled" stroke="#ef4444" fill="transparent" strokeWidth={2} name="Cancelled" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {vehicleBarData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={vehicleBarData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 11 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+                                    <Tooltip cursor={{ fill: "transparent" }} />
+                                    <Bar dataKey="trips" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} name="Total Trips" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-slate-400">No vehicle data available</div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Approval Rate Pie Chart */}
-                <Card className="border-none shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Staff Approval Efficiency</CardTitle>
-                        <CardDescription>Ratio of approved requests vs rejections</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px] flex flex-col justify-center items-center">
-                        <ResponsiveContainer width="100%" height={200}>
-                            <PieChart>
-                                <Pie
-                                    data={statusData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    <Cell fill="#10b981" />
-                                    <Cell fill="#ef4444" />
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="mt-4 text-center">
-                            <p className="text-2xl font-bold text-slate-900">
-                                {((tripStats.approved + tripStats.rejected) > 0 
-                                    ? ((tripStats.approved / (tripStats.approved + tripStats.rejected)) * 100) 
-                                    : 0).toFixed(1)}%
-                            </p>
-                            <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">Aggregate Approval Rate</p>
+            {/* Chart 3 - Staff Approval Efficiency */}
+            <Card className="border-none shadow-sm">
+                <CardHeader>
+                    <CardTitle className="text-lg">Staff Approval Efficiency</CardTitle>
+                    <CardDescription>Ratio of approved requests vs rejections</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_180px] lg:items-center">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-2xl bg-emerald-50 px-4 py-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Approved</p>
+                                    <p className="mt-1 text-2xl font-black text-emerald-700">{tripStats.approved}</p>
+                                </div>
+                                <div className="rounded-2xl bg-rose-50 px-4 py-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-700">Rejected</p>
+                                    <p className="mt-1 text-2xl font-black text-rose-700">{tripStats.rejected}</p>
+                                </div>
+                            </div>
+                            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Aggregate Approval Rate</p>
+                                <p className="mt-1 text-3xl font-black text-slate-900">{approvalRate.toFixed(1)}%</p>
+                                <p className="text-xs text-slate-500">{approvalTotal} total review decisions</p>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
+                        <div className="relative mx-auto h-[180px] w-[180px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={statusData} cx="50%" cy="50%" innerRadius={58} outerRadius={78} paddingAngle={6} dataKey="value" startAngle={90} endAngle={-270}>
+                                        <Cell fill="#10b981" />
+                                        <Cell fill="#ef4444" />
+                                    </Pie>
+                                    <Tooltip />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                    <p className="text-2xl font-black text-slate-900">{approvalRate.toFixed(0)}%</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Approved</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-                {/* Utilization Registry Table */}
-                <Card className="lg:col-span-2 border-none shadow-sm overflow-hidden">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Fleet Utilization Registry</CardTitle>
-                        <CardDescription>Individual vehicle workload and mileage metrics</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
-                                    <tr>
-                                        <th className="px-6 py-4">Vehicle Plate</th>
-                                        <th className="px-6 py-4 text-center">Trips</th>
-                                        <th className="px-6 py-4">Total Distance</th>
-                                        <th className="px-6 py-4">Efficiency</th>
-                                        <th className="px-6 py-4 text-center">Utilization</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white">
-                                    {utilizationData.map((v) => (
+            {/* Fleet Utilization Table */}
+            <Card className="border-none shadow-sm overflow-hidden">
+                <CardHeader>
+                    <CardTitle className="text-lg">Fleet Utilization Registry</CardTitle>
+                    <CardDescription>Individual vehicle workload and mileage metrics</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                                <tr>
+                                    <th className="px-6 py-4">Vehicle Plate</th>
+                                    <th className="px-6 py-4 text-center">Trips</th>
+                                    <th className="px-6 py-4">Total Distance</th>
+                                    <th className="px-6 py-4">Km / Trip</th>
+                                    <th className="px-6 py-4">Utilization</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 bg-white">
+                                {utilizationData.length > 0 ? utilizationData.map((v) => {
+                                    const kmPerTrip = v.totalTrips > 0 ? v.totalDistance / v.totalTrips : 0;
+                                    const tripShare = totalFleetTrips > 0 ? (v.totalTrips / totalFleetTrips) * 100 : 0;
+                                    return (
                                         <tr key={v.vehicleId} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
@@ -224,31 +219,32 @@ export default function UtilizationPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center font-semibold text-slate-700">{v.totalTrips}</td>
-                                            <td className="px-6 py-4 text-slate-600">{v.totalDistance} km</td>
+                                            <td className="px-6 py-4 text-slate-600">{(v.totalDistance || 0).toLocaleString()} km</td>
                                             <td className="px-6 py-4">
                                                 <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-50 border-none font-bold">
-                                                    92% Load
+                                                    {kmPerTrip.toFixed(1)} km/trip
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex-1 bg-slate-100 rounded-full h-1.5 min-w-[80px]">
-                                                        <div 
-                                                            className="bg-amber-500 h-full rounded-full" 
-                                                            style={{ width: '78%' }}
-                                                        />
+                                                        <div className="bg-amber-500 h-full rounded-full" style={{ width: `${Math.min(tripShare, 100)}%` }} />
                                                     </div>
-                                                    <span className="text-xs font-bold text-slate-900">78%</span>
+                                                    <span className="text-xs font-bold text-slate-900">{tripShare.toFixed(0)}%</span>
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                                    );
+                                }) : (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-400">No utilization data available</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

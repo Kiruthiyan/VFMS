@@ -43,6 +43,23 @@ export interface TripStats {
     cancelled: number;
 }
 
+export interface UtilizationDepartmentData {
+    name: string;
+    requests: number;
+}
+
+export interface UtilizationTrendData {
+    name: string;
+    completed: number;
+    cancelled: number;
+}
+
+export interface UtilizationSummary {
+    overallFleetUtilization: number;
+    departmentData: UtilizationDepartmentData[];
+    completionTrend: UtilizationTrendData[];
+}
+
 type ApiEnvelope<T> = {
     success?: boolean;
     message?: string;
@@ -58,6 +75,89 @@ function unwrapApiData<T>(payload: T | ApiEnvelope<T>): T {
 }
 
 export const reportService = {
+  getFuelLogs: async (): Promise<any[]> => {
+    try {
+      const { getAllFuelRecordsApi } = await import('@/lib/api/fuel');
+      const result = await getAllFuelRecordsApi();
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      console.error('Failed to fetch fuel logs:', error);
+      return [];
+    }
+  },
+
+  getVehicles: async (): Promise<any[]> => {
+    try {
+      const { vehicleApi } = await import('@/lib/api/vehicle');
+      const result = await vehicleApi.getAll();
+      return Array.isArray(result) ? result : result?.data || [];
+    } catch (error) {
+      console.error('Failed to fetch vehicles:', error);
+      return [];
+    }
+  },
+
+  getRentals: async (): Promise<any[]> => {
+    try {
+      const { rentalApi } = await import('@/lib/api/rental');
+      const result = await rentalApi.getAll();
+      return Array.isArray(result) ? result : result?.data || [];
+    } catch (error) {
+      console.error('Failed to fetch rentals:', error);
+      return [];
+    }
+  },
+
+  getMaintenanceAnalytics: async (): Promise<any[]> => {
+    try {
+      const { maintenanceApi } = await import('@/lib/api/maintenance');
+      const result = await maintenanceApi.getAll();
+      return Array.isArray(result) ? result : result?.data || [];
+    } catch (error) {
+      console.error('Failed to fetch maintenance:', error);
+      return [];
+    }
+  },
+
+  async getFuelLogs(): Promise<any[]> {
+    try {
+      const response = await apiClient.get('/fuel');
+      return response.data?.data || response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch fuel logs:', error);
+      return [];
+    }
+  },
+
+  async getVehicles(): Promise<any[]> {
+    try {
+      const response = await apiClient.get('/vehicles');
+      return response.data?.data || response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch vehicles:', error);
+      return [];
+    }
+  },
+
+  async getRentals(): Promise<any[]> {
+    try {
+      const response = await apiClient.get('/rentals');
+      return response.data?.data || response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch rentals:', error);
+      return [];
+    }
+  },
+
+  async getMaintenanceAnalytics(): Promise<any[]> {
+    try {
+      const response = await apiClient.get('/maintenance');
+      return response.data?.data || response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch maintenance records:', error);
+      return [];
+    }
+  },
     getDashboardStats: async (): Promise<DashboardStats> => {
         try {
             const response = await api.get<DashboardStats>('/api/reports/dashboard');
@@ -235,6 +335,20 @@ export const reportService = {
         }
     },
 
+    getUtilizationSummary: async (): Promise<UtilizationSummary> => {
+        try {
+            const response = await api.get<UtilizationSummary>('/api/reports/utilization/summary');
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching utilization summary:", error);
+            return {
+                overallFleetUtilization: 0,
+                departmentData: [],
+                completionTrend: []
+            };
+        }
+    },
+
     getRentals: async () => {
         try {
             const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/rentals');
@@ -245,4 +359,56 @@ export const reportService = {
         }
     },
 
+async getFuelLogs(): Promise<any[]> {
+    try {
+      const records = await getAllFuelRecordsApi();
+      return records.map((record: any) => ({
+        id: record.id,
+        vehicleId: record.vehicleId,
+        licensePlate: record.vehiclePlate,
+        date: record.fuelDate,
+        fuelQuantity: record.quantity,
+        pricePerLiter: record.costPerLitre,
+        totalCost: record.totalCost,
+        odometer: record.odometerReading,
+        fuelStation: record.fuelStation ?? "",
+      }));
+    } catch (error) {
+      console.error('Failed to fetch fuel logs:', error);
+      return [];
+    }
+  },
+
+  async getVehicles(): Promise<any[]> {
+    try {
+      const { vehicleApi } = await import('@/lib/api/vehicle');
+      const result = await vehicleApi.getAll();
+      return Array.isArray(result) ? result : result?.data || [];
+    } catch (error) {
+      console.error('Failed to fetch vehicles:', error);
+      return [];
+    }
+  },
+
+  async getRentals(): Promise<any[]> {
+    try {
+      const { rentalApi } = await import('@/lib/api/rental');
+      const result = await rentalApi.getAll();
+      return Array.isArray(result) ? result : result?.data || [];
+    } catch (error) {
+      console.error('Failed to fetch rentals:', error);
+      return [];
+    }
+  },
+
+  async getMaintenanceAnalytics(): Promise<any[]> {
+    try {
+      const { maintenanceApi } = await import('@/lib/api/maintenance');
+      const result = await maintenanceApi.getAll();
+      return Array.isArray(result) ? result : result?.data || [];
+    } catch (error) {
+      console.error('Failed to fetch maintenance:', error);
+      return [];
+    }
+  },
 };

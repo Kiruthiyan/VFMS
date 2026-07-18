@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -20,6 +20,7 @@ export default function ExportPage() {
     const [selectedFuelVehicle, setSelectedFuelVehicle] = useState<string>('');
     const [selectedMaintenanceVehicle, setSelectedMaintenanceVehicle] = useState<string>('');
     const [selectedRental, setSelectedRental] = useState<string>('');
+    const [rentals, setRentals] = useState<any[]>([]);
 
     // Date range filter for category reports
     const [startDate, setStartDate] = useState<string>('');
@@ -35,21 +36,18 @@ export default function ExportPage() {
         const loadData = async () => {
             try {
                 const [vData, dData] = await Promise.all([
+                    reportService.getRentals(),
                     reportService.getVehicles(),
                     reportService.getDriverPerformance()
                 ]);
                 setVehicles(vData);
+                setRentals((await reportService.getRentals()) || []);
                 setDrivers(dData);
                 
-                if (vData.length > 0) {
-                    const firstId = vData[0].id || vData[0].vehicleId;
-                    setSelectedVehicle(firstId);
-                    setSelectedFuelVehicle(firstId);
-                    setSelectedMaintenanceVehicle(firstId);
-                }
-                if (dData.length > 0) {
-                    setSelectedDriver(dData[0].id || dData[0].driverId);
-                }
+                setSelectedVehicle('');
+                setSelectedFuelVehicle('');
+                setSelectedMaintenanceVehicle('');
+                setSelectedDriver('');
             } catch (e) {
                 console.error("Export page data load failed", e);
             }
@@ -300,7 +298,7 @@ export default function ExportPage() {
                         >
                             <option value="">Choose a Vehicle...</option>
                             {vehicles.map(v => (
-                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.licensePlate} ({v.make})</option>
+                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.plateNumber} ({v.brand} {v.model})</option>
                             ))}
                         </select>
                         <div className="grid grid-cols-2 gap-2">
@@ -326,7 +324,7 @@ export default function ExportPage() {
                         >
                             <option value="">Select Driver...</option>
                             {drivers.map(d => (
-                                <option key={d.id || d.driverId} value={d.id || d.driverId}>{d.driverName || d.name}</option>
+                                <option key={d.id || d.driverId} value={d.id || d.driverId}>{d.driverName || d.name || "Unknown Driver"}</option>
                             ))}
                         </select>
                         <div className="grid grid-cols-2 gap-2">
@@ -352,7 +350,7 @@ export default function ExportPage() {
                         >
                             <option value="">Select for Fuel Log...</option>
                             {vehicles.map(v => (
-                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.licensePlate}</option>
+                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.plateNumber}</option>
                             ))}
                         </select>
                         <div className="grid grid-cols-2 gap-2">
@@ -378,7 +376,7 @@ export default function ExportPage() {
                         >
                             <option value="">Select for Logs...</option>
                             {vehicles.map(v => (
-                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.licensePlate}</option>
+                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.plateNumber}</option>
                             ))}
                         </select>
                         <div className="grid grid-cols-2 gap-2">
@@ -402,29 +400,16 @@ export default function ExportPage() {
                             onChange={(e) => setSelectedRental(e.target.value)}
                             className="w-full h-10 px-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-pink-500 outline-none font-bold text-sm"
                         >
-                            <option value="">Select Booking ID...</option>
-                            <option value="ALL">Export All Bookings</option>
+                            <option value="">Select Rental...</option>
+                            {rentals.map(r => (
+                                <option key={r.id} value={String(r.id)}>
+                                    {r.plateNumber || r.vehicleType || "Vehicle"} — {r.vendorName || "Vendor"} ({r.startDate || "-"})
+                                </option>
+                            ))}
                         </select>
                         <div className="grid grid-cols-2 gap-2">
                             <Button size="sm" className="bg-pink-600 font-bold" onClick={() => handleExport('rental', 'pdf')} disabled={!selectedRental || !!downloading}>PDF</Button>
                             <Button size="sm" variant="outline" className="font-bold border-pink-200" onClick={() => handleExport('rental', 'excel')} disabled={!selectedRental || !!downloading}>Excel</Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Performance Analytics Card */}
-                <Card className="border-2 border-cyan-200 hover:shadow-lg transition-all">
-                    <CardHeader className="pb-3">
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="h-6 w-6 text-cyan-600" />
-                            <CardTitle className="text-lg">Performance Report</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <p className="text-xs text-slate-500 font-medium">Generate a comprehensive performance analysis for the entire fleet.</p>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" className="bg-cyan-600 font-bold" onClick={() => handleExport('performance', 'pdf')} disabled={!!downloading}>PDF</Button>
-                            <Button size="sm" variant="outline" className="font-bold border-cyan-200" onClick={() => handleExport('performance', 'excel')} disabled={!!downloading}>Excel</Button>
                         </div>
                     </CardContent>
                 </Card>

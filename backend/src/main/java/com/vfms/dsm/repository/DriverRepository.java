@@ -40,6 +40,8 @@ public class DriverRepository {
     private final ObjectMapper objectMapper;
     private final UserRepository users;
 
+    public List<UUID> findAllDriverIds() { return jdbcTemplate.queryForList("select id from drivers", UUID.class); }
+
     @PostConstruct
     void ensureEmbeddedRecordSequence() {
         jdbcTemplate.execute("CREATE SEQUENCE IF NOT EXISTS driver_embedded_record_id_seq START WITH 1");
