@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -35,14 +35,14 @@ export default function ExportPage() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [vData, dData] = await Promise.all([
+                const [rentalsData, vehiclesData, driversData] = await Promise.all([
                     reportService.getRentals(),
                     reportService.getVehicles(),
                     reportService.getDriverPerformance()
                 ]);
-                setVehicles(vData);
-                setRentals((await reportService.getRentals()) || []);
-                setDrivers(dData);
+                setVehicles(vehiclesData);
+                setRentals(rentalsData || []);
+                setDrivers(driversData);
                 
                 setSelectedVehicle('');
                 setSelectedFuelVehicle('');
@@ -403,7 +403,7 @@ export default function ExportPage() {
                             <option value="">Select Rental...</option>
                             {rentals.map(r => (
                                 <option key={r.id} value={String(r.id)}>
-                                    {r.plateNumber || r.vehicleType || "Vehicle"} — {r.vendorName || "Vendor"} ({r.startDate || "-"})
+                                    {r.plateNumber || r.vehicleType || "Vehicle"} � {r.vendorName || "Vendor"} ({r.startDate || "-"})
                                 </option>
                             ))}
                         </select>
