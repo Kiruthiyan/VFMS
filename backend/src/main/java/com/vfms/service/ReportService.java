@@ -80,10 +80,11 @@ public class ReportService {
     }
 
     public List<DriverPerformanceDTO> getDriverPerformance() {
-        return driverRepository.findAllDriverIds().stream().map((java.util.UUID driverId) ->
+        java.util.Map<java.util.UUID, String> namesById = driverRepository.findAllDriverIdsAndNames();
+        return namesById.entrySet().stream().map(entry ->
             DriverPerformanceDTO.builder()
-                    .driverId(driverId)
-                    .driverName("Driver-" + driverId.toString().substring(0, 8))
+                    .driverId(entry.getKey())
+                    .driverName(entry.getValue() != null ? entry.getValue() : "Driver-" + entry.getKey().toString().substring(0, 8))
                     .totalTrips(0L)
                     .totalDistance(0.0)
                     .rating(0.0)

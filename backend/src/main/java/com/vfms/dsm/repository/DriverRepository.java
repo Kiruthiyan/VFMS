@@ -42,6 +42,13 @@ public class DriverRepository {
 
     public List<UUID> findAllDriverIds() { return jdbcTemplate.queryForList("select id from drivers", UUID.class); }
 
+    public Map<UUID, String> findAllDriverIdsAndNames() {
+        return jdbcTemplate.query(
+                "select id, full_name from drivers",
+                (rs, rowNum) -> Map.entry((UUID) rs.getObject("id"), rs.getString("full_name"))
+        ).stream().collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     @PostConstruct
     void ensureEmbeddedRecordSequence() {
         jdbcTemplate.execute("CREATE SEQUENCE IF NOT EXISTS driver_embedded_record_id_seq START WITH 1");
