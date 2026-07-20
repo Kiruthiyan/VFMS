@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,8 +34,8 @@ export default function RentalAnalyticsPage() {
     const totalExpenses = rentals.reduce((sum, r) => sum + (r.totalCost || 0), 0);
     const avgDailyRate = rentals.length > 0 ? rentals.reduce((sum, r) => sum + (r.costPerDay || 0), 0) / rentals.length : 0;
     const totalDays = rentals.reduce((sum, r) => sum + (r.days || 0), 0);
-    const rentedVehicles = vehicles.filter(v => v.status === "RENTED").length;
-    const rentalUtilization = vehicles.length > 0 ? (rentedVehicles / vehicles.length) * 100 : 0;
+    const activeRentals = rentals.filter(r => r.status === "ACTIVE").length;
+    const rentalUtilization = rentals.length > 0 ? (activeRentals / rentals.length) * 100 : 0;
 
     const spendingData = rentals.map(r => ({
         name: r.startDate,
@@ -197,7 +197,7 @@ export default function RentalAnalyticsPage() {
                                         <td className="px-6 py-4 font-semibold text-slate-900">{rental.vendorName || rental.vendorId || "-"}</td>
                                         <td className="px-6 py-4 text-slate-600">{rental.vehicleType || "-"}</td>
                                         <td className="px-6 py-4 text-slate-600">{rental.plateNumber || "-"}</td>
-                                        <td className="px-6 py-4 text-slate-600">{rental.startDate || "-"} → {rental.endDate || "-"}</td>
+                                        <td className="px-6 py-4 text-slate-600">{rental.startDate || "-"} ? {rental.endDate || "-"}</td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-900">LKR {(rental.totalCost || 0).toLocaleString()}</td>
                                         <td className="px-6 py-4">
                                             <Badge className={

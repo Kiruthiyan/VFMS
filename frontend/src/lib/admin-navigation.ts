@@ -24,6 +24,7 @@ export interface AdminNavItem {
   icon: LucideIcon;
   exact?: boolean;
   description?: string;
+  children?: AdminNavItem[];
 }
 
 export interface AdminNavSection {
@@ -155,13 +156,6 @@ export const adminNavigationSections: AdminNavSection[] = [
         exact: true,
         description: "Resolve flagged fuel activity",
       },
-      {
-        href: "/dashboards/admin/reports/fuel",
-        label: "Fuel Reports",
-        icon: BarChart3,
-        exact: false,
-        description: "Fuel consumption and cost analysis",
-      },
     ],
   },
   {
@@ -173,48 +167,50 @@ export const adminNavigationSections: AdminNavSection[] = [
         icon: BarChart3,
         exact: true,
         description: "Overview of all reports",
-      },
-      {
-        href: "/dashboards/admin/reports/drivers",
-        label: "Driver Reports",
-        icon: Users,
-        exact: false,
-        description: "Driver performance and analytics",
-      },
-      {
-        href: "/dashboards/admin/reports/fuel",
-        label: "Fuel Reports",
-        icon: Droplets,
-        exact: false,
-        description: "Fuel consumption and cost analysis",
-      },
-      {
-        href: "/dashboards/admin/reports/utilization",
-        label: "Vehicle Utilization",
-        icon: Car,
-        exact: false,
-        description: "Fleet utilization metrics",
-      },
-      {
-        href: "/dashboards/admin/reports/maintenance",
-        label: "Maintenance Reports",
-        icon: Wrench,
-        exact: false,
-        description: "Maintenance cost and history",
-      },
-      {
-        href: "/dashboards/admin/reports/rentals",
-        label: "Rental Reports",
-        icon: FileText,
-        exact: false,
-        description: "Rental analytics and insights",
-      },
-      {
-        href: "/dashboards/admin/reports/export",
-        label: "Export Reports",
-        icon: Download,
-        exact: false,
-        description: "Download reports in PDF or Excel format",
+        children: [
+          {
+            href: "/dashboards/admin/reports/drivers",
+            label: "Driver Reports",
+            icon: Users,
+            exact: false,
+            description: "Driver performance and analytics",
+          },
+          {
+            href: "/dashboards/admin/reports/fuel",
+            label: "Fuel Reports",
+            icon: Droplets,
+            exact: false,
+            description: "Fuel consumption and cost analysis",
+          },
+          {
+            href: "/dashboards/admin/reports/utilization",
+            label: "Vehicle Utilization",
+            icon: Car,
+            exact: false,
+            description: "Fleet utilization metrics",
+          },
+          {
+            href: "/dashboards/admin/reports/maintenance",
+            label: "Maintenance Reports",
+            icon: Wrench,
+            exact: false,
+            description: "Maintenance cost and history",
+          },
+          {
+            href: "/dashboards/admin/reports/rentals",
+            label: "Rental Reports",
+            icon: FileText,
+            exact: false,
+            description: "Rental analytics and insights",
+          },
+          {
+            href: "/dashboards/admin/reports/export",
+            label: "Export Reports",
+            icon: Download,
+            exact: false,
+            description: "Download reports in PDF or Excel format",
+          },
+        ],
       },
     ],
   },
@@ -247,8 +243,8 @@ export const adminQuickLinks: AdminNavItem[] = [
   },
 ];
 
-export const allAdminNavItems = adminNavigationSections.flatMap(
-  (section) => section.items
+export const allAdminNavItems = adminNavigationSections.flatMap((section) =>
+  section.items.flatMap((item) => [item, ...(item.children ?? [])])
 );
 
 function isExactMatch(pathname: string, href: string): boolean {
@@ -324,7 +320,7 @@ export function getAdminBreadcrumbs(pathname: string): string[] {
   }
 
   const section = adminNavigationSections.find((group) =>
-    group.items.some((item) => item.href === matchedItem.href)
+    group.items.some((item) => item.href === matchedItem.href || item.children?.some((c) => c.href === matchedItem.href))
   );
 
   if (section && section.title !== "Overview") {
@@ -335,7 +331,3 @@ export function getAdminBreadcrumbs(pathname: string): string[] {
 
   return breadcrumbs;
 }
-
-
-
-

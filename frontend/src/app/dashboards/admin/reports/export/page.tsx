@@ -13,7 +13,7 @@ export default function ExportPage() {
     const [downloading, setDownloading] = useState<string | null>(null);
     const [vehicles, setVehicles] = useState<any[]>([]);
     const [drivers, setDrivers] = useState<any[]>([]);
-    
+
     // Selection states
     const [selectedVehicle, setSelectedVehicle] = useState<string>('');
     const [selectedDriver, setSelectedDriver] = useState<string>('');
@@ -27,10 +27,44 @@ export default function ExportPage() {
     const [endDate, setEndDate] = useState<string>('');
     const [appliedStartDate, setAppliedStartDate] = useState<string>('');
     const [appliedEndDate, setAppliedEndDate] = useState<string>('');
-    
+
     // Date input refs for triggering picker
     const startDateInputRef = useRef<HTMLInputElement>(null);
     const endDateInputRef = useRef<HTMLInputElement>(null);
+
+    // Saved reports history state
+    const [savedReports, setSavedReports] = useState<any[]>([]);
+    const [loadingReports, setLoadingReports] = useState<boolean>(false);
+
+    const loadSavedReports = async () => {
+        setLoadingReports(true);
+        try {
+            const data = await reportService.getReportDocuments();
+            setSavedReports(data || []);
+        } catch (e) {
+            console.error("Failed to load saved reports", e);
+        } finally {
+            setLoadingReports(false);
+        }
+    };
+
+    const handleDeleteReport = async (id: number) => {
+        try {
+            await reportService.deleteReportDocument(id);
+            toast({
+                title: "Report Deleted",
+                description: "The saved report has been deleted from Supabase storage.",
+            });
+            await loadSavedReports();
+        } catch (error) {
+            console.error("Delete report error:", error);
+            toast({
+                title: "Delete Failed",
+                description: "Failed to delete the report. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -43,7 +77,7 @@ export default function ExportPage() {
                 setVehicles(vehiclesData);
                 setRentals(rentalsData || []);
                 setDrivers(driversData);
-                
+
                 setSelectedVehicle('');
                 setSelectedFuelVehicle('');
                 setSelectedMaintenanceVehicle('');
@@ -53,6 +87,7 @@ export default function ExportPage() {
             }
         };
         loadData();
+        loadSavedReports();
     }, []);
 
     const getDateRange = () => {
@@ -89,73 +124,82 @@ export default function ExportPage() {
     const handleExport = async (type: string, format: 'pdf' | 'excel', id?: string) => {
         const loadingId = `${type}-${format}`;
         setDownloading(loadingId);
-        
+
         try {
             const { startDate, endDate } = getDateRange();
+            let result: { blob: Blob; fileName: string } | undefined = undefined;
 
             // Overall Summary
             if (type === 'overall') {
                 const summary = await reportService.getDashboardStats();
-                if (format === 'pdf') exportService.exportOverallSummaryPDF(summary);
-                else exportService.exportOverallSummaryExcel(summary);
+                if (format === 'pdf') result = exportService.exportOverallSummaryPDF(summary);
+                else result = exportService.exportOverallSummaryExcel(summary);
             }
             // Individual Vehicle
             else if (type === 'vehicle') {
                 const vehicleId = id || selectedVehicle;
                 const vehicle = vehicles.find(v => (v.id || v.vehicleId).toString() === vehicleId.toString());
-                if (format === 'pdf') exportService.exportVehicleReportPDF(vehicle);
-                else exportService.exportVehicleReportExcel(vehicle);
+                if (format === 'pdf') result = exportService.exportVehicleReportPDF(vehicle);
+                else result = exportService.exportVehicleReportExcel(vehicle);
             }
             // Individual Driver
             else if (type === 'driver') {
                 const driverId = id || selectedDriver;
                 const driver = drivers.find(d => (d.id || d.driverId).toString() === driverId.toString());
-                if (format === 'pdf') exportService.exportDriverReportPDF(driver);
-                else exportService.exportDriverReportExcel(driver);
+                if (format === 'pdf') result = exportService.exportDriverReportPDF(driver);
+                else result = exportService.exportDriverReportExcel(driver);
             }
             // Category Reports
             else if (type === 'maintenance') {
                 const data = await reportService.getMaintenanceAnalytics();
-                if (format === 'pdf') exportService.exportMaintenancePDF(data, startDate, endDate);
-                else exportService.exportMaintenanceExcel(data);
+                if (format === 'pdf') result = exportService.exportMaintenancePDF(data, startDate, endDate);
+                else result = exportService.exportMaintenanceExcel(data);
             }
             else if (type === 'fuel') {
                 const data = await reportService.getFuelLogs();
-                if (format === 'pdf') exportService.exportFuelPDF(data, startDate, endDate);
-                else exportService.exportFuelExcel(data);
+                if (format === 'pdf') result = exportService.exportFuelPDF(data, startDate, endDate);
+                else result = exportService.exportFuelExcel(data);
             }
             // Fuel Log for specific vehicle
             else if (type === 'fuellog') {
                 const data = await reportService.getFuelLogs();
                 const vehicleId = id || selectedFuelVehicle;
                 const filtered = data.filter((f: any) => (f.vehicleId || '').toString() === vehicleId.toString());
-                if (format === 'pdf') exportService.exportFuelPDF(filtered);
-                else exportService.exportFuelExcel(filtered);
+                if (format === 'pdf') result = exportService.exportFuelPDF(filtered);
+                else result = exportService.exportFuelExcel(filtered);
             }
             // Maintenance Log for specific vehicle
             else if (type === 'maintenancelog') {
                 const data = await reportService.getMaintenanceAnalytics();
                 const vehicleId = id || selectedMaintenanceVehicle;
                 const filtered = data.filter((m: any) => (m.vehicleId || m.licensePlate || '').toString() === vehicleId.toString());
-                if (format === 'pdf') exportService.exportMaintenancePDF(filtered);
-                else exportService.exportMaintenanceExcel(filtered);
+                if (format === 'pdf') result = exportService.exportMaintenancePDF(filtered);
+                else result = exportService.exportMaintenanceExcel(filtered);
             }
             // Rental
             else if (type === 'rental') {
                 const data = await reportService.getRentals();
-                if (format === 'pdf') exportService.exportRentalPDF(data);
-                else exportService.exportRentalExcel(data);
+                const rentalId = id || selectedRental;
+                const filtered = rentalId ? data.filter((r: any) => String(r.id) === String(rentalId)) : data;
+                if (format === 'pdf') result = exportService.exportRentalPDF(filtered);
+                else result = exportService.exportRentalExcel(filtered);
+            }
+            // Upload to backend if successfully captured
+            if (result && result.blob && result.fileName) {
+                const file = new File([result.blob], result.fileName, { type: result.blob.type });
+                await reportService.uploadReport(file, type, format, result.fileName);
+                await loadSavedReports();
             }
 
             toast({
                 title: "Export Successful",
-                description: `Your ${type} ${format.toUpperCase()} report has been downloaded.`,
+                description: `Your ${type} ${format.toUpperCase()} report has been downloaded and saved to Supabase storage.`,
             });
         } catch (error) {
             console.error("Export error:", error);
             toast({
                 title: "Export Failed",
-                description: "There was a problem generating your report.",
+                description: "There was a problem generating or saving your report.",
                 variant: "destructive",
             });
         } finally {
@@ -229,15 +273,15 @@ export default function ExportPage() {
                         {/* Action Buttons and Active Filter Display */}
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4">
                             <div className="flex gap-3">
-                                <Button 
+                                <Button
                                     type="button"
-                                    variant="outline" 
+                                    variant="outline"
                                     className="font-bold text-slate-700 border-slate-300 hover:bg-slate-50"
                                     onClick={handleResetDateRange}
                                 >
                                     RESET
                                 </Button>
-                                <Button 
+                                <Button
                                     type="button"
                                     className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6"
                                     onClick={handleApplyDateRange}
@@ -403,7 +447,7 @@ export default function ExportPage() {
                             <option value="">Select Rental...</option>
                             {rentals.map(r => (
                                 <option key={r.id} value={String(r.id)}>
-                                    {r.plateNumber || r.vehicleType || "Vehicle"} � {r.vendorName || "Vendor"} ({r.startDate || "-"})
+                                    {r.plateNumber || r.vehicleType || "Vehicle"} --- {r.vendorName || "Vendor"} ({r.startDate || "-"})
                                 </option>
                             ))}
                         </select>
@@ -414,6 +458,105 @@ export default function ExportPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Saved Reports / History Section */}
+            <Card className="border-2 border-slate-200 bg-white shadow-xl overflow-hidden mt-8">
+                <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-amber-400" />
+                        <h2 className="text-white font-bold text-lg">Saved Reports & Export History</h2>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-slate-300 border-slate-700 hover:bg-slate-800"
+                        onClick={loadSavedReports}
+                        disabled={loadingReports}
+                    >
+                        Refresh History
+                    </Button>
+                </div>
+                <CardContent className="p-6">
+                    {loadingReports ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mb-2"></div>
+                            <p className="font-semibold text-sm">Loading saved reports...</p>
+                        </div>
+                    ) : savedReports.length === 0 ? (
+                        <div className="text-center py-12 text-slate-400">
+                            <p className="text-base font-bold">No saved reports found.</p>
+                            <p className="text-sm">Generated reports will automatically appear here once exported.</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-left text-sm text-slate-500">
+                                <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-700">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 border-b">Report Name</th>
+                                        <th scope="col" className="px-6 py-3 border-b">Type</th>
+                                        <th scope="col" className="px-6 py-3 border-b">Format</th>
+                                        <th scope="col" className="px-6 py-3 border-b">Size</th>
+                                        <th scope="col" className="px-6 py-3 border-b">Export Date</th>
+                                        <th scope="col" className="px-6 py-3 border-b text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {savedReports.map((report) => (
+                                        <tr key={report.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4 font-semibold text-slate-900 border-b">
+                                                {report.fileName}
+                                            </td>
+                                            <td className="px-6 py-4 border-b">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                                    report.reportType === 'overall' ? 'bg-blue-50 text-blue-700' :
+                                                    report.reportType === 'vehicle' ? 'bg-purple-50 text-purple-700' :
+                                                    report.reportType === 'driver' ? 'bg-indigo-50 text-indigo-700' :
+                                                    report.reportType === 'fuellog' ? 'bg-green-50 text-green-700' :
+                                                    report.reportType === 'maintenancelog' ? 'bg-orange-50 text-orange-700' :
+                                                    'bg-pink-50 text-pink-700'
+                                                }`}>
+                                                    {report.reportType.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold border-b">
+                                                <span className={report.format === 'pdf' ? 'text-rose-600' : 'text-emerald-600'}>
+                                                    {report.format.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500 border-b">
+                                                {(report.fileSize / 1024).toFixed(1)} KB
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500 border-b">
+                                                {new Date(report.uploadedAt).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right space-x-3 border-b">
+                                                {report.fileUrl ? (
+                                                    <a
+                                                        href={report.fileUrl}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                                                    >
+                                                        Download
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">Unavailable</span>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDeleteReport(report.id)}
+                                                    className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

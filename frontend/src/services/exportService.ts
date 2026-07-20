@@ -87,6 +87,7 @@ export const exportService = {
         });
 
         doc.save(fileName);
+        return { blob: doc.output('blob'), fileName };
     },
 
     exportOverallSummaryExcel: (summary: any) => {
@@ -126,6 +127,8 @@ export const exportService = {
         XLSX.utils.book_append_sheet(wb, wsDriver, 'Driver Performance');
 
         XLSX.writeFile(wb, fileName);
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        return { blob: new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName };
     },
 
     // ====================
@@ -193,6 +196,7 @@ export const exportService = {
         });
 
         doc.save(fileName);
+        return { blob: doc.output('blob'), fileName };
     },
 
     exportVehicleReportExcel: (vehicle: any) => {
@@ -214,6 +218,8 @@ export const exportService = {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Vehicle Report');
         XLSX.writeFile(wb, fileName);
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        return { blob: new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName };
     },
 
     // ====================
@@ -255,6 +261,7 @@ export const exportService = {
         });
 
         doc.save(fileName);
+        return { blob: doc.output('blob'), fileName };
     },
 
     exportDriverReportExcel: (driver: any) => {
@@ -275,6 +282,8 @@ export const exportService = {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Driver Report');
         XLSX.writeFile(wb, fileName);
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        return { blob: new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName };
     },
 
     // ====================
@@ -308,6 +317,7 @@ export const exportService = {
         });
 
         doc.save(`maintenance_report.pdf`);
+        return { blob: doc.output('blob'), fileName: `maintenance_report.pdf` };
     },
 
     exportMaintenanceExcel: (records: any[]) => {
@@ -332,6 +342,8 @@ export const exportService = {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Report');
         XLSX.writeFile(wb, `maintenance_report.xlsx`);
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        return { blob: new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName: `maintenance_report.xlsx` };
     },
 
     // ====================
@@ -367,6 +379,7 @@ export const exportService = {
         });
 
         doc.save(`fuel_analysis_report.pdf`);
+        return { blob: doc.output('blob'), fileName: `fuel_analysis_report.pdf` };
     },
 
     exportFuelExcel: (records: any[]) => {
@@ -394,6 +407,8 @@ export const exportService = {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Fuel Analysis');
         XLSX.writeFile(wb, `fuel_analysis_report.xlsx`);
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        return { blob: new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName: `fuel_analysis_report.xlsx` };
     },
 
     // ====================
@@ -421,6 +436,7 @@ export const exportService = {
         });
 
         doc.save(`rental_report.pdf`);
+        return { blob: doc.output('blob'), fileName: `rental_report.pdf` };
     },
 
     exportRentalExcel: (records: any[]) => {
@@ -437,5 +453,7 @@ export const exportService = {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Rental Report');
         XLSX.writeFile(wb, `rental_report.xlsx`);
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        return { blob: new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName: `rental_report.xlsx` };
     }
 };

@@ -251,19 +251,6 @@ export const reportService = {
         }
     },
 
-    getUtilizationSummary: async (): Promise<UtilizationSummary> => {
-        try {
-            const response = await api.get<UtilizationSummary>('/api/reports/utilization/summary');
-            return response.data;
-        } catch (error) {
-            console.error("Error fetching utilization summary:", error);
-            return {
-                overallFleetUtilization: 0,
-                departmentData: [],
-                completionTrend: []
-            };
-        }
-    },
 
     getRentals: async () => {
         try {
@@ -275,4 +262,26 @@ export const reportService = {
             return [];
         }
     },
+
+    uploadReport: async (file: File, reportType: string, format: string, fileName?: string): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('reportType', reportType);
+        formData.append('format', format);
+        if (fileName) formData.append('fileName', fileName);
+
+        const response = await api.post('/api/reports/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+
+    getReportDocuments: async (): Promise<any[]> => {
+        const response = await api.get<any[]>('/api/reports/documents');
+        return response.data;
+    },
+
+    deleteReportDocument: async (id: number): Promise<void> => {
+        await api.delete(`/api/reports/documents/${id}`);
+    }
 };

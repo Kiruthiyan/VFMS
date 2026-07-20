@@ -43,10 +43,13 @@ public class DriverRepository {
     public List<UUID> findAllDriverIds() { return jdbcTemplate.queryForList("select id from drivers", UUID.class); }
 
     public Map<UUID, String> findAllDriverIdsAndNames() {
-        return jdbcTemplate.query(
-                "select id, full_name from drivers",
-                (rs, rowNum) -> Map.entry((UUID) rs.getObject("id"), rs.getString("full_name"))
-        ).stream().collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return jdbcTemplate.query("select id, full_name from drivers", (java.sql.ResultSet rs) -> {
+            Map<UUID, String> map = new java.util.LinkedHashMap<>();
+            while (rs.next()) {
+                map.put((UUID) rs.getObject("id"), rs.getString("full_name"));
+            }
+            return map;
+        });
     }
 
     @PostConstruct
