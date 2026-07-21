@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   UserRound,
 } from "lucide-react";
+import { toast } from "sonner";
 
 
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   getErrorMessage,
+  getFuelReceiptAccessUrlApi,
   getFuelRecordByIdApi,
   type FuelRecord,
 } from "@/lib/api/fuel";
@@ -187,6 +189,25 @@ export default function AdminFuelDetailPage() {
     );
   }, [record]);
 
+  async function openReceipt() {
+    if (!record) {
+      return;
+    }
+
+    const receiptWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+    try {
+      const signedUrl = await getFuelReceiptAccessUrlApi(record.id);
+      if (receiptWindow) {
+        receiptWindow.location.href = signedUrl;
+      } else {
+        window.open(signedUrl, "_blank", "noopener,noreferrer");
+      }
+    } catch (error) {
+      receiptWindow?.close();
+      toast.error(getErrorMessage(error));
+    }
+  }
+
   return (
     <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -208,15 +229,9 @@ export default function AdminFuelDetailPage() {
               </Button>
             )}
             {record?.receiptUrl && (
-              <Button asChild variant="outline" size="sm">
-                <a
-                  href={record.receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <FileText />
-                  View Receipt
-                </a>
+              <Button type="button" variant="outline" size="sm" onClick={openReceipt}>
+                <FileText />
+                View Receipt
               </Button>
             )}
           </div>
@@ -493,15 +508,9 @@ export default function AdminFuelDetailPage() {
                         Open the uploaded receipt in a new tab for document
                         verification.
                       </p>
-                      <Button asChild className="mt-4 w-full">
-                        <a
-                          href={record.receiptUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <FileText />
-                          Open Receipt
-                        </a>
+                      <Button type="button" className="mt-4 w-full" onClick={openReceipt}>
+                        <FileText />
+                        Open Receipt
                       </Button>
                     </div>
                   ) : (

@@ -15,6 +15,9 @@ public class SupabaseStorageConfig {
     @Value("${supabase.storage.service-key:}")
     private String serviceKey;
 
+    @Value("${supabase.storage.signed-url-ttl-seconds:300}")
+    private long signedUrlTtlSeconds;
+
     public String getStorageUrl() {
         return storageUrl;
     }
@@ -25,5 +28,9 @@ public class SupabaseStorageConfig {
 
     public String getServiceKey() {
         return serviceKey;
+    }
+
+    public long getSignedUrlTtlSeconds() {
+        return signedUrlTtlSeconds;
     }
 }

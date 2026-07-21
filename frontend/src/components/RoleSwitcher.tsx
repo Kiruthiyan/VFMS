@@ -4,7 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { useRole, User } from "@/lib/role-context";
 import { ChevronDown, Loader2, Check } from "lucide-react";
 
-const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
+const DEMO_ROLE_ENABLED =
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
 
 const ROLE_CONFIG: Record<string, {
     label: string;

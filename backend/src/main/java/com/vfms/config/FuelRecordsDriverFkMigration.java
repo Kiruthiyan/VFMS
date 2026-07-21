@@ -40,7 +40,8 @@ public class FuelRecordsDriverFkMigration implements ApplicationRunner {
             }
 
             jdbcTemplate.update("""
-                    DELETE FROM fuel_records fr
+                    UPDATE fuel_records fr
+                    SET driver_id = NULL
                     WHERE fr.driver_id IS NOT NULL
                       AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = fr.driver_id)
                     """);

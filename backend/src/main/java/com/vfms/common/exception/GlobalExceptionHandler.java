@@ -9,6 +9,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -75,6 +76,12 @@ public class GlobalExceptionHandler {
         String message = "Required parameter '" + ex.getParameterName() + "' is missing.";
         log.warn("Missing request parameter: {}", message);
         return build(HttpStatus.BAD_REQUEST, message, Map.of(ex.getParameterName(), message));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableMessage(HttpMessageNotReadableException ex) {
+        log.warn("Request body could not be read: {}", ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, "Invalid or missing request body.");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

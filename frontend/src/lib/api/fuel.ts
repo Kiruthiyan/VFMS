@@ -52,6 +52,10 @@ export interface FuelFormMetadata {
   drivers: FuelLookupOption[];
 }
 
+interface FuelReceiptAccessResponse {
+  url: string;
+}
+
 export async function createFuelRecordApi(
   data: CreateFuelRecordData,
   receipt?: File
@@ -85,6 +89,13 @@ export async function getFuelFormMetadataApi(): Promise<FuelFormMetadata> {
 export async function getFuelRecordByIdApi(id: string): Promise<FuelRecord> {
   const response = await api.get<FuelRecord>(`/api/v1/fuel/${id}`);
   return response.data;
+}
+
+export async function getFuelReceiptAccessUrlApi(id: string): Promise<string> {
+  const response = await api.get<FuelReceiptAccessResponse>(
+    `/api/v1/fuel/${id}/receipt`
+  );
+  return response.data.url;
 }
 
 export async function getFuelByVehicleApi(

@@ -2,6 +2,7 @@ package com.vfms.fuel.controller;
 
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelFormMetadataResponse;
+import com.vfms.fuel.dto.FuelReceiptAccessResponse;
 import com.vfms.fuel.dto.FuelRecordResponse;
 import com.vfms.fuel.dto.PatchFuelRecordRequest;
 import com.vfms.fuel.service.FuelService;
@@ -64,6 +65,11 @@ public class FuelController {
     @GetMapping("/{id}/with-vehicle-data")
     public ResponseEntity<FuelRecordResponse> getFuelRecordWithVehicleData(@PathVariable UUID id) {
         return ResponseEntity.ok(fuelService.getFuelRecordWithRealTimeData(id));
+    }
+
+    @GetMapping("/{id}/receipt")
+    public ResponseEntity<FuelReceiptAccessResponse> getFuelReceiptAccessUrl(@PathVariable UUID id) {
+        return ResponseEntity.ok(new FuelReceiptAccessResponse(fuelService.createReceiptAccessUrl(id)));
     }
 
     @GetMapping("/realtime/all")

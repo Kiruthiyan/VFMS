@@ -14,7 +14,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -103,7 +102,7 @@ class AdminUserControllerSecurityTest {
         SoftDeleteRequest request = new SoftDeleteRequest();
         request.setReason("No longer needed");
 
-        mockMvc.perform(delete("/api/admin/users/{id}", UUID.randomUUID())
+        mockMvc.perform(patch("/api/admin/users/{id}/soft-delete", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
@@ -115,7 +114,7 @@ class AdminUserControllerSecurityTest {
         SoftDeleteRequest request = new SoftDeleteRequest();
         request.setReason("No longer needed");
 
-        mockMvc.perform(delete("/api/admin/users/{id}", UUID.randomUUID())
+        mockMvc.perform(patch("/api/admin/users/{id}/soft-delete", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
