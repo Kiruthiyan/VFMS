@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -193,7 +193,7 @@ export default function FuelAnalysisPage() {
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
                                     <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} label={{ value: "LKR", angle: -90, position: "insideLeft", fill: "#94a3b8", fontSize: 11 }} />
                                     <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} label={{ value: "Litres", angle: 90, position: "insideRight", fill: "#94a3b8", fontSize: 11 }} />
-                                    <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} formatter={(value: any, name: string) => name === "Total Cost (LKR)" ? [`LKR ${Number(value).toLocaleString()}`, name] : [`${Number(value).toLocaleString()} L`, name]} />
+                                    <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} formatter={(value: any, name: any) => name === "Total Cost (LKR)" ? [`LKR ${Number(value).toLocaleString()}`, name] : [`${Number(value).toLocaleString()} L`, name]} />
                                     <Legend />
                                     <Area yAxisId="left" type="monotone" dataKey="costLKR" stroke="#3b82f6" fillOpacity={1} fill="url(#colorCost)" strokeWidth={3} name="Total Cost (LKR)" />
                                     <Bar yAxisId="right" dataKey="litersL" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Volume (L)" barSize={25} />

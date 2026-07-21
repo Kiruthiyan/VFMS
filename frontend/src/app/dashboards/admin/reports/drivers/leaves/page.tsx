@@ -14,6 +14,7 @@ type LeaveRow = {
     driverId?: string | number;
     status?: string;
     type?: string;
+    reason?: string;
     startDate?: string;
     endDate?: string;
     driverName?: string;
