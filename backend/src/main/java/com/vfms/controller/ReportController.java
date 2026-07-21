@@ -66,12 +66,12 @@ public class ReportController {
             @RequestParam("reportType") String reportType,
             @RequestParam("format") String format,
             @RequestParam(value = "fileName", required = false) String fileName) {
-        
+
         String originalName = file.getOriginalFilename() == null ? "report" : file.getOriginalFilename();
         String displayName = (fileName == null || fileName.isBlank()) ? originalName : fileName;
-        
+
         String path = reportSupabaseStorageService.uploadReportFile(reportType, format, file);
-        
+
         ReportDocument doc = ReportDocument.builder()
                 .fileName(displayName)
                 .originalFileName(originalName)
@@ -82,15 +82,15 @@ public class ReportController {
                 .reportType(reportType)
                 .format(format)
                 .build();
-                
+
         doc = reportDocumentRepository.save(doc);
-        
+
         try {
             doc.setFileUrl(reportSupabaseStorageService.createSignedUrl(doc.getBucketName(), doc.getStoragePath()));
         } catch (Exception e) {
             // Keep fileUrl null or fallback
         }
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(doc);
     }
 

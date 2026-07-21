@@ -197,12 +197,13 @@ export default function RentalAnalyticsPage() {
                                         <td className="px-6 py-4 font-semibold text-slate-900">{rental.vendorName || rental.vendorId || "-"}</td>
                                         <td className="px-6 py-4 text-slate-600">{rental.vehicleType || "-"}</td>
                                         <td className="px-6 py-4 text-slate-600">{rental.plateNumber || "-"}</td>
-                                        <td className="px-6 py-4 text-slate-600">{rental.startDate || "-"} ? {rental.endDate || "-"}</td>
+                                        <td className="px-6 py-4 text-slate-600">{rental.startDate || "-"} to {rental.endDate || "-"}</td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-900">LKR {(rental.totalCost || 0).toLocaleString()}</td>
                                         <td className="px-6 py-4">
                                             <Badge className={
-                                                rental.status === "Active" ? "bg-indigo-100 text-indigo-700 border-none px-3 py-1" :
-                                                rental.status === "Completed" ? "bg-slate-100 text-slate-700 border-none px-3 py-1" :
+                                                rental.status === "ACTIVE" ? "bg-indigo-100 text-indigo-700 border-none px-3 py-1" :
+                                                rental.status === "RETURNED" ? "bg-emerald-100 text-emerald-700 border-none px-3 py-1" :
+                                                rental.status === "CLOSED" ? "bg-slate-100 text-slate-700 border-none px-3 py-1" :
                                                 "bg-red-50 text-red-600 border-none px-3 py-1"
                                             }>
                                                 {rental.status}
