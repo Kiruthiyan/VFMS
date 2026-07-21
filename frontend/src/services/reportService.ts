@@ -43,6 +43,23 @@ export interface TripStats {
     cancelled: number;
 }
 
+export interface UtilizationDepartmentData {
+    name: string;
+    requests: number;
+}
+
+export interface UtilizationTrendData {
+    name: string;
+    completed: number;
+    cancelled: number;
+}
+
+export interface UtilizationSummary {
+    overallFleetUtilization: number;
+    departmentData: UtilizationDepartmentData[];
+    completionTrend: UtilizationTrendData[];
+}
+
 type ApiEnvelope<T> = {
     success?: boolean;
     message?: string;
@@ -53,7 +70,6 @@ function unwrapApiData<T>(payload: T | ApiEnvelope<T>): T {
     if (payload && typeof payload === 'object' && 'data' in payload) {
         return (payload as ApiEnvelope<T>).data as T;
     }
-
     return payload as T;
 }
 
@@ -134,8 +150,9 @@ export const reportService = {
 
     getVehicles: async () => {
         try {
-            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/vehicles');
-            return unwrapApiData<any[]>(response.data);
+            const { vehicleApi } = await import('@/lib/api/vehicle');
+            const result = await vehicleApi.getAll();
+            return Array.isArray(result) ? result : (result as any)?.data || [];
         } catch (error) {
             console.error("Error fetching vehicles:", error);
             return [];
@@ -144,8 +161,7 @@ export const reportService = {
 
     getVehicleTotalCount: async () => {
         try {
-            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/vehicles');
-            const vehicles = unwrapApiData<any[]>(response.data);
+            const vehicles = await reportService.getVehicles();
             return vehicles.length;
         } catch (error) {
             console.error("Error fetching vehicle count:", error);
@@ -197,10 +213,10 @@ export const reportService = {
         }
     },
 
-    getFuelLogs: async () => {
+    getFuelLogs: async (): Promise<any[]> => {
         try {
             const records = await getAllFuelRecordsApi();
-            return records.map((record) => ({
+            return records.map((record: any) => ({
                 id: record.id,
                 vehicleId: record.vehicleId,
                 licensePlate: record.vehiclePlate,
@@ -235,14 +251,37 @@ export const reportService = {
         }
     },
 
+
     getRentals: async () => {
         try {
-            const response = await api.get<ApiEnvelope<any[]> | any[]>('/api/rentals');
-            return unwrapApiData<any[]>(response.data);
+            const { rentalApi } = await import('@/lib/api/rental');
+            const result = await rentalApi.getAll();
+            return Array.isArray(result) ? result : (result as any)?.data || [];
         } catch (error) {
             console.error("Error fetching rentals:", error);
             return [];
         }
     },
 
+    uploadReport: async (file: File, reportType: string, format: string, fileName?: string): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('reportType', reportType);
+        formData.append('format', format);
+        if (fileName) formData.append('fileName', fileName);
+
+        const response = await api.post('/api/reports/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+
+    getReportDocuments: async (): Promise<any[]> => {
+        const response = await api.get<any[]>('/api/reports/documents');
+        return response.data;
+    },
+
+    deleteReportDocument: async (id: number): Promise<void> => {
+        await api.delete(`/api/reports/documents/${id}`);
+    }
 };

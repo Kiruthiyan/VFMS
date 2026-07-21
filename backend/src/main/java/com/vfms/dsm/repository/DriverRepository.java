@@ -40,6 +40,18 @@ public class DriverRepository {
     private final ObjectMapper objectMapper;
     private final UserRepository users;
 
+    public List<UUID> findAllDriverIds() { return jdbcTemplate.queryForList("select id from drivers", UUID.class); }
+
+    public Map<UUID, String> findAllDriverIdsAndNames() {
+        return jdbcTemplate.query("select id, full_name from drivers", (java.sql.ResultSet rs) -> {
+            Map<UUID, String> map = new java.util.LinkedHashMap<>();
+            while (rs.next()) {
+                map.put((UUID) rs.getObject("id"), rs.getString("full_name"));
+            }
+            return map;
+        });
+    }
+
     @PostConstruct
     void ensureEmbeddedRecordSequence() {
         jdbcTemplate.execute("CREATE SEQUENCE IF NOT EXISTS driver_embedded_record_id_seq START WITH 1");

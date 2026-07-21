@@ -1,7 +1,8 @@
 package com.vfms.service;
 
 import com.vfms.dto.*;
-import com.vfms.user.repository.UserRepository;
+import com.vfms.dsm.repository.DriverRepository;
+import com.vfms.dsm.entity.DriverAggregate;
 import com.vfms.fuel.repository.FuelRecordRepository;
 import com.vfms.maintenance.MaintenanceRepository;
 import com.vfms.trip.repository.TripRequestRepository;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 public class ReportService {
 
     private final VehicleRepository vehicleRepository;
-    private final UserRepository userRepository;
+    private final DriverRepository driverRepository;
     private final TripRequestRepository tripRequestRepository;
     private final MaintenanceRepository maintenanceRepository;
     private final FuelRecordRepository fuelRecordRepository;
@@ -79,10 +80,11 @@ public class ReportService {
     }
 
     public List<DriverPerformanceDTO> getDriverPerformance() {
-        return userRepository.findAll().stream().map(driver ->
+        java.util.Map<java.util.UUID, String> namesById = driverRepository.findAllDriverIdsAndNames();
+        return namesById.entrySet().stream().map(entry ->
             DriverPerformanceDTO.builder()
-                    .driverId(driver.getId())
-                    .driverName(driver.getFullName())
+                    .driverId(entry.getKey())
+                    .driverName(entry.getValue() != null ? entry.getValue() : "Driver-" + entry.getKey().toString().substring(0, 8))
                     .totalTrips(0L)
                     .totalDistance(0.0)
                     .rating(0.0)

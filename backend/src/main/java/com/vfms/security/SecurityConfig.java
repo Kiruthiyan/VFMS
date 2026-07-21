@@ -77,6 +77,8 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         // --- User management (admin only) ---
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // --- Reports (admin only) ---
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
                         // --- Fuel management (admin only; matches FuelController) ---
                         .requestMatchers("/api/v1/fuel/**").hasRole("ADMIN")
                         // --- Authenticated user profile & password change ---

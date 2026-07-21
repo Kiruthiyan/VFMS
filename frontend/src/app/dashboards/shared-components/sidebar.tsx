@@ -1,21 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { 
-  KeyRound, 
-  LayoutDashboard, 
-  LogOut, 
-  Car, 
-  Wrench, 
-  FileText, 
-  Users, 
-  Briefcase, 
-  Calendar, 
+import {
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Car,
+  Wrench,
+  FileText,
+  Users,
+  Briefcase,
+  Calendar,
   CheckSquare,
   UserCircle,
   Store,
   AlertTriangle,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,6 +52,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const [manuallyToggled, setManuallyToggled] = useState<Record<string, boolean>>({});
 
   const navSections = getNavSectionsByRole(user?.role);
   const fallbackHref = user?.role ? (dashboardHrefByRole[user.role] ?? '/') : '/';
@@ -89,6 +92,10 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
     return hrefPath !== fallbackHref && pathname.startsWith(hrefPath + '/');
   };
 
+  const toggleExpanded = (href: string, currentlyOpen: boolean) => {
+    setManuallyToggled((prev) => ({ ...prev, [href]: !currentlyOpen }));
+  };
+
   return (
     <aside className="flex h-full flex-col">
       <div className="border-b border-white/10 px-5 py-5">
@@ -112,31 +119,113 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
               <nav className="space-y-1">
                 {section.items.map((item) => {
                   const isActive = isNavItemActive(item.href);
-                  
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onNavigate}
-                      className={cn(
-                        'group flex items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-[13px] font-semibold transition-all',
-                        isActive
-                          ? 'border-transparent bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
-                          : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
-                      )}
-                    >
-                      <span
+                  const hasChildren = !!item.children && item.children.length > 0;
+                  const childActive = hasChildren
+                    ? item.children!.some((child) => isNavItemActive(child.href))
+                    : false;
+                  const routeWantsOpen = isActive || childActive;
+                  const isOpen = manuallyToggled[item.href] ?? routeWantsOpen;
+
+                  if (!hasChildren) {
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onNavigate}
                         className={cn(
-                          'flex h-8 w-8 items-center justify-center rounded-xl border transition-colors',
+                          'group flex items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-[13px] font-semibold transition-all',
                           isActive
-                            ? 'border-slate-950/10 bg-slate-950/10 text-slate-950'
-                            : 'border-white/5 bg-white/5 text-slate-500 group-hover:border-white/10 group-hover:bg-slate-800 group-hover:text-amber-300'
+                            ? 'border-transparent bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
+                            : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
                         )}
                       >
-                        <item.icon className="h-3.5 w-3.5" />
-                      </span>
-                      {item.label}
-                    </Link>
+                        <span
+                          className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-xl border transition-colors',
+                            isActive
+                              ? 'border-slate-950/10 bg-slate-950/10 text-slate-950'
+                              : 'border-white/5 bg-white/5 text-slate-500 group-hover:border-white/10 group-hover:bg-slate-800 group-hover:text-amber-300'
+                          )}
+                        >
+                          <item.icon className="h-3.5 w-3.5" />
+                        </span>
+                        {item.label}
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <div key={item.href} className="space-y-1">
+                      <div
+                        className={cn(
+                          'group flex items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-[13px] font-semibold transition-all',
+                          isActive
+                            ? 'border-transparent bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
+                            : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
+                        )}
+                      >
+                        <Link
+                          href={item.href}
+                          onClick={onNavigate}
+                          className="flex flex-1 items-center gap-2.5"
+                        >
+                          <span
+                            className={cn(
+                              'flex h-8 w-8 items-center justify-center rounded-xl border transition-colors',
+                              isActive
+                                ? 'border-slate-950/10 bg-slate-950/10 text-slate-950'
+                                : 'border-white/5 bg-white/5 text-slate-500 group-hover:border-white/10 group-hover:bg-slate-800 group-hover:text-amber-300'
+                            )}
+                          >
+                            <item.icon className="h-3.5 w-3.5" />
+                          </span>
+                          {item.label}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(item.href, isOpen)}
+                          className="flex h-6 w-6 items-center justify-center rounded-lg text-current transition-transform hover:bg-black/5"
+                          aria-label={isOpen ? 'Collapse' : 'Expand'}
+                        >
+                          <ChevronDown
+                            className={cn('h-3.5 w-3.5 transition-transform', isOpen ? 'rotate-180' : '')}
+                          />
+                        </button>
+                      </div>
+
+                      {isOpen && (
+                        <div className="ml-4 space-y-1 border-l border-white/10 pl-3">
+                          {item.children!.map((child) => {
+                            const isChildActive = isNavItemActive(child.href);
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={onNavigate}
+                                className={cn(
+                                  'group flex items-center gap-2.5 rounded-xl border px-2.5 py-2 text-[12.5px] font-semibold transition-all',
+                                  isChildActive
+                                    ? 'border-transparent bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
+                                    : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-white'
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    'flex h-6 w-6 items-center justify-center rounded-lg border transition-colors',
+                                    isChildActive
+                                      ? 'border-slate-950/10 bg-slate-950/10 text-slate-950'
+                                      : 'border-white/5 bg-white/5 text-slate-500 group-hover:border-white/10 group-hover:bg-slate-800 group-hover:text-amber-300'
+                                  )}
+                                >
+                                  <child.icon className="h-3 w-3" />
+                                </span>
+                                {child.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </nav>

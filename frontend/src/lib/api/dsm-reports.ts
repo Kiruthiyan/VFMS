@@ -34,10 +34,13 @@ export interface DriverPerformanceRow {
 export interface DriverInfractionRow {
   id: number;
   driverId?: string;
+  driverName?: string;
   severity: string;
   status: string;
   infractionType: string;
+  type?: string;
   incidentDate: string;
+  date?: string;
   description?: string;
   resolutionStatus?: string;
 }
@@ -79,10 +82,21 @@ interface PageResponse<T> {
   totalElements: number;
 }
 
-function mapDriverPerformance(user: DriverUserSummary): DriverPerformanceRow {
-  const complianceBase = user.licenseExpiryDate
-    ? (new Date(user.licenseExpiryDate) >= new Date() ? 90 : 50)
-    : 70;
+type TripSummaryRow = {
+  distanceKm?: number | string | null;
+  driverRating?: number | string | null;
+};
+
+async function mapDriverPerformance(user: DriverUserSummary): Promise<DriverPerformanceRow> {
+  const trips = await apiFetch<TripSummaryRow[]>(`/api/trips/driver/${user.id}`);
+  const totalTrips = trips.length;
+  const totalDistance = trips.reduce((sum, trip) => sum + Number(trip.distanceKm ?? 0), 0);
+  const ratings = trips
+    .map((trip) => Number(trip.driverRating ?? 0))
+    .filter((rating) => Number.isFinite(rating) && rating > 0);
+  const rating = ratings.length > 0
+    ? ratings.reduce((sum, current) => sum + current, 0) / ratings.length
+    : 0;
 
   return {
     id: user.id,
@@ -90,11 +104,11 @@ function mapDriverPerformance(user: DriverUserSummary): DriverPerformanceRow {
     driverName: user.fullName,
     name: user.fullName,
     employeeId: user.employeeId,
-    safetyScore: complianceBase,
-    feedbackRating: 4,
-    totalTrips: 0,
-    totalDistance: 0,
-    rating: 0,
+    safetyScore: rating,
+    feedbackRating: rating,
+    totalTrips,
+    totalDistance,
+    rating,
     status: user.status,
   };
 }
@@ -102,20 +116,26 @@ function mapDriverPerformance(user: DriverUserSummary): DriverPerformanceRow {
 function mapInfraction(raw: Record<string, unknown>): DriverInfractionRow {
   const severity = String(raw.severity ?? 'LOW');
   const resolutionStatus = String(raw.resolutionStatus ?? 'OPEN');
+  const driver = raw.driver as { fullName?: string; employeeId?: string } | undefined;
   return {
     id: Number(raw.id),
     severity: severity.charAt(0) + severity.slice(1).toLowerCase(),
     status: resolutionStatus === 'RESOLVED' ? 'Resolved' : 'Pending',
     infractionType: String(raw.infractionType ?? ''),
+    // Backward-compatible aliases used by older report pages.
+    type: String(raw.infractionType ?? ''),
     incidentDate: String(raw.incidentDate ?? ''),
+    date: String(raw.incidentDate ?? ''),
     description: raw.description as string | undefined,
     resolutionStatus,
+    driverId: String(raw.driverId ?? driver?.employeeId ?? ''),
+    driverName: driver?.fullName ?? String(raw.driverName ?? ''),
   };
 }
 
 export async function getDriverUsersForReports(): Promise<DriverPerformanceRow[]> {
   const page = await apiFetch<PageResponse<DriverUserSummary>>('/api/drivers/from-users?size=500');
-  return (page.content ?? []).map(mapDriverPerformance);
+  return Promise.all((page.content ?? []).map(mapDriverPerformance));
 }
 
 export async function getAllDriverInfractions(): Promise<DriverInfractionRow[]> {
