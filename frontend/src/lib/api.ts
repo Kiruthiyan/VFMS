@@ -54,7 +54,6 @@ const PUBLIC_AUTH_PATHS = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/refresh",
-  "/api/auth/logout",
   "/api/auth/staff/email-check",
   "/api/auth/staff/verify",
   "/api/auth/forgot-password",

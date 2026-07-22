@@ -50,8 +50,9 @@ public class PasswordService {
      */
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
         // Always respond with success message to prevent email enumeration
-        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+        userRepository.findByEmail(email).ifPresent(user -> {
             // Only send reset email for approved accounts
             if (user.getStatus() == UserStatus.APPROVED) {
                 resetTokenRepository.deleteByUser(user);

@@ -19,7 +19,9 @@ const roleBadgeColors: Record<string, string> = {
   DRIVER: "bg-amber-100 text-amber-800",
 };
 
-const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
+const DEMO_ROLE_ENABLED =
+  process.env.NODE_ENV !== "production" &&
+  process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
 
 // Build readable breadcrumb from pathname
 function getBreadcrumb(pathname: string): string {

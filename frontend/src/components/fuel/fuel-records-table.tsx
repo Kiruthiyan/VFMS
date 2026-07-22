@@ -5,12 +5,16 @@ import Link from "next/link";
 import {
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   Eye,
   Receipt,
 } from "lucide-react";
+import { toast } from "sonner";
 
-import type { FuelRecord } from "@/lib/api/fuel";
+import {
+  getErrorMessage,
+  getFuelReceiptAccessUrlApi,
+  type FuelRecord,
+} from "@/lib/api/fuel";
 import { formatEfficiency, formatLKR } from "@/lib/fuel-utils";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +34,22 @@ function formatDate(dateStr: string): string {
 
 export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  async function openReceipt(record: FuelRecord) {
+    const receiptWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+
+    try {
+      const signedUrl = await getFuelReceiptAccessUrlApi(record.id);
+      if (receiptWindow) {
+        receiptWindow.location.href = signedUrl;
+      } else {
+        window.open(signedUrl, "_blank", "noopener,noreferrer");
+      }
+    } catch (error) {
+      receiptWindow?.close();
+      toast.error(getErrorMessage(error));
+    }
+  }
 
   if (records.length === 0) {
     return (
@@ -185,16 +205,14 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
                       {record.receiptUrl && (
                         <div>
                           <p className="mb-1 text-slate-500">Receipt</p>
-                          <a
-                            href={record.receiptUrl}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => openReceipt(record)}
                             className="inline-flex items-center gap-1 font-semibold text-amber-600 hover:text-amber-500"
                           >
                             <Receipt size={12} />
                             {record.receiptFileName ?? "View Receipt"}
-                            <ExternalLink size={10} />
-                          </a>
+                          </button>
                         </div>
                       )}
 

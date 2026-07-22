@@ -19,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,21 +29,16 @@ import java.util.List;
 
 /**
  * HTTP security for VFMS.
- * <p>
- * Scoped modules (auth, admin user management, fuel, fleet) are locked down explicitly.
- * {@code /api/**} remains {@code permitAll} for legacy modules that have not
- * yet been individually secured (trips, DSM, reports, etc.) - see
- * {@link #REMAINING_OPEN_API_RISK}.
+ *
+ * Public routes are limited to authentication bootstrap flows. Every API route
+ * after those matchers must be authenticated and role-mapped here or by method
+ * security. Unknown API routes are denied by default.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-  /** Paths still reachable without authentication due to the legacy {@code /api/**} fallback. */
-  public static final String REMAINING_OPEN_API_RISK =
-      "Non-scoped modules under /api/** (trips, drivers, reports, etc.)";
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
@@ -64,7 +60,6 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/register",
                                 "/api/auth/refresh",
-                                "/api/auth/logout",
                                 "/api/auth/staff/**",
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification",
@@ -81,12 +76,53 @@ public class SecurityConfig {
                         .requestMatchers("/api/reports/**").hasRole("ADMIN")
                         // --- Fuel management (admin only; matches FuelController) ---
                         .requestMatchers("/api/v1/fuel/**").hasRole("ADMIN")
+                        // --- Authenticated logout ---
+                        .requestMatchers("/api/auth/logout").authenticated()
                         // --- Authenticated user profile & password change ---
                         .requestMatchers("/api/user/**").authenticated()
                         // --- Staff self-profile (authenticated; method security enforces role) ---
                         .requestMatchers("/api/staff-profile/**").authenticated()
                         // --- Driver self-service portal (ROLE_DRIVER only, IDOR-safe) ---
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
+                        // --- Driver/staff management (approver/admin only) ---
+                        .requestMatchers("/api/drivers/**", "/api/internal/drivers/**")
+                        .hasAnyRole("ADMIN", "APPROVER")
+                        // --- Trips: operational requests and approver actions ---
+                        .requestMatchers(HttpMethod.GET, "/api/trips/driver/*", "/api/trips/driver/*/upcoming")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER")
+                        .requestMatchers(RegexRequestMatcher.regexMatcher(
+                                HttpMethod.GET,
+                                "^/api/trips/[0-9a-fA-F\\-]{36}$"
+                        ))
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER")
+                        .requestMatchers(HttpMethod.GET, "/api/trips/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER")
+                        .requestMatchers(HttpMethod.POST, "/api/trips/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.PUT, "/api/trips/**")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/trips/*/approve",
+                                "/api/trips/*/reject",
+                                "/api/trips/*/assign-driver",
+                                "/api/trips/*/assign-vehicle",
+                                "/api/trips/*/cancel"
+                        ).hasAnyRole("ADMIN", "APPROVER")
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/trips/*/submit",
+                                "/api/trips/*/feedback"
+                        ).hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/trips/*/driver-accept",
+                                "/api/trips/*/driver-reject",
+                                "/api/trips/*/start",
+                                "/api/trips/*/complete",
+                                "/api/trips/*/log-stop"
+                        ).hasRole("DRIVER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/trips/**").denyAll()
                         // --- Fleet module: vehicles ---
                         .requestMatchers(HttpMethod.GET, "/api/vehicles/**")
                         .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER")
@@ -125,8 +161,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/vendors/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/vendors/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/vendors/**").hasRole("ADMIN")
-                        // --- Legacy modules: keep open until individually secured ---
-                        .requestMatchers("/api/**").permitAll()
+                        // --- API deny-by-default: new APIs must be explicitly role-mapped ---
+                        .requestMatchers("/api/**").denyAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->

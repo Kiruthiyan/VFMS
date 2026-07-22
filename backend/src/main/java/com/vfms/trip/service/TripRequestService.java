@@ -12,6 +12,7 @@ import com.vfms.trip.dto.ApprovalDTO;
 import java.time.LocalDateTime;
 import com.vfms.trip.dto.VehicleOptionDTO;
 import com.vfms.trip.dto.DriverOptionDTO;
+import com.vfms.common.exception.AuthorizationException;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
 import jakarta.persistence.EntityManager;
@@ -115,6 +116,12 @@ public class TripRequestService {
 
     public TripRequest getTripById(UUID tripId) {
         return findById(tripId);
+    }
+
+    public TripRequest getDriverTripById(UUID tripId, UUID driverId) {
+        TripRequest trip = findById(tripId);
+        ensureAssignedDriver(trip, driverId);
+        return trip;
     }
 
     public List<TripRequest> getTripsByRequester(UUID requesterId) {
@@ -246,7 +253,80 @@ public class TripRequestService {
     }
 
     public TripRequest driverAcceptTrip(UUID tripId) {
+        return acceptTrip(findById(tripId));
+    }
+
+    public TripRequest driverAcceptTrip(UUID tripId, UUID driverId) {
+        return acceptTrip(findAssignedDriverTrip(tripId, driverId));
+    }
+
+    public TripRequest driverRejectTrip(UUID tripId, ApprovalDTO dto) {
+        return rejectByDriver(findById(tripId), dto);
+    }
+
+    public TripRequest driverRejectTrip(UUID tripId, ApprovalDTO dto, UUID driverId) {
+        return rejectByDriver(findAssignedDriverTrip(tripId, driverId), dto);
+    }
+
+    public TripRequest startTrip(UUID tripId) {
+        return startTrip(findById(tripId));
+    }
+
+    public TripRequest startTrip(UUID tripId, UUID driverId) {
+        return startTrip(findAssignedDriverTrip(tripId, driverId));
+    }
+
+    public TripRequest completeTrip(UUID tripId) {
+        return completeTrip(tripId, null);
+    }
+
+    public TripRequest completeTrip(UUID tripId, String reason) {
+        return completeTrip(findById(tripId), reason);
+    }
+
+    public TripRequest completeTrip(UUID tripId, String reason, UUID driverId) {
+        return completeTrip(findAssignedDriverTrip(tripId, driverId), reason);
+    }
+
+    public TripRequest submitDriverFeedback(UUID tripId, Integer rating, String feedback) {
+        return submitDriverFeedback(tripId, rating, feedback, null);
+    }
+
+    public TripRequest submitDriverFeedback(UUID tripId, Integer rating, String feedback, String staffTimelineReason) {
         TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.COMPLETED) {
+            throw new ValidationException("Feedback can only be submitted for completed trips");
+        }
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new ValidationException("Rating must be between 1 and 5");
+        }
+
+        // Require staff reason if actual completion time was early or late by 30 mins
+        if (trip.getEndTime() != null) {
+            boolean deviates = trip.getEndTime().isBefore(trip.getReturnTime().minusMinutes(30)) ||
+                               trip.getEndTime().isAfter(trip.getReturnTime().plusMinutes(30));
+            if (deviates && (staffTimelineReason == null || staffTimelineReason.trim().isEmpty())) {
+                throw new ValidationException("Trip ended outside the 30-minute return window. Staff must provide a justification reason.");
+            }
+            if (deviates) {
+                trip.setStaffTimelineReason(staffTimelineReason);
+            }
+        }
+
+        trip.setDriverRating(rating);
+        trip.setDriverFeedback(feedback);
+        return repository.save(trip);
+    }
+
+    public TripRequest logStopArrival(UUID tripId) {
+        return logStopArrival(findById(tripId));
+    }
+
+    public TripRequest logStopArrival(UUID tripId, UUID driverId) {
+        return logStopArrival(findAssignedDriverTrip(tripId, driverId));
+    }
+
+    private TripRequest acceptTrip(TripRequest trip) {
         if (trip.getStatus() != TripStatus.APPROVED) {
             throw new ValidationException("Only APPROVED trips can be accepted by driver");
         }
@@ -254,12 +334,10 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
-    public TripRequest driverRejectTrip(UUID tripId, ApprovalDTO dto) {
-        TripRequest trip = findById(tripId);
+    private TripRequest rejectByDriver(TripRequest trip, ApprovalDTO dto) {
         if (trip.getStatus() != TripStatus.APPROVED) {
             throw new ValidationException("Only APPROVED trips can be rejected by driver");
         }
-        // Clear assignment so administrative staff can cleanly reassign a different driver/vehicle
         trip.setStatus(TripStatus.DRIVER_REJECTED);
         trip.setApprovalNotes("Driver rejected: " + dto.getNotes());
         trip.setAssignedDriverId(null);
@@ -267,13 +345,11 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
-    public TripRequest startTrip(UUID tripId) {
-        TripRequest trip = findById(tripId);
+    private TripRequest startTrip(TripRequest trip) {
         if (trip.getStatus() != TripStatus.DRIVER_CONFIRMED) {
             throw new ValidationException("Only DRIVER_CONFIRMED trips can be started");
         }
 
-        // Validate starting window (+/- 30 minutes of requested departureTime)
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(trip.getDepartureTime().minusMinutes(30)) ||
                 now.isAfter(trip.getDepartureTime().plusMinutes(30))) {
@@ -289,12 +365,7 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
-    public TripRequest completeTrip(UUID tripId) {
-        return completeTrip(tripId, null);
-    }
-
-    public TripRequest completeTrip(UUID tripId, String reason) {
-        TripRequest trip = findById(tripId);
+    private TripRequest completeTrip(TripRequest trip, String reason) {
         if (trip.getStatus() != TripStatus.ONGOING) {
             throw new ValidationException("Only ONGOING trips can be completed");
         }
@@ -329,38 +400,7 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
-    public TripRequest submitDriverFeedback(UUID tripId, Integer rating, String feedback) {
-        return submitDriverFeedback(tripId, rating, feedback, null);
-    }
-
-    public TripRequest submitDriverFeedback(UUID tripId, Integer rating, String feedback, String staffTimelineReason) {
-        TripRequest trip = findById(tripId);
-        if (trip.getStatus() != TripStatus.COMPLETED) {
-            throw new ValidationException("Feedback can only be submitted for completed trips");
-        }
-        if (rating == null || rating < 1 || rating > 5) {
-            throw new ValidationException("Rating must be between 1 and 5");
-        }
-
-        // Require staff reason if actual completion time was early or late by 30 mins
-        if (trip.getEndTime() != null) {
-            boolean deviates = trip.getEndTime().isBefore(trip.getReturnTime().minusMinutes(30)) ||
-                               trip.getEndTime().isAfter(trip.getReturnTime().plusMinutes(30));
-            if (deviates && (staffTimelineReason == null || staffTimelineReason.trim().isEmpty())) {
-                throw new ValidationException("Trip ended outside the 30-minute return window. Staff must provide a justification reason.");
-            }
-            if (deviates) {
-                trip.setStaffTimelineReason(staffTimelineReason);
-            }
-        }
-
-        trip.setDriverRating(rating);
-        trip.setDriverFeedback(feedback);
-        return repository.save(trip);
-    }
-
-    public TripRequest logStopArrival(UUID tripId) {
-        TripRequest trip = findById(tripId);
+    private TripRequest logStopArrival(TripRequest trip) {
         if (trip.getStatus() != TripStatus.ONGOING) {
             throw new ValidationException("Stops can only be logged for ONGOING trips");
         }
@@ -466,5 +506,17 @@ public class TripRequestService {
             trip.setStatus(TripStatus.EXPIRED);
             repository.save(trip);
         }
+    }
+
+    private void ensureAssignedDriver(TripRequest trip, UUID driverId) {
+        if (driverId == null || !driverId.equals(trip.getAssignedDriverId())) {
+            throw new AuthorizationException("Drivers can only access their assigned trips.");
+        }
+    }
+
+    private TripRequest findAssignedDriverTrip(UUID tripId, UUID driverId) {
+        TripRequest trip = findById(tripId);
+        ensureAssignedDriver(trip, driverId);
+        return trip;
     }
 }

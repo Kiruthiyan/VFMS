@@ -1,14 +1,18 @@
 package com.vfms.trip.controller;
 
+import com.vfms.common.enums.Role;
+import com.vfms.common.exception.AuthorizationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.vfms.trip.dto.CreateTripRequestDTO;
 import com.vfms.trip.entity.TripRequest;
 import com.vfms.trip.service.TripRequestService;
 import com.vfms.trip.enums.TripStatus;
+import com.vfms.user.entity.User;
 import java.util.List;
 import java.util.UUID;
 import com.vfms.trip.dto.ApprovalDTO;
@@ -60,7 +64,12 @@ public class TripRequestController {
      * Retrieves a single trip request by its unique UUID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TripRequest> getTripById(@PathVariable UUID id) {
+    public ResponseEntity<TripRequest> getTripById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user) {
+        if (isDriver(user)) {
+            return ResponseEntity.ok(service.getDriverTripById(id, requireDriverId(user)));
+        }
         return ResponseEntity.ok(service.getTripById(id));
     }
 
@@ -160,41 +169,53 @@ public class TripRequestController {
      * Allows an assigned driver to accept the trip request.
      */
     @PatchMapping("/{id}/driver-accept")
-    public ResponseEntity<TripRequest> driverAcceptTrip(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.driverAcceptTrip(id));
+    public ResponseEntity<TripRequest> driverAcceptTrip(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(service.driverAcceptTrip(id, requireDriverId(user)));
     }
 
     /**
      * Allows an assigned driver to reject the trip request (e.g., due to an emergency).
      */
     @PatchMapping("/{id}/driver-reject")
-    public ResponseEntity<TripRequest> driverRejectTrip(@PathVariable UUID id, @RequestBody ApprovalDTO dto) {
-        return ResponseEntity.ok(service.driverRejectTrip(id, dto));
+    public ResponseEntity<TripRequest> driverRejectTrip(
+            @PathVariable UUID id,
+            @RequestBody ApprovalDTO dto,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(service.driverRejectTrip(id, dto, requireDriverId(user)));
     }
 
     /**
      * Marks the trip as currently ongoing/started.
      */
     @PatchMapping("/{id}/start")
-    public ResponseEntity<TripRequest> startTrip(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.startTrip(id));
+    public ResponseEntity<TripRequest> startTrip(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(service.startTrip(id, requireDriverId(user)));
     }
 
     /**
      * Marks the trip as successfully completed.
      */
     @PatchMapping("/{id}/complete")
-    public ResponseEntity<TripRequest> completeTrip(@PathVariable UUID id, @RequestBody(required = false) CompleteRequestDTO dto) {
+    public ResponseEntity<TripRequest> completeTrip(
+            @PathVariable UUID id,
+            @RequestBody(required = false) CompleteRequestDTO dto,
+            @AuthenticationPrincipal User user) {
         String reason = dto != null ? dto.getReason() : null;
-        return ResponseEntity.ok(service.completeTrip(id, reason));
+        return ResponseEntity.ok(service.completeTrip(id, reason, requireDriverId(user)));
     }
 
     /**
      * Records the arrival time at the next intermediate stop.
      */
     @PatchMapping("/{id}/log-stop")
-    public ResponseEntity<TripRequest> logStopArrival(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.logStopArrival(id));
+    public ResponseEntity<TripRequest> logStopArrival(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(service.logStopArrival(id, requireDriverId(user)));
     }
 
     /**
@@ -223,7 +244,10 @@ public class TripRequestController {
      * Retrieves all trips assigned to a specific driver.
      */
     @GetMapping("/driver/{driverId}")
-    public ResponseEntity<List<TripRequest>> getTripsByDriver(@PathVariable UUID driverId) {
+    public ResponseEntity<List<TripRequest>> getTripsByDriver(
+            @PathVariable UUID driverId,
+            @AuthenticationPrincipal User user) {
+        assertDriverCanAccessDriverId(driverId, user);
         return ResponseEntity.ok(service.getTripsByDriver(driverId));
     }
 
@@ -231,7 +255,10 @@ public class TripRequestController {
      * Retrieves upcoming (not yet started/completed) trips for a specific driver.
      */
     @GetMapping("/driver/{driverId}/upcoming")
-    public ResponseEntity<List<TripRequest>> getUpcomingTripsByDriver(@PathVariable UUID driverId) {
+    public ResponseEntity<List<TripRequest>> getUpcomingTripsByDriver(
+            @PathVariable UUID driverId,
+            @AuthenticationPrincipal User user) {
+        assertDriverCanAccessDriverId(driverId, user);
         return ResponseEntity.ok(service.getUpcomingTripsByDriver(driverId));
     }
 
@@ -292,5 +319,22 @@ public class TripRequestController {
     @lombok.Data
     public static class CompleteRequestDTO {
         private String reason;
+    }
+
+    private boolean isDriver(User user) {
+        return user != null && user.getRole() == Role.DRIVER;
+    }
+
+    private UUID requireDriverId(User user) {
+        if (!isDriver(user) || user.getId() == null) {
+            throw new AuthorizationException("Authenticated driver is required.");
+        }
+        return user.getId();
+    }
+
+    private void assertDriverCanAccessDriverId(UUID driverId, User user) {
+        if (isDriver(user) && !user.getId().equals(driverId)) {
+            throw new AuthorizationException("Drivers can only access their own trips.");
+        }
     }
 }

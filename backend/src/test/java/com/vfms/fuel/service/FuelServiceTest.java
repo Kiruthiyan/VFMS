@@ -96,6 +96,7 @@ class FuelServiceTest {
 
         assertNotNull(resp.getId());
         assertEquals(req.getVehicleId(), resp.getVehicleId());
+        assertEquals("/api/v1/fuel/" + resp.getId() + "/receipt", resp.getReceiptUrl());
         verify(vehicleRepository).save(argThat(v -> v.getOdometerReading().equals(req.getOdometerReading())));
     }
 
@@ -175,6 +176,28 @@ class FuelServiceTest {
         UUID id = UUID.randomUUID();
         when(fuelRecordRepository.existsById(id)).thenReturn(false);
         assertThrows(ResourceNotFoundException.class, () -> fuelService.deleteFuelRecord(id));
+    }
+
+    @Test
+    @DisplayName("createReceiptAccessUrl should sign the stored receipt reference")
+    void createReceiptAccessUrl_shouldSignStoredReceiptReference() {
+        UUID id = UUID.randomUUID();
+        FuelRecord record = FuelRecord.builder()
+                .id(id)
+                .vehicle(Vehicle.builder().id(202L).plateNumber("A").brand("M").model("X").build())
+                .fuelDate(LocalDate.now())
+                .quantity(BigDecimal.TEN)
+                .costPerLitre(BigDecimal.TEN)
+                .totalCost(BigDecimal.TEN)
+                .odometerReading(10.0)
+                .receiptUrl("receipts/r.pdf")
+                .build();
+
+        when(fuelRecordRepository.findById(id)).thenReturn(Optional.of(record));
+        when(fuelStorageService.createSignedReceiptUrl("receipts/r.pdf"))
+                .thenReturn("https://signed.example/r.pdf");
+
+        assertEquals("https://signed.example/r.pdf", fuelService.createReceiptAccessUrl(id));
     }
 
     @Test

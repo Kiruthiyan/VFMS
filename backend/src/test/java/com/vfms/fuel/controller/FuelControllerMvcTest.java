@@ -101,6 +101,26 @@ class FuelControllerMvcTest {
     }
 
     @Test
+    void getReceipt_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/v1/fuel/{id}/receipt", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "SYSTEM_USER")
+    void getReceipt_nonAdmin_returns403() throws Exception {
+        mockMvc.perform(get("/api/v1/fuel/{id}/receipt", UUID.randomUUID()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void getReceipt_adminCanReachEndpoint() throws Exception {
+        mockMvc.perform(get("/api/v1/fuel/{id}/receipt", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @WithMockUser(roles = "APPROVER")
     void deleteFuelRecord_nonAdmin_returns403() throws Exception {
         mockMvc.perform(delete("/api/v1/fuel/{id}", UUID.randomUUID()))

@@ -22,7 +22,9 @@ export interface User {
   employeeId?: string;
 }
 
-const DEMO_ROLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
+const DEMO_ROLE_ENABLED =
+  process.env.NODE_ENV !== "production" &&
+  process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
 
 const VALID_ROLES: Role[] = ["ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER"];
 

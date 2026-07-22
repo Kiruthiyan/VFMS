@@ -127,6 +127,16 @@ public class FuelService {
     }
 
     @Transactional(readOnly = true)
+    public String createReceiptAccessUrl(UUID id) {
+        FuelRecord record = fuelRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
+        if (record.getReceiptUrl() == null || record.getReceiptUrl().isBlank()) {
+            throw new ResourceNotFoundException("Fuel receipt not found for record: " + id);
+        }
+        return fuelStorageService.createSignedReceiptUrl(record.getReceiptUrl());
+    }
+
+    @Transactional(readOnly = true)
     public FuelRecordResponse getFuelRecordWithRealTimeData(UUID id) {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
@@ -465,7 +475,7 @@ public class FuelService {
                 .odometerReading(record.getOdometerReading())
                 .fuelStation(record.getFuelStation())
                 .notes(record.getNotes())
-                .receiptUrl(record.getReceiptUrl())
+                .receiptUrl(protectedReceiptUrl(record))
                 .receiptFileName(record.getReceiptFileName())
                 .flaggedForMisuse(record.isFlaggedForMisuse())
                 .flagReason(record.getFlagReason())
@@ -497,7 +507,7 @@ public class FuelService {
                     .odometerReading(record.getOdometerReading())
                     .fuelStation(record.getFuelStation())
                     .notes(record.getNotes())
-                    .receiptUrl(record.getReceiptUrl())
+                    .receiptUrl(protectedReceiptUrl(record))
                     .receiptFileName(record.getReceiptFileName())
                     .flaggedForMisuse(record.isFlaggedForMisuse())
                     .flagReason(record.getFlagReason())
@@ -562,5 +572,14 @@ public class FuelService {
         } catch (NumberFormatException ex) {
             throw new ValidationException("Vehicle ID must be a valid numeric identifier.");
         }
+    }
+
+    private String protectedReceiptUrl(FuelRecord record) {
+        if (record.getId() == null
+                || record.getReceiptUrl() == null
+                || record.getReceiptUrl().isBlank()) {
+            return null;
+        }
+        return "/api/v1/fuel/" + record.getId() + "/receipt";
     }
 }

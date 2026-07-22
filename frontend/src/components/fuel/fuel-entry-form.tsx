@@ -33,6 +33,7 @@ const MAX_RECEIPT_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_RECEIPT_TYPES = new Set([
   "image/jpeg",
   "image/png",
+  "image/webp",
   "application/pdf",
 ]);
 
@@ -103,7 +104,7 @@ export function FuelEntryForm({
 
   function selectReceipt(file: File) {
     if (!ACCEPTED_RECEIPT_TYPES.has(file.type)) {
-      toast.error("Please upload a JPG, PNG, or PDF receipt.");
+      toast.error("Please upload a JPG, PNG, WebP, or PDF receipt.");
       return;
     }
 
@@ -443,7 +444,7 @@ export function FuelEntryForm({
                   key={receiptInputKey}
                   id="fuel-receipt-upload"
                   type="file"
-                  accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
                   className="hidden"
                   onChange={(event) => handleFileSelection(event.target.files)}
                 />
@@ -454,7 +455,7 @@ export function FuelEntryForm({
                     : "Drag and drop or click to upload receipt"}
                 </p>
                 <p className="mt-1 text-xs font-medium text-slate-600">
-                  JPG, PNG, or PDF - Max 5MB
+                  JPG, PNG, WebP, or PDF - Max 5MB
                 </p>
               </label>
             )}
