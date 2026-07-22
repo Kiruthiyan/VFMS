@@ -78,4 +78,8 @@ uploads/
 backend/src/main/resources/application.properties
 
 
-docs/
+
+
+.agents
+.codex
+.codex-smoke

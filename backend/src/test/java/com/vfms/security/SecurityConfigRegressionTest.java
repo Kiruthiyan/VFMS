@@ -70,6 +70,32 @@ class SecurityConfigRegressionTest {
     }
 
     @Test
+    @WithMockUser(roles = "SYSTEM_USER")
+    void trips_systemUserCannotUseDriverExecutionAction() throws Exception {
+        mockMvc.perform(patch("/api/trips/{id}/driver-accept", java.util.UUID.randomUUID()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "DRIVER")
+    void trips_driverCanReachDriverExecutionActions() throws Exception {
+        java.util.UUID id = java.util.UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/trips/{id}/driver-accept", id))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/trips/{id}/driver-reject", id)
+                        .contentType("application/json")
+                        .content("{\"notes\":\"Driver unavailable for this assignment\"}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/trips/{id}/start", id))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/trips/{id}/complete", id))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/trips/{id}/log-stop", id))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @WithMockUser(roles = "APPROVER")
     void trips_approverCanReachApprovalAction() throws Exception {
         mockMvc.perform(patch("/api/trips/{id}/approve", java.util.UUID.randomUUID()))

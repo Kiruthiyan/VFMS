@@ -106,6 +106,14 @@ public class SecurityConfig {
                                 "/api/trips/*/submit",
                                 "/api/trips/*/feedback"
                         ).hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/trips/*/driver-accept",
+                                "/api/trips/*/driver-reject",
+                                "/api/trips/*/start",
+                                "/api/trips/*/complete",
+                                "/api/trips/*/log-stop"
+                        ).hasRole("DRIVER")
                         .requestMatchers(HttpMethod.PATCH, "/api/trips/**").denyAll()
                         // --- Fleet module: vehicles ---
                         .requestMatchers(HttpMethod.GET, "/api/vehicles/**")
