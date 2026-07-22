@@ -1,15 +1,23 @@
 package com.vfms.security;
 
+import com.vfms.common.enums.Role;
+import com.vfms.common.enums.UserStatus;
+import com.vfms.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -53,6 +61,28 @@ class SecurityConfigRegressionTest {
     }
 
     @Test
+    void trips_driverCanReadOwnDriverTripListsAndDetailRoute() throws Exception {
+        UUID driverId = UUID.randomUUID();
+
+        mockMvc.perform(get("/api/trips/driver/{driverId}", driverId)
+                        .with(driverPrincipal(driverId)))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/trips/driver/{driverId}/upcoming", driverId)
+                        .with(driverPrincipal(driverId)))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/trips/{id}", UUID.randomUUID())
+                        .with(driverPrincipal(driverId)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void trips_driverCannotReadAnotherDriversTripList() throws Exception {
+        mockMvc.perform(get("/api/trips/driver/{driverId}", UUID.randomUUID())
+                        .with(driverPrincipal(UUID.randomUUID())))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(roles = "SYSTEM_USER")
     void trips_systemUserCanReadAndSubmit() throws Exception {
         mockMvc.perform(get("/api/trips"))
@@ -79,19 +109,25 @@ class SecurityConfigRegressionTest {
     @Test
     @WithMockUser(roles = "DRIVER")
     void trips_driverCanReachDriverExecutionActions() throws Exception {
-        java.util.UUID id = java.util.UUID.randomUUID();
+        UUID driverId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
 
-        mockMvc.perform(patch("/api/trips/{id}/driver-accept", id))
+        mockMvc.perform(patch("/api/trips/{id}/driver-accept", id)
+                        .with(driverPrincipal(driverId)))
                 .andExpect(status().isNotFound());
         mockMvc.perform(patch("/api/trips/{id}/driver-reject", id)
                         .contentType("application/json")
-                        .content("{\"notes\":\"Driver unavailable for this assignment\"}"))
+                        .content("{\"notes\":\"Driver unavailable for this assignment\"}")
+                        .with(driverPrincipal(driverId)))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(patch("/api/trips/{id}/start", id))
+        mockMvc.perform(patch("/api/trips/{id}/start", id)
+                        .with(driverPrincipal(driverId)))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(patch("/api/trips/{id}/complete", id))
+        mockMvc.perform(patch("/api/trips/{id}/complete", id)
+                        .with(driverPrincipal(driverId)))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(patch("/api/trips/{id}/log-stop", id))
+        mockMvc.perform(patch("/api/trips/{id}/log-stop", id)
+                        .with(driverPrincipal(driverId)))
                 .andExpect(status().isNotFound());
     }
 
@@ -100,5 +136,20 @@ class SecurityConfigRegressionTest {
     void trips_approverCanReachApprovalAction() throws Exception {
         mockMvc.perform(patch("/api/trips/{id}/approve", java.util.UUID.randomUUID()))
                 .andExpect(status().isBadRequest());
+    }
+
+    private static RequestPostProcessor driverPrincipal(UUID driverId) {
+        User driver = User.builder()
+                .id(driverId)
+                .fullName("Driver User")
+                .email("driver@example.com")
+                .password("password")
+                .phone("0770000000")
+                .nic("123456789V")
+                .role(Role.DRIVER)
+                .status(UserStatus.APPROVED)
+                .enabled(true)
+                .build();
+        return authentication(new UsernamePasswordAuthenticationToken(driver, "password", driver.getAuthorities()));
     }
 }

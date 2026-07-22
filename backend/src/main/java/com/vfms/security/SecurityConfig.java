@@ -19,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -87,6 +88,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/drivers/**", "/api/internal/drivers/**")
                         .hasAnyRole("ADMIN", "APPROVER")
                         // --- Trips: operational requests and approver actions ---
+                        .requestMatchers(HttpMethod.GET, "/api/trips/driver/*", "/api/trips/driver/*/upcoming")
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER")
+                        .requestMatchers(RegexRequestMatcher.regexMatcher(
+                                HttpMethod.GET,
+                                "^/api/trips/[0-9a-fA-F\\-]{36}$"
+                        ))
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER")
                         .requestMatchers(HttpMethod.GET, "/api/trips/**")
                         .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER")
                         .requestMatchers(HttpMethod.POST, "/api/trips/**")
