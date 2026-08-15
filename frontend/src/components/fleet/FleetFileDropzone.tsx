@@ -58,7 +58,7 @@ export function FleetFileDropzone({
       <div
         {...getRootProps()}
         className={cn(
-          "rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm transition-colors",
+          "rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-4 shadow-sm transition-colors hover:border-slate-400 hover:bg-white",
           isDragActive && "border-blue-400 bg-blue-50",
         )}
       >
@@ -93,7 +93,7 @@ export function FleetFileDropzone({
           </div>
 
           {!readonly && (
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               {file && (
                 <Button
                   type="button"
@@ -103,7 +103,7 @@ export function FleetFileDropzone({
                     event.stopPropagation();
                     onFileChange(null);
                   }}
-                  className="h-9 px-3"
+                  className="h-9 w-full px-3 sm:w-auto"
                 >
                   <X className="h-4 w-4" />
                   Clear
@@ -117,7 +117,7 @@ export function FleetFileDropzone({
                   event.stopPropagation();
                   open();
                 }}
-                className="h-9 px-3 bg-white"
+                className="h-9 w-full bg-white px-3 sm:w-auto"
               >
                 <Upload className="h-4 w-4" />
                 {file || existingFileName ? replaceLabel : uploadLabel}

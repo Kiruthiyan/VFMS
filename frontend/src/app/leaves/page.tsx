@@ -128,18 +128,18 @@ export default function LeavesPage() {
                               Process
                             </button>
                           </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Process Leave Request</DialogTitle>
+                          <DialogContent className="max-w-xl overflow-hidden p-0">
+                            <DialogHeader className="vfms-form-header px-6 py-5 pl-8">
+                              <DialogTitle className="text-white">Process Leave Request</DialogTitle>
                             </DialogHeader>
-                            <div className="space-y-3 pt-1">
+                            <div className="space-y-4 px-6 pb-6 pt-5">
                               <div>
-                                <Label className="text-xs text-muted-foreground">Decision</Label>
+                                <Label>Decision</Label>
                                 <Select
                                   value={approvalStatus}
                                   onValueChange={(value) => setApprovalStatus(value as Decision)}
                                 >
-                                  <SelectTrigger className="mt-1 h-9 text-sm">
+                                  <SelectTrigger className="mt-1">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -149,19 +149,15 @@ export default function LeavesPage() {
                                 </Select>
                               </div>
                               <div>
-                                <Label className="text-xs text-muted-foreground">Notes</Label>
+                                <Label>Notes</Label>
                                 <Input
                                   value={approvalNotes}
                                   onChange={(e) => setApprovalNotes(e.target.value)}
-                                  className="mt-1 h-9 text-sm"
+                                  className="mt-1"
                                 />
                               </div>
                               <button
-                                className="w-full h-9 rounded-md text-sm font-medium"
-                                style={{
-                                  backgroundColor: 'hsl(var(--primary))',
-                                  color: 'hsl(var(--primary-foreground))',
-                                }}
+                                className="h-11 w-full rounded-xl bg-slate-950 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition-colors hover:bg-slate-900"
                                 onClick={() => processLeave(leave.id)}
                               >
                                 Submit Decision

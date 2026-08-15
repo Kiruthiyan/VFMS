@@ -74,8 +74,8 @@ export default function VendorDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container animate-in fade-in duration-500">
         <Button
           variant="ghost"
           onClick={() => router.push("/dashboards/fleet/vendors")}
@@ -84,14 +84,14 @@ export default function VendorDetailPage() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vendors
         </Button>
 
-        <Card className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
-          <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-white text-lg">
-                <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
+        <Card className="vfms-detail-card">
+          <CardHeader className="vfms-form-header px-6 py-5 pl-8">
+            <CardTitle className="flex flex-col gap-3 text-white text-lg sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-blue-950">
                   <Building2 className="h-5 w-5" />
                 </div>
-                {vendor.name}
+                <span className="min-w-0 truncate">{vendor.name}</span>
               </div>
               <span
                 className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide ${
@@ -107,8 +107,8 @@ export default function VendorDetailPage() {
 
           <CardContent className="pt-6 space-y-6">
             {/* Info Grid */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="vfms-detail-tile">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <User className="h-4 w-4" />
                 </div>
@@ -119,7 +119,7 @@ export default function VendorDetailPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <Phone className="h-4 w-4" />
                 </div>
@@ -130,7 +130,7 @@ export default function VendorDetailPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <Mail className="h-4 w-4" />
                 </div>
@@ -141,7 +141,7 @@ export default function VendorDetailPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mt-0.5">
                   <MapPin className="h-4 w-4" />
                 </div>

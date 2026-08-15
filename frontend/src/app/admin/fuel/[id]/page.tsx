@@ -10,9 +10,9 @@ import {
   CircleDollarSign,
   Droplets,
   FileText,
+  Fuel,
   Gauge,
   Pencil,
-  type LucideIcon,
   MapPin,
   ShieldAlert,
   UserRound,
@@ -70,16 +70,18 @@ function DetailRow({
   return (
     <div
       className={cn(
-        "flex items-start justify-between gap-6 border-b border-slate-100 py-4 last:border-b-0 last:pb-0 first:pt-0",
+        "flex items-start justify-between gap-6 border-b border-slate-100 py-3.5 last:border-b-0 last:pb-0 first:pt-0",
         className
       )}
     >
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
           {label}
         </p>
       </div>
-      <p className="text-right text-sm font-semibold text-slate-900">{value}</p>
+      <p className="min-w-0 break-words text-right text-sm font-semibold text-slate-950">
+        {value}
+      </p>
     </div>
   );
 }
@@ -99,47 +101,25 @@ function SectionCard({
 }) {
   return (
     <Card
-      className={cn("overflow-hidden rounded-3xl border-slate-200/90", className)}
+      className={cn(
+        "vfms-detail-card overflow-hidden",
+        className
+      )}
     >
-      <CardHeader className="border-b border-slate-100 bg-slate-50/70">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+      <CardHeader className="vfms-card-header px-5 py-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
           {eyebrow}
         </p>
-        <CardTitle className="text-lg text-slate-950">{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        <CardTitle className="text-xl font-bold text-slate-950">
+          {title}
+        </CardTitle>
+        {description && (
+          <CardDescription className="text-sm font-medium text-slate-500">
+            {description}
+          </CardDescription>
+        )}
       </CardHeader>
-      <CardContent className="p-6">{children}</CardContent>
-    </Card>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  meta,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  meta: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <Card className="rounded-3xl border-slate-200/90 bg-white">
-      <CardContent className="flex items-start justify-between p-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-            {label}
-          </p>
-          <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-            {value}
-          </p>
-          <p className="mt-2 text-sm text-slate-500">{meta}</p>
-        </div>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-          <Icon className="h-5 w-5" />
-        </span>
-      </CardContent>
+      <CardContent className="p-5">{children}</CardContent>
     </Card>
   );
 }
@@ -209,28 +189,35 @@ export default function AdminFuelDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href="/admin/fuel"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950"
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container max-w-none animate-in fade-in duration-500">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <Button
+            asChild
+            variant="ghost"
+            className="text-slate-600 hover:text-slate-900"
           >
-            <ArrowLeft size={14} />
-            Back to Fuel Management
-          </Link>
+            <Link href="/admin/fuel">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Fuel Management
+            </Link>
+          </Button>
 
           <div className="flex flex-wrap items-center gap-2">
             {record && (
-              <Button asChild variant="outline" size="sm">
+              <Button
+                asChild
+                className="bg-blue-950 text-white shadow-md transition-all duration-200 hover:bg-blue-900 hover:shadow-lg active:scale-[0.98]"
+              >
                 <Link href={`/admin/fuel/${record.id}/edit`}>
-                  <Pencil />
+                  <Pencil className="mr-2 h-4 w-4" />
                   Edit Entry
                 </Link>
               </Button>
             )}
             {record?.receiptUrl && (
-              <Button type="button" variant="outline" size="sm" onClick={openReceipt}>
-                <FileText />
+              <Button type="button" variant="outline" onClick={openReceipt}>
+                <FileText className="mr-2 h-4 w-4" />
                 View Receipt
               </Button>
             )}
@@ -247,282 +234,241 @@ export default function AdminFuelDetailPage() {
           <FormMessage type="error" message="Fuel entry not found" />
         ) : (
           <>
-            <Card className="overflow-hidden rounded-[30px] border-slate-200/90 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_60%,#fff8e7_100%)]">
-              <CardContent className="p-0">
-                <div className="flex flex-col gap-8 p-8 lg:flex-row lg:items-end lg:justify-between">
-                  <div className="max-w-3xl">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Badge variant="outline" className="bg-white/80">
-                        Fuel Record
-                      </Badge>
+              <Card className="vfms-detail-card mb-6 overflow-hidden">
+                <CardHeader className="vfms-form-header px-6 py-5">
+                  <div className="flex flex-col gap-3 text-white sm:flex-row sm:items-center">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-blue-950">
+                        <Fuel className="h-5 w-5" />
+                      </div>
+                      <CardTitle className="min-w-0 flex-1 truncate text-lg font-bold text-white">
+                        {record.vehiclePlate}
+                      </CardTitle>
+                    </div>
+                    <div className="sm:ml-auto">
                       {statusBadge}
                     </div>
-                    <h1 className="mt-5 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                      {record.vehiclePlate}
-                    </h1>
-                    <p className="mt-2 text-base text-slate-600">
-                      {record.vehicleMakeModel} with full fueling, audit, and
-                      supporting evidence details for administrative review.
-                    </p>
-
-                    <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                        <div className="flex items-center gap-2 text-slate-500">
-                          <UserRound className="h-4 w-4" />
-                          <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                            Driver
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm font-semibold text-slate-950">
-                          {record.driverName ?? "Unassigned"}
-                        </p>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-5">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="vfms-detail-tile xl:col-span-2">
+                      <FileText className="vfms-detail-icon" />
+                      <div className="min-w-0">
+                        <p className="vfms-detail-label">Record ID</p>
+                        <p className="vfms-detail-value truncate">{record.id}</p>
                       </div>
-
-                      <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                        <div className="flex items-center gap-2 text-slate-500">
-                          <CalendarDays className="h-4 w-4" />
-                          <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                            Fuel Date
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm font-semibold text-slate-950">
-                          {formatDate(record.fuelDate)}
-                        </p>
+                    </div>
+                    <div className="vfms-detail-tile xl:col-span-2">
+                      <CarFront className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Vehicle</p>
+                        <p className="vfms-detail-value">{record.vehicleMakeModel}</p>
                       </div>
-
-                      <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                        <div className="flex items-center gap-2 text-slate-500">
-                          <MapPin className="h-4 w-4" />
-                          <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                            Station
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm font-semibold text-slate-950">
-                          {record.fuelStation ?? "Not specified"}
-                        </p>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <UserRound className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Driver</p>
+                        <p className="vfms-detail-value">{record.driverName ?? "Unassigned"}</p>
+                      </div>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <CalendarDays className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Fuel Date</p>
+                        <p className="vfms-detail-value">{formatDate(record.fuelDate)}</p>
+                      </div>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <MapPin className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Station</p>
+                        <p className="vfms-detail-value">{record.fuelStation ?? "Not specified"}</p>
+                      </div>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <CircleDollarSign className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Total Cost</p>
+                        <p className="vfms-detail-value">{formatLKR(record.totalCost)}</p>
+                      </div>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <Droplets className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Quantity</p>
+                        <p className="vfms-detail-value">{record.quantity.toFixed(2)} L</p>
+                      </div>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <CircleDollarSign className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Cost per Litre</p>
+                        <p className="vfms-detail-value">{formatLKR(record.costPerLitre)}</p>
+                      </div>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <Gauge className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Efficiency</p>
+                        <p className="vfms-detail-value">{formatEfficiency(record.efficiencyKmPerLitre)}</p>
+                      </div>
+                    </div>
+                    <div className="vfms-detail-tile">
+                      <CarFront className="vfms-detail-icon" />
+                      <div>
+                        <p className="vfms-detail-label">Odometer</p>
+                        <p className="vfms-detail-value">{record.odometerReading.toLocaleString()} km</p>
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <div className="grid gap-3 sm:grid-cols-2 lg:w-[320px]">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        Total Cost
+              <div className="grid gap-5 xl:grid-cols-2">
+              <SectionCard
+                eyebrow="Vehicle Context"
+                title="Trip and asset details"
+                description="Core operational information tied to this fuel event."
+              >
+                <DetailRow label="Vehicle ID" value={record.vehicleId} />
+                <DetailRow label="License Plate" value={record.vehiclePlate} />
+                <DetailRow
+                  label="Make and Model"
+                  value={record.vehicleMakeModel}
+                />
+                <DetailRow
+                  label="Driver Name"
+                  value={record.driverName ?? "N/A"}
+                />
+                <DetailRow
+                  label="Driver ID"
+                  value={record.driverId ?? "N/A"}
+                />
+                <DetailRow
+                  label="Distance Since Last"
+                  value={
+                    record.distanceSinceLast != null
+                      ? `${record.distanceSinceLast.toLocaleString()} km`
+                      : "N/A"
+                  }
+                />
+              </SectionCard>
+
+              <SectionCard
+                eyebrow="Review Status"
+                title="Compliance signal"
+                description="Quick status for trust, follow-up, and exception handling."
+              >
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={cn(
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
+                        record.flaggedForMisuse
+                          ? "bg-red-100 text-red-600"
+                          : "bg-emerald-100 text-emerald-600"
+                      )}
+                    >
+                      <ShieldAlert className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {record.flaggedForMisuse
+                          ? "Flagged for review"
+                          : "No anomaly detected"}
                       </p>
-                      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
-                        {formatLKR(record.totalCost)}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-400">
-                        Captured for audit and reimbursement reporting
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
-                        Record ID
-                      </p>
-                      <p className="mt-3 truncate text-lg font-semibold text-slate-950">
-                        {record.id}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        Reference for support and traceability
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {record.flagReason ??
+                          "This entry currently shows no flagged misuse condition."}
                       </p>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </SectionCard>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <StatCard
-                label="Quantity"
-                value={`${record.quantity.toFixed(2)} L`}
-                meta="Dispensed volume"
-                icon={Droplets}
-              />
-              <StatCard
-                label="Cost per Litre"
-                value={formatLKR(record.costPerLitre)}
-                meta="Unit purchase cost"
-                icon={CircleDollarSign}
-              />
-              <StatCard
-                label="Efficiency"
-                value={formatEfficiency(record.efficiencyKmPerLitre)}
-                meta="Estimated vehicle performance"
-                icon={Gauge}
-              />
-              <StatCard
-                label="Odometer"
-                value={`${record.odometerReading.toLocaleString()} km`}
-                meta="Reading at fueling"
-                icon={CarFront}
-              />
-            </div>
+              <SectionCard
+                eyebrow="Fueling Snapshot"
+                title="Purchase and location summary"
+                description="Structured values used for cost control and anomaly review."
+              >
+                <DetailRow label="Fuel Date" value={formatDate(record.fuelDate)} />
+                <DetailRow
+                  label="Fuel Station"
+                  value={record.fuelStation ?? "N/A"}
+                />
+                <DetailRow
+                  label="Quantity"
+                  value={`${record.quantity.toFixed(2)} L`}
+                />
+                <DetailRow
+                  label="Cost per Litre"
+                  value={formatLKR(record.costPerLitre)}
+                />
+                <DetailRow label="Total Cost" value={formatLKR(record.totalCost)} />
+                <DetailRow
+                  label="Fuel Efficiency"
+                  value={formatEfficiency(record.efficiencyKmPerLitre)}
+                />
+              </SectionCard>
 
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.9fr)]">
-              <div className="space-y-6">
+              <SectionCard
+                eyebrow="Audit Trail"
+                title="Record ownership"
+                description="Administrative metadata used for traceability."
+              >
+                <DetailRow label="Created By" value={record.createdBy} />
+                <DetailRow
+                  label="Created At"
+                  value={formatDateTime(record.createdAt)}
+                />
+              </SectionCard>
+
+              {record.notes && (
                 <SectionCard
-                  eyebrow="Vehicle Context"
-                  title="Trip and asset details"
-                  description="Core operational information tied to this fuel event."
+                  eyebrow="Operator Notes"
+                  title="Recorded observations"
+                  description="Free-text context captured at the time of entry."
+                  className="xl:col-span-2"
                 >
-                  <div className="grid gap-x-8 md:grid-cols-2">
-                    <div>
-                      <DetailRow label="Vehicle ID" value={record.vehicleId} />
-                      <DetailRow
-                        label="License Plate"
-                        value={record.vehiclePlate}
-                      />
-                      <DetailRow
-                        label="Make and Model"
-                        value={record.vehicleMakeModel}
-                      />
-                    </div>
-                    <div>
-                      <DetailRow
-                        label="Driver Name"
-                        value={record.driverName ?? "N/A"}
-                      />
-                      <DetailRow
-                        label="Driver ID"
-                        value={record.driverId ?? "N/A"}
-                      />
-                      <DetailRow
-                        label="Distance Since Last"
-                        value={
-                          record.distanceSinceLast != null
-                            ? `${record.distanceSinceLast.toLocaleString()} km`
-                            : "N/A"
-                        }
-                      />
-                    </div>
-                  </div>
+                  <p className="text-sm leading-7 text-slate-700">
+                    {record.notes}
+                  </p>
                 </SectionCard>
+              )}
 
-                <SectionCard
-                  eyebrow="Fueling Snapshot"
-                  title="Purchase and location summary"
-                  description="Structured values used for cost control and anomaly review."
-                >
-                  <div className="grid gap-x-8 md:grid-cols-2">
+              <SectionCard
+                eyebrow="Supporting Files"
+                title="Receipt evidence"
+                description="Stored attachment linked to this transaction."
+                className="xl:col-span-2"
+              >
+                {record.receiptUrl ? (
+                  <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <DetailRow
-                        label="Fuel Date"
-                        value={formatDate(record.fuelDate)}
-                      />
-                      <DetailRow
-                        label="Fuel Station"
-                        value={record.fuelStation ?? "N/A"}
-                      />
-                      <DetailRow
-                        label="Quantity"
-                        value={`${record.quantity.toFixed(2)} L`}
-                      />
-                    </div>
-                    <div>
-                      <DetailRow
-                        label="Cost per Litre"
-                        value={formatLKR(record.costPerLitre)}
-                      />
-                      <DetailRow
-                        label="Total Cost"
-                        value={formatLKR(record.totalCost)}
-                      />
-                      <DetailRow
-                        label="Fuel Efficiency"
-                        value={formatEfficiency(record.efficiencyKmPerLitre)}
-                      />
-                    </div>
-                  </div>
-                </SectionCard>
-
-                {record.notes && (
-                  <SectionCard
-                    eyebrow="Operator Notes"
-                    title="Recorded observations"
-                    description="Free-text context captured at the time of entry."
-                  >
-                    <p className="text-sm leading-7 text-slate-700">
-                      {record.notes}
-                    </p>
-                  </SectionCard>
-                )}
-              </div>
-
-              <div className="space-y-6">
-                <SectionCard
-                  eyebrow="Review Status"
-                  title="Compliance signal"
-                  description="Quick status for trust, follow-up, and exception handling."
-                >
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={cn(
-                          "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
-                          record.flaggedForMisuse
-                            ? "bg-red-100 text-red-600"
-                            : "bg-emerald-100 text-emerald-600"
-                        )}
-                      >
-                        <ShieldAlert className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950">
-                          {record.flaggedForMisuse
-                            ? "Flagged for review"
-                            : "No anomaly detected"}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                          {record.flagReason ??
-                            "This entry currently shows no flagged misuse condition."}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </SectionCard>
-
-                <SectionCard
-                  eyebrow="Audit Trail"
-                  title="Record ownership"
-                  description="Administrative metadata used for traceability."
-                >
-                  <DetailRow label="Created By" value={record.createdBy} />
-                  <DetailRow
-                    label="Created At"
-                    value={formatDateTime(record.createdAt)}
-                  />
-                </SectionCard>
-
-                <SectionCard
-                  eyebrow="Supporting Files"
-                  title="Receipt evidence"
-                  description="Stored attachment linked to this transaction."
-                >
-                  {record.receiptUrl ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
                       <p className="text-sm font-semibold text-slate-950">
                         {record.receiptFileName ?? "Receipt attachment"}
                       </p>
                       <p className="mt-2 text-sm text-slate-500">
-                        Open the uploaded receipt in a new tab for document
-                        verification.
+                        Open the uploaded receipt in a new tab for document verification.
                       </p>
-                      <Button type="button" className="mt-4 w-full" onClick={openReceipt}>
-                        <FileText />
-                        Open Receipt
-                      </Button>
                     </div>
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
-                      No receipt file is attached to this fuel entry.
-                    </div>
-                  )}
-                </SectionCard>
+                    <Button type="button" onClick={openReceipt}>
+                      <FileText />
+                      Open Receipt
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
+                    No receipt file is attached to this fuel entry.
+                  </div>
+                )}
+              </SectionCard>
               </div>
-            </div>
           </>
         )}
+      </div>
     </div>
   );
 }

@@ -27,6 +27,8 @@ import {
   ShieldCheck,
   FileCheck,
   Gauge,
+  Pencil,
+  Archive,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
@@ -130,25 +132,53 @@ export default function VehicleDetailPage({
   const vehicleDisplayStatus = isInTripUse ? "IN_TRIP_USE" : vehicle.status;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-4xl mx-auto animate-in fade-in duration-500">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4 text-slate-600 hover:text-slate-900"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vehicles
-        </Button>
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container max-w-none animate-in fade-in duration-500">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vehicles
+          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {canAdmin && (
+              <Button
+                className="bg-blue-950 text-white shadow-md transition-all duration-200 hover:bg-blue-900 hover:shadow-lg active:scale-[0.98]"
+                onClick={() =>
+                  router.push(`/dashboards/fleet/vehicles/${vehicle.id}/edit`)
+                }
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Vehicle
+              </Button>
+            )}
+            {canAdmin && vehicle.status !== "RETIRED" && (
+              <Button
+                className="bg-red-600 text-white shadow-md transition-all duration-200 hover:bg-red-700 hover:shadow-lg active:scale-[0.98]"
+                onClick={handleRetire}
+                disabled={retiring}
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                {retiring ? "Retiring..." : "Retire Vehicle"}
+              </Button>
+            )}
+          </div>
+        </div>
 
         {/* ── Header Card ── */}
-        <Card className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden mb-6">
-          <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
-            <CardTitle className="flex items-center gap-3 text-white text-lg">
-              <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
+        <Card className="vfms-detail-card mb-6">
+          <CardHeader className="vfms-form-header px-6 py-5 pl-8">
+            <CardTitle className="flex flex-col gap-3 text-white text-lg sm:flex-row sm:items-center">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-blue-950">
                 <Car className="h-5 w-5" />
               </div>
-              {vehicle.brand} {vehicle.model}
-              <div className="ml-auto">
+              <span className="min-w-0 flex-1 truncate">
+                {vehicle.brand} {vehicle.model}
+              </span>
+              <div className="sm:ml-auto">
                 <VehicleStatusBadge status={vehicleDisplayStatus} />
               </div>
             </CardTitle>
@@ -188,59 +218,59 @@ export default function VehicleDetailPage({
             {/* ── Details Tab ── */}
             {activeTab === "details" && (
               <>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                    <Hash className="h-5 w-5 text-blue-600" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="vfms-detail-tile">
+                    <Hash className="vfms-detail-icon" />
                     <div>
-                      <p className="text-xs text-slate-500">Plate Number</p>
-                      <p className="font-semibold text-slate-900">
+                      <p className="vfms-detail-label">Plate Number</p>
+                      <p className="vfms-detail-value">
                         {vehicle.plateNumber}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                    <Car className="h-5 w-5 text-blue-600" />
+                  <div className="vfms-detail-tile">
+                    <Car className="vfms-detail-icon" />
                     <div>
-                      <p className="text-xs text-slate-500">Vehicle Type</p>
-                      <p className="font-semibold text-slate-900">
+                      <p className="vfms-detail-label">Vehicle Type</p>
+                      <p className="vfms-detail-value">
                         {vehicle.vehicleType}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                    <Fuel className="h-5 w-5 text-blue-600" />
+                  <div className="vfms-detail-tile">
+                    <Fuel className="vfms-detail-icon" />
                     <div>
-                      <p className="text-xs text-slate-500">Fuel Type</p>
-                      <p className="font-semibold text-slate-900">
+                      <p className="vfms-detail-label">Fuel Type</p>
+                      <p className="vfms-detail-value">
                         {vehicle.fuelType}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <div className="vfms-detail-tile">
+                    <Calendar className="vfms-detail-icon" />
                     <div>
-                      <p className="text-xs text-slate-500">Year</p>
-                      <p className="font-semibold text-slate-900">
+                      <p className="vfms-detail-label">Year</p>
+                      <p className="vfms-detail-value">
                         {vehicle.year}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                    <Gauge className="h-5 w-5 text-blue-600" />
+                  <div className="vfms-detail-tile">
+                    <Gauge className="vfms-detail-icon" />
                     <div>
-                      <p className="text-xs text-slate-500">Odometer</p>
-                      <p className="font-semibold text-slate-900">
+                      <p className="vfms-detail-label">Odometer</p>
+                      <p className="vfms-detail-value">
                         {vehicle.odometerReading != null
                           ? `${vehicle.odometerReading.toLocaleString()} km`
                           : "Not recorded"}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm col-span-2">
-                    <Building className="h-5 w-5 text-blue-600" />
+                  <div className="vfms-detail-tile md:col-span-2">
+                    <Building className="vfms-detail-icon" />
                     <div>
-                      <p className="text-xs text-slate-500">Department</p>
-                      <p className="font-semibold text-slate-900">
+                      <p className="vfms-detail-label">Department</p>
+                      <p className="vfms-detail-value">
                         {vehicle.department || "Not assigned"}
                       </p>
                     </div>
@@ -250,29 +280,29 @@ export default function VehicleDetailPage({
                   {(vehicle.color || vehicle.seatingCapacity) && (
                     <>
                       <div className="col-span-2 pt-1">
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        <p className="vfms-detail-section-label">
                           Additional Details
                         </p>
                       </div>
                       {vehicle.color && (
-                        <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                          <Palette className="h-5 w-5 text-blue-600" />
+                        <div className="vfms-detail-tile">
+                          <Palette className="vfms-detail-icon" />
                           <div>
-                            <p className="text-xs text-slate-500">Color</p>
-                            <p className="font-semibold text-slate-900">
+                            <p className="vfms-detail-label">Color</p>
+                            <p className="vfms-detail-value">
                               {vehicle.color}
                             </p>
                           </div>
                         </div>
                       )}
                       {vehicle.seatingCapacity && (
-                        <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
-                          <Users className="h-5 w-5 text-blue-600" />
+                        <div className="vfms-detail-tile">
+                          <Users className="vfms-detail-icon" />
                           <div>
-                            <p className="text-xs text-slate-500">
+                            <p className="vfms-detail-label">
                               Seating Capacity
                             </p>
-                            <p className="font-semibold text-slate-900">
+                            <p className="vfms-detail-value">
                               {vehicle.seatingCapacity} seats
                             </p>
                           </div>
@@ -286,7 +316,7 @@ export default function VehicleDetailPage({
                     vehicle.revenueLicenseExpiryDate) && (
                     <>
                       <div className="col-span-2 pt-1">
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        <p className="vfms-detail-section-label">
                           Compliance & Expiry Dates
                         </p>
                       </div>
@@ -383,31 +413,6 @@ export default function VehicleDetailPage({
                     </>
                   )}
                 </div>
-
-                <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
-                  {canAdmin && (
-                    <Button
-                      className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
-                      onClick={() =>
-                        router.push(`/dashboards/fleet/vehicles/${vehicle.id}/edit`)
-                      }
-                    >
-                      Edit Vehicle
-                    </Button>
-                  )}
-                  {canAdmin && vehicle.status !== "RETIRED" && (
-                    <Button
-                      className="bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
-                      onClick={handleRetire}
-                      disabled={retiring}
-                    >
-                      {retiring ? "Retiring..." : "Retire Vehicle"}
-                    </Button>
-                  )}
-                  <Button variant="outline" onClick={() => router.back()}>
-                    Back
-                  </Button>
-                </div>
               </>
             )}
 
@@ -485,10 +490,10 @@ export default function VehicleDetailPage({
                   </div>
                 ) : (
                   <div className="rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full border-separate border-spacing-0 text-left text-sm">
                       <thead className="bg-blue-950">
                         <tr>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                          <th className="rounded-tl-2xl px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
                             Type
                           </th>
                           <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
@@ -506,7 +511,7 @@ export default function VehicleDetailPage({
                           <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">
                             Date
                           </th>
-                          <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
+                          <th className="rounded-tr-2xl px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
                             Action
                           </th>
                         </tr>

@@ -128,32 +128,32 @@ export function UserTable({
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+        <table className="w-full min-w-[920px] border-separate border-spacing-0 text-sm">
+          <thead className="bg-slate-950">
+            <tr>
+              <th className="rounded-tl-2xl bg-slate-950 px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/90">
                 User
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <th className="bg-slate-950 px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/90">
                 Role
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <th className="bg-slate-950 px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/90">
                 Status
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <th className="bg-slate-950 px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/90">
                 {showDeletedActions ? "Deleted" : "Registered"}
               </th>
-              <th className="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <th className="rounded-tr-2xl bg-slate-950 px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/90">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-slate-100 bg-slate-50">
             {users.map((user) => (
-              <tr key={user.id} className="transition-colors hover:bg-slate-50">
-                <td className="px-6 py-3.5">
+              <tr key={user.id} className="transition-colors hover:bg-white">
+                <td className="px-6 py-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-sm font-bold uppercase text-slate-950 shadow-sm ring-1 ring-black/5">
                       {user.fullName.slice(0, 1)}
                     </div>
                     <div className="min-w-0">
@@ -175,28 +175,28 @@ export function UserTable({
                   </div>
                 </td>
 
-                <td className="px-6 py-3.5">
+                <td className="px-6 py-4">
                   <UserRoleBadge role={user.role} />
                 </td>
 
-                <td className="px-6 py-3.5">
+                <td className="px-6 py-4">
                   <UserStatusBadge status={user.status} />
                 </td>
 
-                <td className="px-6 py-3.5 text-sm text-slate-600">
+                <td className="px-6 py-4 text-sm font-medium text-slate-700">
                   {showDeletedActions
                     ? formatDateTime(user.deletedAt)
                     : formatDate(user.createdAt)}
                 </td>
 
-                <td className="px-6 py-3.5">
-                  <div className="flex items-center justify-end gap-1">
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={() =>
                         setExpandedRow(expandedRow === user.id ? null : user.id)
                       }
-                      className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                      className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950"
                       title="View details"
                     >
                       {expandedRow === user.id ? (
@@ -211,7 +211,7 @@ export function UserTable({
                         type="button"
                         onClick={() => handleRestore(user)}
                         disabled={restoringId === user.id}
-                        className="rounded-xl p-2 text-emerald-600 transition-colors hover:bg-emerald-50 disabled:opacity-40"
+                        className="rounded-xl border border-emerald-200 bg-white p-2 text-emerald-600 shadow-sm transition-colors hover:bg-emerald-50 disabled:opacity-40"
                         title="Restore user"
                       >
                         <RotateCcw
@@ -228,7 +228,7 @@ export function UserTable({
                             <button
                               type="button"
                               onClick={() => setReviewingUser(user)}
-                              className="rounded-xl p-2 text-amber-600 transition-colors hover:bg-amber-50"
+                              className="rounded-xl border border-amber-200 bg-white p-2 text-amber-600 shadow-sm transition-colors hover:bg-amber-50"
                               title="Review"
                             >
                               <MoreVertical size={14} />
@@ -240,7 +240,7 @@ export function UserTable({
                           <button
                             type="button"
                             onClick={() => setEditingUser(user)}
-                            className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950"
                             title="Edit"
                           >
                             <Pencil size={14} />
@@ -253,10 +253,10 @@ export function UserTable({
                             type="button"
                             onClick={() => handleToggleStatus(user)}
                             disabled={togglingId === user.id || isSelf(user)}
-                            className={`rounded-xl p-2 transition-colors disabled:opacity-40 ${
+                            className={`rounded-xl border bg-white p-2 shadow-sm transition-colors disabled:opacity-40 ${
                               user.status === "APPROVED"
-                                ? "text-amber-600 hover:bg-amber-50"
-                                : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
+                                ? "border-amber-200 text-amber-600 hover:bg-amber-50"
+                                : "border-slate-200 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
                             }`}
                             title={
                               isSelf(user)
@@ -279,7 +279,7 @@ export function UserTable({
                             type="button"
                             onClick={() => setDeletingUser(user)}
                             disabled={isSelf(user)}
-                            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
                             title={
                               isSelf(user)
                                 ? "You cannot delete your own account"

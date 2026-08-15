@@ -11,9 +11,9 @@ export function FormErrorSummary({ messages, title = 'Please fix the highlighted
 
   return (
     <div className={className} role="alert" aria-live="polite">
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm">
+      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm">
         <p className="font-medium">{title}</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">
           {messages.map((message, index) => (
             <li key={`${message}-${index}`}>{message}</li>
           ))}

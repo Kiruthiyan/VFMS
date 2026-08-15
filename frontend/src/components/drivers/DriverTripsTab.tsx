@@ -29,10 +29,10 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
   NEW: { bg: 'hsl(210 40% 96%)', text: 'hsl(215 25% 27%)', border: 'hsl(214 32% 91%)' },
   SUBMITTED: { bg: 'hsl(35 100% 97%)', text: 'hsl(31 92% 34%)', border: 'hsl(36 95% 85%)' },
   APPROVED: { bg: 'hsl(142 76% 94%)', text: 'hsl(142 71% 45%)', border: 'hsl(142 71% 70%)' },
-  DRIVER_CONFIRMED: { bg: 'hsl(175 70% 95%)', text: 'hsl(175 70% 35%)', border: 'hsl(175 70% 80%)' },
+  DRIVER_CONFIRMED: { bg: 'hsl(142 76% 94%)', text: 'hsl(142 71% 32%)', border: 'hsl(142 71% 70%)' },
   DRIVER_REJECTED: { bg: 'hsl(25 100% 95%)', text: 'hsl(25 100% 45%)', border: 'hsl(25 100% 80%)' },
-  ONGOING: { bg: 'hsl(260 100% 97%)', text: 'hsl(263 83% 53%)', border: 'hsl(263 83% 74%)' },
-  COMPLETED: { bg: 'hsl(218 100% 97%)', text: 'hsl(221 83% 53%)', border: 'hsl(221 83% 74%)' },
+  ONGOING: { bg: 'hsl(45 96% 95%)', text: 'hsl(35 92% 32%)', border: 'hsl(45 96% 78%)' },
+  COMPLETED: { bg: 'hsl(210 40% 96%)', text: 'hsl(215 25% 27%)', border: 'hsl(214 32% 84%)' },
   REJECTED: { bg: 'hsl(0 84% 97%)', text: 'hsl(0 84% 60%)', border: 'hsl(0 84% 74%)' },
   CANCELLED: { bg: 'hsl(0 0% 96%)', text: 'hsl(0 0% 40%)', border: 'hsl(0 0% 85%)' },
 };
@@ -90,8 +90,8 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="border-b border-border bg-muted/30 px-4 py-3">
+      <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+        <CardHeader className="border-b border-slate-200 bg-slate-50 px-4 py-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold">Filter Trips</CardTitle>
           </div>
@@ -113,28 +113,28 @@ export function DriverTripsTab({ driverId }: DriverTripsTabProps) {
       </Card>
 
       {/* Trips List */}
-      <Card>
-        <CardHeader className="border-b border-border bg-muted/30 px-4 py-3">
-          <CardTitle className="text-sm font-semibold">
+      <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+        <CardHeader className="vfms-card-header px-4 py-3 pl-8">
+          <CardTitle className="text-sm font-semibold text-white">
             {TRIP_FILTERS.find((filter) => filter.value === filterStatus)?.label ?? 'All'} Trips
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0 py-0">
           {loading ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">Loading trips...</div>
+            <div className="m-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-sm text-muted-foreground">Loading trips...</div>
           ) : filteredTrips.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">No trips found</div>
+            <div className="m-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-sm text-muted-foreground">No trips found</div>
           ) : (
             <div className="divide-y divide-border/50">
               {filteredTrips.map((trip) => {
                 const statusColors = getStatusBadgeStyle(trip.status);
                 return (
-                  <div key={trip.id} className="p-4 hover:bg-muted/30 transition-colors">
+                  <div key={trip.id} className="p-4 transition-colors hover:bg-slate-50">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         {/* Destination */}
                         <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                          <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
+                          <MapPin className="h-4 w-4 shrink-0 text-amber-600" />
                           {trip.destination}
                         </div>
                         

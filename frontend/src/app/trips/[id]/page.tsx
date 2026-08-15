@@ -175,8 +175,8 @@ export default function TripDetailPage() {
     const isDriverRejectedNote = trip.approvalNotes?.startsWith("Driver rejected:");
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="vfms-detail-page">
+            <div className="vfms-detail-container max-w-7xl space-y-6">
 
                 <button
                     onClick={() => router.push("/trips")}
@@ -185,11 +185,11 @@ export default function TripDetailPage() {
                     <ArrowLeft className="h-4 w-4" /> Back to Trips
                 </button>
 
-                <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
+                <Card className="vfms-detail-card">
+                    <CardHeader className="vfms-form-header px-6 py-5 pl-8">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-blue-950">
                                     <Calendar className="h-5 w-5" />
                                 </div>
                                 <div>
@@ -216,7 +216,7 @@ export default function TripDetailPage() {
                         {/* Destination Itinerary Timeline */}
                         <div className="space-y-2">
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Itinerary Route</p>
-                            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 space-y-4">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-4">
                                 {trip.destination.split(" -> ").map((place: string, idx: number, arr: string[]) => {
                                     const isStop = idx > 0 && idx < arr.length - 1;
                                     const arrivalTimes = trip.stopArrivalTimes ? trip.stopArrivalTimes.split(",") : [];
@@ -267,15 +267,15 @@ export default function TripDetailPage() {
                         </div>
 
                         {/* Times */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex items-start gap-2">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="vfms-detail-tile">
                                 <Calendar className="h-4 w-4 text-blue-950 mt-0.5 shrink-0" />
                                 <div>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Departure</p>
                                     <p className="text-slate-900 font-medium text-sm">{formatDate(trip.departureTime)}</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-2">
+                            <div className="vfms-detail-tile">
                                 <Clock className="h-4 w-4 text-blue-950 mt-0.5 shrink-0" />
                                 <div>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Return</p>
@@ -285,8 +285,8 @@ export default function TripDetailPage() {
                         </div>
 
                         {/* Passengers & Distance */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex items-start gap-2">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="vfms-detail-tile">
                                 <Users className="h-4 w-4 text-blue-950 mt-0.5 shrink-0" />
                                 <div>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Passengers</p>
@@ -294,7 +294,7 @@ export default function TripDetailPage() {
                                 </div>
                             </div>
                             {trip.distanceKm && (
-                                <div className="flex items-start gap-2">
+                                <div className="vfms-detail-tile">
                                     <MapPin className="h-4 w-4 text-blue-950 mt-0.5 shrink-0" />
                                     <div>
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Distance</p>
@@ -306,7 +306,7 @@ export default function TripDetailPage() {
 
                         {/* Assignments */}
                         {(trip.assignedDriverId || trip.assignedVehicleId) && (
-                            <div className="bg-slate-50 rounded-lg p-4 space-y-2 border border-slate-200">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Assignments</p>
                                 {trip.assignedDriverId && (
                                     <div className="flex items-center gap-2 text-sm text-slate-700">
@@ -662,7 +662,7 @@ export default function TripDetailPage() {
                                         }
                                     }}>
                                         <DialogContent>
-                                            <DialogHeader>
+                                            <DialogHeader className="vfms-form-header rounded-t-xl px-6 py-5 pl-8">
                                                 <DialogTitle>Timeline Deviation Reason</DialogTitle>
                                                 <DialogDescription>
                                                     You are ending this trip more than 30 minutes early or late compared to the scheduled return time ({formatDate(trip.returnTime)}). Please provide a reason for the change.
@@ -719,7 +719,7 @@ export default function TripDetailPage() {
                                         }
                                     }}>
                                         <DialogContent>
-                                            <DialogHeader>
+                                            <DialogHeader className="vfms-form-header rounded-t-xl px-6 py-5 pl-8">
                                                 <DialogTitle>Cancel Trip Request</DialogTitle>
                                                 <DialogDescription>
                                                     Please provide a reason for canceling this trip request. This action cannot be undone.

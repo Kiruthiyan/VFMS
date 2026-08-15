@@ -133,7 +133,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                         href={item.href}
                         onClick={onNavigate}
                         className={cn(
-                          'group flex items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-[13px] font-semibold transition-all',
+                          'group flex min-w-0 items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-[13px] font-semibold transition-all',
                           isActive
                             ? 'border-transparent bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
                             : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
@@ -149,7 +149,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                         >
                           <item.icon className="h-3.5 w-3.5" />
                         </span>
-                        {item.label}
+                        <span className="min-w-0 flex-1 break-words leading-5">
+                          {item.label}
+                        </span>
                       </Link>
                     );
                   }
@@ -158,7 +160,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                     <div key={item.href} className="space-y-1">
                       <div
                         className={cn(
-                          'group flex items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-[13px] font-semibold transition-all',
+                          'group flex min-w-0 items-center gap-2.5 rounded-2xl border px-2.5 py-2.5 text-[13px] font-semibold transition-all',
                           isActive
                             ? 'border-transparent bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
                             : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'
@@ -167,7 +169,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                         <Link
                           href={item.href}
                           onClick={onNavigate}
-                          className="flex flex-1 items-center gap-2.5"
+                          className="flex min-w-0 flex-1 items-center gap-2.5"
                         >
                           <span
                             className={cn(
@@ -179,7 +181,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                           >
                             <item.icon className="h-3.5 w-3.5" />
                           </span>
-                          {item.label}
+                          <span className="min-w-0 flex-1 break-words leading-5">
+                            {item.label}
+                          </span>
                         </Link>
                         <button
                           type="button"
@@ -203,7 +207,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                                 href={child.href}
                                 onClick={onNavigate}
                                 className={cn(
-                                  'group flex items-center gap-2.5 rounded-xl border px-2.5 py-2 text-[12.5px] font-semibold transition-all',
+                                  'group flex min-w-0 items-center gap-2.5 rounded-xl border px-2.5 py-2 text-[12.5px] font-semibold transition-all',
                                   isChildActive
                                     ? 'border-transparent bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
                                     : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-white'
@@ -219,7 +223,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                                 >
                                   <child.icon className="h-3 w-3" />
                                 </span>
-                                {child.label}
+                                <span className="min-w-0 flex-1 break-words leading-5">
+                                  {child.label}
+                                </span>
                               </Link>
                             );
                           })}

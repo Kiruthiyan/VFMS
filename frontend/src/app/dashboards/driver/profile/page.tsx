@@ -74,32 +74,78 @@ function DriverRating({ ratingPercentage }: { ratingPercentage?: number | null }
   const safeRating = getSafeRatingPercentage(ratingPercentage);
 
   return (
-    <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem', boxShadow: '0 8px 24px hsl(220 30% 10% / 0.04)' }}>
-      <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>
-        Driver Rating
-      </p>
+    <ProfileSection title="Driver Rating" description="Synced from staff trip scheduling feedback">
       {safeRating === null ? (
-        <p style={{ fontSize: '0.875rem', color: 'hsl(var(--muted-foreground))', margin: 0, fontWeight: 500 }}>Not rated</p>
-      ) : (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem' }} title={`${safeRating}% driver rating`}>
-          <div style={{ position: 'relative', height: '1.25rem', width: '7.1rem' }} aria-label={`${safeRating}% driver rating`}>
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', gap: '0.15rem', color: 'hsl(var(--muted-foreground) / 0.35)' }}>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star key={`empty-${index}`} style={{ width: '1.25rem', height: '1.25rem' }} />
-              ))}
-            </div>
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', gap: '0.15rem', overflow: 'hidden', color: 'hsl(42 100% 50%)', width: `${safeRating}%` }}>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star key={`filled-${index}`} style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0, fill: 'currentColor' }} />
-              ))}
-            </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.95rem', border: '1px dashed hsl(var(--border))', borderRadius: '0.875rem', background: 'hsl(210 40% 98%)', minWidth: 0 }}>
+          <span style={{ width: '1.9rem', height: '1.9rem', borderRadius: '0.5rem', background: '#fff', border: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Star style={{ width: '0.95rem', height: '0.95rem', color: 'hsl(42 100% 45%)' }} />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontSize: '0.68rem', color: 'hsl(var(--muted-foreground))', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Current Rating</p>
+            <p style={{ fontSize: '0.95rem', color: 'hsl(var(--foreground))', margin: '0.2rem 0 0', fontWeight: 700 }}>Not rated</p>
+            <p style={{ fontSize: '0.72rem', color: 'hsl(var(--muted-foreground))', margin: '0.35rem 0 0', lineHeight: 1.45 }}>A rating appears after staff feedback is recorded.</p>
           </div>
-          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{safeRating}%</span>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.95rem', border: '1px solid hsl(var(--border))', borderRadius: '0.875rem', background: 'hsl(210 40% 98%)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem' }} title={`${safeRating}% driver rating`}>
+              <div style={{ position: 'relative', height: '1.25rem', width: '7.1rem' }} aria-label={`${safeRating}% driver rating`}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', gap: '0.15rem', color: 'hsl(var(--muted-foreground) / 0.35)' }}>
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star key={`empty-${index}`} style={{ width: '1.25rem', height: '1.25rem' }} />
+                  ))}
+                </div>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', gap: '0.15rem', overflow: 'hidden', color: 'hsl(42 100% 50%)', width: `${safeRating}%` }}>
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star key={`filled-${index}`} style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0, fill: 'currentColor' }} />
+                  ))}
+                </div>
+              </div>
+              <span style={{ fontSize: '1rem', fontWeight: 800, color: 'hsl(var(--foreground))' }}>{safeRating}%</span>
+            </div>
+            <span style={{ borderRadius: '9999px', border: '1px solid hsl(var(--border))', background: '#fff', color: 'hsl(var(--muted-foreground))', padding: '0.3rem 0.65rem', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Performance
+            </span>
+          </div>
         </div>
       )}
-      <p style={{ fontSize: '0.72rem', color: 'hsl(var(--muted-foreground))', margin: '0.45rem 0 0', lineHeight: 1.45 }}>
-        Rating will sync from staff trip scheduling feedback.
-      </p>
+    </ProfileSection>
+  );
+}
+
+function ProfileSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="vfms-section-card">
+      <header className="vfms-section-header">
+        <h3 className="vfms-section-title">{title}</h3>
+        {description ? (
+          <p className="vfms-section-description">{description}</p>
+        ) : null}
+      </header>
+      <div style={{ padding: '1.25rem' }}>{children}</div>
+    </section>
+  );
+}
+
+function ProfileInfoTile({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.95rem', border: '1px solid hsl(var(--border))', borderRadius: '0.875rem', background: 'hsl(210 40% 98%)', minWidth: 0 }}>
+      <span style={{ width: '1.9rem', height: '1.9rem', borderRadius: '0.5rem', background: '#fff', border: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon style={{ width: '0.9rem', height: '0.9rem', color: 'hsl(var(--muted-foreground))' }} />
+      </span>
+      <div style={{ minWidth: 0 }}>
+        <p style={{ fontSize: '0.68rem', color: 'hsl(var(--muted-foreground))', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{label}</p>
+        <p style={{ fontSize: '0.95rem', color: 'hsl(var(--foreground))', margin: '0.2rem 0 0', fontWeight: 700, overflowWrap: 'anywhere' }}>{value || '--'}</p>
+      </div>
     </div>
   );
 }
@@ -126,12 +172,14 @@ function InfractionWarningsSection() {
   if (infractions.length === 0) return null;
 
   return (
-    <div role="alert" style={{ borderRadius: '1rem', border: '1px solid hsl(19 90% 62%)', background: 'hsl(19 97% 96%)', padding: '1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
-        <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: 'hsl(19 85% 40%)', flexShrink: 0, marginTop: '0.1rem' }} />
+    <div role="alert" style={{ borderRadius: '1rem', border: '1px solid hsl(38 92% 70%)', background: '#fff', padding: '1rem 1.25rem', boxShadow: '0 12px 32px hsl(220 30% 10% / 0.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.85rem' }}>
+        <span style={{ width: '2rem', height: '2rem', borderRadius: '0.6rem', background: 'hsl(38 92% 94%)', border: '1px solid hsl(38 92% 76%)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <AlertTriangle style={{ width: '1rem', height: '1rem', color: 'hsl(38 92% 34%)' }} />
+        </span>
         <div>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'hsl(19 85% 28%)', margin: 0 }}>Infraction Notice</h3>
-          <p style={{ fontSize: '0.78rem', color: 'hsl(19 75% 32%)', margin: '0.25rem 0 0', lineHeight: 1.5 }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'hsl(222 47% 11%)', margin: 0 }}>Infraction Notice</h3>
+          <p style={{ fontSize: '0.78rem', color: 'hsl(var(--muted-foreground))', margin: '0.25rem 0 0', lineHeight: 1.5 }}>
             An infraction has been recorded on your driver profile. Please contact the office for further information and guidance.
           </p>
         </div>
@@ -139,9 +187,9 @@ function InfractionWarningsSection() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
         {infractions.map((infraction) => (
-          <div key={infraction.id} style={{ borderRadius: '0.65rem', border: '1px solid hsl(19 75% 78%)', background: 'hsl(var(--card))', padding: '0.85rem' }}>
+          <div key={infraction.id} style={{ borderRadius: '0.75rem', border: '1px solid hsl(var(--border))', background: 'hsl(210 40% 98%)', padding: '0.9rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <strong style={{ fontSize: '0.8rem', color: 'hsl(var(--foreground))' }}>
+              <strong style={{ fontSize: '0.82rem', color: 'hsl(var(--foreground))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {(infraction.infractionType ?? 'Unknown infraction').replace(/_/g, ' ')}
               </strong>
               <span style={{ borderRadius: '9999px', padding: '0.18rem 0.55rem', background: 'hsl(19 97% 92%)', color: 'hsl(19 85% 30%)', fontSize: '0.68rem', fontWeight: 700 }}>
@@ -195,85 +243,93 @@ function CertificationsSection() {
   };
 
   return (
-    <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
+    <div className="vfms-section-card">
+      <div className="vfms-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>Certifications</h3>
-          <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.125rem 0 0' }}>View and submit your training certifications</p>
+          <h3 className="vfms-section-title">Certifications</h3>
+          <p className="vfms-section-description">View and submit your training certifications</p>
         </div>
         <button
           type="button"
           onClick={openCertificationForm}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', background: 'hsl(42 100% 50%)', color: '#000', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', flexShrink: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.55rem 0.9rem', borderRadius: '0.5rem', border: '1px solid hsl(42 100% 50% / 0.35)', background: 'hsl(42 100% 50%)', color: 'hsl(222 47% 11%)', fontWeight: 800, fontSize: '0.8125rem', cursor: 'pointer', flexShrink: 0 }}
         >
           <Plus style={{ width: '0.875rem', height: '0.875rem' }} /> Add Certification
         </button>
       </div>
 
-      {loadingCertifications ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: 'hsl(var(--muted-foreground))' }}>
-          <Loader2 style={{ width: '1.25rem', height: '1.25rem', animation: 'spin 1s linear infinite' }} />
-        </div>
-      ) : certifications.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'hsl(var(--muted-foreground))', border: '1px dashed hsl(var(--border))', borderRadius: '0.75rem' }}>
-          <Award style={{ width: '1.75rem', height: '1.75rem', margin: '0 auto 0.5rem', opacity: 0.4 }} />
-          <p style={{ margin: 0, fontSize: '0.8125rem' }}>No certifications yet. Add your first one.</p>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(14rem, 1fr))', gap: '0.75rem' }}>
-          {certifications.map((certification) => (
-            <div key={certification.id} style={{ borderRadius: '0.75rem', border: '1px solid hsl(var(--border))', padding: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <Award style={{ width: '1rem', height: '1rem', color: 'hsl(42 100% 45%)' }} />
-                <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', borderRadius: '9999px', background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))', fontWeight: 500 }}>
-                  {(certification.certType ?? 'OTHER').replace(/_/g, ' ')}
-                </span>
+      <div style={{ padding: '1.25rem' }}>
+        {loadingCertifications ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: 'hsl(var(--muted-foreground))' }}>
+            <Loader2 style={{ width: '1.25rem', height: '1.25rem', animation: 'spin 1s linear infinite' }} />
+          </div>
+        ) : certifications.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'hsl(var(--muted-foreground))', border: '1px dashed hsl(var(--border))', borderRadius: '0.75rem', background: 'hsl(210 40% 98%)' }}>
+            <Award style={{ width: '1.75rem', height: '1.75rem', margin: '0 auto 0.5rem', color: 'hsl(42 100% 45%)' }} />
+            <p style={{ margin: 0, fontSize: '0.8125rem' }}>No certifications yet. Add your first one.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '0.9rem' }}>
+            {certifications.map((certification) => (
+              <div key={certification.id} style={{ borderRadius: '0.875rem', border: '1px solid hsl(var(--border))', background: 'hsl(210 40% 98%)', padding: '1rem', boxShadow: '0 6px 18px hsl(220 30% 10% / 0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <span style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.65rem', background: 'hsl(222 47% 11%)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Award style={{ width: '1rem', height: '1rem', color: 'hsl(42 100% 50%)' }} />
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ display: 'inline-flex', fontSize: '0.68rem', padding: '0.18rem 0.5rem', borderRadius: '9999px', background: '#fff', color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {(certification.certType ?? 'OTHER').replace(/_/g, ' ')}
+                    </span>
+                    <p style={{ fontSize: '0.95rem', fontWeight: 700, color: 'hsl(var(--foreground))', margin: '0.55rem 0 0.25rem' }}>{certification.certName || 'Unnamed certification'}</p>
+                    {certification.issuedBy && <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.25rem' }}>Issued by {certification.issuedBy}</p>}
+                    {certification.expiryDate && <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>Expires {certification.expiryDate}</p>}
+                  </div>
+                </div>
               </div>
-              <p style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 0.25rem' }}>{certification.certName || 'Unnamed certification'}</p>
-              {certification.issuedBy && <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.25rem' }}>by {certification.issuedBy}</p>}
-              {certification.expiryDate && <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>Expires: {certification.expiryDate}</p>}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {showCertificationForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="add-certification-title" style={{ background: '#fff', color: '#000', borderRadius: '1rem', border: '1px solid #e5e7eb', padding: '1.5rem', width: '28rem', maxWidth: '90vw' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h2 id="add-certification-title" style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0 }}>Add Certification</h2>
-              <button type="button" aria-label="Close certification form" onClick={() => setShowCertificationForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(var(--muted-foreground))' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'hsl(222 47% 5% / 0.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="add-certification-title" style={{ background: '#fff', color: 'hsl(222 47% 11%)', borderRadius: '0.95rem', border: '1px solid hsl(var(--border))', overflow: 'hidden', width: '34rem', maxWidth: '100%', boxShadow: '0 24px 80px hsl(222 47% 5% / 0.32)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', background: 'hsl(222 47% 11%)' }}>
+              <h2 id="add-certification-title" style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: '#fff' }}>Add Certification</h2>
+              <button type="button" aria-label="Close certification form" onClick={() => setShowCertificationForm(false)} style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'transparent', border: '1px solid hsl(215 25% 82% / 0.24)', cursor: 'pointer', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X style={{ width: '1rem', height: '1rem' }} />
               </button>
             </div>
             <form onSubmit={handleCertificationSubmit}>
-              <div style={{ marginBottom: '0.875rem' }}>
-                <label htmlFor="certification-type" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</label>
-                <select id="certification-type" value={certificationForm.certType} onChange={(event) => setCertificationForm((current) => ({ ...current, certType: event.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))', background: '#fff', color: '#000', fontSize: '0.875rem', boxSizing: 'border-box' }}>
+              <div style={{ display: 'grid', gap: '1rem', padding: '1.25rem' }}>
+              <div>
+                <label htmlFor="certification-type" className="mb-2 block text-sm font-semibold text-slate-700">Type</label>
+                <select id="certification-type" value={certificationForm.certType} onChange={(event) => setCertificationForm((current) => ({ ...current, certType: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100">
                   {CERTIFICATION_TYPES.map((type) => <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
-              <div style={{ marginBottom: '0.875rem' }}>
-                <label htmlFor="certification-name" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Certification Name</label>
-                <input id="certification-name" required value={certificationForm.certName} onChange={(event) => setCertificationForm((current) => ({ ...current, certName: event.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))', background: '#fff', color: '#000', fontSize: '0.875rem', boxSizing: 'border-box' }} />
+              <div>
+                <label htmlFor="certification-name" className="mb-2 block text-sm font-semibold text-slate-700">Certification Name</label>
+                <input id="certification-name" required value={certificationForm.certName} onChange={(event) => setCertificationForm((current) => ({ ...current, certName: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
               </div>
-              <div style={{ marginBottom: '0.875rem' }}>
-                <label htmlFor="certification-issuer" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Issued By</label>
-                <input id="certification-issuer" value={certificationForm.issuedBy} onChange={(event) => setCertificationForm((current) => ({ ...current, issuedBy: event.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))', background: '#fff', color: '#000', fontSize: '0.875rem', boxSizing: 'border-box' }} />
+              <div>
+                <label htmlFor="certification-issuer" className="mb-2 block text-sm font-semibold text-slate-700">Issued By</label>
+                <input id="certification-issuer" value={certificationForm.issuedBy} onChange={(event) => setCertificationForm((current) => ({ ...current, issuedBy: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div style={{ marginBottom: '0.875rem' }}>
-                  <label htmlFor="certification-issue-date" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Issue Date</label>
-                  <input id="certification-issue-date" type="date" value={certificationForm.issueDate} onChange={(event) => setCertificationForm((current) => ({ ...current, issueDate: event.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))', background: '#fff', color: '#000', fontSize: '0.875rem', boxSizing: 'border-box' }} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="certification-issue-date" className="mb-2 block text-sm font-semibold text-slate-700">Issue Date</label>
+                  <input id="certification-issue-date" type="date" value={certificationForm.issueDate} onChange={(event) => setCertificationForm((current) => ({ ...current, issueDate: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
                 </div>
-                <div style={{ marginBottom: '0.875rem' }}>
-                  <label htmlFor="certification-expiry-date" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expiry Date</label>
-                  <input id="certification-expiry-date" type="date" value={certificationForm.expiryDate} onChange={(event) => setCertificationForm((current) => ({ ...current, expiryDate: event.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))', background: '#fff', color: '#000', fontSize: '0.875rem', boxSizing: 'border-box' }} />
+                <div>
+                  <label htmlFor="certification-expiry-date" className="mb-2 block text-sm font-semibold text-slate-700">Expiry Date</label>
+                  <input id="certification-expiry-date" type="date" value={certificationForm.expiryDate} onChange={(event) => setCertificationForm((current) => ({ ...current, expiryDate: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowCertificationForm(false)} style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))', background: 'transparent', color: '#000', cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" disabled={savingCertification} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', background: 'hsl(42 100% 50%)', color: '#000', fontWeight: 600, cursor: savingCertification ? 'not-allowed' : 'pointer' }}>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', background: 'hsl(210 40% 98%)', padding: '1rem 1.25rem', flexWrap: 'wrap' }}>
+                <button type="button" onClick={() => setShowCertificationForm(false)} style={{ minWidth: '5.75rem', height: '2.6rem', padding: '0 1rem', borderRadius: '0.65rem', border: '1px solid hsl(var(--border))', background: '#fff', color: 'hsl(222 47% 11%)', cursor: 'pointer', fontWeight: 700 }}>Cancel</button>
+                <button type="submit" disabled={savingCertification} style={{ minWidth: '6.25rem', height: '2.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', padding: '0 1rem', borderRadius: '0.65rem', border: 'none', background: 'hsl(222 47% 11%)', color: '#fff', fontWeight: 800, cursor: savingCertification ? 'not-allowed' : 'pointer', boxShadow: '0 10px 22px hsl(222 47% 11% / 0.16)' }}>
                   {savingCertification ? <Loader2 style={{ width: '0.875rem', height: '0.875rem', animation: 'spin 1s linear infinite' }} /> : <Save style={{ width: '0.875rem', height: '0.875rem' }} />}
                   {savingCertification ? 'Saving...' : 'Save'}
                 </button>
@@ -383,24 +439,23 @@ export default function DriverProfilePage() {
           <p>No driver profile linked to your account. Contact an administrator.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '74rem', margin: '0 auto', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '86rem', margin: '0 auto', width: '100%' }}>
           <InfractionWarningsSection />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(18rem, 22rem) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 
           {/* Left: Avatar + identity card */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'contents' }}>
             {/* Avatar card */}
-            <div style={{
-              borderRadius: '1.25rem', border: '1px solid hsl(var(--border))',
+            <div className="md:col-span-2 xl:col-span-3" style={{
+              borderRadius: '1rem', border: '1px solid hsl(var(--border))',
               background: 'hsl(var(--card))', overflow: 'hidden',
-              boxShadow: '0 16px 40px hsl(220 30% 10% / 0.08)',
+              boxShadow: '0 16px 44px hsl(220 30% 10% / 0.08)',
             }}>
-              {/* Gradient banner */}
-              <div style={{ height: '5.5rem', background: 'linear-gradient(135deg, hsl(220 30% 15%), hsl(42 100% 30%))' }} />
-              <div style={{ padding: '0 1.5rem 1.5rem', position: 'relative', textAlign: 'center' }}>
+              <div style={{ height: '4.25rem', background: 'hsl(222 47% 11%)' }} />
+              <div style={{ padding: '0 1.5rem 1.5rem', position: 'relative', textAlign: 'left', display: 'flex', alignItems: 'flex-end', gap: '1.25rem', flexWrap: 'wrap' }}>
                 {/* Avatar */}
-                <div style={{ position: 'relative', display: 'inline-block', marginTop: '-2.5rem', marginBottom: '0.75rem' }}>
+                <div style={{ position: 'relative', display: 'inline-block', marginTop: '-2.5rem' }}>
                   {avatarSrc ? (
                     <button
                       type="button"
@@ -427,7 +482,7 @@ export default function DriverProfilePage() {
                   ) : (
                     <div style={{
                       width: '5rem', height: '5rem', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, hsl(220 30% 25%), hsl(42 100% 40%))',
+                      background: 'hsl(222 47% 11%)',
                       border: '3px solid hsl(var(--background))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
@@ -440,14 +495,14 @@ export default function DriverProfilePage() {
                       disabled={uploadingPic}
                       aria-label="Remove profile picture"
                       style={{
-                        position: 'absolute', top: '0.25rem', right: '-2rem',
-                        width: '1.5rem', height: '1.5rem', borderRadius: '50%',
+                        position: 'absolute', top: '0.2rem', right: '-0.25rem',
+                        width: '1.65rem', height: '1.65rem', borderRadius: '50%',
                         background: '#fff', border: '1px solid hsl(var(--border))',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px hsl(0 0% 0% / 0.12)'
                       }}
                     >
-                      <Trash2 style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(0 84% 45%)' }} />
+                      <Trash2 style={{ width: '0.78rem', height: '0.78rem', color: 'hsl(0 84% 45%)' }} />
                     </button>
                   )}
                   {/* Upload overlay */}
@@ -456,8 +511,8 @@ export default function DriverProfilePage() {
                     disabled={uploadingPic}
                     aria-label="Change profile picture"
                     style={{
-                      position: 'absolute', top: avatarSrc ? '2.1rem' : '0.25rem', right: '-2rem',
-                      width: '1.5rem', height: '1.5rem', borderRadius: '50%',
+                      position: 'absolute', bottom: '0.2rem', right: '-0.25rem',
+                      width: '1.65rem', height: '1.65rem', borderRadius: '50%',
                       background: '#fff', border: '1px solid hsl(var(--border))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px hsl(0 0% 0% / 0.12)'
@@ -471,7 +526,8 @@ export default function DriverProfilePage() {
                   <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
                 </div>
 
-                <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--foreground))', margin: 0 }}>
+                <div style={{ flex: '1 1 18rem', minWidth: 0, paddingTop: '1rem' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'hsl(var(--foreground))', margin: 0, lineHeight: 1.2 }}>
                   <span>
                     {editingName ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -553,37 +609,31 @@ export default function DriverProfilePage() {
                   Driver
                 </p>
 
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <StatusPill status={profile.status} />
+                </div>
                 </div>
               </div>
             </div>
 
             <DriverRating ratingPercentage={profile.ratingPercentage} />
 
-            {/* Identity card */}
-            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem', boxShadow: '0 8px 24px hsl(220 30% 10% / 0.04)' }}>
-              <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>
-                Identity
-              </p>
-              <InfoRow icon={Badge} label="Driver ID" value={profile.employeeId} />
-              <InfoRow icon={CreditCard} label="NIC / Passport" value={profile.nic} />
-            </div>
+            <ProfileSection title="Identity">
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                <ProfileInfoTile icon={Badge} label="Driver ID" value={profile.employeeId} />
+                <ProfileInfoTile icon={CreditCard} label="NIC / Passport" value={profile.nic} />
+              </div>
+            </ProfileSection>
 
-            {/* License card */}
-            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem', boxShadow: '0 8px 24px hsl(220 30% 10% / 0.04)' }}>
-              <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>
-                License
-              </p>
-              <InfoRow icon={Shield} label="License Number" value={profile.licenseNumber} />
-              <InfoRow icon={Calendar} label="Expiry Date" value={profile.licenseExpiryDate} />
-            </div>
+            <ProfileSection title="License">
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                <ProfileInfoTile icon={Shield} label="License Number" value={profile.licenseNumber} />
+                <ProfileInfoTile icon={Calendar} label="Expiry Date" value={profile.licenseExpiryDate} />
+              </div>
+            </ProfileSection>
 
             {/* Upload Document (migrated from Documents page) */}
-            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1.1rem 1.25rem', boxShadow: '0 8px 24px hsl(220 30% 10% / 0.04)' }}>
-              <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.75rem' }}>
-                Upload Document
-              </p>
+            <ProfileSection title="Upload Document" description="Submit license and supporting files">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.65rem' }}>
                 <select
                   value={selectedDocType}
@@ -592,7 +642,7 @@ export default function DriverProfilePage() {
                     setSelectedDocType(nextType);
                     if (nextType === 'LICENSE') setOtherDocumentName('');
                   }}
-                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '0.65rem', border: '1px solid hsl(var(--border))', background: '#fff', color: '#000', fontSize: '0.875rem' }}
+                  className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100"
                 >
                   <option value="LICENSE">License</option>
                   <option value="OTHER">Other</option>
@@ -604,14 +654,14 @@ export default function DriverProfilePage() {
                     onChange={(e) => setOtherDocumentName(e.target.value)}
                     placeholder="Document name"
                     aria-label="Other document name"
-                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '0.65rem', border: '1px solid hsl(var(--border))', background: '#fff', color: '#000', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                    className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100"
                   />
                 )}
 
                 <button
                   onClick={() => docInputRef.current?.click()}
                   disabled={uploadingDoc || (selectedDocType === 'OTHER' && !otherDocumentName.trim())}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '0.65rem', border: 'none', background: 'hsl(42 100% 50%)', color: '#000', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '0.65rem', border: 'none', background: 'hsl(222 47% 11%)', color: '#fff', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer' }}
                 >
                   {uploadingDoc ? (
                     <Loader2 style={{ width: '0.875rem', height: '0.875rem', animation: 'spin 1s linear infinite' }} />
@@ -629,31 +679,33 @@ export default function DriverProfilePage() {
                 />
                 <span style={{ fontSize: '0.72rem', color: 'hsl(var(--muted-foreground))', lineHeight: 1.45 }}>PDF, JPG, PNG, WEBP accepted</span>
               </div>
-            </div>
+            </ProfileSection>
             </div>
 
           {/* Right: Read-only contact info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
+          <div style={{ display: 'contents' }}>
             {/* Contact info */}
-            <div style={{ borderRadius: '1.25rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1.5rem', boxShadow: '0 12px 32px hsl(220 30% 10% / 0.06)' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>Contact Information</h3>
-                <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.125rem 0 0' }}>Your registered contact details</p>
+            <div className="vfms-section-card">
+              <div className="vfms-section-header">
+                <h3 className="vfms-section-title">Contact Information</h3>
+                <p className="vfms-section-description">Your registered contact details</p>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '0.75rem', padding: '1.25rem' }}>
               {/* Phone with inline edit */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid hsl(var(--border))' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.95rem', border: '1px solid hsl(var(--border))', borderRadius: '0.875rem', background: 'hsl(210 40% 98%)', minWidth: 0 }}>
                 <span style={{
                   width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem',
-                  background: 'hsl(var(--muted))', display: 'flex', alignItems: 'center',
+                  background: '#fff', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', flexShrink: 0, marginTop: '0.125rem',
+                  border: '1px solid hsl(var(--border))',
                 }}>
                   <Phone style={{ width: '0.875rem', height: '0.875rem', color: 'hsl(var(--muted-foreground))' }} />
                 </span>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}>Phone Number</p>
                   {!editingPhone ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.125rem' }}>
-                      <p style={{ fontSize: '0.875rem', color: 'hsl(var(--foreground))', margin: 0, fontWeight: 500 }}>{profile.phone || '—'}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.125rem', minWidth: 0 }}>
+                      <p style={{ fontSize: '0.95rem', color: 'hsl(var(--foreground))', margin: 0, fontWeight: 700, overflowWrap: 'anywhere' }}>{profile.phone || '--'}</p>
                       <button
                         aria-label="Edit phone"
                         onClick={() => { setPhoneInput(profile.phone ?? ''); setEditingPhone(true); }}
@@ -721,7 +773,8 @@ export default function DriverProfilePage() {
                   )}
                 </div>
               </div>
-              <InfoRow icon={Mail} label="Email Address" value={profile.email} />
+              <ProfileInfoTile icon={Mail} label="Email Address" value={profile.email} />
+              </div>
             </div>
 
             <CertificationsSection />

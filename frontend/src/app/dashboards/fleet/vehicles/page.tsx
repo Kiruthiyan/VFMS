@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Vehicle, vehicleApi, VehicleStatus } from "@/lib/api/vehicle";
 import { tripAvailabilityApi } from "@/lib/api/trip-availability";
 import { VehicleStatusBadge } from "@/components/vehicles/VehicleStatusBadge";
+import { FleetSummaryCard } from "@/components/fleet/FleetSummaryCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,6 +22,9 @@ import {
   Loader2,
   RefreshCw,
   AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
@@ -74,6 +78,14 @@ export default function VehiclesPage() {
       ? "IN_TRIP_USE"
       : vehicle.status;
 
+  const availableCount = vehicles.filter((v) => v.status === "AVAILABLE").length;
+  const inTripUseCount = vehicles.filter(
+    (v) => v.status === "AVAILABLE" && activeTripVehicleIds.has(v.id),
+  ).length;
+  const maintenanceCount = vehicles.filter(
+    (v) => v.status === "UNDER_MAINTENANCE",
+  ).length;
+
   // ── Compliance warning helper ──
   const getComplianceWarning = (
     vehicle: Vehicle,
@@ -119,8 +131,11 @@ export default function VehiclesPage() {
             <Button
               variant="outline"
               size="icon"
+              className="vfms-refresh-button"
               onClick={fetchVehicles}
               disabled={loading}
+              aria-label="Refresh vehicles"
+              title="Refresh vehicles"
             >
               <RefreshCw
                 className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -135,6 +150,37 @@ export default function VehiclesPage() {
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Summary */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <FleetSummaryCard
+            label="Total Vehicles"
+            value={vehicles.length}
+            helper="Company-owned fleet assets"
+            icon={Car}
+          />
+          <FleetSummaryCard
+            label="Available"
+            value={availableCount}
+            helper="Ready for assignment"
+            icon={CheckCircle2}
+            tone="emerald"
+          />
+          <FleetSummaryCard
+            label="In Trip Use"
+            value={inTripUseCount}
+            helper="Currently tied to active trips"
+            icon={Clock3}
+            tone="blue"
+          />
+          <FleetSummaryCard
+            label="Under Maintenance"
+            value={maintenanceCount}
+            helper="Temporarily unavailable"
+            icon={Wrench}
+            tone={maintenanceCount > 0 ? "amber" : "slate"}
+          />
         </div>
 
         {/* Filters */}
@@ -166,6 +212,15 @@ export default function VehiclesPage() {
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
+          <div className="vfms-card-header px-7 py-5 pl-8">
+            <h2 className="text-xl font-bold text-slate-950">
+              Vehicle Registry
+            </h2>
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              {filtered.length} company-owned fleet asset
+              {filtered.length === 1 ? "" : "s"} matching the current view
+            </p>
+          </div>
           {loading && vehicles.length === 0 ? (
             <div className="p-8 text-center text-slate-500 flex items-center justify-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" /> Loading vehicles...
@@ -175,10 +230,10 @@ export default function VehiclesPage() {
               No vehicles found.
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <table className="w-full border-separate border-spacing-0 text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                  <th className="rounded-tl-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
                     Vehicle Info
                   </th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
@@ -193,7 +248,7 @@ export default function VehiclesPage() {
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
                     Department
                   </th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
+                  <th className="rounded-tr-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
                     Actions
                   </th>
                 </tr>

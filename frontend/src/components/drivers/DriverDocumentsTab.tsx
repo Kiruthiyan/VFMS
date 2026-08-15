@@ -33,9 +33,9 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
-        <CardTitle className="text-sm font-semibold">Other Documents</CardTitle>
+    <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+      <CardHeader className="vfms-card-header flex flex-row items-center justify-between px-4 py-3 pl-8">
+        <CardTitle className="text-sm font-semibold text-white">Other Documents</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4 px-4 pb-4 pt-3">
@@ -43,7 +43,7 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className="flex items-center justify-between rounded-lg border border-border p-2.5 transition-colors hover:bg-muted/20"
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5 transition-colors hover:bg-slate-50"
             >
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-amber-500/15">
@@ -86,7 +86,7 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
           ))}
 
           {documents.length === 0 && (
-            <p className="py-4 text-center text-xs text-muted-foreground">No other documents uploaded</p>
+            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-4 text-center text-xs text-muted-foreground">No other documents uploaded</p>
           )}
         </div>
       </CardContent>

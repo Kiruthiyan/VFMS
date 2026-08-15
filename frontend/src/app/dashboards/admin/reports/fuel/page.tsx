@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Fuel, Navigation, Droplets, MapPin, Search, DollarSign } from "lucide-react";
+import { Fuel, Navigation, Droplets, MapPin, Search, DollarSign, Car } from "lucide-react";
 import { reportService } from "@/services/reportService";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ComposedChart, Area, AreaChart } from "recharts";
 
@@ -274,7 +274,9 @@ export default function FuelAnalysisPage() {
                                     <tr key={log.id || index} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-black text-xs">V</div>
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400 text-blue-950 shadow-sm ring-1 ring-black/5">
+                                                    <Car className="h-5 w-5" />
+                                                </div>
                                                 <div>
                                                     <p className="font-bold text-slate-900">{log.licensePlate}</p>
                                                     <p className="text-[10px] text-slate-400 uppercase font-bold">ID: {log.vehicleId}</p>
@@ -282,7 +284,7 @@ export default function FuelAnalysisPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <Badge className="border-none font-bold text-[10px]" style={{ backgroundColor: `${FUEL_TYPE_COLORS[log.fuelType] || "#94a3b8"}20`, color: FUEL_TYPE_COLORS[log.fuelType] || "#64748b" }}>
+                                            <Badge className="whitespace-nowrap border-none bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 hover:bg-slate-100">
                                                 {log.fuelType}
                                             </Badge>
                                         </td>

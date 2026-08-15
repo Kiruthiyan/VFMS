@@ -6,12 +6,12 @@ import {
   BarChart3,
   Droplets,
   FileText,
+  Flag,
   Fuel,
   Plus,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-
 
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -61,37 +61,59 @@ export default function FuelDashboardPage() {
       value: records.length.toString(),
       detail: "Fuel entries tracked",
       icon: Fuel,
-      iconBg: "bg-amber-100",
-      iconColor: "text-amber-700",
     },
     {
       label: "Total Spend",
       value: `LKR ${(totalSpend / 1000).toFixed(1)}k`,
       detail: "Total fuel cost",
       icon: TrendingUp,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-700",
     },
     {
       label: "Total Volume",
       value: `${totalVolume.toFixed(0)}L`,
       detail: "Liters dispensed",
       icon: Droplets,
-      iconBg: "bg-amber-100",
-      iconColor: "text-amber-700",
     },
     {
       label: "Avg Cost/L",
       value: `LKR ${avgCostPerLiter}`,
       detail: "Cost per liter",
       icon: BarChart3,
-      iconBg: "bg-slate-100",
-      iconColor: "text-slate-700",
+    },
+  ];
+
+  const operationCards = [
+    {
+      title: "Fuel Logs",
+      description: "View and filter every fuel transaction recorded.",
+      href: "/admin/fuel/logs",
+      icon: FileText,
+      action: "View",
+    },
+    {
+      title: "New Fuel Entry",
+      description: "Record a new fuel purchase for the fleet.",
+      href: "/admin/fuel/create",
+      icon: Plus,
+      action: "Create",
+    },
+    {
+      title: "Fuel Alerts",
+      description: "Review unusual usage and suspicious patterns.",
+      href: "/admin/fuel/alerts",
+      icon: AlertCircle,
+      action: "Review",
+    },
+    {
+      title: "Flagged Records",
+      description: "Open records that need operational follow-up.",
+      href: "/admin/fuel/alerts/flagged",
+      icon: Flag,
+      action: "Resolve",
     },
   ];
 
   return (
-
       <div className="space-y-6">
         <PageHeader
           title="Fuel Management"
@@ -136,24 +158,21 @@ export default function FuelDashboardPage() {
                 return (
                   <Card
                     key={card.label}
-                    className="rounded-2xl shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    className="rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <CardContent className="p-5">
                       <div className="mb-4 flex items-start justify-between">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                             {card.label}
                           </p>
-                          <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                          <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">
                             {card.value}
                           </p>
                         </div>
-                        <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.iconBg}`}
-                        >
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700">
                           <Icon
                             size={18}
-                            className={card.iconColor}
                             strokeWidth={2.2}
                           />
                         </div>
@@ -167,90 +186,56 @@ export default function FuelDashboardPage() {
               })}
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              <Link href="/admin/fuel/logs" className="group">
-                <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
-                  <CardContent className="pt-6">
-                    <div className="mb-4 flex items-start justify-between">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
-                        <FileText
-                          size={22}
-                          className="text-slate-950"
-                          strokeWidth={1.5}
-                        />
+            <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="vfms-card-header flex flex-col gap-1 px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-950">
+                    <Fuel className="text-amber-600" size={22} />
+                    Fuel Operations
+                  </CardTitle>
+                  <p className="mt-1 text-sm font-medium text-slate-500">
+                    Common fuel workflows are available here without crowding the sidebar.
+                  </p>
+                </div>
+              </div>
+              <CardContent className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
+                {operationCards.map((card) => {
+                  const Icon = card.icon;
+                  return (
+                    <Link
+                      key={card.href}
+                      href={card.href}
+                      className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-200 hover:bg-slate-50 hover:shadow-md"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700 transition-colors group-hover:bg-amber-100">
+                          <Icon size={20} strokeWidth={2.1} />
+                        </div>
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+                          {card.action}
+                        </span>
                       </div>
-                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-                        VIEW
-                      </span>
-                    </div>
-                    <h3 className="mb-1 text-sm font-bold text-slate-900">
-                      Fuel Entry Logs
-                    </h3>
-                    <p className="text-xs text-slate-600">
-                      View and filter all fuel entry records with details.
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/fuel/create" className="group">
-                <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
-                  <CardContent className="pt-6">
-                    <div className="mb-4 flex items-start justify-between">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
-                        <Plus
-                          size={22}
-                          className="text-slate-950"
-                          strokeWidth={2.5}
-                        />
-                      </div>
-                      <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
-                        NEW
-                      </span>
-                    </div>
-                    <h3 className="mb-1 text-sm font-bold text-slate-900">
-                      Create Fuel Entry
-                    </h3>
-                    <p className="text-xs text-slate-600">
-                      Log a new fuel purchase for your fleet.
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/fuel/alerts" className="group">
-                <Card className="h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
-                  <CardContent className="pt-6">
-                    <div className="mb-4 flex items-start justify-between">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors group-hover:bg-amber-100">
-                        <AlertCircle
-                          size={22}
-                          className="text-slate-950"
-                          strokeWidth={1.5}
-                        />
-                      </div>
-                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-                        MONITOR
-                      </span>
-                    </div>
-                    <h3 className="mb-1 text-sm font-bold text-slate-900">
-                      Fuel Alerts
-                    </h3>
-                    <p className="text-xs text-slate-600">
-                      Review flagged records and suspicious patterns.
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
+                      <h3 className="mt-4 text-base font-bold text-slate-950">
+                        {card.title}
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        {card.description}
+                      </p>
+                    </Link>
+                  );
+                })}
+              </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Card>
-                <CardContent className="p-6">
-                  <CardTitle className="mb-6 flex items-center gap-2 text-base font-semibold text-slate-950">
+              <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="vfms-card-header px-6 py-5">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
                     <Fuel size={18} className="text-amber-700" />
                     Fleet Overview
                   </CardTitle>
+                </div>
+                <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                       <span className="text-sm font-medium text-slate-700">
@@ -272,12 +257,14 @@ export default function FuelDashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <CardTitle className="mb-6 flex items-center gap-2 text-base font-semibold text-slate-950">
+              <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="vfms-card-header px-6 py-5">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
                     <BarChart3 size={18} className="text-amber-700" />
                     Quick Stats
                   </CardTitle>
+                </div>
+                <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                       <span className="text-sm font-medium text-slate-700">
@@ -307,6 +294,5 @@ export default function FuelDashboardPage() {
           </>
         )}
       </div>
-
   );
 }

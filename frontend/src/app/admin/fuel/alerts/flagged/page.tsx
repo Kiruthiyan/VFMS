@@ -95,12 +95,19 @@ export default function FlaggedRecordsPage() {
                   Dashboard
                 </Link>
               </Button>
-              <Button variant="outline" onClick={fetchAll} disabled={loading}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="vfms-refresh-button"
+                onClick={fetchAll}
+                disabled={loading}
+                aria-label="Refresh flagged fuel records"
+                title="Refresh flagged fuel records"
+              >
                 <RefreshCw
                   size={16}
                   className={loading ? "animate-spin" : ""}
                 />
-                Refresh
               </Button>
             </>
           }

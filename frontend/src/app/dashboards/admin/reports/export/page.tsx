@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Table, BarChart, Car, User, Droplet, Wrench, Calendar, ClipboardList, TrendingUp } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Table, BarChart, Car, User, Droplet, Wrench, Calendar, ClipboardList, RefreshCw } from "lucide-react";
 import { exportService } from "@/services/exportService";
 import { reportService } from "@/services/reportService";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +36,8 @@ export default function ExportPage() {
     // Saved reports history state
     const [savedReports, setSavedReports] = useState<any[]>([]);
     const [loadingReports, setLoadingReports] = useState<boolean>(false);
+    const primaryExportButtonClass = "rounded-xl bg-slate-950 font-bold text-white shadow-sm shadow-slate-950/15 hover:bg-slate-800 disabled:cursor-not-allowed disabled:border disabled:border-slate-200 disabled:!bg-slate-100 disabled:!text-slate-400 disabled:!opacity-100 disabled:!shadow-none disabled:hover:!bg-slate-100 disabled:[&_svg]:!text-slate-400";
+    const excelExportButtonClass = "rounded-xl border-emerald-200 bg-emerald-50 font-bold text-emerald-800 shadow-sm hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:!bg-slate-50 disabled:!text-slate-400 disabled:!opacity-100 disabled:!shadow-none disabled:hover:!bg-slate-50 disabled:[&_svg]:!text-slate-400";
 
     const loadSavedReports = async () => {
         setLoadingReports(true);
@@ -217,11 +220,11 @@ export default function ExportPage() {
             </div>
 
             {/* Date Filtering Section */}
-            <Card className="border-2 border-indigo-200 bg-white shadow-xl overflow-hidden">
-                <div className="bg-indigo-600 px-6 py-3 flex items-center justify-between">
+            <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm">
+                <div className="vfms-card-header flex items-center justify-between px-6 py-3 pl-8">
                     <div className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-white" />
-                        <h2 className="text-white font-bold">Select Period</h2>
+                        <Calendar className="h-5 w-5 text-slate-700" />
+                        <h2 className="font-bold text-slate-950">Select Period</h2>
                     </div>
                 </div>
                 <CardContent className="p-6">
@@ -237,7 +240,7 @@ export default function ExportPage() {
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
                                         placeholder="mm/dd/yyyy"
-                                        className="w-full h-11 px-4 py-2 pr-10 bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-semibold text-slate-700 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                        className="h-11 w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 pr-10 font-semibold text-slate-700 transition-all focus:border-slate-400 focus:ring-2 focus:ring-slate-200 [&::-webkit-calendar-picker-indicator]:opacity-0"
                                     />
                                     <div
                                         onClick={() => startDateInputRef.current?.showPicker()}
@@ -258,7 +261,7 @@ export default function ExportPage() {
                                         value={endDate}
                                         onChange={(e) => setEndDate(e.target.value)}
                                         placeholder="mm/dd/yyyy"
-                                        className="w-full h-11 px-4 py-2 pr-10 bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-semibold text-slate-700 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                        className="h-11 w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 pr-10 font-semibold text-slate-700 transition-all focus:border-slate-400 focus:ring-2 focus:ring-slate-200 [&::-webkit-calendar-picker-indicator]:opacity-0"
                                     />
                                     <div
                                         onClick={() => endDateInputRef.current?.showPicker()}
@@ -276,14 +279,14 @@ export default function ExportPage() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="font-bold text-slate-700 border-slate-300 hover:bg-slate-50"
+                                    className="border-slate-300 bg-white font-bold text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50"
                                     onClick={handleResetDateRange}
                                 >
                                     RESET
                                 </Button>
                                 <Button
                                     type="button"
-                                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6"
+                                    className="bg-slate-950 px-6 font-bold text-white shadow-lg shadow-slate-950/15 hover:bg-slate-800"
                                     onClick={handleApplyDateRange}
                                 >
                                     APPLY
@@ -291,9 +294,9 @@ export default function ExportPage() {
                             </div>
 
                             {/* Active Filter Display */}
-                            <div className="flex-1 md:flex-none p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-center md:text-right">
-                                <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Active Filter</p>
-                                <p className="text-sm font-black text-indigo-900">{getFormattedDateRange()}</p>
+                            <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-center md:flex-none md:text-right">
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Active Filter</p>
+                                <p className="text-sm font-black text-slate-950">{getFormattedDateRange()}</p>
                             </div>
                         </div>
                     </div>
@@ -301,24 +304,26 @@ export default function ExportPage() {
             </Card>
 
             {/* Top Row: Primary Reports */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6">
                  {/* Overall Summary Card */}
-                <Card className="border-2 border-blue-200 bg-blue-50/50 hover:shadow-lg transition-all overflow-hidden">
-                    <CardHeader className="bg-blue-600 text-white">
+                <Card className="w-full overflow-hidden border border-slate-200 bg-white transition-all hover:shadow-md">
+                    <CardHeader className="vfms-card-header pl-8">
                         <div className="flex items-center gap-3">
-                            <BarChart className="h-8 w-8" />
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-slate-950">
+                                <BarChart className="h-5 w-5" />
+                            </span>
                             <div>
-                                <CardTitle className="text-xl">Fleet-Wide Summary</CardTitle>
-                                <CardDescription className="text-blue-100">Complete performance & financial overview</CardDescription>
+                                <CardTitle className="text-xl text-slate-950">Fleet-Wide Summary</CardTitle>
+                                <CardDescription>Complete performance & financial overview</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6 flex flex-col sm:flex-row gap-4">
-                        <Button className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl" onClick={() => handleExport('overall', 'pdf')} disabled={!!downloading}>
-                            <FileText className="mr-2 h-5 w-5" /> PDF Summary
+                    <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
+                        <Button className={`h-12 w-full ${primaryExportButtonClass}`} onClick={() => handleExport('overall', 'pdf')} disabled={!!downloading}>
+                            <FileText className="mr-2 h-5 w-5 text-amber-300" /> PDF Summary
                         </Button>
-                        <Button className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl" onClick={() => handleExport('overall', 'excel')} disabled={!!downloading}>
-                            <Table className="mr-2 h-5 w-5" /> Excel Spreadsheet
+                        <Button variant="outline" className={`h-12 w-full ${excelExportButtonClass}`} onClick={() => handleExport('overall', 'excel')} disabled={!!downloading}>
+                            <Table className="mr-2 h-5 w-5 text-emerald-700" /> Excel Spreadsheet
                         </Button>
                     </CardContent>
                 </Card>
@@ -327,153 +332,186 @@ export default function ExportPage() {
             {/* Selection Row: Individual Entity Reports */}
             <div className="grid gap-6 md:grid-cols-3">
                 {/* Vehicle Selection Card */}
-                <Card className="border-2 border-purple-200 hover:shadow-lg transition-all">
+                <Card className="border border-slate-200 bg-white transition-all hover:shadow-md">
                     <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
-                            <Car className="h-6 w-6 text-purple-600" />
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800 ring-1 ring-amber-200">
+                                <Car className="h-5 w-5" />
+                            </span>
                             <CardTitle className="text-lg">Vehicle Insight</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <select
-                            value={selectedVehicle}
-                            onChange={(e) => setSelectedVehicle(e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none font-bold text-sm"
+                        <Select
+                            value={selectedVehicle || "NONE"}
+                            onValueChange={(value) => setSelectedVehicle(value === "NONE" ? "" : value)}
                         >
-                            <option value="">Choose a Vehicle...</option>
-                            {vehicles.map(v => (
-                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.plateNumber} ({v.brand} {v.model})</option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="h-10 font-bold">
+                                <SelectValue placeholder="Choose a vehicle..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="NONE">Choose a vehicle...</SelectItem>
+                                {vehicles.map(v => (
+                                    <SelectItem key={v.id || v.vehicleId} value={String(v.id || v.vehicleId)}>{v.plateNumber} ({v.brand} {v.model})</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" className="bg-purple-600 font-bold" onClick={() => handleExport('vehicle', 'pdf')} disabled={!selectedVehicle || !!downloading}>PDF</Button>
-                            <Button size="sm" variant="outline" className="font-bold border-purple-200" onClick={() => handleExport('vehicle', 'excel')} disabled={!selectedVehicle || !!downloading}>Excel</Button>
+                            <Button size="sm" className={`h-9 ${primaryExportButtonClass}`} onClick={() => handleExport('vehicle', 'pdf')} disabled={!selectedVehicle || !!downloading}><FileText className="h-4 w-4 text-amber-300" />PDF</Button>
+                            <Button size="sm" variant="outline" className={`h-9 ${excelExportButtonClass}`} onClick={() => handleExport('vehicle', 'excel')} disabled={!selectedVehicle || !!downloading}><Table className="h-4 w-4 text-emerald-700" />Excel</Button>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Driver Selection Card */}
-                <Card className="border-2 border-indigo-200 hover:shadow-lg transition-all">
+                <Card className="border border-slate-200 bg-white transition-all hover:shadow-md">
                     <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
-                            <User className="h-6 w-6 text-indigo-600" />
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-800 ring-1 ring-blue-200">
+                                <User className="h-5 w-5" />
+                            </span>
                             <CardTitle className="text-lg">Driver Scorecard</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <select
-                            value={selectedDriver}
-                            onChange={(e) => setSelectedDriver(e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-bold text-sm"
+                        <Select
+                            value={selectedDriver || "NONE"}
+                            onValueChange={(value) => setSelectedDriver(value === "NONE" ? "" : value)}
                         >
-                            <option value="">Select Driver...</option>
-                            {drivers.map(d => (
-                                <option key={d.id || d.driverId} value={d.id || d.driverId}>{d.driverName || d.name || "Unknown Driver"}</option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="h-10 font-bold">
+                                <SelectValue placeholder="Select driver..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="NONE">Select driver...</SelectItem>
+                                {drivers.map(d => (
+                                    <SelectItem key={d.id || d.driverId} value={String(d.id || d.driverId)}>{d.driverName || d.name || "Unknown Driver"}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" className="bg-indigo-600 font-bold" onClick={() => handleExport('driver', 'pdf')} disabled={!selectedDriver || !!downloading}>PDF</Button>
-                            <Button size="sm" variant="outline" className="font-bold border-indigo-200" onClick={() => handleExport('driver', 'excel')} disabled={!selectedDriver || !!downloading}>Excel</Button>
+                            <Button size="sm" className={`h-9 ${primaryExportButtonClass}`} onClick={() => handleExport('driver', 'pdf')} disabled={!selectedDriver || !!downloading}><FileText className="h-4 w-4 text-amber-300" />PDF</Button>
+                            <Button size="sm" variant="outline" className={`h-9 ${excelExportButtonClass}`} onClick={() => handleExport('driver', 'excel')} disabled={!selectedDriver || !!downloading}><Table className="h-4 w-4 text-emerald-700" />Excel</Button>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Fuel Log Card */}
-                <Card className="border-2 border-green-200 hover:shadow-lg transition-all">
+                <Card className="border border-slate-200 bg-white transition-all hover:shadow-md">
                     <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
-                            <Droplet className="h-6 w-6 text-green-600" />
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200">
+                                <Droplet className="h-5 w-5" />
+                            </span>
                             <CardTitle className="text-lg">Fuel Consumption</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <select
-                            value={selectedFuelVehicle}
-                            onChange={(e) => setSelectedFuelVehicle(e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-green-500 outline-none font-bold text-sm"
+                        <Select
+                            value={selectedFuelVehicle || "NONE"}
+                            onValueChange={(value) => setSelectedFuelVehicle(value === "NONE" ? "" : value)}
                         >
-                            <option value="">Select for Fuel Log...</option>
-                            {vehicles.map(v => (
-                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.plateNumber}</option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="h-10 font-bold">
+                                <SelectValue placeholder="Select for fuel log..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="NONE">Select for fuel log...</SelectItem>
+                                {vehicles.map(v => (
+                                    <SelectItem key={v.id || v.vehicleId} value={String(v.id || v.vehicleId)}>{v.plateNumber}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" className="bg-green-600 font-bold" onClick={() => handleExport('fuellog', 'pdf')} disabled={!selectedFuelVehicle || !!downloading}>PDF</Button>
-                            <Button size="sm" variant="outline" className="font-bold border-green-200" onClick={() => handleExport('fuellog', 'excel')} disabled={!selectedFuelVehicle || !!downloading}>Excel</Button>
+                            <Button size="sm" className={`h-9 ${primaryExportButtonClass}`} onClick={() => handleExport('fuellog', 'pdf')} disabled={!selectedFuelVehicle || !!downloading}><FileText className="h-4 w-4 text-amber-300" />PDF</Button>
+                            <Button size="sm" variant="outline" className={`h-9 ${excelExportButtonClass}`} onClick={() => handleExport('fuellog', 'excel')} disabled={!selectedFuelVehicle || !!downloading}><Table className="h-4 w-4 text-emerald-700" />Excel</Button>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Maintenance Log Card - RESTORED */}
-                <Card className="border-2 border-orange-200 hover:shadow-lg transition-all">
+                <Card className="border border-slate-200 bg-white transition-all hover:shadow-md">
                     <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
-                            <Wrench className="h-6 w-6 text-orange-600" />
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-800 ring-1 ring-orange-200">
+                                <Wrench className="h-5 w-5" />
+                            </span>
                             <CardTitle className="text-lg">Maintenance Log</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <select
-                            value={selectedMaintenanceVehicle}
-                            onChange={(e) => setSelectedMaintenanceVehicle(e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-orange-500 outline-none font-bold text-sm"
+                        <Select
+                            value={selectedMaintenanceVehicle || "NONE"}
+                            onValueChange={(value) => setSelectedMaintenanceVehicle(value === "NONE" ? "" : value)}
                         >
-                            <option value="">Select for Logs...</option>
-                            {vehicles.map(v => (
-                                <option key={v.id || v.vehicleId} value={v.id || v.vehicleId}>{v.plateNumber}</option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="h-10 font-bold">
+                                <SelectValue placeholder="Select for logs..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="NONE">Select for logs...</SelectItem>
+                                {vehicles.map(v => (
+                                    <SelectItem key={v.id || v.vehicleId} value={String(v.id || v.vehicleId)}>{v.plateNumber}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" className="bg-orange-600 font-bold" onClick={() => handleExport('maintenancelog', 'pdf')} disabled={!selectedMaintenanceVehicle || !!downloading}>PDF</Button>
-                            <Button size="sm" variant="outline" className="font-bold border-orange-200" onClick={() => handleExport('maintenancelog', 'excel')} disabled={!selectedMaintenanceVehicle || !!downloading}>Excel</Button>
+                            <Button size="sm" className={`h-9 ${primaryExportButtonClass}`} onClick={() => handleExport('maintenancelog', 'pdf')} disabled={!selectedMaintenanceVehicle || !!downloading}><FileText className="h-4 w-4 text-amber-300" />PDF</Button>
+                            <Button size="sm" variant="outline" className={`h-9 ${excelExportButtonClass}`} onClick={() => handleExport('maintenancelog', 'excel')} disabled={!selectedMaintenanceVehicle || !!downloading}><Table className="h-4 w-4 text-emerald-700" />Excel</Button>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Rental Card - RESTORED */}
-                <Card className="border-2 border-pink-200 hover:shadow-lg transition-all">
+                <Card className="border border-slate-200 bg-white transition-all hover:shadow-md">
                     <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
-                            <ClipboardList className="h-6 w-6 text-pink-600" />
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-800 ring-1 ring-violet-200">
+                                <ClipboardList className="h-5 w-5" />
+                            </span>
                             <CardTitle className="text-lg">Rental Contracts</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <select
-                            value={selectedRental}
-                            onChange={(e) => setSelectedRental(e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-pink-500 outline-none font-bold text-sm"
+                        <Select
+                            value={selectedRental || "NONE"}
+                            onValueChange={(value) => setSelectedRental(value === "NONE" ? "" : value)}
                         >
-                            <option value="">Select Rental...</option>
-                            {rentals.map(r => (
-                                <option key={r.id} value={String(r.id)}>
-                                    {r.plateNumber || r.vehicleType || "Vehicle"} --- {r.vendorName || "Vendor"} ({r.startDate || "-"})
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="h-10 font-bold">
+                                <SelectValue placeholder="Select rental..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="NONE">Select rental...</SelectItem>
+                                {rentals.map(r => (
+                                    <SelectItem key={r.id} value={String(r.id)}>
+                                        {r.plateNumber || r.vehicleType || "Vehicle"} - {r.vendorName || "Vendor"} ({r.startDate || "-"})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" className="bg-pink-600 font-bold" onClick={() => handleExport('rental', 'pdf')} disabled={!selectedRental || !!downloading}>PDF</Button>
-                            <Button size="sm" variant="outline" className="font-bold border-pink-200" onClick={() => handleExport('rental', 'excel')} disabled={!selectedRental || !!downloading}>Excel</Button>
+                            <Button size="sm" className={`h-9 ${primaryExportButtonClass}`} onClick={() => handleExport('rental', 'pdf')} disabled={!selectedRental || !!downloading}><FileText className="h-4 w-4 text-amber-300" />PDF</Button>
+                            <Button size="sm" variant="outline" className={`h-9 ${excelExportButtonClass}`} onClick={() => handleExport('rental', 'excel')} disabled={!selectedRental || !!downloading}><Table className="h-4 w-4 text-emerald-700" />Excel</Button>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Saved Reports / History Section */}
-            <Card className="border-2 border-slate-200 bg-white shadow-xl overflow-hidden mt-8">
-                <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
+            <Card className="mt-8 overflow-hidden border border-slate-200 bg-white shadow-sm">
+                <div className="relative flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-6 py-4 pl-8">
+                    <span className="absolute left-5 top-4 bottom-4 w-1 rounded-full bg-amber-400" aria-hidden="true" />
                     <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-amber-400" />
-                        <h2 className="text-white font-bold text-lg">Saved Reports & Export History</h2>
+                        <FileText className="h-5 w-5 text-slate-700" />
+                        <h2 className="text-slate-950 font-bold text-lg">Saved Reports & Export History</h2>
                     </div>
                     <Button
                         variant="outline"
-                        size="sm"
-                        className="text-slate-300 border-slate-700 hover:bg-slate-800"
+                        size="icon"
+                        className="vfms-refresh-button"
                         onClick={loadSavedReports}
                         disabled={loadingReports}
+                        aria-label="Refresh saved report history"
+                        title="Refresh saved report history"
                     >
-                        Refresh History
+                        <RefreshCw className={`h-4 w-4 ${loadingReports ? "animate-spin" : ""}`} />
                     </Button>
                 </div>
                 <CardContent className="p-6">

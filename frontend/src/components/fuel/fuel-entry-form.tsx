@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useWatch, type Resolver } from "react-hook-form";
+import { Controller, useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { FileText, Upload, X } from "lucide-react";
@@ -10,6 +10,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   createFuelRecordApi,
   getErrorMessage,
@@ -185,9 +186,9 @@ export function FuelEntryForm({
         />
       )}
 
-      <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
-          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
+      <div className="vfms-form-section">
+        <h3 className="vfms-form-section-title">
+          <span className="vfms-form-step">
             1
           </span>
           Vehicle and Driver Information
@@ -197,21 +198,28 @@ export function FuelEntryForm({
             <label className="block text-sm font-semibold text-slate-900">
               Vehicle <span className="text-red-600">*</span>
             </label>
-            <select
-              {...register("vehicleId")}
-              disabled={isSubmitting}
-              defaultValue=""
-              className={inputClass + " appearance-none cursor-pointer"}
-            >
-              <option value="" disabled>
-                Select vehicle
-              </option>
-              {vehicles.map((vehicle) => (
-                <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.label}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="vehicleId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value || ""}
+                  onValueChange={field.onChange}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select vehicle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.vehicleId && (
               <p className="text-xs font-medium text-red-600">
                 {errors.vehicleId.message}
@@ -223,26 +231,38 @@ export function FuelEntryForm({
             <label className="block text-sm font-semibold text-slate-900">
               Driver
             </label>
-            <select
-              {...register("driverId")}
-              disabled={isSubmitting}
-              defaultValue={driverId ?? ""}
-              className={inputClass + " appearance-none cursor-pointer"}
-            >
-              <option value="">{driverName ? `No driver (${driverName})` : "No driver assigned"}</option>
-              {drivers.map((driver) => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.label}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="driverId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value || "NONE"}
+                  onValueChange={(value) => field.onChange(value === "NONE" ? "" : value)}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="No driver assigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">
+                      {driverName ? `No driver (${driverName})` : "No driver assigned"}
+                    </SelectItem>
+                    {drivers.map((driver) => (
+                      <SelectItem key={driver.id} value={driver.id}>
+                        {driver.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-5">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
-          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
+      <div className="vfms-form-section">
+        <h3 className="vfms-form-section-title">
+          <span className="vfms-form-step">
             2
           </span>
           Fuel Details
@@ -280,9 +300,9 @@ export function FuelEntryForm({
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-5">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
-          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
+      <div className="vfms-form-section">
+        <h3 className="vfms-form-section-title">
+          <span className="vfms-form-step">
             3
           </span>
           Fuel Quantity and Cost
@@ -361,9 +381,9 @@ export function FuelEntryForm({
         </div>
       )}
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-5">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
-          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-950 text-xs text-amber-300">
+      <div className="vfms-form-section">
+        <h3 className="vfms-form-section-title">
+          <span className="vfms-form-step">
             4
           </span>
           Additional Information
