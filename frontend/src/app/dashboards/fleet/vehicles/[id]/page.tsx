@@ -134,7 +134,7 @@ export default function VehicleDetailPage({
   return (
     <div className="vfms-detail-page">
       <div className="vfms-detail-container max-w-none animate-in fade-in duration-500">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <Button
             variant="ghost"
             onClick={() => router.back()}
@@ -142,30 +142,6 @@ export default function VehicleDetailPage({
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Vehicles
           </Button>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {canAdmin && (
-              <Button
-                className="bg-blue-950 text-white shadow-md transition-all duration-200 hover:bg-blue-900 hover:shadow-lg active:scale-[0.98]"
-                onClick={() =>
-                  router.push(`/dashboards/fleet/vehicles/${vehicle.id}/edit`)
-                }
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Vehicle
-              </Button>
-            )}
-            {canAdmin && vehicle.status !== "RETIRED" && (
-              <Button
-                className="bg-red-600 text-white shadow-md transition-all duration-200 hover:bg-red-700 hover:shadow-lg active:scale-[0.98]"
-                onClick={handleRetire}
-                disabled={retiring}
-              >
-                <Archive className="mr-2 h-4 w-4" />
-                {retiring ? "Retiring..." : "Retire Vehicle"}
-              </Button>
-            )}
-          </div>
         </div>
 
         {/* ── Header Card ── */}
@@ -220,7 +196,7 @@ export default function VehicleDetailPage({
               <>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="vfms-detail-tile">
-                    <Hash className="vfms-detail-icon" />
+                    <Hash className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="vfms-detail-label">Plate Number</p>
                       <p className="vfms-detail-value">
@@ -229,7 +205,7 @@ export default function VehicleDetailPage({
                     </div>
                   </div>
                   <div className="vfms-detail-tile">
-                    <Car className="vfms-detail-icon" />
+                    <Car className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="vfms-detail-label">Vehicle Type</p>
                       <p className="vfms-detail-value">
@@ -238,7 +214,7 @@ export default function VehicleDetailPage({
                     </div>
                   </div>
                   <div className="vfms-detail-tile">
-                    <Fuel className="vfms-detail-icon" />
+                    <Fuel className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="vfms-detail-label">Fuel Type</p>
                       <p className="vfms-detail-value">
@@ -247,7 +223,7 @@ export default function VehicleDetailPage({
                     </div>
                   </div>
                   <div className="vfms-detail-tile">
-                    <Calendar className="vfms-detail-icon" />
+                    <Calendar className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="vfms-detail-label">Year</p>
                       <p className="vfms-detail-value">
@@ -256,7 +232,7 @@ export default function VehicleDetailPage({
                     </div>
                   </div>
                   <div className="vfms-detail-tile">
-                    <Gauge className="vfms-detail-icon" />
+                    <Gauge className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="vfms-detail-label">Odometer</p>
                       <p className="vfms-detail-value">
@@ -266,8 +242,8 @@ export default function VehicleDetailPage({
                       </p>
                     </div>
                   </div>
-                  <div className="vfms-detail-tile md:col-span-2">
-                    <Building className="vfms-detail-icon" />
+                  <div className="vfms-detail-tile">
+                    <Building className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="vfms-detail-label">Department</p>
                       <p className="vfms-detail-value">
@@ -286,7 +262,7 @@ export default function VehicleDetailPage({
                       </div>
                       {vehicle.color && (
                         <div className="vfms-detail-tile">
-                          <Palette className="vfms-detail-icon" />
+                          <Palette className="h-5 w-5 text-blue-600" />
                           <div>
                             <p className="vfms-detail-label">Color</p>
                             <p className="vfms-detail-value">
@@ -297,7 +273,7 @@ export default function VehicleDetailPage({
                       )}
                       {vehicle.seatingCapacity && (
                         <div className="vfms-detail-tile">
-                          <Users className="vfms-detail-icon" />
+                          <Users className="h-5 w-5 text-blue-600" />
                           <div>
                             <p className="vfms-detail-label">
                               Seating Capacity
@@ -413,6 +389,31 @@ export default function VehicleDetailPage({
                     </>
                   )}
                 </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
+                  {canAdmin && (
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        router.push(`/dashboards/fleet/vehicles/${vehicle.id}/edit`)
+                      }
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit Vehicle
+                    </Button>
+                  )}
+                  {canAdmin && vehicle.status !== "RETIRED" && (
+                    <Button
+                      variant="destructive"
+                      onClick={handleRetire}
+                      disabled={retiring}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      {retiring ? "Retiring..." : "Retire Vehicle"}
+                    </Button>
+                  )}
+                </div>
               </>
             )}
 
@@ -479,7 +480,7 @@ export default function VehicleDetailPage({
                     {canCreate && vehicle.status !== "RETIRED" && (
                       <Button
                         size="sm"
-                        className="bg-blue-950 hover:bg-blue-900 text-white mt-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                        className="mt-2"
                         onClick={() =>
                           router.push("/dashboards/fleet/maintenance/create")
                         }
@@ -489,7 +490,7 @@ export default function VehicleDetailPage({
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
+                  <div className="rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-x-auto">
                     <table className="w-full border-separate border-spacing-0 text-left text-sm">
                       <thead className="bg-blue-950">
                         <tr>

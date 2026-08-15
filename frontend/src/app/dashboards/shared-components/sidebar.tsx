@@ -240,28 +240,6 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
         </div>
       </div>
 
-      <div className="border-t border-white/10 px-4 py-3.5">
-        <Link
-          href="/settings/change-password"
-          onClick={onNavigate}
-          className="mb-1.5 flex items-center gap-2.5 rounded-2xl px-2.5 py-2.5 text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-800 text-slate-400">
-            <KeyRound className="h-3.5 w-3.5" />
-          </span>
-          Security Settings
-        </Link>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="flex w-full items-center gap-2.5 rounded-2xl px-2.5 py-2.5 text-left text-[13px] font-semibold text-slate-300 transition-colors hover:bg-red-500/10 hover:text-red-300"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-800">
-            <LogOut className="h-3.5 w-3.5" />
-          </span>
-          Logout
-        </button>
-      </div>
     </aside>
   );
 }
@@ -303,26 +281,21 @@ function getNavSectionsByRole(role?: string) {
   }
   if (role === 'APPROVER') {
     sections.push({
-      title: "Approvals",
+      title: "Pending Approvals",
       items: [
         { label: 'Trip Requests', href: '/trips', icon: CheckSquare },
+        { label: 'Leave Requests', href: '/drivers/leave-requests', icon: Calendar },
+        { label: 'Maintenance Approvals', href: '/dashboards/fleet/maintenance?status=SUBMITTED', icon: CheckSquare },
       ]
     });
     sections.push({
-      title: "Drivers",
+      title: "Directory & Logs",
       items: [
         { label: 'Drivers', href: '/drivers', icon: Users },
-        { label: 'Leave Requests', href: '/drivers/leave-requests', icon: Calendar },
-        { label: 'Infractions', href: '/drivers/infractions', icon: AlertTriangle },
-      ]
-    });
-    sections.push({
-      title: "Fleet Review",
-      items: [
-        { label: 'Pending Maintenance Approvals', href: '/dashboards/fleet/maintenance?status=SUBMITTED', icon: CheckSquare },
-        { label: 'All Maintenance Requests', href: '/dashboards/fleet/maintenance', icon: Wrench },
+        { label: 'Driver Infractions', href: '/drivers/infractions', icon: AlertTriangle },
         { label: 'Vehicle Registry', href: '/dashboards/fleet/vehicles', icon: Car },
         { label: 'Vehicle Rentals', href: '/dashboards/fleet/rentals', icon: FileText },
+        { label: 'All Maintenance Logs', href: '/dashboards/fleet/maintenance', icon: Wrench },
       ]
     });
   }

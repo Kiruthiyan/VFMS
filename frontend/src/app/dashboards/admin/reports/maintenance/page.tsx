@@ -1,9 +1,13 @@
 ﻿"use client";
+
+import { Button } from "@/components/ui/button";
+
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { reportService } from "@/services/reportService";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { AlertTriangle, Clock, TrendingDown, TrendingUp, CheckCircle2, Timer, DollarSign } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Clock, TrendingDown, TrendingUp, CheckCircle2, Timer, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const COLORS = ["#f59e0b", "#ef4444", "#3b82f6", "#10b981"];
@@ -68,6 +72,16 @@ export default function MaintenancePage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-8 bg-slate-50/50 min-h-screen">
+
+            <div>
+                <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-4 mb-2">
+                    <Link href="/dashboards/admin/reports">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Reports Dashboard
+                    </Link>
+                </Button>
+            </div>
+
             <div>
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Maintenance Analytics</h1>
                 <p className="text-slate-500 mt-1">Deep dive into fleet maintenance costs</p>

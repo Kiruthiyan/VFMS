@@ -179,37 +179,51 @@ export default function InfractionsPage() {
               <form onSubmit={submitInfraction} className="space-y-4 px-6 pb-6 pt-5">
                 <div>
                   <Label htmlFor="infraction-driver">Select Driver *</Label>
-                  <select id="infraction-driver" required value={form.driverId} onChange={(event) => setForm((current) => ({ ...current, driverId: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                    <option value="">Select a driver</option>
-                    {drivers.map((driver) => <option key={driver.id} value={driver.id}>{driver.employeeId ? `${driver.employeeId} — ` : ''}{driver.fullName}</option>)}
-                  </select>
+                  <Select value={form.driverId} onValueChange={(val) => setForm((c) => ({ ...c, driverId: val }))} required>
+                    <SelectTrigger id="infraction-driver" className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus:border-amber-400 focus:ring-amber-400/40">
+                      <SelectValue placeholder="Select a driver" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {drivers.map((driver) => <SelectItem key={driver.id} value={driver.id}>{driver.employeeId ? `${driver.employeeId} — ` : ''}{driver.fullName}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="infraction-type">Type *</Label>
-                  <select id="infraction-type" required value={form.infractionType} onChange={(event) => setForm((current) => ({ ...current, infractionType: event.target.value as InfractionType }))} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                    {(['TRAFFIC_VIOLATION', 'MINOR_ACCIDENT', 'MAJOR_ACCIDENT', 'NEAR_MISS', 'RECKLESS_DRIVING', 'OTHER'] as InfractionType[]).map((type) => <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>)}
-                  </select>
+                  <Select value={form.infractionType} onValueChange={(val) => setForm((c) => ({ ...c, infractionType: val as InfractionType }))} required>
+                    <SelectTrigger id="infraction-type" className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus:border-amber-400 focus:ring-amber-400/40">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(['TRAFFIC_VIOLATION', 'MINOR_ACCIDENT', 'MAJOR_ACCIDENT', 'NEAR_MISS', 'RECKLESS_DRIVING', 'OTHER'] as InfractionType[]).map((type) => <SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="infraction-severity">Severity *</Label>
-                  <select id="infraction-severity" required value={form.severity} onChange={(event) => setForm((current) => ({ ...current, severity: event.target.value as InfractionSeverity }))} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
-                    {(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as InfractionSeverity[]).map((severity) => <option key={severity} value={severity}>{severity}</option>)}
-                  </select>
+                  <Select value={form.severity} onValueChange={(val) => setForm((c) => ({ ...c, severity: val as InfractionSeverity }))} required>
+                    <SelectTrigger id="infraction-severity" className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus:border-amber-400 focus:ring-amber-400/40">
+                      <SelectValue placeholder="Select severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as InfractionSeverity[]).map((severity) => <SelectItem key={severity} value={severity}>{severity}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="infraction-date">Incident Date *</Label>
-                  <Input id="infraction-date" type="date" required value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1" />
+                  <Input id="infraction-date" type="date" required value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div>
                   <Label htmlFor="infraction-description">Description</Label>
-                  <Input id="infraction-description" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1" />
+                  <Input id="infraction-description" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div>
                   <Label htmlFor="infraction-penalty">Penalty Notes</Label>
-                  <Input id="infraction-penalty" value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1" />
+                  <Input id="infraction-penalty" value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
-                <div className="flex justify-end border-t border-slate-200 pt-4">
-                  <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Log Infraction'}</Button>
+                <div className="flex pt-4 mt-2">
+                  <Button type="submit" disabled={submitting} className="h-11 w-full rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500">{submitting ? 'Saving...' : 'Log Infraction'}</Button>
                 </div>
               </form>
             </DialogContent>
@@ -256,9 +270,9 @@ export default function InfractionsPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent bg-muted/40">
+                <TableRow className="hover:bg-slate-950 bg-slate-950">
                   {['Driver', 'Type', 'Incident Date', 'Severity', 'Status', 'Description', ''].map((h) => (
-                    <TableHead key={h} className="text-xs font-medium text-muted-foreground">
+                    <TableHead key={h} className="text-xs font-bold uppercase tracking-[0.18em] text-white">
                       {h}
                     </TableHead>
                   ))}

@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Car, ArrowLeft } from "lucide-react";
+import { Car, ArrowLeft, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function EditRentalPage() {
@@ -104,15 +104,22 @@ export default function EditRentalPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-950" />
+      <div className="min-h-screen bg-slate-50">
+        <div className="p-8 max-w-none mx-auto animate-in fade-in duration-500">
+          <div className="mb-4 opacity-50 pointer-events-none inline-flex items-center text-sm font-medium text-slate-600 h-10 px-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </div>
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-2xl mx-auto animate-in fade-in duration-500">
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container animate-in fade-in duration-500">
         <Button
           variant="ghost"
           onClick={() => router.back()}
@@ -299,9 +306,9 @@ export default function EditRentalPage() {
               <div className="flex gap-3 pt-4 border-t border-slate-200">
                 <Button
                   type="submit"
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                   disabled={isSubmitting}
                 >
+                  <Save className="mr-2 h-4 w-4" />
                   {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
                 <Button

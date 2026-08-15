@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 /**
  * Approver Dashboard Layout
@@ -18,7 +19,7 @@ export default function ApproverDashboardLayout({
   return (
     <Suspense>
       <RoleGuard allowedRole="APPROVER">
-        {children}
+        <DashboardShell>{children}</DashboardShell>
       </RoleGuard>
     </Suspense>
   );

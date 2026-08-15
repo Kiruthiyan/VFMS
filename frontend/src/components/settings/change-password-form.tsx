@@ -71,7 +71,7 @@ export function ChangePasswordForm() {
     : DEFAULT_ROUTES.DEFAULT_DASHBOARD;
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-none">
       <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950">

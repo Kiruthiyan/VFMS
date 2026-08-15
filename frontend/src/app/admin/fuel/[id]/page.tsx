@@ -191,7 +191,7 @@ export default function AdminFuelDetailPage() {
   return (
     <div className="vfms-detail-page">
       <div className="vfms-detail-container max-w-none animate-in fade-in duration-500">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <Button
             asChild
             variant="ghost"
@@ -202,26 +202,6 @@ export default function AdminFuelDetailPage() {
               Back to Fuel Management
             </Link>
           </Button>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {record && (
-              <Button
-                asChild
-                className="bg-blue-950 text-white shadow-md transition-all duration-200 hover:bg-blue-900 hover:shadow-lg active:scale-[0.98]"
-              >
-                <Link href={`/admin/fuel/${record.id}/edit`}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit Entry
-                </Link>
-              </Button>
-            )}
-            {record?.receiptUrl && (
-              <Button type="button" variant="outline" onClick={openReceipt}>
-                <FileText className="mr-2 h-4 w-4" />
-                View Receipt
-              </Button>
-            )}
-          </div>
         </div>
 
         {loading ? (
@@ -253,70 +233,70 @@ export default function AdminFuelDetailPage() {
                 <CardContent className="p-5">
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <div className="vfms-detail-tile xl:col-span-2">
-                      <FileText className="vfms-detail-icon" />
+                      <FileText className="h-5 w-5 text-blue-600" />
                       <div className="min-w-0">
                         <p className="vfms-detail-label">Record ID</p>
                         <p className="vfms-detail-value truncate">{record.id}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile xl:col-span-2">
-                      <CarFront className="vfms-detail-icon" />
+                      <CarFront className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Vehicle</p>
                         <p className="vfms-detail-value">{record.vehicleMakeModel}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <UserRound className="vfms-detail-icon" />
+                      <UserRound className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Driver</p>
                         <p className="vfms-detail-value">{record.driverName ?? "Unassigned"}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <CalendarDays className="vfms-detail-icon" />
+                      <CalendarDays className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Fuel Date</p>
                         <p className="vfms-detail-value">{formatDate(record.fuelDate)}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <MapPin className="vfms-detail-icon" />
+                      <MapPin className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Station</p>
                         <p className="vfms-detail-value">{record.fuelStation ?? "Not specified"}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <CircleDollarSign className="vfms-detail-icon" />
+                      <CircleDollarSign className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Total Cost</p>
                         <p className="vfms-detail-value">{formatLKR(record.totalCost)}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <Droplets className="vfms-detail-icon" />
+                      <Droplets className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Quantity</p>
                         <p className="vfms-detail-value">{record.quantity.toFixed(2)} L</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <CircleDollarSign className="vfms-detail-icon" />
+                      <CircleDollarSign className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Cost per Litre</p>
                         <p className="vfms-detail-value">{formatLKR(record.costPerLitre)}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <Gauge className="vfms-detail-icon" />
+                      <Gauge className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Efficiency</p>
                         <p className="vfms-detail-value">{formatEfficiency(record.efficiencyKmPerLitre)}</p>
                       </div>
                     </div>
                     <div className="vfms-detail-tile">
-                      <CarFront className="vfms-detail-icon" />
+                      <CarFront className="h-5 w-5 text-blue-600" />
                       <div>
                         <p className="vfms-detail-label">Odometer</p>
                         <p className="vfms-detail-value">{record.odometerReading.toLocaleString()} km</p>
@@ -465,6 +445,21 @@ export default function AdminFuelDetailPage() {
                   </div>
                 )}
               </SectionCard>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2 mt-2 flex-wrap">
+                {record && (
+                  <Button
+                    asChild
+                    variant="outline"
+                  >
+                    <Link href={`/admin/fuel/${record.id}/edit`}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit Entry
+                    </Link>
+                  </Button>
+                )}
               </div>
           </>
         )}

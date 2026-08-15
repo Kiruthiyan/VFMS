@@ -1,8 +1,12 @@
 "use client";
+
+import { Button } from "@/components/ui/button";
+
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Fuel, Navigation, Droplets, MapPin, Search, DollarSign, Car } from "lucide-react";
+import { ArrowLeft, Fuel, Navigation, Droplets, MapPin, Search, DollarSign, Car } from "lucide-react";
 import { reportService } from "@/services/reportService";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ComposedChart, Area, AreaChart } from "recharts";
 
@@ -101,6 +105,16 @@ export default function FuelAnalysisPage() {
 
     return (
         <div className="space-y-6 p-8 bg-slate-50/50 min-h-screen animate-in fade-in duration-700">
+
+            <div>
+                <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-4 mb-2">
+                    <Link href="/dashboards/admin/reports">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Reports Dashboard
+                    </Link>
+                </Button>
+            </div>
+
 
             {/* Header */}
             <div>

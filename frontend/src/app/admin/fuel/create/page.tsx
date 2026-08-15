@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -47,7 +47,7 @@ export default function CreateFuelEntryPage() {
 
   return (
 
-      <div className="mx-auto max-w-3xl animate-in fade-in duration-500">
+      <div className="mx-auto max-w-none animate-in fade-in duration-500">
         <Button
           variant="ghost"
           onClick={() => router.push("/admin/fuel")}

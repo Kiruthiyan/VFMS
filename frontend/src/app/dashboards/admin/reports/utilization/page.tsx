@@ -1,9 +1,13 @@
 ﻿"use client";
 
+import { Button } from "@/components/ui/button";
+
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Car, CheckCircle2, Clock, Calendar, PlayCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Car, CheckCircle2, Clock, Calendar, PlayCircle, XCircle } from "lucide-react";
 import { reportService, VehicleUtilization, TripStats } from "@/services/reportService";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
@@ -59,6 +63,16 @@ export default function UtilizationPage() {
 
     return (
         <div className="space-y-6 p-8 bg-slate-50/50 min-h-screen animate-in fade-in duration-700">
+
+            <div>
+                <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-4 mb-2">
+                    <Link href="/dashboards/admin/reports">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Reports Dashboard
+                    </Link>
+                </Button>
+            </div>
+
             <div>
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Vehicle Utilization Analytics</h1>
                 <p className="text-slate-500 mt-1">Fleet workload distribution and trip lifecycle metrics</p>

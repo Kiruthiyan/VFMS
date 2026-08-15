@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
-  User, Mail, Phone, Calendar, CreditCard,
-  Shield, Camera, Loader2, Badge, Trash2, Pencil, Check, X, Upload,
-  Award, Plus, Save, AlertTriangle, Star
+  User, MapPin, Phone, Shield, Calendar, CreditCard,
+  Badge, Camera, Loader2, Star, Trash2, Pencil, Check, X,
+  Upload, AlertTriangle, Plus, Award, Save, UserRound, Mail
 } from 'lucide-react';
-import { DashboardShell } from '@/components/layout/dashboard-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   getMyProfile, uploadProfilePicture, removeProfilePicture,
   type DriverProfileResponse,
@@ -17,7 +17,9 @@ import {
   getMyInfractions, type InfractionItem,
 } from '@/lib/api/driver-portal';
 import { resolveBackendAssetUrl } from '@/lib/api';
-
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 const CERTIFICATION_TYPES = ['DEFENSIVE_DRIVING', 'FIRST_AID', 'HAZMAT', 'HEAVY_VEHICLE', 'PASSENGER_TRANSPORT', 'OTHER'];
 const EMPTY_CERTIFICATION: CertificationPayload = {
   certType: 'DEFENSIVE_DRIVING',
@@ -292,47 +294,55 @@ function CertificationsSection() {
       </div>
 
       {showCertificationForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'hsl(222 47% 5% / 0.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="add-certification-title" style={{ background: '#fff', color: 'hsl(222 47% 11%)', borderRadius: '0.95rem', border: '1px solid hsl(var(--border))', overflow: 'hidden', width: '34rem', maxWidth: '100%', boxShadow: '0 24px 80px hsl(222 47% 5% / 0.32)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', background: 'hsl(222 47% 11%)' }}>
-              <h2 id="add-certification-title" style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: '#fff' }}>Add Certification</h2>
-              <button type="button" aria-label="Close certification form" onClick={() => setShowCertificationForm(false)} style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'transparent', border: '1px solid hsl(215 25% 82% / 0.24)', cursor: 'pointer', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X style={{ width: '1rem', height: '1rem' }} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="add-certification-title" className="relative w-full max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+            {/* Dark gradient header — matches vfms-form-header / fuel form style */}
+            <div className="vfms-form-header flex items-center justify-between px-8 py-5">
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-slate-950">
+                  <Award className="h-5 w-5" />
+                </div>
+                <h2 id="add-certification-title" className="text-lg font-bold text-white">Add Certification</h2>
+              </div>
+              <button type="button" aria-label="Close certification form" onClick={() => setShowCertificationForm(false)} className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-white/10 hover:text-white transition-colors">
+                <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleCertificationSubmit}>
-              <div style={{ display: 'grid', gap: '1rem', padding: '1.25rem' }}>
-              <div>
-                <label htmlFor="certification-type" className="mb-2 block text-sm font-semibold text-slate-700">Type</label>
-                <select id="certification-type" value={certificationForm.certType} onChange={(event) => setCertificationForm((current) => ({ ...current, certType: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100">
-                  {CERTIFICATION_TYPES.map((type) => <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>)}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="certification-name" className="mb-2 block text-sm font-semibold text-slate-700">Certification Name</label>
-                <input id="certification-name" required value={certificationForm.certName} onChange={(event) => setCertificationForm((current) => ({ ...current, certName: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
-              </div>
-              <div>
-                <label htmlFor="certification-issuer" className="mb-2 block text-sm font-semibold text-slate-700">Issued By</label>
-                <input id="certification-issuer" value={certificationForm.issuedBy} onChange={(event) => setCertificationForm((current) => ({ ...current, issuedBy: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="certification-issue-date" className="mb-2 block text-sm font-semibold text-slate-700">Issue Date</label>
-                  <input id="certification-issue-date" type="date" value={certificationForm.issueDate} onChange={(event) => setCertificationForm((current) => ({ ...current, issueDate: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
+              <div className="grid gap-5 px-6 py-6">
+                <div className="space-y-2">
+                  <label htmlFor="certification-type" className="block text-sm font-semibold text-slate-900">Type <span className="text-red-600">*</span></label>
+                  <select id="certification-type" value={certificationForm.certType} onChange={(event) => setCertificationForm((current) => ({ ...current, certType: event.target.value }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300 appearance-none">
+                    {CERTIFICATION_TYPES.map((type) => <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>)}
+                  </select>
                 </div>
-                <div>
-                  <label htmlFor="certification-expiry-date" className="mb-2 block text-sm font-semibold text-slate-700">Expiry Date</label>
-                  <input id="certification-expiry-date" type="date" value={certificationForm.expiryDate} onChange={(event) => setCertificationForm((current) => ({ ...current, expiryDate: event.target.value }))} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 shadow-sm outline-none transition focus:border-slate-500 focus:ring-4 focus:ring-slate-100" />
+                <div className="space-y-2">
+                  <label htmlFor="certification-name" className="block text-sm font-semibold text-slate-900">Certification Name <span className="text-red-600">*</span></label>
+                  <input id="certification-name" required value={certificationForm.certName} onChange={(event) => setCertificationForm((current) => ({ ...current, certName: event.target.value }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300" />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="certification-issuer" className="block text-sm font-semibold text-slate-900">Issued By</label>
+                  <input id="certification-issuer" value={certificationForm.issuedBy} onChange={(event) => setCertificationForm((current) => ({ ...current, issuedBy: event.target.value }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300" />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor="certification-issue-date" className="block text-sm font-semibold text-slate-900">Issue Date</label>
+                    <input id="certification-issue-date" type="date" value={certificationForm.issueDate} onChange={(event) => setCertificationForm((current) => ({ ...current, issueDate: event.target.value }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300" />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="certification-expiry-date" className="block text-sm font-semibold text-slate-900">Expiry Date</label>
+                    <input id="certification-expiry-date" type="date" value={certificationForm.expiryDate} onChange={(event) => setCertificationForm((current) => ({ ...current, expiryDate: event.target.value }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300" />
+                  </div>
                 </div>
               </div>
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', background: 'hsl(210 40% 98%)', padding: '1rem 1.25rem', flexWrap: 'wrap' }}>
-                <button type="button" onClick={() => setShowCertificationForm(false)} style={{ minWidth: '5.75rem', height: '2.6rem', padding: '0 1rem', borderRadius: '0.65rem', border: '1px solid hsl(var(--border))', background: '#fff', color: 'hsl(222 47% 11%)', cursor: 'pointer', fontWeight: 700 }}>Cancel</button>
-                <button type="submit" disabled={savingCertification} style={{ minWidth: '6.25rem', height: '2.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', padding: '0 1rem', borderRadius: '0.65rem', border: 'none', background: 'hsl(222 47% 11%)', color: '#fff', fontWeight: 800, cursor: savingCertification ? 'not-allowed' : 'pointer', boxShadow: '0 10px 22px hsl(222 47% 11% / 0.16)' }}>
-                  {savingCertification ? <Loader2 style={{ width: '0.875rem', height: '0.875rem', animation: 'spin 1s linear infinite' }} /> : <Save style={{ width: '0.875rem', height: '0.875rem' }} />}
-                  {savingCertification ? 'Saving...' : 'Save'}
+              <div className="flex gap-3 border-t border-slate-100 px-6 pb-6 pt-2">
+                <button type="button" onClick={() => setShowCertificationForm(false)} className="h-11 flex-1 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 transition-all hover:bg-slate-50">
+                  Cancel
                 </button>
+                <Button type="submit" disabled={savingCertification} className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl">
+                  {savingCertification ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {savingCertification ? 'Saving...' : 'Save'}
+                </Button>
               </div>
             </form>
           </div>
@@ -429,7 +439,12 @@ export default function DriverProfilePage() {
   };
 
   return (
-    <DashboardShell title="My Profile" description="View your personal information">
+    <div className="space-y-6">
+      <PageHeader 
+        title="My Profile" 
+        description="View your personal information" 
+        icon={UserRound} 
+      />
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: 'hsl(var(--muted-foreground))' }}>
           <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite' }} />
@@ -852,6 +867,6 @@ export default function DriverProfilePage() {
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DashboardShell>
+    </div>
   );
 }

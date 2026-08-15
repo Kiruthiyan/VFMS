@@ -1,9 +1,13 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Car, DollarSign, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Car, DollarSign, Clock, Calendar } from "lucide-react";
 import { reportService } from "@/services/reportService";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
@@ -49,6 +53,16 @@ export default function RentalAnalyticsPage() {
 
     return (
         <div className="p-8 space-y-8 bg-slate-50/30 min-h-screen animate-in fade-in duration-700">
+
+            <div>
+                <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-4 mb-2">
+                    <Link href="/dashboards/admin/reports">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Reports Dashboard
+                    </Link>
+                </Button>
+            </div>
+
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-slate-900">Rental Insights</h1>

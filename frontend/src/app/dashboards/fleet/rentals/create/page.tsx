@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Car, ArrowLeft } from "lucide-react";
+import { Car, ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CreateRentalPage() {
@@ -73,8 +73,8 @@ export default function CreateRentalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container animate-in fade-in duration-500">
         <Button
           variant="ghost"
           onClick={() => router.back()}
@@ -261,9 +261,9 @@ export default function CreateRentalPage() {
               <div className="flex gap-3 pt-4 border-t border-slate-200">
                 <Button
                   type="submit"
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                   disabled={isSubmitting}
                 >
+                  <Save className="mr-2 h-4 w-4" />
                   {isSubmitting ? "Creating..." : "Create Rental"}
                 </Button>
                 <Button

@@ -1,12 +1,14 @@
 ﻿"use client";
 
+import { Button } from "@/components/ui/button";
+
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-    Star, Stethoscope, Calendar, FileText,
-    CheckCircle2, FileWarning
-} from "lucide-react";
+import { ArrowLeft, Star, Stethoscope, Calendar, FileText,
+    CheckCircle2, FileWarning } from "lucide-react";
 import * as dsmReports from "@/lib/api/dsm-reports";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
@@ -75,6 +77,16 @@ export default function DriverAnalyticsOverview() {
 
     return (
         <div className="space-y-10 animate-in fade-in duration-500 p-8 bg-slate-50/50 min-h-screen">
+
+            <div>
+                <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-4 mb-2">
+                    <Link href="/dashboards/admin/reports">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Reports Dashboard
+                    </Link>
+                </Button>
+            </div>
+
 
             {/* ===== PAGE HEADER ===== */}
             <div>

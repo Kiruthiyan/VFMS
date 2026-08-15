@@ -58,18 +58,19 @@ export default function LeavesPage() {
   };
 
   return (
-    <Tabs defaultValue="pending" className="w-full space-y-6 animate-fade-in">
-      <TabsList className="bg-muted/30 p-1 rounded-lg shadow-sm">
-        <TabsTrigger value="pending" className="data-[state=active]:bg-white data-[state=active]:shadow">
-          Leave Requests
-        </TabsTrigger>
-        <TabsTrigger value="log" className="data-[state=active]:bg-white data-[state=active]:shadow">
-          Leave Requests - Log
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="pending">
-        <div className="p-6 md:p-8 space-y-6">
-          <PageHeader
+    <div className="p-6 md:p-8 space-y-6 animate-fade-in">
+      <Tabs defaultValue="pending" className="w-full space-y-6">
+        <TabsList className="bg-muted/30 p-1 rounded-lg shadow-sm">
+          <TabsTrigger value="pending" className="data-[state=active]:bg-white data-[state=active]:shadow">
+            Leave Requests
+          </TabsTrigger>
+          <TabsTrigger value="log" className="data-[state=active]:bg-white data-[state=active]:shadow">
+            Leave Requests - Log
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="pending">
+          <div className="space-y-6">
+            <PageHeader
             icon={<CalendarDays className="w-5 h-5" />}
             title="Leave Requests"
             subtitle="Pending driver leave approvals"
@@ -81,9 +82,9 @@ export default function LeavesPage() {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="hover:bg-transparent bg-muted/40">
+                  <TableRow className="hover:bg-slate-950 bg-slate-950">
                     {['Driver', 'Type', 'From', 'To', 'Reason', 'Status', ''].map((header) => (
-                      <TableHead key={header} className="text-xs font-medium text-muted-foreground">
+                      <TableHead key={header} className="text-xs font-bold uppercase tracking-[0.18em] text-white">
                         {header}
                       </TableHead>
                     ))}
@@ -139,7 +140,7 @@ export default function LeavesPage() {
                                   value={approvalStatus}
                                   onValueChange={(value) => setApprovalStatus(value as Decision)}
                                 >
-                                  <SelectTrigger className="mt-1">
+                                  <SelectTrigger className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus:border-amber-400 focus:ring-amber-400/40">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -153,15 +154,17 @@ export default function LeavesPage() {
                                 <Input
                                   value={approvalNotes}
                                   onChange={(e) => setApprovalNotes(e.target.value)}
-                                  className="mt-1"
+                                  className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40"
                                 />
                               </div>
-                              <button
-                                className="h-11 w-full rounded-xl bg-slate-950 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition-colors hover:bg-slate-900"
-                                onClick={() => processLeave(leave.id)}
-                              >
-                                Submit Decision
-                              </button>
+                              <div className="flex pt-2">
+                                <button
+                                  className="h-11 w-full rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500"
+                                  onClick={() => processLeave(leave.id)}
+                                >
+                                  Submit Decision
+                                </button>
+                              </div>
                             </div>
                           </DialogContent>
                         </Dialog>
@@ -185,6 +188,7 @@ export default function LeavesPage() {
         <LeavesLog />
       </TabsContent>
     </Tabs>
+    </div>
   );
 }
 

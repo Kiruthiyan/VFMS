@@ -14,6 +14,7 @@ import {
   MapPin,
   Loader2,
   Power,
+  Edit,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
@@ -158,26 +159,21 @@ export default function VendorDetailPage() {
             <div className="flex gap-3 pt-6 mt-2 border-t border-slate-200 flex-wrap">
               {canAdmin && (
                 <Button
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                  variant="outline"
                   onClick={() =>
                     router.push(`/dashboards/fleet/vendors/${vendor.id}/edit`)
                   }
                 >
-                  Edit Vendor
+                  <Edit className="mr-2 h-4 w-4" /> Edit Vendor
                 </Button>
               )}
               {canAdmin && (
                 <Button
-                  className={
-                    vendor.active
-                      ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
-                      : "border-emerald-300 text-emerald-600 hover:bg-emerald-50 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98]"
-                  }
-                  variant={vendor.active ? "default" : "outline"}
+                  variant={vendor.active ? "destructive" : "success"}
                   onClick={handleToggleStatus}
                   disabled={toggling}
                 >
-                  <Power className="h-4 w-4 mr-2" />
+                  <Power className="mr-2 h-4 w-4" />
                   {toggling
                     ? "Updating..."
                     : vendor.active

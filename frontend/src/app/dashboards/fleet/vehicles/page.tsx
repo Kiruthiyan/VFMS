@@ -143,7 +143,6 @@ export default function VehiclesPage() {
             </Button>
             {canAdmin && (
               <Button
-                className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 onClick={() => router.push("/dashboards/fleet/vehicles/add")}
               >
                 <Plus className="mr-2 h-4 w-4" /> Add Vehicle
@@ -230,6 +229,7 @@ export default function VehiclesPage() {
               No vehicles found.
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full border-separate border-spacing-0 text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
@@ -324,6 +324,7 @@ export default function VehiclesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

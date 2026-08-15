@@ -1,12 +1,16 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { reportService } from "@/services/reportService";
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Star, Award, UserCheck, Navigation } from "lucide-react";
+import { ArrowLeft, Star, Award, UserCheck, Navigation } from "lucide-react";
 
 export default function PerformancePage() {
     const [drivers, setDrivers] = useState<any[]>([]);
@@ -44,6 +48,16 @@ export default function PerformancePage() {
 
     return (
         <div className="space-y-6 p-8 bg-slate-50/50 min-h-screen animate-in fade-in duration-700">
+
+            <div>
+                <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-4 mb-2">
+                    <Link href="/dashboards/admin/reports">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Reports Dashboard
+                    </Link>
+                </Button>
+            </div>
+
             <div>
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
                     <Award className="w-8 h-8 text-indigo-500" />

@@ -169,7 +169,7 @@ export default function ApproveTripPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
-            <div className="max-w-2xl mx-auto space-y-4">
+            <div className="max-w-none mx-auto space-y-4">
 
                 <button
                     onClick={() => router.push("/trips")}
@@ -404,7 +404,7 @@ export default function ApproveTripPage() {
                                     <Button
                                         onClick={handleApprove}
                                         disabled={actionLoading === "approve"}
-                                        className="flex-1 bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                                        className="flex-1"
                                     >
                                         {actionLoading === "approve" ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -426,7 +426,8 @@ export default function ApproveTripPage() {
                                     <Button
                                         onClick={handleReject}
                                         disabled={actionLoading === "reject" || form.notes.trim().length < 10}
-                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                                        variant="destructive"
+                                        className="flex-1 disabled:opacity-50"
                                     >
                                         {actionLoading === "reject" ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />

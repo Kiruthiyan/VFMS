@@ -9,6 +9,9 @@ import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStat
 import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Wrench,
   ArrowLeft,
@@ -18,6 +21,9 @@ import {
   Clock,
   FileText,
   Loader2,
+  CheckCircle,
+  Edit,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
@@ -32,6 +38,12 @@ export default function MaintenanceDetailPage({
   const { canCreate, canApprove } = useRole();
   const [request, setRequest] = useState<MaintenanceRequest | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Dialog states
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [closeCost, setCloseCost] = useState("");
 
   const fetchRequest = async () => {
     try {
@@ -72,16 +84,23 @@ export default function MaintenanceDetailPage({
     }
   };
 
-  const handleReject = async () => {
-    const reason = prompt("Enter rejection reason:");
-    if (reason) {
-      try {
-        await maintenanceApi.reject(Number(id), reason);
-        toast.success("Request rejected");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to reject");
-      }
+  const handleReject = () => {
+    setRejectReason("");
+    setRejectDialogOpen(true);
+  };
+
+  const confirmReject = async () => {
+    if (!rejectReason.trim()) {
+      toast.error("Rejection reason is required");
+      return;
+    }
+    setRejectDialogOpen(false);
+    try {
+      await maintenanceApi.reject(Number(id), rejectReason);
+      toast.success("Request rejected");
+      fetchRequest();
+    } catch {
+      toast.error("Failed to reject");
     }
   };
 
@@ -100,23 +119,20 @@ export default function MaintenanceDetailPage({
       }
     } else {
       // Approved = maintenance was done, ask for actual cost (optional)
-      const costInput = prompt(
-        "Enter actual maintenance cost (Rs.):\n\nLeave blank or enter 0 if cost is not yet known.",
-      );
-      const cost = costInput ? Number(costInput) : 0;
-      if (
-        !confirm(
-          `Close this request with actual cost: Rs.${cost.toLocaleString()}?`,
-        )
-      )
-        return;
-      try {
-        await maintenanceApi.close(Number(id), cost);
-        toast.success("Request closed successfully");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to close request");
-      }
+      setCloseCost("");
+      setCloseDialogOpen(true);
+    }
+  };
+
+  const confirmClose = async () => {
+    const cost = closeCost ? Number(closeCost) : 0;
+    setCloseDialogOpen(false);
+    try {
+      await maintenanceApi.close(Number(id), cost);
+      toast.success("Request closed successfully");
+      fetchRequest();
+    } catch {
+      toast.error("Failed to close request");
     }
   };
 
@@ -331,60 +347,55 @@ export default function MaintenanceDetailPage({
                   uploadLabel="Upload Invoice"
                 />
               </div>
-            </div>
-
-            {/* Action Buttons */}
+            </div>            {/* Action Buttons */}
             <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
               {canCreate && request.status === "NEW" && (
                 <>
                   <Button
-                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                     onClick={handleSubmit}
                   >
-                    Submit for Approval
+                    <CheckCircle className="mr-2 h-4 w-4" /> Submit for Approval
                   </Button>
                   <Button
-                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                     variant="outline"
                     onClick={() =>
                       router.push(`/dashboards/fleet/maintenance/${request.id}/edit`)
                     }
                   >
-                    Edit
+                    <Edit className="mr-2 h-4 w-4" /> Edit
                   </Button>
                 </>
               )}
               {canApprove && request.status === "SUBMITTED" && (
                 <>
                   <Button
-                    className="bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                    variant="success"
                     onClick={handleApprove}
                   >
-                    Approve
+                    <CheckCircle className="mr-2 h-4 w-4" /> Approve
                   </Button>
                   <Button
-                    className="bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                    variant="destructive"
                     onClick={handleReject}
                   >
-                    Reject
+                    <XCircle className="mr-2 h-4 w-4" /> Reject
                   </Button>
                 </>
               )}
               {canCreate && request.status === "APPROVED" && (
                 <Button
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                  variant="destructive"
                   onClick={handleClose}
                 >
-                  Close Request
+                  <XCircle className="mr-2 h-4 w-4" /> Close Request
                 </Button>
               )}
               {canCreate && request.status === "REJECTED" && (
                 <Button
                   variant="outline"
-                  className="border-slate-300 text-slate-600 hover:bg-slate-50"
                   onClick={handleClose}
                 >
-                  Acknowledge &amp; Close
+                  <CheckCircle className="mr-2 h-4 w-4" /> Acknowledge & Close
                 </Button>
               )}
               <Button variant="outline" onClick={() => router.back()}>
@@ -393,6 +404,67 @@ export default function MaintenanceDetailPage({
             </div>
           </CardContent>
         </Card>
+
+        {/* Dialogs */}
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Request</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Reason for Rejection
+              </label>
+              <Textarea
+                placeholder="Enter rejection reason..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={confirmReject}
+              >
+                Reject Request
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Close Maintenance Request</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Actual Maintenance Cost (Rs.)
+              </label>
+              <Input
+                type="number"
+                placeholder="e.g. 3000"
+                value={closeCost}
+                onChange={(e) => setCloseCost(e.target.value)}
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Leave blank or enter 0 if cost is not yet known.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCloseDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={confirmClose}>
+                Confirm Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

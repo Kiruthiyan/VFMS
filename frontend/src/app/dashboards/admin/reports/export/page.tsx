@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
+
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Table, BarChart, Car, User, Droplet, Wrench, Calendar, ClipboardList, RefreshCw } from "lucide-react";
+import { ArrowLeft, FileText, Table, BarChart, Car, User, Droplet, Wrench, Calendar, ClipboardList, RefreshCw } from "lucide-react";
 import { exportService } from "@/services/exportService";
 import { reportService } from "@/services/reportService";
 import { useToast } from "@/hooks/use-toast";
@@ -212,6 +214,16 @@ export default function ExportPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-8">
+
+            <div>
+                <Button asChild variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-4 mb-2">
+                    <Link href="/dashboards/admin/reports">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Reports Dashboard
+                    </Link>
+                </Button>
+            </div>
+
             <div className="flex justify-between items-end">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight">Report Export Center</h1>

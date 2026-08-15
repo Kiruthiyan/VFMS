@@ -271,9 +271,9 @@ export default function DriversPage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="hover:bg-transparent bg-muted/40">
+                    <TableRow className="hover:bg-slate-950 bg-slate-950">
                       {['Driver ID', 'Full Name', 'NIC', 'Phone', 'Rating', 'License Alert', 'Availability', 'Status'].map((h) => (
-                        <TableHead key={h} className="text-xs font-medium text-muted-foreground">
+                        <TableHead key={h} className="text-xs font-bold uppercase tracking-[0.18em] text-white">
                           {h}
                         </TableHead>
                       ))}

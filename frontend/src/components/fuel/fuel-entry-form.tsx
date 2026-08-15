@@ -503,7 +503,7 @@ export function FuelEntryForm({
           type="submit"
           disabled={isSubmitting}
           className={cn(
-            "flex h-11 items-center justify-center gap-2",
+            "flex h-11 items-center justify-center gap-2 bg-slate-950 text-white hover:bg-slate-800",
             isEditMode ? "w-full" : "flex-1"
           )}
         >

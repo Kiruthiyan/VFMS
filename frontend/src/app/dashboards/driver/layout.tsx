@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { RoleGuard } from '@/components/auth/role-guard';
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export const metadata = {
   title: 'Driver Dashboard | VFMS',
@@ -10,7 +11,7 @@ export default function DriverDashboardLayout({ children }: { children: React.Re
   return (
     <Suspense>
       <RoleGuard allowedRole="DRIVER">
-        {children}
+        <DashboardShell>{children}</DashboardShell>
       </RoleGuard>
     </Suspense>
   );

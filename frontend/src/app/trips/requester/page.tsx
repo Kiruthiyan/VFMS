@@ -108,7 +108,6 @@ export default function RequesterTripsPage() {
                 </div>
                 <Button
                     onClick={() => router.push("/trips/create")}
-                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                 >
                     <Plus className="mr-2 h-4 w-4" /> New Request
                 </Button>
@@ -167,7 +166,6 @@ export default function RequesterTripsPage() {
                     <p className="text-slate-400 font-medium">No trips found.</p>
                     <Button
                         onClick={() => router.push("/trips/create")}
-                        className="mt-4 bg-blue-950 hover:bg-blue-900 text-white"
                     >
                         <Plus className="mr-2 h-4 w-4" /> Create your first trip
                     </Button>

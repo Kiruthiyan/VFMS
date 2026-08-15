@@ -43,8 +43,8 @@ export default function AddVendorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container animate-in fade-in duration-500">
         <Button
           variant="ghost"
           onClick={() => router.push("/dashboards/fleet/vendors")}
@@ -155,10 +155,9 @@ export default function AddVendorPage() {
               <div className="flex gap-3 pt-3 border-t border-slate-200">
                 <Button
                   type="submit"
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                   disabled={isSubmitting}
                 >
-                  <Save className="mr-2 h-4 w-4" />{" "}
+                  <Save className="mr-2 h-4 w-4" />
                   {isSubmitting ? "Saving..." : "Add Vendor"}
                 </Button>
                 <Button

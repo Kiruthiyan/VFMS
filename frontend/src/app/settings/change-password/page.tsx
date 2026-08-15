@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AuthorizedShell } from "@/components/layout/authorized-shell";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
 
 export const metadata: Metadata = {
@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 
 export default function ChangePasswordPage() {
   return (
-    <AuthorizedShell
-      pageTitle="Change Password"
-      pageDescription="Keep your account secure with a strong, updated password."
+    <DashboardShell
+      title="Change Password"
+      description="Keep your account secure with a strong, updated password."
     >
-      <div className="max-w-2xl">
+      <div className="max-w-none">
         <ChangePasswordForm />
       </div>
-    </AuthorizedShell>
+    </DashboardShell>
   );
 }
