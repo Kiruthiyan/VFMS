@@ -32,15 +32,39 @@ interface CreateUserFormProps {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 " +
-  "text-sm text-slate-900 placeholder:text-slate-400 " +
+  "h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 " +
+  "text-sm text-slate-900 shadow-sm placeholder:text-slate-400 " +
   "focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40 " +
   "disabled:opacity-50 transition-colors";
 
-const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600";
-const hintClass = "mt-1 text-xs leading-5 text-slate-500";
-const errorClass = "mt-1 text-xs text-red-500";
+const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+const hintClass = "mt-1.5 text-xs leading-5 text-slate-500";
+const errorClass = "mt-1.5 text-xs font-medium text-red-500";
 const readOnlyInputClass = `${inputClass} bg-slate-50 text-slate-700`;
+
+function SectionTitle({
+  step,
+  title,
+  description,
+}: {
+  step: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div>
+      <h3 className="vfms-form-section-title">
+        <span className="vfms-form-step">{step}</span>
+        {title}
+      </h3>
+      {description && (
+        <p className="-mt-3 mb-5 text-sm leading-6 text-slate-500">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
 
 /**
  * Keeps the admin user provisioning rules in one shared form so the dedicated
@@ -227,42 +251,47 @@ export function CreateUserForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {serverError && <FormMessage type="error" message={serverError} />}
 
-      <div className="space-y-4">
-        <div>
-          <label className={labelClass}>Role *</label>
-          <select
-            {...register("role")}
-            disabled={isSubmitting}
-            className={inputClass}
-          >
-            {ADMIN_MANAGED_ROLE_OPTIONS.map((role) => (
-              <option key={role} value={role}>
-                {ROLE_LABELS[role]}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="vfms-form-section">
+        <SectionTitle
+          step="1"
+          title="Access Role"
+          description="Choose the account type before entering the required identity details."
+        />
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-sm font-semibold text-[#101828]">
-            {roleGuidance.title}
-          </p>
-          <p className="mt-1 text-sm leading-6 text-slate-600">
-            {roleGuidance.description}
-          </p>
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>Role *</label>
+            <select
+              {...register("role")}
+              disabled={isSubmitting}
+              className={inputClass}
+            >
+              {ADMIN_MANAGED_ROLE_OPTIONS.map((role) => (
+                <option key={role} value={role}>
+                  {ROLE_LABELS[role]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm font-semibold text-slate-950">
+              {roleGuidance.title}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              {roleGuidance.description}
+            </p>
+          </div>
         </div>
       </div>
 
       {showStaffFields ? (
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-              Staff Verification
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Enter the employee ID first. VFMS will load the verified staff profile from the company registry automatically.
-            </p>
-          </div>
+        <div className="vfms-form-section">
+          <SectionTitle
+            step="2"
+            title="Staff Verification"
+            description="Enter the employee ID first. VFMS will load the verified staff profile from the company registry automatically."
+          />
 
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <div>
@@ -288,7 +317,7 @@ export function CreateUserForm({
               type="button"
               onClick={() => void loadVerifiedStaffProfile()}
               disabled={isSubmitting || isLoadingStaffProfile}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoadingStaffProfile ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -304,7 +333,7 @@ export function CreateUserForm({
           )}
 
           {staffProfile && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
               <p className="text-sm font-semibold text-slate-950">
                 Verified company staff profile loaded
               </p>
@@ -315,7 +344,7 @@ export function CreateUserForm({
           )}
 
           {staffAccountConflict && staffProfile?.existingAccountRole && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
               <p className="text-sm font-semibold text-red-950">
                 Active account already exists for this staff member
               </p>
@@ -337,7 +366,7 @@ export function CreateUserForm({
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>Full Name *</label>
               <input
@@ -369,7 +398,7 @@ export function CreateUserForm({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>Phone *</label>
               <input
@@ -397,7 +426,7 @@ export function CreateUserForm({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>Department *</label>
               <input
@@ -429,7 +458,7 @@ export function CreateUserForm({
             </div>
           </div>
 
-          <div>
+          <div className="mt-4">
             <label className={labelClass}>Office Location *</label>
             <input
               type="text"
@@ -446,15 +475,12 @@ export function CreateUserForm({
         </div>
       ) : (
         <>
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-              Account Setup
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Start with the verified identity details that will be used across the user profile and login records.
-            </p>
-            </div>
+          <div className="vfms-form-section">
+            <SectionTitle
+              step="2"
+              title="Account Setup"
+              description="Start with the verified identity details that will be used across the user profile and login records."
+            />
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -487,48 +513,45 @@ export function CreateUserForm({
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Phone *</label>
-              <input
-                type="tel"
-                placeholder="07XXXXXXXX"
-                {...register("phone")}
-                disabled={isSubmitting}
-                className={inputClass}
-              />
-              <p className={hintClass}>Use the primary contact number for this account.</p>
-              {errors.phone && <p className={errorClass}>{errors.phone.message}</p>}
-            </div>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Phone *</label>
+                <input
+                  type="tel"
+                  placeholder="07XXXXXXXX"
+                  {...register("phone")}
+                  disabled={isSubmitting}
+                  className={inputClass}
+                />
+                <p className={hintClass}>Use the primary contact number for this account.</p>
+                {errors.phone && <p className={errorClass}>{errors.phone.message}</p>}
+              </div>
 
-            <div>
-              <label className={labelClass}>NIC *</label>
-              <input
-                type="text"
-                placeholder="NIC number"
-                {...register("nic")}
-                disabled={isSubmitting}
-                className={inputClass}
-              />
-              <p className={hintClass}>Enter the NIC exactly as recorded in company documents.</p>
-              {errors.nic && <p className={errorClass}>{errors.nic.message}</p>}
+              <div>
+                <label className={labelClass}>NIC *</label>
+                <input
+                  type="text"
+                  placeholder="NIC number"
+                  {...register("nic")}
+                  disabled={isSubmitting}
+                  className={inputClass}
+                />
+                <p className={hintClass}>Enter the NIC exactly as recorded in company documents.</p>
+                {errors.nic && <p className={errorClass}>{errors.nic.message}</p>}
+              </div>
             </div>
           </div>
         </>
       )}
 
       {showDriverFields && (
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-              Driver Details
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Capture the verified licence and experience details before activating driver access.
-            </p>
-          </div>
+        <div className="vfms-form-section">
+          <SectionTitle
+            step="3"
+            title="Driver Details"
+            description="Capture the verified licence and experience details before activating driver access."
+          />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -561,7 +584,7 @@ export function CreateUserForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>Experience (Years)</label>
               <input
@@ -591,15 +614,12 @@ export function CreateUserForm({
       )}
 
       {showApproverFields && (
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-              Approver Details
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Add approval routing details when the approver participates in tiered workflows.
-            </p>
-          </div>
+        <div className="vfms-form-section">
+          <SectionTitle
+            step="3"
+            title="Approver Details"
+            description="Add approval routing details when the approver participates in tiered workflows."
+          />
 
           <div>
             <label className={labelClass}>Approval Level</label>
@@ -626,7 +646,7 @@ export function CreateUserForm({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50"
+            className="h-12 rounded-2xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -634,7 +654,7 @@ export function CreateUserForm({
         <button
           type="submit"
           disabled={isSubmitting || staffAccountConflict}
-          className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-6 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting && <LoadingSpinner size={14} />}
           {isSubmitting ? "Creating..." : submitLabel}

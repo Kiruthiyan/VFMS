@@ -194,7 +194,7 @@ export default function CreateTripPage() {
                 </button>
 
                 <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-0 gap-0 pb-4">
-                    <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
+                    <CardHeader className="vfms-form-header py-5 pl-8">
                         <div className="flex items-center gap-3">
                             <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                                 <Calendar className="h-5 w-5" />
@@ -203,8 +203,8 @@ export default function CreateTripPage() {
                                 <CardTitle className="text-white text-lg font-bold">
                                     New Trip Request
                                 </CardTitle>
-                                <p className="text-blue-200 text-sm mt-0.5">
-                                    Requesting as <span className="font-bold">{currentUser.name}</span>
+                                <p className="text-sm text-slate-300 mt-0.5">
+                                    Submit a vehicle booking request for approval
                                 </p>
                             </div>
                         </div>
@@ -213,6 +213,12 @@ export default function CreateTripPage() {
                     <CardContent className="p-6">
                         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
 
+                            <div className="vfms-form-section">
+                                <h3 className="vfms-form-section-title">
+                                    <span className="vfms-form-step">1</span>
+                                    Trip Details
+                                </h3>
+                                <div className="space-y-5">
                             {/* Purpose */}
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
@@ -377,6 +383,8 @@ export default function CreateTripPage() {
                                             <AlertTriangle className="h-3 w-3" /> {errors.distanceKm}
                                         </p>
                                     )}
+                                </div>
+                            </div>
                                 </div>
                             </div>
 

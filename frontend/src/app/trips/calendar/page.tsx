@@ -105,7 +105,7 @@ export default function CalendarPage() {
                 {/* Calendar */}
                 <div className="lg:col-span-2">
                     <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-0 gap-0 pb-4">
-                        <CardHeader className="bg-blue-950 py-4 rounded-t-xl">
+                        <CardHeader className="vfms-card-header py-4 pl-8">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
@@ -227,7 +227,7 @@ export default function CalendarPage() {
 
                     {/* Month summary */}
                     <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-0 gap-0 pb-4">
-                        <CardHeader className="bg-blue-950 py-4 rounded-t-xl">
+                        <CardHeader className="vfms-card-header py-4 pl-8">
                             <CardTitle className="text-white text-base font-bold">
                                 Month Summary
                             </CardTitle>
@@ -250,7 +250,7 @@ export default function CalendarPage() {
                     {/* Selected day trips */}
                     {selectedDay && (
                         <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-0 gap-0 pb-4">
-                            <CardHeader className="bg-blue-950 py-4 rounded-t-xl">
+                            <CardHeader className="vfms-card-header py-4 pl-8">
                                 <CardTitle className="text-white text-base font-bold">
                                     {selectedDay} {MONTHS[month - 1]}
                                 </CardTitle>

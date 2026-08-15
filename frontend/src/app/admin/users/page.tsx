@@ -164,14 +164,17 @@ export default function UserManagementDashboardPage() {
             <>
               <Button
                 variant="outline"
+                size="icon"
+                className="vfms-refresh-button"
                 onClick={fetchDashboard}
                 disabled={loading}
+                aria-label="Refresh user management"
+                title="Refresh user management"
               >
                 <RefreshCw
                   size={16}
                   className={loading ? "animate-spin" : ""}
                 />
-                Refresh
               </Button>
 
               <Button asChild>
@@ -199,13 +202,13 @@ export default function UserManagementDashboardPage() {
           <FormMessage type="error" message={error} />
         ) : (
           <>
-            <section className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
+              <div className="vfms-card-header flex flex-col gap-2 px-6 py-5 pl-8 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                     Account Overview
                   </p>
-                  <h2 className="mt-2 text-xl font-black tracking-tight text-slate-950">
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
                     FleetPro user access summary
                   </h2>
                 </div>
@@ -216,7 +219,7 @@ export default function UserManagementDashboardPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 xl:grid-cols-4">
                 {SUMMARY_CARDS.map((card) => {
                   const Icon = card.icon;
                   const count =
@@ -225,7 +228,7 @@ export default function UserManagementDashboardPage() {
                   return (
                     <Card
                       key={card.key}
-                      className="rounded-[24px] border-slate-200 bg-slate-50 shadow-none transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                      className="rounded-[22px] border-slate-200 bg-slate-50 shadow-none transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                     >
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between gap-4">
@@ -255,20 +258,19 @@ export default function UserManagementDashboardPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-amber-200 bg-amber-50 p-5 shadow-sm">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-700 shadow-sm">
+            <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
+              <div className="vfms-card-header flex items-start gap-4 px-6 py-5 pl-8">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-sm">
                   <ShieldAlert className="h-5 w-5" />
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-950">
+                  <h2 className="text-xl font-black tracking-tight text-slate-950">
                     Onboarding Standard
-                  </p>
-                  <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-700">
-                    Staff self-registration is matched with verified company
-                    records and email verification. Driver, approver, and
-                    administrator accounts remain controlled by the admin team.
+                  </h2>
+                  <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
+                    Staff self-registration is matched with verified company records and email verification. Driver,
+                    approver, and administrator accounts remain controlled by the admin team.
                   </p>
                 </div>
               </div>
@@ -277,7 +279,7 @@ export default function UserManagementDashboardPage() {
             <section className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
               <Card className="overflow-hidden rounded-[30px] border-slate-200 bg-white shadow-sm">
                 <CardContent className="p-0">
-                  <div className="flex flex-col gap-2 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="vfms-card-header flex flex-col gap-2 px-6 py-5 pl-8 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <CardTitle className="text-base font-bold text-slate-950">
                         Recent Accounts
@@ -333,9 +335,9 @@ export default function UserManagementDashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-[30px] border-slate-200 bg-white shadow-sm">
-                <CardContent className="p-6">
-                  <div className="mb-6">
+              <Card className="overflow-hidden rounded-[30px] border-slate-200 bg-white shadow-sm">
+                <CardContent className="p-0">
+                  <div className="vfms-card-header px-6 py-5 pl-8">
                     <CardTitle className="text-base font-bold text-slate-950">
                       Access Overview
                     </CardTitle>
@@ -344,7 +346,7 @@ export default function UserManagementDashboardPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-3 p-6">
                     {roleSummary.map((item) => (
                       <div
                         key={item.label}
@@ -361,7 +363,7 @@ export default function UserManagementDashboardPage() {
                     ))}
                   </div>
 
-                  <div className="mt-5 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+                  <div className="mx-6 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       Lifecycle Status
                     </p>
@@ -384,7 +386,7 @@ export default function UserManagementDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-[24px] border border-slate-200 bg-slate-950 p-4 text-white">
+                  <div className="m-6 rounded-[24px] border border-slate-200 bg-slate-950 p-4 text-white">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-300/15 text-amber-300">
                         <ShieldCheck className="h-4 w-4" />

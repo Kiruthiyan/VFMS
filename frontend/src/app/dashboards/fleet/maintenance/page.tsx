@@ -8,6 +8,7 @@ import {
   MaintenanceStatus,
 } from "@/lib/api/maintenance";
 import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
+import { FleetSummaryCard } from "@/components/fleet/FleetSummaryCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,7 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Wrench, Loader2, RefreshCw } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Wrench,
+  Loader2,
+  RefreshCw,
+  ClipboardCheck,
+  Clock3,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
@@ -76,6 +86,12 @@ function MaintenanceList() {
     );
   });
 
+  const submittedCount = requests.filter((r) => r.status === "SUBMITTED").length;
+  const openCount = requests.filter((r) =>
+    ["NEW", "SUBMITTED", "APPROVED", "REJECTED"].includes(r.status),
+  ).length;
+  const closedCount = requests.filter((r) => r.status === "CLOSED").length;
+
   const pageTitle =
     isPendingApprovalsView ? "Pending Approvals" : "Maintenance Requests";
   const pageSubtitle =
@@ -98,8 +114,11 @@ function MaintenanceList() {
             <Button
               variant="outline"
               size="icon"
+              className="vfms-refresh-button"
               onClick={fetchRequests}
               disabled={loading}
+              aria-label="Refresh maintenance requests"
+              title="Refresh maintenance requests"
             >
               <RefreshCw
                 className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -114,6 +133,37 @@ function MaintenanceList() {
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Summary */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <FleetSummaryCard
+            label="Total Requests"
+            value={requests.length}
+            helper="Maintenance records tracked"
+            icon={Wrench}
+          />
+          <FleetSummaryCard
+            label="Pending Approval"
+            value={submittedCount}
+            helper="Waiting for approver action"
+            icon={ClipboardCheck}
+            tone={submittedCount > 0 ? "blue" : "slate"}
+          />
+          <FleetSummaryCard
+            label="Open Work"
+            value={openCount}
+            helper="Not yet closed"
+            icon={Clock3}
+            tone={openCount > 0 ? "amber" : "slate"}
+          />
+          <FleetSummaryCard
+            label="Closed"
+            value={closedCount}
+            helper="Completed maintenance cases"
+            icon={CheckCircle2}
+            tone="emerald"
+          />
         </div>
 
         {/* Filters */}
@@ -149,6 +199,17 @@ function MaintenanceList() {
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
+          <div className="vfms-card-header px-7 py-5 pl-8">
+            <h2 className="text-xl font-bold text-slate-950">
+              {isPendingApprovalsView
+                ? "Pending Approval Registry"
+                : "Maintenance Registry"}
+            </h2>
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              {filtered.length} maintenance request
+              {filtered.length === 1 ? "" : "s"} matching the current view
+            </p>
+          </div>
           {loading && requests.length === 0 ? (
             <div className="p-8 text-center text-slate-500 flex items-center justify-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" /> Loading requests...
@@ -158,10 +219,10 @@ function MaintenanceList() {
               No maintenance requests found.
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <table className="w-full border-separate border-spacing-0 text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                  <th className="rounded-tl-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
                     Vehicle
                   </th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
@@ -176,7 +237,7 @@ function MaintenanceList() {
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
                     Est. Cost
                   </th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
+                  <th className="rounded-tr-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
                     Actions
                   </th>
                 </tr>

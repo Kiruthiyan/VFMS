@@ -49,15 +49,15 @@ export function Topbar() {
   const breadcrumb = getBreadcrumb(pathname);
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-14 bg-white border-b border-slate-200 flex items-center px-6 z-30 shadow-sm">
+    <header className="fixed inset-x-0 top-0 z-30 flex min-h-14 items-center border-b border-slate-200 bg-white px-3 shadow-sm sm:px-6 lg:left-64">
       {/* Breadcrumb */}
-      <div className="flex-1 flex items-center gap-3">
-        <div className="w-1 h-6 bg-amber-400 rounded-full" />
-        <h1 className="text-lg font-bold text-slate-900">{breadcrumb}</h1>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="h-6 w-1 shrink-0 rounded-full bg-amber-400" />
+        <h1 className="min-w-0 truncate text-base font-bold text-slate-900 sm:text-lg">{breadcrumb}</h1>
       </div>
 
       {/* Right section */}
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         {/* Notification */}
         <button className="relative h-8 w-8 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors">
           <Bell className="h-4 w-4 text-slate-500" />
@@ -65,7 +65,7 @@ export function Topbar() {
         </button>
 
         {/* Divider */}
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="hidden h-5 w-px bg-slate-200 sm:block" />
 
         {/* Role badge (demo switcher only when explicitly enabled) */}
         <div className="relative">
@@ -80,7 +80,7 @@ export function Topbar() {
                 >
                   {ROLES.find((r) => r.value === role)?.label}
                 </span>
-                <span className="text-[10px] text-slate-400 hidden sm:block">
+                <span className="hidden text-[10px] text-slate-400 sm:block">
                   Demo Role
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
@@ -123,7 +123,7 @@ export function Topbar() {
         </div>
 
         {/* Avatar */}
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-xs shadow">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-xs font-bold text-white shadow">
           {role === "ADMIN"
             ? "AD"
             : role === "SYSTEM_USER"

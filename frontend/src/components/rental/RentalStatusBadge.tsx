@@ -11,19 +11,19 @@ const statusConfig: Record<
 > = {
     ACTIVE: {
       label: "Active",
-      className: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300",
+      className: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     },
     IN_TRIP_USE: {
       label: "In Trip Use",
-      className: "bg-blue-100 text-blue-700 ring-1 ring-blue-300",
+      className: "bg-blue-50 text-blue-700 ring-blue-200",
     },
     RETURNED: {
       label: "Returned",
-      className: "bg-amber-100 text-amber-700 ring-1 ring-amber-300",
+      className: "bg-amber-50 text-amber-700 ring-amber-200",
     },
     CLOSED: {
       label: "Closed",
-      className: "bg-gray-100 text-gray-600 ring-1 ring-gray-300",
+      className: "bg-slate-100 text-slate-600 ring-slate-200",
     },
   };
 
@@ -31,9 +31,9 @@ export function RentalStatusBadge({ status }: { status: RentalDisplayStatus }) {
   const config = statusConfig[status];
   return (
     <span
-      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide ${config.className}`}
+      className={`inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-semibold leading-4 tracking-wide ring-1 ${config.className}`}
     >
-      {config.label}
+      <span className="truncate">{config.label}</span>
     </span>
   );
 }

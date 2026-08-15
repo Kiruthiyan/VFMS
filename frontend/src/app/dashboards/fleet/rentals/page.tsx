@@ -8,6 +8,7 @@ import {
   tripAvailabilityApi,
 } from "@/lib/api/trip-availability";
 import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
+import { FleetSummaryCard } from "@/components/fleet/FleetSummaryCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,7 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Car, Loader2, RefreshCw } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Car,
+  Loader2,
+  RefreshCw,
+  Clock3,
+  CheckCircle2,
+  CircleDollarSign,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
@@ -72,6 +82,17 @@ export default function RentalsPage() {
       ? "IN_TRIP_USE"
       : rental.status;
 
+  const activeCount = rentals.filter((r) => r.status === "ACTIVE").length;
+  const inTripUseCount = rentals.filter(
+    (r) =>
+      r.status === "ACTIVE" &&
+      activeTripVehicleIds.has(rentalTripVehicleId(r.id)),
+  ).length;
+  const closedCount = rentals.filter(
+    (r) => r.status === "RETURNED" || r.status === "CLOSED",
+  ).length;
+  const totalRentalCost = rentals.reduce((sum, r) => sum + (r.totalCost ?? 0), 0);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
@@ -89,8 +110,11 @@ export default function RentalsPage() {
             <Button
               variant="outline"
               size="icon"
+              className="vfms-refresh-button"
               onClick={fetchRentals}
               disabled={loading}
+              aria-label="Refresh rentals"
+              title="Refresh rentals"
             >
               <RefreshCw
                 className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -105,6 +129,37 @@ export default function RentalsPage() {
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Summary */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <FleetSummaryCard
+            label="Total Rentals"
+            value={rentals.length}
+            helper="External vehicle records"
+            icon={Car}
+          />
+          <FleetSummaryCard
+            label="Active"
+            value={activeCount}
+            helper="Currently available or assigned"
+            icon={Clock3}
+            tone={activeCount > 0 ? "blue" : "slate"}
+          />
+          <FleetSummaryCard
+            label="In Trip Use"
+            value={inTripUseCount}
+            helper="Active rentals used by trips"
+            icon={CheckCircle2}
+            tone={inTripUseCount > 0 ? "emerald" : "slate"}
+          />
+          <FleetSummaryCard
+            label="Total Cost"
+            value={`Rs. ${totalRentalCost.toLocaleString()}`}
+            helper={`${closedCount} returned or closed`}
+            icon={CircleDollarSign}
+            tone="amber"
+          />
         </div>
 
         {/* Filters */}
@@ -134,6 +189,15 @@ export default function RentalsPage() {
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden">
+          <div className="vfms-card-header px-7 py-5 pl-8">
+            <h2 className="text-xl font-bold text-slate-950">
+              Rental Registry
+            </h2>
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              {filtered.length} external rental record
+              {filtered.length === 1 ? "" : "s"} matching the current view
+            </p>
+          </div>
           {loading && rentals.length === 0 ? (
             <div className="p-8 text-center text-slate-500 flex items-center justify-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" /> Loading rentals...
@@ -143,10 +207,10 @@ export default function RentalsPage() {
               No rentals found.
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <table className="w-full border-separate border-spacing-0 text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
+                  <th className="rounded-tl-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
                     Vehicle
                   </th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
@@ -161,7 +225,7 @@ export default function RentalsPage() {
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
+                  <th className="rounded-tr-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90 text-right">
                     Actions
                   </th>
                 </tr>

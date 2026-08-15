@@ -6,11 +6,11 @@ const statusConfig: Record<
   MaintenanceStatus,
   { label: string; className: string }
 > = {
-  NEW: { label: "New", className: "bg-slate-100 text-slate-700" },
-  SUBMITTED: { label: "Submitted", className: "bg-blue-100 text-blue-700" },
-  APPROVED: { label: "Approved", className: "bg-green-100 text-green-700" },
-  REJECTED: { label: "Rejected", className: "bg-red-100 text-red-700" },
-  CLOSED: { label: "Closed", className: "bg-gray-100 text-gray-700" },
+  NEW: { label: "New", className: "bg-slate-100 text-slate-700 ring-slate-200" },
+  SUBMITTED: { label: "Submitted", className: "bg-blue-50 text-blue-700 ring-blue-200" },
+  APPROVED: { label: "Approved", className: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+  REJECTED: { label: "Rejected", className: "bg-red-50 text-red-700 ring-red-200" },
+  CLOSED: { label: "Closed", className: "bg-slate-100 text-slate-600 ring-slate-200" },
 };
 
 export function MaintenanceStatusBadge({
@@ -21,9 +21,9 @@ export function MaintenanceStatusBadge({
   const config = statusConfig[status];
   return (
     <span
-      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${config.className}`}
+      className={`inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-semibold leading-4 ring-1 ${config.className}`}
     >
-      {config.label}
+      <span className="truncate">{config.label}</span>
     </span>
   );
 }

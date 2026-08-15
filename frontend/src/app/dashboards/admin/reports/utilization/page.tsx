@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Truck, CheckCircle2, Clock, Calendar, PlayCircle, XCircle } from "lucide-react";
+import { Car, CheckCircle2, Clock, Calendar, PlayCircle, XCircle } from "lucide-react";
 import { reportService, VehicleUtilization, TripStats } from "@/services/reportService";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
@@ -212,8 +212,8 @@ export default function UtilizationPage() {
                                         <tr key={v.vehicleId} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
-                                                        <Truck className="w-4 h-4" />
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400 text-blue-950 shadow-sm ring-1 ring-black/5">
+                                                        <Car className="h-5 w-5" />
                                                     </div>
                                                     <span className="font-bold text-slate-900">{v.licensePlate}</span>
                                                 </div>

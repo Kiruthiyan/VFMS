@@ -143,7 +143,7 @@ export function AdminShell({ children, requireAdmin = false }: AdminShellProps) 
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 overflow-hidden bg-slate-950 transition-transform lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[min(18rem,calc(100vw-2rem))] overflow-hidden bg-slate-950 transition-transform lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -171,8 +171,8 @@ export function AdminShell({ children, requireAdmin = false }: AdminShellProps) 
           </button>
         </div>
 
-        <main className="px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl space-y-6">{children}</div>
+        <main className="px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+          <div className="mx-auto w-full max-w-screen-2xl space-y-5 sm:space-y-6">{children}</div>
         </main>
       </div>
     </div>

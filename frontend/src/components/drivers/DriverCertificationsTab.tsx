@@ -124,18 +124,18 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
-        <CardTitle className="text-sm font-semibold">Certifications &amp; Training</CardTitle>
+    <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+      <CardHeader className="vfms-card-header flex flex-row items-center justify-between px-4 py-3 pl-8">
+        <CardTitle className="text-sm font-semibold text-white">Certifications &amp; Training</CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-3">
         <div className="space-y-2">
           {certs.map((cert) => (
             <div
               key={cert.id}
-              className="flex items-start justify-between rounded-lg border border-border p-3 transition-colors"
+              className="flex items-start justify-between rounded-xl border border-slate-200 bg-white p-3 transition-colors"
               onMouseEnter={(event) => {
-                event.currentTarget.style.backgroundColor = 'hsl(42 100% 50% / 0.05)';
+                event.currentTarget.style.backgroundColor = 'hsl(210 40% 98%)';
               }}
               onMouseLeave={(event) => {
                 event.currentTarget.style.backgroundColor = '';
@@ -144,9 +144,9 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
               <div className="flex items-start gap-3">
                 <div
                   className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md"
-                  style={{ backgroundColor: 'hsl(var(--primary))' }}
+                  style={{ backgroundColor: 'hsl(222 47% 11%)' }}
                 >
-                  <ShieldCheck className="h-4 w-4" style={{ color: 'hsl(var(--primary-foreground))' }} />
+                  <ShieldCheck className="h-4 w-4" style={{ color: 'hsl(42 100% 50%)' }} />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">{cert.certName}</p>
@@ -179,7 +179,7 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
             </div>
           ))}
           {certs.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No certifications found</p>
+            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-sm text-muted-foreground">No certifications found</p>
           ) : null}
         </div>
       </CardContent>

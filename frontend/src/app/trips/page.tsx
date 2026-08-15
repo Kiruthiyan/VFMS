@@ -2,20 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Table, TableBody, TableCell,
-    TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
     DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreHorizontal, Plus, MapPin, Calendar, Loader2, X, ChevronDown, Clock, CheckCircle, XCircle, AlertCircle, Users } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MoreHorizontal, Plus, MapPin, Calendar, Loader2, X, Clock, CheckCircle, XCircle, AlertCircle, Users, ClipboardCheck, Route, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/role-context";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
+import { useAuthStore } from "@/store/auth-store";
 
 interface Trip {
     id: string;
@@ -35,15 +34,16 @@ interface Trip {
 const STATUS_OPTIONS = ["ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED"];
 
 const STATUS_STYLES: Record<string, string> = {
-    NEW:              "bg-slate-50 text-slate-700 border-slate-200 font-bold",
-    SUBMITTED:        "bg-amber-50 text-amber-700 border-amber-200 font-bold",
-    APPROVED:         "bg-green-50 text-green-700 border-green-200 font-bold",
-    DRIVER_CONFIRMED: "bg-teal-50 text-teal-700 border-teal-200 font-bold",
-    DRIVER_REJECTED:  "bg-orange-50 text-orange-700 border-orange-200 font-bold",
-    REJECTED:         "bg-red-50 text-red-700 border-red-200 font-bold",
-    ONGOING:          "bg-purple-50 text-purple-700 border-purple-200 font-bold",
-    COMPLETED:        "bg-blue-50 text-blue-700 border-blue-200 font-bold",
-    CANCELLED:        "bg-slate-100 text-slate-500 border-slate-300 font-bold",
+    NEW:              "border-slate-200 bg-slate-50 text-slate-700",
+    SUBMITTED:        "border-amber-200 bg-amber-50 text-amber-700",
+    APPROVED:         "border-emerald-200 bg-emerald-50 text-emerald-700",
+    DRIVER_CONFIRMED: "border-teal-200 bg-teal-50 text-teal-700",
+    DRIVER_REJECTED:  "border-orange-200 bg-orange-50 text-orange-700",
+    REJECTED:         "border-red-200 bg-red-50 text-red-700",
+    EXPIRED:          "border-red-200 bg-red-50 text-red-700",
+    ONGOING:          "border-blue-200 bg-blue-50 text-blue-700",
+    COMPLETED:        "border-emerald-200 bg-emerald-50 text-emerald-700",
+    CANCELLED:        "border-slate-300 bg-slate-100 text-slate-600",
 };
 
 const STATUS_ICONS: Record<string, any> = {
@@ -53,6 +53,7 @@ const STATUS_ICONS: Record<string, any> = {
     DRIVER_CONFIRMED: CheckCircle,
     DRIVER_REJECTED: XCircle,
     REJECTED: XCircle,
+    EXPIRED: AlertCircle,
     ONGOING: Clock,
     COMPLETED: CheckCircle,
     CANCELLED: XCircle,
@@ -84,10 +85,21 @@ export default function TripsPage() {
     const [departureDateFilter, setDepartureDateFilter] = useState("");
     const router = useRouter();
     const { currentUser } = useRole();
+    const authHydrated = useAuthStore((state) => state.hydrated);
 
     useEffect(() => {
+        if (!authHydrated) {
+            return;
+        }
+
+        if (currentUser.id === "anonymous") {
+            setTrips([]);
+            setLoading(false);
+            return;
+        }
+
         fetchTrips();
-    }, [currentUser]);
+    }, [authHydrated, currentUser.id, currentUser.role]);
 
     const fetchTrips = async () => {
         setLoading(true);
@@ -103,7 +115,7 @@ export default function TripsPage() {
             }
             setTrips(response.data);
         } catch (error) {
-            console.error("Failed to fetch trips", error);
+            console.warn("Failed to fetch trips:", getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -176,246 +188,320 @@ export default function TripsPage() {
         (currentUser.role === "SYSTEM_USER" || currentUser.role === "ADMIN") &&
         !["COMPLETED", "CANCELLED", "REJECTED"].includes(tripStatus);
 
+    const renderStatusBadge = (status: string) => {
+        const StatusIcon = STATUS_ICONS[status] || AlertCircle;
+        return (
+            <Badge
+                variant="outline"
+                className={`inline-flex min-w-[112px] whitespace-nowrap items-center justify-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.04em] ${STATUS_STYLES[status] || "border-slate-200 bg-slate-50 text-slate-700"}`}
+            >
+                <StatusIcon className="h-3 w-3 shrink-0" />
+                {status.replaceAll("_", " ")}
+            </Badge>
+        );
+    };
+
+    const renderTripActions = (trip: Trip) => (
+        <div onClick={e => e.stopPropagation()}>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="outline"
+                        className="h-10 w-10 rounded-xl border-slate-200 bg-white p-0 text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                    >
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-white text-slate-900">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}`)}>
+                        View details
+                    </DropdownMenuItem>
+                    {currentUser.role === "SYSTEM_USER" && trip.status === "NEW" && (
+                        <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}/edit`)}>
+                            Edit trip
+                        </DropdownMenuItem>
+                    )}
+                    {["APPROVER", "ADMIN"].includes(currentUser.role) &&
+                        ["SUBMITTED", "DRIVER_REJECTED"].includes(trip.status) && (
+                            <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}/approve`)}>
+                                Review & Assign
+                            </DropdownMenuItem>
+                        )}
+                    {canCancelTrip(trip.status) && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => router.push(`/trips/${trip.id}`)}
+                            >
+                                Cancel trip
+                            </DropdownMenuItem>
+                        </>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-slate-50 p-6 space-y-4">
+        <div className="mx-auto min-h-screen max-w-[1500px] space-y-4 bg-slate-50 p-4 sm:p-6">
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900">
-                        {getPageTitle()}
-                    </h1>
-                    <p className="text-slate-500 font-medium mt-1">
-                        Logged in as <span className="font-bold text-blue-950">{currentUser.name}</span>
-                        <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
-                            {currentUser.role.replace("_", " ")}
-                        </span>
-                    </p>
-                </div>
-                {["SYSTEM_USER", "ADMIN"].includes(currentUser.role) && (
+            <PageHeader
+                title={getPageTitle()}
+                description="Review trip requests, schedules, assignments, and booking progress from one operational workspace."
+                icon={Route}
+                iconClassName="text-amber-700"
+                actions={
+                  ["SYSTEM_USER", "ADMIN"].includes(currentUser.role) ? (
                     <Button
-                        className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                        className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-slate-950/15"
                         onClick={() => router.push("/trips/create")}
                     >
                         <Plus className="mr-2 h-4 w-4" /> New Trip Request
                     </Button>
-                )}
-            </div>
+                  ) : null
+                }
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {getStats().map(stat => (
-                    <div key={stat.label} className="bg-white rounded-2xl border border-slate-200 p-5">
-                        <div className="text-slate-500 text-xs font-bold uppercase tracking-wide">
-                            {stat.label}
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                {getStats().map(stat => {
+                    const StatIcon = stat.label === "Total" ? ClipboardCheck : stat.label === "Completed" ? CheckCircle : Clock;
+                    return (
+                        <div key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                                        {stat.label}
+                                    </div>
+                                    <div className={`mt-1.5 text-3xl font-black leading-none ${stat.color}`}>
+                                        {stat.value}
+                                    </div>
+                                </div>
+                                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-700">
+                                    <StatIcon className="h-5 w-5" />
+                                </span>
+                            </div>
                         </div>
-                        <div className={`text-3xl font-black mt-2 ${stat.color}`}>
-                            {stat.value}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Filter Section — only for APPROVER and ADMIN */}
             {["APPROVER", "ADMIN"].includes(currentUser.role) && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Filter Trips
-                    </p>
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700">
+                            <Filter className="h-5 w-5" />
+                        </span>
+                        <div>
+                            <p className="text-base font-bold text-slate-950">Filter Trips</p>
+                            <p className="text-sm text-slate-500">Refine by route, purpose, status, or departure date</p>
+                        </div>
+                    </div>
                     {isFiltersActive && (
                         <button
                             onClick={clearFilters}
-                            className="flex items-center gap-1 text-xs text-red-500 font-medium hover:text-red-700 transition-colors"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
                         >
-                            <X className="h-3 w-3" /> Clear all filters
+                            <X className="h-3.5 w-3.5" /> Clear filters
                         </button>
                     )}
                 </div>
 
-                {/* Search row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-4 p-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Destination</p>
-                        <div className="relative">
-                            <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                            <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                            <select
-                                value={searchDestination}
-                                onChange={e => setSearchDestination(e.target.value)}
-                                className="flex h-9 w-full appearance-none rounded-md border border-slate-200 bg-white pl-9 pr-8 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                            >
-                                <option value="">All destinations</option>
+                        <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Destination</p>
+                        <Select
+                            value={searchDestination || "ALL"}
+                            onValueChange={(value) => setSearchDestination(value === "ALL" ? "" : value)}
+                        >
+                            <SelectTrigger className="h-11 rounded-xl bg-white text-sm font-medium text-slate-900">
+                                <MapPin className="h-4 w-4 text-slate-400" />
+                                <SelectValue placeholder="All destinations" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All destinations</SelectItem>
                                 {uniqueDestinations.map(d => (
-                                    <option key={d} value={d}>{d}</option>
+                                    <SelectItem key={d} value={d}>{d}</SelectItem>
                                 ))}
-                            </select>
-                        </div>
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Purpose</p>
-                        <div className="relative">
-                            <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                            <select
-                                value={searchPurpose}
-                                onChange={e => setSearchPurpose(e.target.value)}
-                                className="flex h-9 w-full appearance-none rounded-md border border-slate-200 bg-white px-3 pr-8 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                            >
-                                <option value="">All purposes</option>
-                                {uniquePurposes.map(p => (
-                                    <option key={p} value={p}>{p}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Status + Date row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status</p>
-                        <div className="flex flex-wrap gap-1.5">
-                            {STATUS_OPTIONS.map(status => (
-                                <button
-                                    key={status}
-                                    onClick={() => setStatusFilter(status)}
-                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                                        statusFilter === status
-                                            ? "bg-blue-950 text-white border-blue-950"
-                                            : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                                    }`}
-                                >
-                                    {status === "ALL" ? "ALL" : status.replace("_", " ")}
-                                    <span className="ml-1 opacity-50 text-[10px]">
-                                        ({status === "ALL" ? trips.length : trips.filter(t => t.status === status).length})
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
+                        <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Purpose</p>
+                        <Select
+                            value={searchPurpose || "ALL"}
+                            onValueChange={(value) => setSearchPurpose(value === "ALL" ? "" : value)}
+                        >
+                            <SelectTrigger className="h-11 rounded-xl bg-white text-sm font-medium text-slate-900">
+                                <SelectValue placeholder="All purposes" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All purposes</SelectItem>
+                                {uniquePurposes.map(p => (
+                                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
+
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Departure Date</p>
+                        <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Departure Date</p>
                         <input
                             type="date"
                             value={departureDateFilter}
                             onChange={e => setDepartureDateFilter(e.target.value)}
-                            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                         />
+                    </div>
+
+                    <div>
+                        <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Status</p>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="h-11 rounded-xl bg-white text-sm font-medium text-slate-900">
+                                <SelectValue placeholder="All statuses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {STATUS_OPTIONS.map(status => (
+                                    <SelectItem key={status} value={status}>
+                                        {status === "ALL" ? "All statuses" : status.replaceAll("_", " ")}
+                                        <span className="ml-1 text-xs text-slate-400">
+                                            ({status === "ALL" ? trips.length : trips.filter(t => t.status === status).length})
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
                 {isFiltersActive && (
-                    <p className="text-xs text-slate-500">
+                    <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
                         Showing <span className="font-bold text-slate-900">{filteredTrips.length}</span> of {trips.length} trips
                     </p>
                 )}
+                </div>
             </div>
             )}
 
             {/* Trip Cards List */}
             {loading ? (
-                <div className="flex justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+                <div className="flex justify-center rounded-2xl border border-slate-200 bg-white py-14 shadow-sm">
+                    <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
                 </div>
             ) : filteredTrips.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 font-medium">
-                    No trips found matching your filters.
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-sm">
+                    <p className="text-base font-bold text-slate-950">No trips found</p>
+                    <p className="mt-1 text-sm text-slate-500">Try changing the filters or create a new trip request.</p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {filteredTrips.map(trip => {
-                        const StatusIcon = STATUS_ICONS[trip.status] || AlertCircle;
-                        return (
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="vfms-card-header px-5 py-3.5 pl-8">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700">
+                                <ClipboardCheck className="h-5 w-5" />
+                            </span>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-950">Trip Registry</h2>
+                                <p className="text-sm text-slate-500">Operational trip records and booking status</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="hidden overflow-x-auto md:block">
+                        <table className="w-full min-w-[920px]">
+                            <thead className="bg-slate-950 text-left text-xs font-bold uppercase tracking-[0.14em] text-white">
+                                <tr>
+                                    <th className="px-6 py-3.5">Trip</th>
+                                    <th className="px-6 py-3.5">Route</th>
+                                    <th className="px-6 py-3.5">Schedule</th>
+                                    <th className="px-6 py-3.5">Passengers</th>
+                                    <th className="px-6 py-3.5">Status</th>
+                                    <th className="px-6 py-3.5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredTrips.map(trip => (
+                                    <tr
+                                        key={trip.id}
+                                        className="cursor-pointer transition-colors hover:bg-slate-50"
+                                        onClick={() => router.push(`/trips/${trip.id}`)}
+                                    >
+                                        <td className="px-6 py-3.5">
+                                            <p className="font-bold text-slate-950">{trip.purpose}</p>
+                                            <p className="mt-1 text-xs font-medium text-slate-500">Trip #{String(trip.id).slice(0, 8)}</p>
+                                        </td>
+                                        <td className="max-w-[360px] px-6 py-3.5">
+                                            <div className="flex items-start gap-2 text-sm font-medium text-slate-600">
+                                                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                                <span className="line-clamp-2">{formatRoute(trip.destination)}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-3.5">
+                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                                <Calendar className="h-4 w-4 text-slate-400" />
+                                                {trip.status === "COMPLETED" && trip.startTime
+                                                    ? formatDate(trip.startTime)
+                                                    : formatDate(trip.departureTime)}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-3.5">
+                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600">
+                                                <Users className="h-3.5 w-3.5" />
+                                                {trip.passengerCount} pax
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-3.5">{renderStatusBadge(trip.status)}</td>
+                                        <td className="px-6 py-3.5">
+                                            <div className="flex justify-end">{renderTripActions(trip)}</div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="space-y-3 p-4 md:hidden">
+                        {filteredTrips.map(trip => (
                             <Card
                                 key={trip.id}
-                                className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:border-blue-200 transition-all"
+                                className="cursor-pointer rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors hover:border-amber-200"
                                 onClick={() => router.push(`/trips/${trip.id}`)}
                             >
-                                <CardContent className="p-5">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1 space-y-2">
-                                            
-                                            {/* Status Badge */}
-                                            <div className="flex items-center gap-2">
-                                                <Badge
-                                                    variant="outline"
-                                                    className={STATUS_STYLES[trip.status] || ""}
-                                                >
-                                                    <StatusIcon className="h-3 w-3 mr-1" />
-                                                    {trip.status.replace("_", " ")}
-                                                </Badge>
+                                <CardContent className="p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0 flex-1 space-y-3">
+                                            {renderStatusBadge(trip.status)}
+                                            <p className="text-base font-bold text-slate-950">{trip.purpose}</p>
+                                            <div className="flex items-start gap-2 text-sm font-medium text-slate-600">
+                                                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                                <span className="break-words">{formatRoute(trip.destination)}</span>
                                             </div>
-
-                                            {/* Purpose */}
-                                            <p className="font-bold text-slate-900">
-                                                {trip.purpose}
-                                            </p>
-
-                                            {/* Truncated Route */}
-                                            <div className="flex items-center gap-2 text-sm text-slate-600">
-                                                <MapPin className="h-3.5 w-3.5 text-blue-950 shrink-0" />
-                                                {formatRoute(trip.destination)}
-                                            </div>
-
-                                            {/* Time & Pax details */}
-                                            <div className="flex items-center gap-4 text-xs text-slate-500">
-                                                <span className="flex items-center gap-1">
-                                                    <Calendar className="h-3 w-3" />
-                                                    {trip.status === "COMPLETED" ? "Started: " : ""}
-                                                    {trip.status === "COMPLETED" && trip.startTime 
-                                                        ? formatDate(trip.startTime) 
+                                            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
+                                                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
+                                                    <Calendar className="h-3.5 w-3.5" />
+                                                    {trip.status === "COMPLETED" && trip.startTime
+                                                        ? formatDate(trip.startTime)
                                                         : formatDate(trip.departureTime)}
                                                 </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Users className="h-3 w-3" />
+                                                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
+                                                    <Users className="h-3.5 w-3.5" />
                                                     {trip.passengerCount} pax
                                                 </span>
                                             </div>
                                         </div>
-
-                                        {/* Actions Dropdown */}
-                                        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-white text-slate-900">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}`)}>
-                                                        View details
-                                                    </DropdownMenuItem>
-                                                    {currentUser.role === "SYSTEM_USER" && trip.status === "NEW" && (
-                                                        <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}/edit`)}>
-                                                            Edit trip
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {["APPROVER", "ADMIN"].includes(currentUser.role) &&
-                                                        ["SUBMITTED", "DRIVER_REJECTED"].includes(trip.status) && (
-                                                        <DropdownMenuItem onClick={() => router.push(`/trips/${trip.id}/approve`)}>
-                                                            Review & Assign
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {canCancelTrip(trip.status) && (
-                                                        <>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                className="text-red-600"
-                                                                onClick={() => router.push(`/trips/${trip.id}`)}
-                                                            >
-                                                                Cancel trip
-                                                            </DropdownMenuItem>
-                                                        </>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
+                                        {renderTripActions(trip)}
                                     </div>
                                 </CardContent>
                             </Card>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

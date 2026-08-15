@@ -51,18 +51,18 @@ export function FormMessage({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-xl border p-4",
+        "flex min-w-0 items-start gap-3 rounded-xl border p-4 shadow-xs",
         style.bg,
         style.border,
         className
       )}
     >
       <Icon size={18} className={cn("mt-0.5 shrink-0", style.icon)} />
-      <div className="space-y-1">
+      <div className="min-w-0 space-y-1">
         <p className={cn("text-sm font-semibold", style.title)}>
           {title ?? style.defaultTitle}
         </p>
-        <p className={cn("text-sm leading-6", style.text)}>{message}</p>
+        <p className={cn("break-words text-sm leading-6", style.text)}>{message}</p>
       </div>
     </div>
   );

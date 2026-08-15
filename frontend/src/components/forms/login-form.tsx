@@ -132,16 +132,20 @@ export function LoginForm() {
         </Link>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        className="w-full bg-slate-950 text-white hover:bg-slate-800 [&_svg]:text-white"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <>
             <LoadingSpinner size={16} />
-            Signing in...
+            <span className="text-white">Signing in...</span>
           </>
         ) : (
           <>
-            <LogIn className="h-4 w-4" />
-            Sign in
+            <LogIn className="h-4 w-4 text-white" />
+            <span className="text-white">Sign in</span>
           </>
         )}
       </Button>

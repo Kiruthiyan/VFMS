@@ -9,6 +9,7 @@ import { DriverReadinessCache, PageResponse } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 /** Shape returned by GET /api/drivers/from-users (user-creation data for DRIVER role) */
@@ -245,16 +246,22 @@ export default function DriversPage() {
                   style={{ '--tw-ring-color': 'hsl(var(--ring))' } as React.CSSProperties}
                 />
               </div>
-                <select
-                  aria-label="Filter drivers by availability"
+                <Select
                   value={availabilityFilter}
-                  onChange={(event) => setAvailabilityFilter(event.target.value as AvailabilityFilter)}
-                  className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none focus:ring-2 focus:ring-ring"
+                  onValueChange={(value) => setAvailabilityFilter(value as AvailabilityFilter)}
                 >
-                  <option value="ALL">All Drivers</option>
-                  <option value="AVAILABLE">Available Drivers</option>
-                  <option value="UNAVAILABLE">Unavailable Drivers</option>
-                </select>
+                  <SelectTrigger
+                    aria-label="Filter drivers by availability"
+                    className="h-10 w-full rounded-xl bg-white text-sm text-slate-900 sm:w-56"
+                  >
+                    <SelectValue placeholder="Availability" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Drivers</SelectItem>
+                    <SelectItem value="AVAILABLE">Available Drivers</SelectItem>
+                    <SelectItem value="UNAVAILABLE">Unavailable Drivers</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardHeader>
 

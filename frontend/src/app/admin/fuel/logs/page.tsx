@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { FileText, Plus, RefreshCw } from "lucide-react";
+import { FileText, Filter, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import {
   getAllFuelRecordsApi,
@@ -18,7 +18,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FuelEntryLogsPage() {
   const [records, setRecords] = useState<FuelRecord[]>([]);
@@ -77,38 +77,47 @@ export default function FuelEntryLogsPage() {
                   New Entry
                 </Link>
               </Button>
-              <Button variant="outline" onClick={fetchAll} disabled={loading}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="vfms-refresh-button"
+                onClick={fetchAll}
+                disabled={loading}
+                aria-label="Refresh fuel logs"
+                title="Refresh fuel logs"
+              >
                 <RefreshCw
                   size={16}
                   className={loading ? "animate-spin" : ""}
                 />
-                Refresh
               </Button>
             </>
           }
         />
 
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="border-b border-slate-200 pb-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Filter Records
-            </p>
-            <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950">
-              Narrow the fuel record list
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              Refine the table by date, vehicle, or driver without leaving the logs workspace.
-            </p>
-          </div>
-          <div className="mt-5">
+        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <CardHeader className="vfms-card-header px-6 py-5 pl-8">
+            <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-950">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700">
+                <Filter size={20} strokeWidth={2.1} />
+              </span>
+              <span>
+                Filter Fuel Records
+                <span className="mt-1 block text-sm font-medium leading-6 text-slate-500">
+                  Refine the registry by date, vehicle, or driver.
+                </span>
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
             <FuelFilterBar
               vehicles={vehicles}
               drivers={drivers}
               onFilter={handleFilter}
               loading={filtering}
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {loading ? (
           <div className="flex justify-center py-24">
@@ -136,12 +145,17 @@ export default function FuelEntryLogsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="overflow-hidden rounded-[28px] shadow-sm">
+          <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <CardContent className="p-0">
-              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-                <CardTitle className="text-base font-semibold text-slate-950">
-                  All Fuel Records ({records.length})
-                </CardTitle>
+              <div className="vfms-card-header flex items-center justify-between px-6 py-5 pl-8">
+                <div>
+                  <CardTitle className="text-xl font-bold text-slate-950">
+                    Fuel Registry
+                  </CardTitle>
+                  <p className="mt-1 text-sm font-medium text-slate-500">
+                    All Fuel Records ({records.length})
+                  </p>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <FuelRecordsTable records={records} />

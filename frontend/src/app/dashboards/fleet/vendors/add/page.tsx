@@ -54,7 +54,7 @@ export default function AddVendorPage() {
         </Button>
 
         <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-0 gap-0 pb-4">
-          <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
+          <CardHeader className="vfms-form-header py-5 pl-8">
             <CardTitle className="flex items-center gap-3 text-white text-lg">
               <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                 <Building2 className="h-5 w-5" />
@@ -65,84 +65,92 @@ export default function AddVendorPage() {
 
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-                    Vendor Name *
-                  </label>
-                  <Input
-                    {...register("name")}
-                    placeholder="City Rentals"
-                    className={fieldClass("name")}
-                  />
-                  {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.name.message}
-                    </p>
-                  )}
+              <div className="vfms-form-section">
+                <h3 className="vfms-form-section-title">
+                  <span className="vfms-form-step">1</span>
+                  Vendor Information
+                </h3>
+                <div className="space-y-4">
+                  <div className="vfms-form-section-grid">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                        Vendor Name *
+                      </label>
+                      <Input
+                        {...register("name")}
+                        placeholder="City Rentals"
+                        className={fieldClass("name")}
+                      />
+                      {errors.name && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.name.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                        Contact Person{" "}
+                        <span className="text-slate-400 font-normal">
+                          (Optional)
+                        </span>
+                      </label>
+                      <Input
+                        {...register("contactPerson")}
+                        placeholder="John Doe"
+                        className="text-slate-900"
+                      />
+                    </div>
+                  </div>
+                  <div className="vfms-form-section-grid">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                        Phone{" "}
+                        <span className="text-slate-400 font-normal">
+                          (Optional)
+                        </span>
+                      </label>
+                      <Input
+                        {...register("phone")}
+                        placeholder="e.g. 0771234567"
+                        className={fieldClass("phone")}
+                      />
+                      {errors.phone && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.phone.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                        Email{" "}
+                        <span className="text-slate-400 font-normal">
+                          (Optional)
+                        </span>
+                      </label>
+                      <Input
+                        {...register("email")}
+                        placeholder="vendor@email.com"
+                        className={fieldClass("email")}
+                      />
+                      {errors.email && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.email.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                      Address{" "}
+                      <span className="text-slate-400 font-normal">(Optional)</span>
+                    </label>
+                    <Input
+                      {...register("address")}
+                      placeholder="123 Main St, Colombo"
+                      className="text-slate-900"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-                    Contact Person{" "}
-                    <span className="text-slate-400 font-normal">
-                      (Optional)
-                    </span>
-                  </label>
-                  <Input
-                    {...register("contactPerson")}
-                    placeholder="John Doe"
-                    className="text-slate-900"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-                    Phone{" "}
-                    <span className="text-slate-400 font-normal">
-                      (Optional)
-                    </span>
-                  </label>
-                  <Input
-                    {...register("phone")}
-                    placeholder="e.g. 0771234567"
-                    className={fieldClass("phone")}
-                  />
-                  {errors.phone && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.phone.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-                    Email{" "}
-                    <span className="text-slate-400 font-normal">
-                      (Optional)
-                    </span>
-                  </label>
-                  <Input
-                    {...register("email")}
-                    placeholder="vendor@email.com"
-                    className={fieldClass("email")}
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-                  Address{" "}
-                  <span className="text-slate-400 font-normal">(Optional)</span>
-                </label>
-                <Input
-                  {...register("address")}
-                  placeholder="123 Main St, Colombo"
-                  className="text-slate-900"
-                />
               </div>
               <div className="flex gap-3 pt-3 border-t border-slate-200">
                 <Button

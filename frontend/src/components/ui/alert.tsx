@@ -24,30 +24,30 @@ export function Alert({
 
   const bgColor =
     alertType === "error"
-      ? "bg-red-500/10"
+      ? "bg-red-50"
       : alertType === "success"
-        ? "bg-green-500/10"
+        ? "bg-emerald-50"
         : alertType === "warning"
-          ? "bg-amber-500/10"
-          : "bg-blue-500/10";
+          ? "bg-amber-50"
+          : "bg-blue-50";
 
   const borderColor =
     alertType === "error"
-      ? "border-red-500/20"
+      ? "border-red-200"
       : alertType === "success"
-        ? "border-green-500/20"
+        ? "border-emerald-200"
         : alertType === "warning"
-          ? "border-amber-500/20"
-          : "border-blue-500/20";
+          ? "border-amber-200"
+          : "border-blue-200";
 
   const textColor =
     alertType === "error"
-      ? "text-red-400"
+      ? "text-red-700"
       : alertType === "success"
-        ? "text-green-400"
+        ? "text-emerald-700"
         : alertType === "warning"
-          ? "text-amber-400"
-          : "text-blue-400";
+          ? "text-amber-800"
+          : "text-blue-700";
 
   const Icon =
     alertType === "error"
@@ -61,17 +61,17 @@ export function Alert({
   if (dismissed) return null;
 
   return (
-    <div className={`${bgColor} ${borderColor} border rounded-xl p-4`}>
+    <div className={`${bgColor} ${borderColor} border rounded-xl p-4 shadow-xs`}>
       <div className="flex gap-3">
-        <Icon size={18} className={`${textColor} flex-shrink-0 mt-0.5`} />
-        <div className="flex-1">
+        <Icon size={18} className={`${textColor} mt-0.5 flex-shrink-0`} />
+        <div className="min-w-0 flex-1">
           {title && <p className={`${textColor} font-semibold mb-1`}>{title}</p>}
-          <p className={`${textColor} text-sm`}>{message || children}</p>
+          <p className={`${textColor} text-sm leading-6 break-words`}>{message || children}</p>
         </div>
         {dismissible && (
           <button
             onClick={() => setDismissed(true)}
-            className={`${textColor} hover:opacity-80 flex-shrink-0`}
+            className={`${textColor} flex-shrink-0 rounded-md p-1 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current`}
           >
             <X size={18} />
           </button>

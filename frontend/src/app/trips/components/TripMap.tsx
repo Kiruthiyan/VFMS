@@ -406,10 +406,15 @@ export default function TripMap({
                 onEstimatedTimeChange(durationStr);
             }
 
+            const map = mapRef.current;
+            if (!map) {
+                return;
+            }
+
             // Remove existing markers & lines
-            markersRef.current.forEach(m => mapRef.current.removeLayer(m));
+            markersRef.current.forEach(m => map.removeLayer(m));
             markersRef.current = [];
-            if (polylineRef.current) mapRef.current.removeLayer(polylineRef.current);
+            if (polylineRef.current) map.removeLayer(polylineRef.current);
 
             // Add new markers (draggable if not viewOnly)
             waypoints.forEach((point, idx) => {
@@ -442,7 +447,7 @@ export default function TripMap({
                 const marker = L.marker([point.lat, point.lon], {
                     icon: markerIcon,
                     draggable: !viewOnly
-                }).addTo(mapRef.current)
+                }).addTo(map)
                   .bindPopup(`<b>${idx === 0 ? "Start" : idx === waypoints.length - 1 ? "Destination" : "Stop " + idx}:</b><br/>${point.name}`);
 
                 // Bind permanent label tooltip
@@ -494,13 +499,13 @@ export default function TripMap({
                     weight: 5,
                     opacity: 0.85
                 }
-            }).addTo(mapRef.current);
+            }).addTo(map);
 
             polylineRef.current = geojsonLayer;
 
             // Fit map
             const bounds = geojsonLayer.getBounds();
-            mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+            map.fitBounds(bounds, { padding: [40, 40] });
             
             // Force Leaflet to recalculate the size of its container and re-fit bounds
             setTimeout(() => {

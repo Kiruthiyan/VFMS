@@ -22,17 +22,19 @@ export function StatsCard({
   const displayLabel = label || title;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-slate-400 mb-2">{displayLabel}</p>
-          <p className="text-3xl font-bold text-slate-100">{value}</p>
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="mb-2 truncate text-sm font-medium text-slate-500">{displayLabel}</p>
+          <p className="break-words text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{value}</p>
           {subtitle && (
-            <p className="text-xs text-slate-500 mt-2">{subtitle}</p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">{subtitle}</p>
           )}
-          {trend && <p className="text-xs text-slate-500 mt-2">{trend}</p>}
+          {trend && <p className="mt-2 text-xs leading-5 text-slate-500">{trend}</p>}
         </div>
-        <Icon size={24} className={`${iconColor} opacity-60`} />
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50">
+          <Icon size={22} className={`${iconColor} opacity-80`} />
+        </span>
       </div>
     </div>
   );

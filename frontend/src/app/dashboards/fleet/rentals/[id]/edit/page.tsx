@@ -122,7 +122,7 @@ export default function EditRentalPage() {
         </Button>
 
         <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
+          <CardHeader className="vfms-form-header py-5 pl-8">
             <CardTitle className="flex items-center gap-3 text-white text-lg">
               <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                 <Car className="h-5 w-5" />
@@ -132,6 +132,12 @@ export default function EditRentalPage() {
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div className="vfms-form-section">
+                <h3 className="vfms-form-section-title">
+                  <span className="vfms-form-step">1</span>
+                  Rental Details
+                </h3>
+                <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-1.5 block">
                   Vendor *
@@ -267,9 +273,12 @@ export default function EditRentalPage() {
                   placeholder="Staff transport, client visit..."
                 />
               </div>
+                </div>
+              </div>
 
-              <div className="pt-5 border-t border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+              <div className="vfms-form-section">
+                <h3 className="vfms-form-section-title">
+                  <span className="vfms-form-step">2</span>
                   Documents
                 </h3>
                 <FleetFileDropzone

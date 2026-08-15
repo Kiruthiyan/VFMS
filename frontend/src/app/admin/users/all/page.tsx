@@ -21,6 +21,13 @@ import { CardTitle } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageHeader } from "@/components/ui/page-header";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { UserRole, UserStatus } from "@/lib/auth";
 import {
   getAllUsersApi,
@@ -46,12 +53,6 @@ const ROLE_FILTER_OPTIONS: { label: string; value: UserRole | "ALL" }[] = [
   { label: "Staff", value: "SYSTEM_USER" },
   { label: "Driver", value: "DRIVER" },
 ];
-
-function getFilterButtonClassName(isActive: boolean): string {
-  return isActive
-    ? "h-10 rounded-xl border border-amber-300 bg-amber-100 px-4 text-sm font-semibold text-slate-950 shadow-sm"
-    : "h-10 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-white hover:text-slate-950";
-}
 
 export default function AllUsersPage() {
   const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
@@ -159,12 +160,19 @@ export default function AllUsersPage() {
           icon={Users}
           actions={
             <>
-              <Button variant="outline" onClick={fetchAll} disabled={loading}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="vfms-refresh-button"
+                onClick={fetchAll}
+                disabled={loading}
+                aria-label="Refresh all users"
+                title="Refresh all users"
+              >
                 <RefreshCw
                   size={16}
                   className={loading ? "animate-spin" : ""}
                 />
-                Refresh
               </Button>
 
               <Button asChild>
@@ -179,26 +187,26 @@ export default function AllUsersPage() {
 
         <UserManagementNav />
 
-        <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+        <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
+          <div className="vfms-card-header flex flex-col gap-3 px-6 py-4 pl-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-sm ring-1 ring-black/5">
                 <SlidersHorizontal className="h-4 w-4" />
-                Directory Filters
               </div>
 
-              <h2 className="mt-2 text-lg font-black tracking-tight text-slate-950">
-                Search and refine user records
-              </h2>
+              <div>
+                <h2 className="text-lg font-black tracking-tight text-slate-950">
+                  Directory Filters
+                </h2>
 
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                Use role, status, and staff details to quickly find user
-                accounts.
-              </p>
+                <p className="mt-0.5 max-w-2xl text-sm leading-6 text-slate-500">
+                  Search by identity, role, status, or staff details.
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm">
                 <span className="font-bold text-slate-950">
                   {filtered.length}
                 </span>{" "}
@@ -221,7 +229,7 @@ export default function AllUsersPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(320px,1fr)_auto_auto] xl:items-start">
+          <div className="grid gap-4 border-t border-slate-200 p-5 xl:grid-cols-[minmax(360px,1fr)_220px_220px] xl:items-end">
             <div className="relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
@@ -230,7 +238,7 @@ export default function AllUsersPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search by name, email, NIC, or employee ID..."
-                className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-amber-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="h-12 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-colors focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
             </div>
 
@@ -239,20 +247,21 @@ export default function AllUsersPage() {
                 Role
               </p>
 
-              <div className="flex max-w-sm flex-wrap gap-2">
-                {ROLE_FILTER_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setRoleFilter(option.value)}
-                    className={getFilterButtonClassName(
-                      roleFilter === option.value
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+              <Select
+                value={roleFilter}
+                onValueChange={(value) => setRoleFilter(value as UserRole | "ALL")}
+              >
+                <SelectTrigger className="h-12 w-full rounded-2xl bg-white text-slate-900 shadow-sm">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_FILTER_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -260,20 +269,23 @@ export default function AllUsersPage() {
                 Status
               </p>
 
-              <div className="flex max-w-sm flex-wrap gap-2">
-                {statusFilterOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setStatusFilter(option.value)}
-                    className={getFilterButtonClassName(
-                      statusFilter === option.value
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(value as UserStatus | "ALL")
+                }
+              >
+                <SelectTrigger className="h-12 w-full rounded-2xl bg-white text-slate-900 shadow-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusFilterOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>
@@ -291,10 +303,10 @@ export default function AllUsersPage() {
           <FormMessage type="error" message={error} />
         ) : (
           <>
-            <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-              <div className="flex flex-col gap-3 border-b border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
+              <div className="vfms-card-header flex flex-col gap-3 px-6 py-5 pl-8 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-slate-950">
+                  <CardTitle className="text-xl font-black tracking-tight text-slate-950">
                     User Directory
                   </CardTitle>
 

@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     ArrowLeft, CheckCircle, XCircle,
     Calendar, MapPin, Users, Loader2, AlertTriangle, Car, User
@@ -179,7 +180,7 @@ export default function ApproveTripPage() {
 
                 {/* Trip Summary */}
                 <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
+                    <CardHeader className="vfms-form-header py-5 pl-8">
                         <div className="flex items-center gap-3">
                             <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
                                 <CheckCircle className="h-5 w-5" />
@@ -248,7 +249,7 @@ export default function ApproveTripPage() {
 
                 {/* Action Card */}
                 <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <CardHeader className={`py-4 rounded-t-xl ${rejectMode ? "bg-red-600" : "bg-blue-950"}`}>
+                    <CardHeader className={`py-4 ${rejectMode ? "rounded-t-xl bg-red-600 text-white" : "vfms-form-header pl-8"}`}>
                         <CardTitle className="text-white text-base font-bold flex items-center gap-2">
                             {rejectMode ? (
                                 <><XCircle className="h-4 w-4" /> Reject Trip Request</>

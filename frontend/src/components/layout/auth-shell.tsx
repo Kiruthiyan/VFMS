@@ -24,7 +24,7 @@ function AuthBrandPanel() {
 
       <div className="flex flex-1 items-center justify-end">
         <div className="max-w-md text-center lg:mr-6 xl:mr-10">
-          <div className="mb-6 inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-200">
+          <div className="auth-brand-pill mb-6 inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-200">
             Fleet Management Platform
           </div>
 
@@ -56,7 +56,7 @@ function AuthBrandPanel() {
 
 function AuthMobileHeader() {
   return (
-    <div className="mb-5 rounded-3xl border border-white/10 bg-slate-900 p-4 text-white shadow-xl shadow-black/20 lg:hidden">
+    <div className="mb-5 rounded-2xl border border-white/10 bg-slate-900 p-4 text-white shadow-xl shadow-black/20 lg:hidden">
       <Link href="/" className="flex items-center justify-center">
         <FleetProLogo theme="dark" size="sm" />
       </Link>
@@ -94,7 +94,7 @@ export function AuthShell({
       <div className="flex min-h-screen flex-col bg-slate-950 lg:h-screen lg:flex-row">
         <AuthBrandPanel />
 
-        <section className="flex min-h-screen flex-1 items-center justify-center bg-slate-950 px-4 py-5 sm:px-6 lg:h-screen lg:min-h-0 lg:w-[52%] lg:flex-none lg:justify-start lg:px-8 lg:py-5 xl:px-10">
+        <section className="flex min-h-screen flex-1 items-center justify-center bg-slate-950 px-3 py-4 sm:px-6 lg:h-screen lg:min-h-0 lg:w-[52%] lg:flex-none lg:justify-start lg:px-8 lg:py-5 xl:px-10">
           <div className={`w-full ${panelWidths[panelWidth]}`}>
             <AuthMobileHeader />
 
@@ -106,17 +106,17 @@ export function AuthShell({
                 exit={{ opacity: 0, y: -12, scale: 0.985 }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               >
-                 <div className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-2xl shadow-black/30 sm:p-6 lg:min-h-[500px] lg:p-6">
+                 <div className="auth-panel-card min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl shadow-black/30 sm:rounded-[30px] sm:p-6 lg:min-h-[500px] lg:p-6">
                   <div className="mb-4 space-y-1.5">
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
                       {eyebrow}
                     </p>
 
-                    <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-[1.9rem]">
+                    <h1 className="break-words text-2xl font-black tracking-tight text-slate-950 sm:text-[1.9rem]">
                       {title}
                     </h1>
 
-                    <p className="max-w-xl text-sm leading-5 text-slate-500">
+                    <p className="max-w-xl text-sm leading-6 text-slate-500">
                       {description}
                     </p>
                   </div>

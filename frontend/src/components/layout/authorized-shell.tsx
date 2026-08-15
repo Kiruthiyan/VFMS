@@ -24,7 +24,7 @@ export function AuthorizedShell({
   if (loading) {
     return (
       <main className="app-shell-background min-h-screen text-slate-900">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</div>
+        <div className="mx-auto w-full max-w-screen-2xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">{children}</div>
       </main>
     );
   }
@@ -89,8 +89,8 @@ export function AuthorizedShell({
     <main className="app-shell-background min-h-screen text-slate-900">
       {pageTitle && (
         <header className="app-topbar sticky top-0 z-30">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-            <div>
+          <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 px-3 py-3.5 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+            <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 Account Settings
               </p>
@@ -109,7 +109,7 @@ export function AuthorizedShell({
         </header>
       )}
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+      <div className="mx-auto w-full max-w-screen-2xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">{children}</div>
     </main>
   );
 }

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type InfractionType = 'TRAFFIC_VIOLATION' | 'MINOR_ACCIDENT' | 'MAJOR_ACCIDENT' | 'NEAR_MISS' | 'RECKLESS_DRIVING' | 'OTHER';
 type InfractionSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -171,46 +172,58 @@ export default function InfractionsPage() {
                 <Plus className="h-4 w-4" /> Log Infraction
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Log Infraction</DialogTitle></DialogHeader>
-              <form onSubmit={submitInfraction} className="space-y-3">
+            <DialogContent className="max-w-2xl overflow-hidden p-0">
+              <DialogHeader className="vfms-form-header px-6 py-5 pl-8">
+                <DialogTitle className="text-white">Log Infraction</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={submitInfraction} className="space-y-4 px-6 pb-6 pt-5">
                 <div>
-                  <Label htmlFor="infraction-driver" className="text-xs text-muted-foreground">Select Driver *</Label>
-                  <select id="infraction-driver" required value={form.driverId} onChange={(event) => setForm((current) => ({ ...current, driverId: event.target.value }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  <Label htmlFor="infraction-driver">Select Driver *</Label>
+                  <select id="infraction-driver" required value={form.driverId} onChange={(event) => setForm((current) => ({ ...current, driverId: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
                     <option value="">Select a driver</option>
                     {drivers.map((driver) => <option key={driver.id} value={driver.id}>{driver.employeeId ? `${driver.employeeId} — ` : ''}{driver.fullName}</option>)}
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="infraction-type" className="text-xs text-muted-foreground">Type *</Label>
-                  <select id="infraction-type" required value={form.infractionType} onChange={(event) => setForm((current) => ({ ...current, infractionType: event.target.value as InfractionType }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  <Label htmlFor="infraction-type">Type *</Label>
+                  <select id="infraction-type" required value={form.infractionType} onChange={(event) => setForm((current) => ({ ...current, infractionType: event.target.value as InfractionType }))} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
                     {(['TRAFFIC_VIOLATION', 'MINOR_ACCIDENT', 'MAJOR_ACCIDENT', 'NEAR_MISS', 'RECKLESS_DRIVING', 'OTHER'] as InfractionType[]).map((type) => <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="infraction-severity" className="text-xs text-muted-foreground">Severity *</Label>
-                  <select id="infraction-severity" required value={form.severity} onChange={(event) => setForm((current) => ({ ...current, severity: event.target.value as InfractionSeverity }))} className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  <Label htmlFor="infraction-severity">Severity *</Label>
+                  <select id="infraction-severity" required value={form.severity} onChange={(event) => setForm((current) => ({ ...current, severity: event.target.value as InfractionSeverity }))} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-950 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40">
                     {(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as InfractionSeverity[]).map((severity) => <option key={severity} value={severity}>{severity}</option>)}
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="infraction-date" className="text-xs text-muted-foreground">Incident Date *</Label>
-                  <Input id="infraction-date" type="date" required value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1 h-9" />
+                  <Label htmlFor="infraction-date">Incident Date *</Label>
+                  <Input id="infraction-date" type="date" required value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1" />
                 </div>
                 <div>
-                  <Label htmlFor="infraction-description" className="text-xs text-muted-foreground">Description</Label>
-                  <Input id="infraction-description" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1 h-9" />
+                  <Label htmlFor="infraction-description">Description</Label>
+                  <Input id="infraction-description" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1" />
                 </div>
                 <div>
-                  <Label htmlFor="infraction-penalty" className="text-xs text-muted-foreground">Penalty Notes</Label>
-                  <Input id="infraction-penalty" value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1 h-9" />
+                  <Label htmlFor="infraction-penalty">Penalty Notes</Label>
+                  <Input id="infraction-penalty" value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1" />
                 </div>
-                <Button type="submit" disabled={submitting} className="w-full">{submitting ? 'Saving...' : 'Log Infraction'}</Button>
+                <div className="flex justify-end border-t border-slate-200 pt-4">
+                  <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Log Infraction'}</Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
-          <Button variant="outline" size="sm" onClick={fetchInfractions} disabled={loading} className="flex items-center gap-2">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={fetchInfractions}
+            disabled={loading}
+            className="vfms-refresh-button"
+            aria-label="Refresh infractions"
+            title="Refresh infractions"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>
@@ -223,16 +236,16 @@ export default function InfractionsPage() {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Label htmlFor="infraction-status-filter" className="text-xs text-muted-foreground">Status</Label>
-            <select
-              id="infraction-status-filter"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-              className="h-8 rounded-md border border-input bg-background px-3 text-xs"
-            >
-              <option value="all">All</option>
-              <option value="resolved">Resolved</option>
-              <option value="in-progress">In progress</option>
-            </select>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+              <SelectTrigger id="infraction-status-filter" className="h-9 w-40 rounded-xl bg-white text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="in-progress">In progress</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">

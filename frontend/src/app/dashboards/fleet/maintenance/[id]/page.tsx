@@ -169,8 +169,8 @@ export default function MaintenanceDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container animate-in fade-in duration-500">
         <Button
           variant="ghost"
           onClick={() => router.back()}
@@ -179,21 +179,23 @@ export default function MaintenanceDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Requests
         </Button>
 
-        <Card className="bg-white rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-hidden mb-6">
-          <CardHeader className="bg-blue-950 py-5 rounded-t-xl">
-            <CardTitle className="flex items-center gap-3 text-white text-lg">
-              <div className="h-9 w-9 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950">
+        <Card className="vfms-detail-card mb-6">
+          <CardHeader className="vfms-form-header px-6 py-5 pl-8">
+            <CardTitle className="flex flex-col gap-3 text-white text-lg sm:flex-row sm:items-center">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-blue-950">
                 <Wrench className="h-5 w-5" />
               </div>
-              Maintenance Request #{request.id}
-              <div className="ml-auto">
+              <span className="min-w-0 flex-1 truncate">
+                Maintenance Request #{request.id}
+              </span>
+              <div className="sm:ml-auto">
                 <MaintenanceStatusBadge status={request.status} />
               </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="vfms-detail-tile">
                 <Car className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Vehicle</p>
@@ -205,7 +207,7 @@ export default function MaintenanceDetailPage({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <Wrench className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Type</p>
@@ -214,7 +216,7 @@ export default function MaintenanceDetailPage({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm col-span-2">
+              <div className="vfms-detail-tile md:col-span-2">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Description</p>
@@ -223,7 +225,7 @@ export default function MaintenanceDetailPage({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <DollarSign className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Estimated Cost</p>
@@ -234,7 +236,7 @@ export default function MaintenanceDetailPage({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <DollarSign className="h-5 w-5 text-green-600" />
                 <div>
                   <p className="text-xs text-slate-500">Actual Cost</p>
@@ -245,7 +247,7 @@ export default function MaintenanceDetailPage({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <Calendar className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Requested Date</p>
@@ -254,7 +256,7 @@ export default function MaintenanceDetailPage({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl ring-1 ring-slate-100 shadow-sm">
+              <div className="vfms-detail-tile">
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-xs text-slate-500">Downtime</p>
@@ -272,7 +274,7 @@ export default function MaintenanceDetailPage({
                 </div>
               </div>
               {request.rejectionReason && (
-                <div className="flex items-center gap-3 p-4 bg-red-50/80 rounded-xl ring-1 ring-red-100 shadow-sm col-span-2">
+                <div className="flex items-center gap-3 rounded-xl bg-red-50/80 p-4 shadow-sm ring-1 ring-red-100 md:col-span-2">
                   <FileText className="h-5 w-5 text-red-600" />
                   <div>
                     <p className="text-xs text-red-500">Rejection Reason</p>

@@ -34,9 +34,9 @@ interface Trip {
 }
 
 const statusStyles: Record<string, string> = {
-  APPROVED: "bg-green-50 text-green-700 border-green-200",
-  ONGOING: "bg-purple-50 text-purple-700 border-purple-200",
-  COMPLETED: "bg-blue-50 text-blue-700 border-blue-200",
+  APPROVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  ONGOING: "bg-amber-50 text-amber-700 border-amber-200",
+  COMPLETED: "bg-slate-100 text-slate-700 border-slate-300",
   CANCELLED: "bg-slate-100 text-slate-500 border-slate-300",
 };
 
@@ -126,28 +126,28 @@ export default function DriverTripsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+        <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
           {trips.map(trip => (
-            <div key={trip.id} className="group relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-200/60 overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:border-blue-300/50 transition-all duration-300 hover:-translate-y-1">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              
-              <div className="p-7">
-                <div className="flex items-start justify-between mb-5">
+            <div key={trip.id} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md">
+              <div className="h-1 bg-amber-400" />
+
+              <div className="p-5 sm:p-6">
+                <div className="mb-5 flex items-start justify-between gap-4">
                   <Badge variant="outline" className={`font-bold px-3.5 py-1.5 rounded-full text-[10px] tracking-wider uppercase border ${statusStyles[trip.status] || ""}`}>
                     {trip.status}
                   </Badge>
-                  <div className="p-2.5 bg-blue-50/80 text-blue-600 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                  <div className="rounded-xl bg-slate-950 p-2.5 text-amber-400 shadow-sm">
                     <MapPin className="h-5 w-5" />
                   </div>
                 </div>
-                
-                <h3 className="text-xl font-extrabold text-slate-900 mb-7 group-hover:text-blue-700 transition-colors line-clamp-2 leading-tight">
+
+                <h3 className="mb-6 line-clamp-2 text-xl font-bold leading-tight text-slate-950">
                   {trip.destination}
                 </h3>
 
-                <div className="grid grid-cols-2 gap-x-6 gap-y-6 text-sm">
+                <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                   <div className="flex items-start gap-4">
-                    <div className="mt-0.5 p-2 bg-slate-50/80 rounded-xl text-slate-400 border border-slate-100 group-hover:border-blue-100 transition-colors">
+                    <div className="mt-0.5 rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500">
                        <Calendar className="h-4 w-4" />
                     </div>
                     <div>
@@ -157,7 +157,7 @@ export default function DriverTripsPage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="mt-0.5 p-2 bg-slate-50/80 rounded-xl text-slate-400 border border-slate-100 group-hover:border-blue-100 transition-colors">
+                    <div className="mt-0.5 rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500">
                        <ArrowRight className="h-4 w-4" />
                     </div>
                     <div>
@@ -167,7 +167,7 @@ export default function DriverTripsPage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="mt-0.5 p-2 bg-slate-50/80 rounded-xl text-slate-400 border border-slate-100 group-hover:border-blue-100 transition-colors">
+                    <div className="mt-0.5 rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500">
                        <Users className="h-4 w-4" />
                     </div>
                     <div>
@@ -177,7 +177,7 @@ export default function DriverTripsPage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="mt-0.5 p-2 bg-slate-50/80 rounded-xl text-slate-400 border border-slate-100 group-hover:border-blue-100 transition-colors">
+                    <div className="mt-0.5 rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500">
                        <Car className="h-4 w-4" />
                     </div>
                     <div>
@@ -195,7 +195,7 @@ export default function DriverTripsPage() {
                     <>
                       <div className="flex gap-3">
                         <Button 
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white" 
+                          className="flex-1 bg-slate-950 text-white hover:bg-slate-800"
                           onClick={() => handleConfirm(trip.id)}
                           disabled={actionLoading === trip.id}
                         >
@@ -216,24 +216,25 @@ export default function DriverTripsPage() {
                               Reject
                             </Button>
                           </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Reject Trip</DialogTitle>
-                              <DialogDescription>
+                          <DialogContent className="overflow-hidden rounded-2xl border-slate-200 p-0 shadow-2xl">
+                            <DialogHeader className="vfms-form-header px-6 py-5 pl-8">
+                              <DialogTitle className="text-white">Reject Trip</DialogTitle>
+                              <DialogDescription className="text-slate-300">
                                 Please provide a reason for rejecting this trip.
                               </DialogDescription>
                             </DialogHeader>
-                            <div className="py-4">
-                              <Label htmlFor="reason" className="sr-only">Reason</Label>
+                            <div className="px-6 py-6">
+                              <Label htmlFor="reason" className="mb-2 block text-sm font-semibold text-slate-700">Reason</Label>
                               <Textarea 
                                 id="reason"
                                 placeholder="Type your reason here..." 
                                 value={rejectReason}
                                 onChange={(e) => setRejectReason(e.target.value)}
                                 rows={4}
+                                className="rounded-lg border-slate-300 text-sm shadow-sm focus:border-slate-500 focus:ring-4 focus:ring-slate-100"
                               />
                             </div>
-                            <DialogFooter>
+                            <DialogFooter className="border-t border-slate-200 bg-slate-50 px-6 py-4">
                               <Button variant="outline" onClick={() => {
                                 setRejectingTripId(null);
                                 setRejectReason("");
@@ -248,7 +249,7 @@ export default function DriverTripsPage() {
                       </div>
                       <Button
                         variant="link"
-                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold text-center w-full"
+                        className="w-full text-center text-xs font-semibold text-slate-700 hover:text-slate-950"
                         onClick={() => router.push(`/trips/${trip.id}`)}
                       >
                         View Full Route & Details →
@@ -257,7 +258,7 @@ export default function DriverTripsPage() {
                   ) : (
                     <Button
                       variant="outline"
-                      className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 font-semibold"
+                      className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
                       onClick={() => router.push(`/trips/${trip.id}`)}
                     >
                       View Route & Details

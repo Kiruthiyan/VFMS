@@ -128,9 +128,16 @@ export default function AdminDashboardPage() {
           icon={Users}
           actions={
             <>
-              <Button variant="outline" onClick={loadDashboard} disabled={loading}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="vfms-refresh-button"
+                onClick={loadDashboard}
+                disabled={loading}
+                aria-label="Refresh admin dashboard"
+                title="Refresh admin dashboard"
+              >
                 <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-                Refresh
               </Button>
               <Button asChild>
                 <Link href="/admin/users">

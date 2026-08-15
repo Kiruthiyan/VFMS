@@ -57,64 +57,64 @@ export default function RentalAnalyticsPage() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
+                <Card className="border border-slate-200 bg-white shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-indigo-100 text-sm font-medium">Total Expense</p>
-                                <h3 className="text-2xl font-bold mt-1">LKR {totalExpenses.toLocaleString()}</h3>
+                                <p className="text-sm font-medium text-slate-500">Total Expense</p>
+                                <h3 className="mt-1 text-2xl font-bold text-slate-900">LKR {totalExpenses.toLocaleString()}</h3>
                             </div>
-                            <div className="p-2 bg-white/10 rounded-lg">
-                                <DollarSign className="w-5 h-5 text-white" />
+                            <div className="rounded-lg bg-amber-100 p-2 text-amber-800 ring-1 ring-amber-200">
+                                <DollarSign className="h-5 w-5" />
                             </div>
                         </div>
-                        <div className="mt-4 text-indigo-100 text-xs">Total across {rentals.length} rentals</div>
+                        <div className="mt-4 text-xs text-slate-500">Total across {rentals.length} rentals</div>
                     </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-sm bg-white">
+                <Card className="border border-slate-200 bg-white shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-slate-500 text-sm font-medium">Avg. Daily Rate</p>
                                 <h3 className="text-2xl font-bold mt-1 text-slate-900">LKR {avgDailyRate.toFixed(2)}</h3>
                             </div>
-                            <div className="p-2 bg-slate-50 rounded-lg">
-                                <Clock className="w-5 h-5 text-indigo-600" />
+                            <div className="rounded-lg bg-amber-100 p-2 text-amber-800 ring-1 ring-amber-200">
+                                <Clock className="h-5 w-5" />
                             </div>
                         </div>
-                        <p className="mt-4 text-xs text-slate-400">Average cost per day per vehicle</p>
+                        <p className="mt-4 text-xs text-slate-500">Average cost per day per vehicle</p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-sm bg-white">
+                <Card className="border border-slate-200 bg-white shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-slate-500 text-sm font-medium">Rental Days</p>
                                 <h3 className="text-2xl font-bold mt-1 text-slate-900">{totalDays} Days</h3>
                             </div>
-                            <div className="p-2 bg-slate-50 rounded-lg">
-                                <Calendar className="w-5 h-5 text-indigo-600" />
+                            <div className="rounded-lg bg-amber-100 p-2 text-amber-800 ring-1 ring-amber-200">
+                                <Calendar className="h-5 w-5" />
                             </div>
                         </div>
-                        <p className="mt-4 text-xs text-slate-400">Total external utilization time</p>
+                        <p className="mt-4 text-xs text-slate-500">Total external utilization time</p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-sm bg-white">
+                <Card className="border border-slate-200 bg-white shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-slate-500 text-sm font-medium">Fleet Rented</p>
                                 <h3 className="text-2xl font-bold mt-1 text-slate-900">{rentalUtilization.toFixed(0)}%</h3>
                             </div>
-                            <div className="p-2 bg-slate-50 rounded-lg">
-                                <Car className="w-5 h-5 text-indigo-600" />
+                            <div className="rounded-lg bg-amber-100 p-2 text-amber-800 ring-1 ring-amber-200">
+                                <Car className="h-5 w-5" />
                             </div>
                         </div>
                         <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
-                            <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${rentalUtilization}%` }} />
+                            <div className="h-1.5 rounded-full bg-amber-500" style={{ width: `${rentalUtilization}%` }} />
                         </div>
                     </CardContent>
                 </Card>

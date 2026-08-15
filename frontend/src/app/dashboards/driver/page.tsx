@@ -61,18 +61,18 @@ export default function DriverDashboardPage() {
         {summaryCards.map((card) => (
           <article
             key={card.title}
-            className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm transition-transform hover:-translate-y-0.5"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                   {card.title}
                 </p>
-                <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">
+                <p className="mt-3 text-2xl font-bold text-slate-950">
                   {card.value}
                 </p>
               </div>
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
                 <card.icon className="h-5 w-5" />
               </span>
             </div>
@@ -85,13 +85,13 @@ export default function DriverDashboardPage() {
 
       {/* Feature Highlight */}
       <section className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
-        <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-amber-400">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950 text-amber-400">
               <ShieldCheck className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 Driver Workspace
               </p>
               <h2 className="mt-2 text-xl font-bold text-slate-950">
@@ -107,8 +107,8 @@ export default function DriverDashboardPage() {
           </div>
         </article>
 
-        <article className="rounded-[28px] border border-slate-200 bg-slate-900 p-6 text-white shadow-xl shadow-slate-900/10">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300">
+        <article className="rounded-xl border border-slate-800 bg-slate-950 p-6 text-white shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-300">
             Available features
           </p>
           <div className="mt-4 space-y-3">
@@ -121,7 +121,7 @@ export default function DriverDashboardPage() {
             ].map((item) => (
               <div
                 key={item}
-                className="flex items-start gap-3 rounded-2xl bg-white/5 px-4 py-3"
+                className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3"
               >
                 <CheckCircle2 className="mt-0.5 h-4 w-4 text-amber-300" />
                 <p className="text-sm text-slate-200">{item}</p>
@@ -137,10 +137,10 @@ export default function DriverDashboardPage() {
           <Link
             key={link.href}
             href={link.href}
-            className="group flex flex-col gap-3 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+            className="group flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
           >
             <div className="flex items-center justify-between">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
                 <link.icon className="h-4 w-4" />
               </span>
               <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-amber-600" />

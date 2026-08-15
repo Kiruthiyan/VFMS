@@ -27,13 +27,13 @@ interface EditUserDialogProps {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-[#E4E7EC] bg-white px-3 py-2.5 " +
-  "text-sm text-[#101828] placeholder:text-[#667085] " +
-  "focus:outline-none focus:ring-2 focus:ring-[#0B1736]/30 " +
-  "focus:border-[#0B1736] disabled:opacity-50 transition-colors";
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 " +
+  "text-sm text-slate-900 placeholder:text-slate-400 " +
+  "focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40 " +
+  "disabled:opacity-50 transition-colors";
 
-const labelClass = "block text-xs font-semibold text-[#344054] mb-1.5";
-const hintClass = "mt-1 text-xs leading-5 text-[#667085]";
+const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-600";
+const hintClass = "mt-1 text-xs leading-5 text-slate-500";
 const errorClass = "mt-1 text-xs text-red-500";
 const readOnlyInputClass = `${inputClass} bg-slate-50 text-slate-700`;
 
@@ -272,8 +272,8 @@ export function EditUserDialog({
         onClick={onClose}
       />
 
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[#E4E7EC] bg-white shadow-lg">
-        <div className="flex items-start justify-between bg-[#0B1736] px-6 py-4">
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className="vfms-form-header flex items-start justify-between px-6 py-4 pl-8">
           <div>
             <h3 className="text-lg font-bold text-white">Edit User</h3>
             <p className="mt-0.5 text-sm text-white opacity-90">
@@ -310,22 +310,22 @@ export function EditUserDialog({
             </select>
           </div>
 
-          <div className="rounded-2xl border border-[#E4E7EC] bg-[#F8FAFC] px-4 py-3">
-            <p className="text-sm font-semibold text-[#101828]">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm font-semibold text-slate-950">
               {roleGuidance.title}
             </p>
-            <p className="mt-1 text-sm leading-6 text-[#667085]">
+            <p className="mt-1 text-sm leading-6 text-slate-500">
               {roleGuidance.description}
             </p>
           </div>
 
           {showStaffFields ? (
-            <div className="space-y-4 rounded-2xl border border-[#E4E7EC] bg-[#F9FAFC] p-4">
+            <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
                   Staff Verification
                 </p>
-                <p className="mt-1 text-sm text-[#667085]">
+                <p className="mt-1 text-sm text-slate-500">
                   Load the staff profile from the company registry before saving changes.
                 </p>
               </div>
@@ -353,7 +353,7 @@ export function EditUserDialog({
                   type="button"
                   onClick={() => void loadVerifiedStaffProfile()}
                   disabled={isSubmitting || isLoadingStaffProfile}
-                  className="flex h-11 items-center justify-center gap-2 rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-semibold text-[#344054] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isLoadingStaffProfile ? (
                     <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -561,10 +561,15 @@ export function EditUserDialog({
           )}
 
           {showDriverFields && (
-            <div className="space-y-4 rounded-2xl border border-[#E4E7EC] bg-[#F9FAFC] p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
-                Driver Details
-              </p>
+            <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                  Driver Details
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Keep licence and experience details aligned with the driver's active company profile.
+                </p>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className={labelClass}>Licence Number *</label>
@@ -618,8 +623,8 @@ export function EditUserDialog({
           )}
 
           {showApproverFields && (
-            <div className="space-y-4 rounded-2xl border border-[#E4E7EC] bg-[#F9FAFC] p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#475467]">
+            <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
                 Approver Details
               </p>
               <div>
@@ -646,14 +651,14 @@ export function EditUserDialog({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 rounded-lg border border-[#E4E7EC] bg-[#F9FAFC] text-sm font-medium text-[#475467] transition-colors hover:bg-[#F5F7FB] disabled:opacity-50 h-11"
+              className="h-11 flex-1 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || staffAccountConflict}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0B1736] text-sm font-bold text-white shadow-lg shadow-[0_0_20px_rgba(11,23,54,0.15)] transition-colors hover:bg-[#122347] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting && <LoadingSpinner size={14} />}
               {isSubmitting ? "Saving..." : "Save Changes"}
