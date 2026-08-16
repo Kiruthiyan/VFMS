@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -30,7 +29,6 @@ import {
   resendVerificationApi,
   type ApiSuccessResponse,
 } from "@/lib/api/auth";
-import { AUTH_ROUTES } from "@/lib/constants/routes";
 import {
   resendVerificationSchema,
   type ResendVerificationFormValues,

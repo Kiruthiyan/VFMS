@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Archive,
   RefreshCw,
@@ -20,31 +20,22 @@ import { PageHeader } from "@/components/ui/page-header";
 import {
   getDeletedUsersApi,
   getErrorMessage,
-  type UserSummary,
 } from "@/lib/api/admin";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function DeletedUsersPage() {
-  const [deletedUsers, setDeletedUsers] = useState<UserSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchDeleted = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await getDeletedUsersApi();
-      setDeletedUsers(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDeleted();
-  }, [fetchDeleted]);
+  const {
+    data: deletedUsers = [],
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.adminDeletedUsers,
+    queryFn: getDeletedUsersApi,
+    placeholderData: (previous) => previous,
+  });
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   return (
     <div className="space-y-6">
@@ -59,12 +50,12 @@ export default function DeletedUsersPage() {
             variant="outline"
             size="icon"
             className="vfms-refresh-button"
-            onClick={fetchDeleted}
-            disabled={loading}
+            onClick={() => void refetch()}
+            disabled={isFetching}
             aria-label="Refresh deleted users"
             title="Refresh deleted users"
           >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
           </Button>
         }
       />
@@ -159,16 +150,16 @@ export default function DeletedUsersPage() {
               Loading deleted users...
             </p>
           </div>
-        ) : error ? (
+        ) : errorMessage ? (
           <div className="p-6">
-            <FormMessage type="error" message={error} />
+            <FormMessage type="error" message={errorMessage} />
           </div>
         ) : (
           <UserTable
             users={deletedUsers}
             showReviewActions={false}
             showDeletedActions={true}
-            onRefresh={fetchDeleted}
+            onRefresh={() => void refetch()}
           />
         )}
       </section>

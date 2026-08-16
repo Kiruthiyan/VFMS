@@ -1,48 +1,50 @@
 package com.vfms.auth.service;
 
+import com.vfms.auth.entity.AuthRateLimitAttempt;
+import com.vfms.auth.repository.AuthRateLimitAttemptRepository;
 import com.vfms.common.exception.ValidationException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.Duration;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Simple in-memory rate limiter for authentication endpoints.
+ * Database-backed rate limiter for authentication endpoints.
+ * This keeps limits consistent across multiple backend instances.
  */
 @Service
+@RequiredArgsConstructor
 public class AuthRateLimitService {
 
     private static final Duration WINDOW = Duration.ofMinutes(15);
 
-    private final ConcurrentHashMap<String, Deque<Long>> attempts = new ConcurrentHashMap<>();
+    private final AuthRateLimitAttemptRepository attemptRepository;
 
     @Value("${vfms.auth.rate-limit.max-requests:10}")
     private int maxRequests;
 
+    @Transactional
     public void check(HttpServletRequest request, String action) {
         String key = action + ":" + resolveClientIp(request);
-        long now = System.currentTimeMillis();
-        long windowStart = now - WINDOW.toMillis();
+        Instant now = Instant.now();
+        Instant windowStart = now.minus(WINDOW);
 
-        Deque<Long> timestamps = attempts.compute(key, (k, deque) -> {
-            Deque<Long> bucket = deque != null ? deque : new ArrayDeque<>();
-            while (!bucket.isEmpty() && bucket.peekFirst() < windowStart) {
-                bucket.pollFirst();
-            }
-            return bucket;
-        });
+        attemptRepository.deleteByAttemptedAtBefore(windowStart);
 
-        if (timestamps.size() >= maxRequests) {
+        if (attemptRepository.countByRateKeyAndAttemptedAtAfter(key, windowStart) >= maxRequests) {
             throw new ValidationException(
                     "Too many attempts. Please wait a few minutes before trying again."
             );
         }
 
-        timestamps.addLast(now);
+        attemptRepository.save(AuthRateLimitAttempt.builder()
+                .rateKey(key)
+                .attemptedAt(now)
+                .build());
     }
 
     private String resolveClientIp(HttpServletRequest request) {

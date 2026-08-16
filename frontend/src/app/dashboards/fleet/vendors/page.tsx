@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { vendorApi, Vendor } from "@/lib/api/rental";
+import { vendorApi } from "@/lib/api/rental";
 import { FleetSummaryCard } from "@/components/fleet/FleetSummaryCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,32 +26,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function VendorsPage() {
   const router = useRouter();
   const { canAdmin } = useRole();
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-
-  const fetchVendors = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: vendors = [],
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: [...queryKeys.vendors, canAdmin ? "all" : "active"],
+    queryFn: async () => {
       const res = canAdmin
         ? await vendorApi.getAllIncludingInactive()
         : await vendorApi.getAll();
-      setVendors(res.data);
-    } catch {
-      toast.error("Failed to load vendors");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+  });
 
   useEffect(() => {
-    fetchVendors();
-  }, [canAdmin]);
+    if (error) {
+      toast.error("Failed to load vendors");
+    }
+  }, [error]);
 
   const filtered = vendors.filter((v) => {
     const q = search.toLowerCase();
@@ -89,13 +92,13 @@ export default function VendorsPage() {
               variant="outline"
               size="icon"
               className="vfms-refresh-button"
-              onClick={fetchVendors}
-              disabled={loading}
+              onClick={() => refetch()}
+              disabled={isFetching}
               aria-label="Refresh vendors"
               title="Refresh vendors"
             >
               <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
               />
             </Button>
             {canAdmin && (

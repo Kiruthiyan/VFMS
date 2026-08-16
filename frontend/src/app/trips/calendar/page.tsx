@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar, Loader2, MapPin } from "lucide-react";
 import api from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Trip {
     id: string;
@@ -40,25 +42,23 @@ export default function CalendarPage() {
 
     const [year, setYear] = useState(today.getFullYear());
     const [month, setMonth] = useState(today.getMonth() + 1);
-    const [trips, setTrips] = useState<Trip[]>([]);
-    const [loading, setLoading] = useState(true);
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
+    const {
+        data: trips = [],
+        error,
+        isLoading: loading,
+    } = useQuery({
+        queryKey: queryKeys.tripCalendar(year, month),
+        placeholderData: keepPreviousData,
+        queryFn: async (): Promise<Trip[]> => {
+            const res = await api.get(`/trips/calendar?year=${year}&month=${month}`);
+            return res.data;
+        },
+    });
 
     useEffect(() => {
-        fetchTrips();
-    }, [year, month]);
-
-    const fetchTrips = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get(`/trips/calendar?year=${year}&month=${month}`);
-            setTrips(res.data);
-        } catch (err) {
-            console.error("Failed to fetch calendar trips", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        if (error) console.error("Failed to fetch calendar trips", error);
+    }, [error]);
 
     const prevMonth = () => {
         if (month === 1) { setMonth(12); setYear(y => y - 1); }

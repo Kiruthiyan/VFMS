@@ -20,6 +20,15 @@ import {
   restoreUserApi,
   toggleUserStatusApi,
 } from "@/lib/api/admin";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { EditUserDialog } from "./edit-user-dialog";
@@ -70,6 +79,8 @@ export function UserTable({
   const [reviewingUser, setReviewingUser] = useState<UserSummary | null>(null);
   const [editingUser, setEditingUser] = useState<UserSummary | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserSummary | null>(null);
+  const [statusTarget, setStatusTarget] = useState<UserSummary | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<UserSummary | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [restoringId, setRestoringId] = useState<string | null>(null);
@@ -89,6 +100,7 @@ export function UserTable({
       toast.error(getErrorMessage(err));
     } finally {
       setTogglingId(null);
+      setStatusTarget(null);
     }
   };
 
@@ -102,6 +114,7 @@ export function UserTable({
       toast.error(getErrorMessage(err));
     } finally {
       setRestoringId(null);
+      setRestoreTarget(null);
     }
   };
 
@@ -209,7 +222,7 @@ export function UserTable({
                     {showDeletedActions && (
                       <button
                         type="button"
-                        onClick={() => handleRestore(user)}
+                        onClick={() => setRestoreTarget(user)}
                         disabled={restoringId === user.id}
                         className="rounded-xl border border-emerald-200 bg-white p-2 text-emerald-600 shadow-sm transition-colors hover:bg-emerald-50 disabled:opacity-40"
                         title="Restore user"
@@ -251,7 +264,7 @@ export function UserTable({
                           user.status === "DEACTIVATED") && (
                           <button
                             type="button"
-                            onClick={() => handleToggleStatus(user)}
+                            onClick={() => setStatusTarget(user)}
                             disabled={togglingId === user.id || isSelf(user)}
                             className={`rounded-xl border bg-white p-2 shadow-sm transition-colors disabled:opacity-40 ${
                               user.status === "APPROVED"
@@ -483,6 +496,82 @@ export function UserTable({
           onSuccess={onRefresh}
         />
       )}
+
+      <Dialog open={Boolean(statusTarget)} onOpenChange={(open) => !open && setStatusTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {statusTarget?.status === "APPROVED"
+                ? "Deactivate account?"
+                : "Reactivate account?"}
+            </DialogTitle>
+            <DialogDescription>
+              {statusTarget?.status === "APPROVED"
+                ? `${statusTarget.fullName} will lose system access and active sessions will be revoked.`
+                : `${statusTarget?.fullName ?? "This user"} will be able to sign in again with their approved account.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStatusTarget(null)}
+              disabled={Boolean(statusTarget && togglingId === statusTarget.id)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant={statusTarget?.status === "APPROVED" ? "destructive" : "success"}
+              onClick={() => {
+                if (statusTarget) {
+                  void handleToggleStatus(statusTarget);
+                }
+              }}
+              disabled={Boolean(statusTarget && togglingId === statusTarget.id)}
+            >
+              {statusTarget && togglingId === statusTarget.id
+                ? "Processing..."
+                : statusTarget?.status === "APPROVED"
+                  ? "Deactivate"
+                  : "Reactivate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(restoreTarget)} onOpenChange={(open) => !open && setRestoreTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Restore archived account?</DialogTitle>
+            <DialogDescription>
+              {restoreTarget?.fullName ?? "This user"} will return to their previous lifecycle status and appear in active user records again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRestoreTarget(null)}
+              disabled={Boolean(restoreTarget && restoringId === restoreTarget.id)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="success"
+              onClick={() => {
+                if (restoreTarget) {
+                  void handleRestore(restoreTarget);
+                }
+              }}
+              disabled={Boolean(restoreTarget && restoringId === restoreTarget.id)}
+            >
+              {restoreTarget && restoringId === restoreTarget.id ? "Restoring..." : "Restore"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Search, UserRound } from 'lucide-react';
 import { apiFetch, getErrorMessage } from '@/lib/api';
+import { getDriverDisplayId } from '@/lib/driver-display';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -23,6 +24,10 @@ interface DriverUserItem {
   driverId: string | null;
 }
 
+interface DriverUserPage {
+  content?: DriverUserItem[];
+}
+
 export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
   const [drivers, setDrivers] = useState<DriverUserItem[]>([]);
   const [query, setQuery] = useState('');
@@ -35,7 +40,7 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
       try {
         setLoading(true);
         // Fetch all driver-role users from users table (large page to get all)
-        const data = await apiFetch<any>('/api/drivers/from-users?page=0&size=100');
+        const data = await apiFetch<DriverUserItem[] | DriverUserPage>('/api/drivers/from-users?page=0&size=100');
 
         let list: DriverUserItem[] = [];
         if (Array.isArray(data)) {
@@ -72,7 +77,7 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
 
     return drivers.filter((driver) => {
       return (
-        (driver.employeeId || '').toLowerCase().includes(normalizedQuery) ||
+        getDriverDisplayId(driver.employeeId, '').toLowerCase().includes(normalizedQuery) ||
         driver.fullName.toLowerCase().includes(normalizedQuery) ||
         (driver.email || '').toLowerCase().includes(normalizedQuery) ||
         (driver.nic || '').toLowerCase().includes(normalizedQuery)
@@ -105,6 +110,7 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
             <div className="space-y-2">
               {filteredDrivers.map((driver) => {
                 const isActive = driver.id === activeDriverId || driver.driverId === activeDriverId;
+                const displayDriverId = getDriverDisplayId(driver.employeeId, '');
                 const nameParts = driver.fullName.split(' ');
                 const initials = nameParts.length >= 2
                   ? `${nameParts[0]?.[0] || ''}${nameParts[nameParts.length - 1]?.[0] || ''}`.toUpperCase()
@@ -136,10 +142,10 @@ export function DriverQuickList({ activeDriverId }: DriverQuickListProps) {
                         <p className="truncate font-medium">
                           {driver.fullName}
                         </p>
-                        {driver.employeeId && (
+                        {displayDriverId && (
                           <span className={cn('text-[10px] font-mono font-semibold px-1 py-0.5 rounded border leading-none', 
                             isActive ? 'bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30' : 'bg-muted text-muted-foreground border-border')}>
-                            {driver.employeeId}
+                            {displayDriverId}
                           </span>
                         )}
                       </div>

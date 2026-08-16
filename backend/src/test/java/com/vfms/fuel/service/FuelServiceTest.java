@@ -99,6 +99,69 @@ class FuelServiceTest {
     }
 
     @Test
+    @DisplayName("createFuelRecord should reject future fuel dates")
+    void createFuelRecord_shouldRejectFutureFuelDates() {
+        CreateFuelRecordRequest req = baseCreateRequest();
+        req.setFuelDate(LocalDate.now().plusDays(1));
+
+        Vehicle vehicle = Vehicle.builder()
+                .id(Long.valueOf(req.getVehicleId()))
+                .plateNumber("ABC-1234")
+                .brand("Toyota")
+                .model("Camry")
+                .status(VehicleStatus.AVAILABLE)
+                .active(true)
+                .build();
+
+        when(vehicleRepository.findById(Long.valueOf(req.getVehicleId()))).thenReturn(Optional.of(vehicle));
+
+        ValidationException exception = assertThrows(
+                ValidationException.class,
+                () -> fuelService.createFuelRecord(req, null, userDetails)
+        );
+
+        assertEquals("Fuel date cannot be in the future.", exception.getMessage());
+        verify(fuelRecordRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("createFuelRecord should reject odometer readings below latest vehicle fuel record")
+    void createFuelRecord_shouldRejectLowerOdometerThanLatestRecord() {
+        CreateFuelRecordRequest req = baseCreateRequest();
+        req.setOdometerReading(950.0);
+
+        Long vehicleId = Long.valueOf(req.getVehicleId());
+        Vehicle vehicle = Vehicle.builder()
+                .id(vehicleId)
+                .plateNumber("ABC-1234")
+                .brand("Toyota")
+                .model("Camry")
+                .status(VehicleStatus.AVAILABLE)
+                .active(true)
+                .build();
+        FuelRecord latest = FuelRecord.builder()
+                .id(UUID.randomUUID())
+                .vehicle(vehicle)
+                .fuelDate(req.getFuelDate())
+                .odometerReading(1000.0)
+                .build();
+
+        when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
+        when(fuelRecordRepository.findLatestByVehicle(vehicleId)).thenReturn(List.of(latest));
+
+        ValidationException exception = assertThrows(
+                ValidationException.class,
+                () -> fuelService.createFuelRecord(req, null, userDetails)
+        );
+
+        assertEquals(
+                "Odometer reading cannot be lower than the latest recorded reading for this vehicle.",
+                exception.getMessage()
+        );
+        verify(fuelRecordRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("patchFuelRecord should require quantity and costPerLitre before computing total")
     void patchFuelRecord_shouldRequireQuantityAndCost() {
         UUID id = UUID.randomUUID();

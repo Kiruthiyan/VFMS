@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Vehicle, vehicleApi, VehicleStatus } from "@/lib/api/vehicle";
 import { tripAvailabilityApi } from "@/lib/api/trip-availability";
@@ -28,21 +29,23 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function VehiclesPage() {
   const router = useRouter();
   const { canAdmin } = useRole();
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [activeTripVehicleIds, setActiveTripVehicleIds] = useState<Set<number>>(
-    new Set(),
-  );
-
-  const fetchVehicles = useCallback(async () => {
-    setLoading(true);
-    try {
+  const {
+    data,
+    error,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.vehicles(statusFilter),
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
       const vehiclesRequest =
         statusFilter !== "ALL"
           ? vehicleApi.filterByStatus(statusFilter as VehicleStatus)
@@ -51,18 +54,22 @@ export default function VehiclesPage() {
         vehiclesRequest,
         tripAvailabilityApi.getActiveVehicleIds().catch((): number[] => []),
       ]);
-      setVehicles(res.data);
-      setActiveTripVehicleIds(new Set(tripVehicleIds));
-    } catch {
-      toast.error("Failed to load vehicles");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter]);
+      return {
+        vehicles: res.data,
+        activeTripVehicleIds: new Set(tripVehicleIds),
+      };
+    },
+  });
+
+  const vehicles = data?.vehicles ?? [];
+  const activeTripVehicleIds = data?.activeTripVehicleIds ?? new Set<number>();
+  const loading = isLoading;
 
   useEffect(() => {
-    fetchVehicles();
-  }, [fetchVehicles]);
+    if (error) {
+      toast.error("Failed to load vehicles");
+    }
+  }, [error]);
 
   const filtered = vehicles.filter((v) => {
     const q = search.toLowerCase();
@@ -132,13 +139,13 @@ export default function VehiclesPage() {
               variant="outline"
               size="icon"
               className="vfms-refresh-button"
-              onClick={fetchVehicles}
-              disabled={loading}
+              onClick={() => refetch()}
+              disabled={isFetching}
               aria-label="Refresh vehicles"
               title="Refresh vehicles"
             >
               <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
               />
             </Button>
             {canAdmin && (

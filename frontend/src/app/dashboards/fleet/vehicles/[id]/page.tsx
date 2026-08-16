@@ -10,6 +10,14 @@ import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStat
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Car,
   Calendar,
@@ -48,6 +56,7 @@ export default function VehicleDetailPage({
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [retiring, setRetiring] = useState(false);
+  const [retireDialogOpen, setRetireDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "history">("details");
   const [isInTripUse, setIsInTripUse] = useState(false);
 
@@ -85,13 +94,12 @@ export default function VehicleDetailPage({
     fetchHistory();
   }, [id]);
 
-  const handleRetire = async () => {
-    if (
-      !confirm(
-        `Are you sure you want to retire ${vehicle?.brand} ${vehicle?.model}? This cannot be undone.`,
-      )
-    )
-      return;
+  const handleRetire = () => {
+    setRetireDialogOpen(true);
+  };
+
+  const submitRetireVehicle = async () => {
+    setRetireDialogOpen(false);
     setRetiring(true);
     try {
       await vehicleApi.retire(Number(id));
@@ -392,7 +400,7 @@ export default function VehicleDetailPage({
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
-                  {canAdmin && (
+                  {canAdmin && vehicle.status !== "RETIRED" && (
                     <Button
                       variant="outline"
                       onClick={() =>
@@ -596,6 +604,36 @@ export default function VehicleDetailPage({
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={retireDialogOpen} onOpenChange={setRetireDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Retire vehicle?</DialogTitle>
+              <DialogDescription>
+                This will remove the vehicle from active fleet operations and
+                make the vehicle record read-only.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              <span className="font-medium text-slate-900">
+                {vehicle.brand} {vehicle.model}
+              </span>{" "}
+              ({vehicle.plateNumber})
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRetireDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={submitRetireVehicle}
+                disabled={retiring}
+              >
+                {retiring ? "Retiring..." : "Retire Vehicle"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

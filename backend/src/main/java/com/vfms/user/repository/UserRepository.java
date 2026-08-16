@@ -53,6 +53,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     List<User> findByDeletedAtIsNotNullOrderByDeletedAtDesc();
 
+    List<User> findByDeletedAtIsNotNullAndDeletedByAndDeletedReasonOrderByDeletedAtDesc(
+            String deletedBy,
+            String deletedReason
+    );
+
     List<User> findByStatus(UserStatus status);
 
     List<User> findByStatusOrderByCreatedAtAsc(UserStatus status);

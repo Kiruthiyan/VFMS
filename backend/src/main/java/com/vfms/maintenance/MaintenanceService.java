@@ -175,6 +175,7 @@ public class MaintenanceService {
     public MaintenanceResponseDto uploadQuotation(Long id, String quotationUrl) {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
+        ensureQuotationUploadAllowed(mr);
         mr.setQuotationUrl(quotationUrl);
         return mapToResponse(maintenanceRepository.save(mr));
     }
@@ -185,12 +186,22 @@ public class MaintenanceService {
         MaintenanceRequest mr = maintenanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id));
 
-        if (mr.getStatus() != MaintenanceStatus.APPROVED && mr.getStatus() != MaintenanceStatus.CLOSED) {
-            throw new IllegalStateException("Invoice can only be uploaded for approved/closed requests");
-        }
+        ensureInvoiceUploadAllowed(mr);
 
         mr.setInvoiceUrl(invoiceUrl);
         return mapToResponse(maintenanceRepository.save(mr));
+    }
+
+    @Transactional(readOnly = true)
+    public void assertQuotationUploadAllowed(Long id) {
+        ensureQuotationUploadAllowed(maintenanceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id)));
+    }
+
+    @Transactional(readOnly = true)
+    public void assertInvoiceUploadAllowed(Long id) {
+        ensureInvoiceUploadAllowed(maintenanceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenanceRequest", id)));
     }
 
     // Only records with both dates present are included so that downtime hours can be calculated accurately — partial records would skew the report
@@ -301,6 +312,18 @@ public class MaintenanceService {
     private void ensureVehicleCanReceiveMaintenance(Vehicle vehicle) {
         if (vehicle.getStatus() == VehicleStatus.RETIRED || Boolean.FALSE.equals(vehicle.getActive())) {
             throw new IllegalStateException("Cannot create maintenance for a retired vehicle.");
+        }
+    }
+
+    private void ensureQuotationUploadAllowed(MaintenanceRequest mr) {
+        if (mr.getStatus() != MaintenanceStatus.NEW) {
+            throw new IllegalStateException("Quotation can only be uploaded while the request is in NEW status");
+        }
+    }
+
+    private void ensureInvoiceUploadAllowed(MaintenanceRequest mr) {
+        if (mr.getStatus() != MaintenanceStatus.APPROVED && mr.getStatus() != MaintenanceStatus.CLOSED) {
+            throw new IllegalStateException("Invoice can only be uploaded for approved/closed requests");
         }
     }
 

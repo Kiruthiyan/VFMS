@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  User, MapPin, Phone, Shield, Calendar, CreditCard,
+  User, Phone, Shield, Calendar, CreditCard,
   Badge, Camera, Loader2, Star, Trash2, Pencil, Check, X,
   Upload, AlertTriangle, Plus, Award, Save, UserRound, Mail
 } from 'lucide-react';
@@ -17,9 +18,8 @@ import {
   getMyInfractions, type InfractionItem,
 } from '@/lib/api/driver-portal';
 import { resolveBackendAssetUrl } from '@/lib/api';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { queryKeys } from '@/lib/query-keys';
 const CERTIFICATION_TYPES = ['DEFENSIVE_DRIVING', 'FIRST_AID', 'HAZMAT', 'HEAVY_VEHICLE', 'PASSENGER_TRANSPORT', 'OTHER'];
 const EMPTY_CERTIFICATION: CertificationPayload = {
   certType: 'DEFENSIVE_DRIVING',
@@ -28,6 +28,25 @@ const EMPTY_CERTIFICATION: CertificationPayload = {
   issueDate: '',
   expiryDate: '',
 };
+const PROFILE_PICTURE_MAX_BYTES = 5 * 1024 * 1024;
+const PROFILE_PICTURE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const PROFILE_PICTURE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
+
+function validateProfilePicture(file: File): string | null {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const hasSupportedType = file.type ? PROFILE_PICTURE_TYPES.has(file.type) : false;
+  const hasSupportedExtension = PROFILE_PICTURE_EXTENSIONS.has(extension);
+
+  if (!hasSupportedType && !hasSupportedExtension) {
+    return 'Profile picture must be a JPEG, PNG, or WebP image.';
+  }
+
+  if (file.size > PROFILE_PICTURE_MAX_BYTES) {
+    return 'Profile picture must be 5 MB or smaller.';
+  }
+
+  return null;
+}
 
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
@@ -153,15 +172,17 @@ function ProfileInfoTile({ icon: Icon, label, value }: { icon: React.ElementType
 }
 
 function InfractionWarningsSection() {
-  const [infractions, setInfractions] = useState<InfractionItem[]>([]);
-  const [loadingInfractions, setLoadingInfractions] = useState(true);
+  const { data: infractions = [], error, isLoading: loadingInfractions } = useQuery({
+    queryKey: queryKeys.driverInfractions,
+    queryFn: async () => {
+      const items = await getMyInfractions();
+      return items.filter((item) => item.resolutionStatus !== 'RESOLVED');
+    },
+  });
 
   useEffect(() => {
-    getMyInfractions()
-      .then((items) => setInfractions(items.filter((item) => item.resolutionStatus !== 'RESOLVED')))
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Failed to load infraction notices')))
-      .finally(() => setLoadingInfractions(false));
-  }, []);
+    if (error) toast.error(getApiErrorMessage(error, 'Failed to load infraction notices'));
+  }, [error]);
 
   if (loadingInfractions) {
     return (
@@ -211,18 +232,22 @@ function InfractionWarningsSection() {
 }
 
 function CertificationsSection() {
-  const [certifications, setCertifications] = useState<CertificationItem[]>([]);
-  const [loadingCertifications, setLoadingCertifications] = useState(true);
+  const queryClient = useQueryClient();
   const [showCertificationForm, setShowCertificationForm] = useState(false);
   const [certificationForm, setCertificationForm] = useState<CertificationPayload>({ ...EMPTY_CERTIFICATION });
   const [savingCertification, setSavingCertification] = useState(false);
+  const {
+    data: certifications = [],
+    error,
+    isLoading: loadingCertifications,
+  } = useQuery({
+    queryKey: queryKeys.driverCertifications,
+    queryFn: getMyCertifications,
+  });
 
   useEffect(() => {
-    getMyCertifications()
-      .then(setCertifications)
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Failed to load certifications')))
-      .finally(() => setLoadingCertifications(false));
-  }, []);
+    if (error) toast.error(getApiErrorMessage(error, 'Failed to load certifications'));
+  }, [error]);
 
   const openCertificationForm = () => {
     setCertificationForm({ ...EMPTY_CERTIFICATION });
@@ -234,7 +259,8 @@ function CertificationsSection() {
     setSavingCertification(true);
     try {
       const added = await addMyCertification(certificationForm);
-      setCertifications((current) => [...current, added]);
+      queryClient.setQueryData<CertificationItem[]>(queryKeys.driverCertifications, (current = []) => [...current, added]);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverCertifications });
       setShowCertificationForm(false);
       toast.success('Certification added');
     } catch (error: unknown) {
@@ -353,8 +379,8 @@ function CertificationsSection() {
 }
 
 export default function DriverProfilePage() {
-  const [profile, setProfile] = useState<DriverProfileResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [localProfile, setLocalProfile] = useState<DriverProfileResponse | null>(null);
   const [uploadingPic, setUploadingPic] = useState(false);
   const [showProfilePicturePreview, setShowProfilePicturePreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -374,22 +400,42 @@ export default function DriverProfilePage() {
   const [phoneInput, setPhoneInput] = useState('');
   const [savingPhone, setSavingPhone] = useState(false);
 
+  const {
+    data: cachedProfile,
+    error: profileError,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.driverProfile,
+    queryFn: getMyProfile,
+  });
+  const profile = localProfile ?? cachedProfile ?? null;
+
   useEffect(() => {
-    getMyProfile()
-      .then((data) => { setProfile(data); })
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Failed to load profile')))
-      .finally(() => setLoading(false));
-  }, []);
+    if (cachedProfile) setLocalProfile(cachedProfile);
+  }, [cachedProfile]);
+
+  useEffect(() => {
+    if (profileError) toast.error(getApiErrorMessage(profileError, 'Failed to load profile'));
+  }, [profileError]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const validationError = validateProfilePicture(file);
+    if (validationError) {
+      toast.error(validationError);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setUploadingPic(true);
     try {
       await uploadProfilePicture(file);
       // Re-fetch profile to get updated photo URL
       const updated = await getMyProfile();
-      setProfile(updated);
+      setLocalProfile(updated);
+      queryClient.setQueryData(queryKeys.driverProfile, updated);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
       toast.success('Profile picture updated');
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, 'Failed to upload photo'));
@@ -405,7 +451,9 @@ export default function DriverProfilePage() {
     try {
       await removeProfilePicture();
       const updated = await getMyProfile();
-      setProfile(updated);
+      setLocalProfile(updated);
+      queryClient.setQueryData(queryKeys.driverProfile, updated);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
       toast.success('Profile picture removed');
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, 'Failed to remove photo'));
@@ -428,6 +476,8 @@ export default function DriverProfilePage() {
     setUploadingDoc(true);
     try {
       await uploadMyDocument(file, selectedDocType, undefined, documentName);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverDocuments });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverLicenses });
       if (selectedDocType === 'OTHER') setOtherDocumentName('');
       toast.success('Document uploaded');
     } catch (error: unknown) {
@@ -538,7 +588,7 @@ export default function DriverProfilePage() {
                       : <Camera style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(var(--foreground))' }} />
                     }
                   </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+                  <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePhotoUpload} />
                 </div>
 
                 <div style={{ flex: '1 1 18rem', minWidth: 0, paddingTop: '1rem' }}>
@@ -568,7 +618,9 @@ export default function DriverProfilePage() {
                             try {
                               await import('@/lib/api/driver-portal').then(m => m.updateMyProfile({ fullName: newName }));
                               const updated = await import('@/lib/api/driver-portal').then(m => m.getMyProfile());
-                              setProfile(updated);
+                              setLocalProfile(updated);
+                              queryClient.setQueryData(queryKeys.driverProfile, updated);
+                              await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
                               setEditingName(false);
                               toast.success('Name updated');
                             } catch (error: unknown) {
@@ -755,7 +807,9 @@ export default function DriverProfilePage() {
                           try {
                             await import('@/lib/api/driver-portal').then(m => m.updateMyProfile({ phone: phoneInput }));
                             const updated = await import('@/lib/api/driver-portal').then(m => m.getMyProfile());
-                            setProfile(updated);
+                            setLocalProfile(updated);
+                            queryClient.setQueryData(queryKeys.driverProfile, updated);
+                            await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
                             setEditingPhone(false);
                             toast.success('Phone updated');
                           } catch (error: unknown) {

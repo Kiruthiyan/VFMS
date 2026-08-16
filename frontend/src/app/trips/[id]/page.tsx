@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/role-context";
+import { queryKeys } from "@/lib/query-keys";
 
 const TripMap = dynamic(() => import("../components/TripMap"), { ssr: false });
 
@@ -74,8 +76,6 @@ export default function TripDetailPage() {
     const id = params.id as string;
     const { currentUser } = useRole();
 
-    const [trip, setTrip] = useState<Trip | null>(null);
-    const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState("");
     const [driverRejectMode, setDriverRejectMode] = useState(false);
     const [driverRejectReason, setDriverRejectReason] = useState("");
@@ -88,6 +88,18 @@ export default function TripDetailPage() {
     const [completeReason, setCompleteReason] = useState("");
     const [cancelReasonMode, setCancelReasonMode] = useState(false);
     const [cancelReason, setCancelReason] = useState("");
+    const {
+        data: trip = null,
+        isLoading: loading,
+        refetch,
+    } = useQuery({
+        queryKey: queryKeys.trip(id),
+        enabled: Boolean(id && id !== "[id]" && id !== "undefined"),
+        queryFn: async (): Promise<Trip> => {
+            const res = await api.get(`/trips/${id}`);
+            return res.data;
+        },
+    });
 
     const checkReturnDeviation = () => {
         if (!trip) return false;
@@ -97,23 +109,6 @@ export default function TripDetailPage() {
         return diffMs > 30 * 60 * 1000;
     };
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
-
-    useEffect(() => {
-        if (id && id !== "[id]" && id !== "undefined") {
-            fetchTrip();
-        }
-    }, [id]);
-
-    const fetchTrip = async () => {
-        try {
-            const res = await api.get(`/trips/${id}`);
-            setTrip(res.data);
-        } catch (err) {
-            console.error("Failed to fetch trip", err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleFeedbackSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -125,7 +120,7 @@ export default function TripDetailPage() {
                 feedback: feedback.trim(),
                 staffTimelineReason: staffTimelineReason.trim()
             });
-            fetchTrip();
+            await refetch();
         } catch (err: any) {
             setError(err.response?.data?.message || "Failed to submit feedback.");
         } finally {
@@ -142,7 +137,7 @@ export default function TripDetailPage() {
             } else {
                 await api.patch(`/trips/${id}/${action}`);
             }
-            await fetchTrip();
+            await refetch();
         } catch (err: any) {
             setError(err.response?.data?.message || `Failed to ${action} trip`);
         } finally {

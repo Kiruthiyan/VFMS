@@ -57,8 +57,8 @@ export default function ExportPage() {
         try {
             await reportService.deleteReportDocument(id);
             toast({
-                title: "Report Deleted",
-                description: "The saved report has been deleted from Supabase storage.",
+                title: "Removed from History",
+                description: "The report file and database record are preserved for audit history.",
             });
             await loadSavedReports();
         } catch (error) {
@@ -596,7 +596,7 @@ export default function ExportPage() {
                                                     onClick={() => handleDeleteReport(report.id)}
                                                     className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors"
                                                 >
-                                                    Delete
+                                                    Remove from History
                                                 </button>
                                             </td>
                                         </tr>

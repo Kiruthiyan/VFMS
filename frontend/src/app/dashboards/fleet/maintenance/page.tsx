@@ -1,12 +1,9 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  MaintenanceRequest,
-  maintenanceApi,
-  MaintenanceStatus,
-} from "@/lib/api/maintenance";
+import { maintenanceApi, MaintenanceStatus } from "@/lib/api/maintenance";
 import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
 import { FleetSummaryCard } from "@/components/fleet/FleetSummaryCard";
 import { Button } from "@/components/ui/button";
@@ -30,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function MaintenanceListPage() {
   return (
@@ -45,8 +43,6 @@ function MaintenanceList() {
   const { canCreate } = useRole();
   const statusParam = searchParams.get("status");
   const isPendingApprovalsView = statusParam === "SUBMITTED";
-  const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(
     statusParam ?? "ALL",
@@ -58,24 +54,31 @@ function MaintenanceList() {
     setStatusFilter(param);
   }, [isPendingApprovalsView, statusParam]);
 
-  const fetchRequests = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: requests = [],
+    error,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.maintenance(statusFilter),
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
       const res =
         statusFilter !== "ALL"
           ? await maintenanceApi.getByStatus(statusFilter as MaintenanceStatus)
           : await maintenanceApi.getAll();
-      setRequests(res.data);
-    } catch {
-      toast.error("Failed to load maintenance requests");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+  });
+
+  const loading = isLoading;
 
   useEffect(() => {
-    fetchRequests();
-  }, [statusFilter]);
+    if (error) {
+      toast.error("Failed to load maintenance requests");
+    }
+  }, [error]);
 
   const filtered = requests.filter((r) => {
     const q = search.toLowerCase();
@@ -115,13 +118,13 @@ function MaintenanceList() {
               variant="outline"
               size="icon"
               className="vfms-refresh-button"
-              onClick={fetchRequests}
-              disabled={loading}
+              onClick={() => refetch()}
+              disabled={isFetching}
               aria-label="Refresh maintenance requests"
               title="Refresh maintenance requests"
             >
               <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
               />
             </Button>
             {canCreate && (

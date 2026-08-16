@@ -8,6 +8,8 @@ type ApiResponse<T> = {
 
 const SUPABASE_REF_PREFIX = "supabase://";
 
+type FleetDocumentModule = "maintenance" | "rental";
+
 function isSupabaseReference(pathOrUrl: string): boolean {
   return pathOrUrl.startsWith(SUPABASE_REF_PREFIX);
 }
@@ -41,6 +43,28 @@ function apiPathFromDocumentUrl(pathOrUrl: string): string {
   return pathOrUrl;
 }
 
+function legacyDocumentApiPath(
+  pathOrUrl: string,
+  module?: FleetDocumentModule,
+): string {
+  const apiPath = apiPathFromDocumentUrl(pathOrUrl);
+
+  if (apiPath.startsWith("/api/")) {
+    return apiPath;
+  }
+
+  const plainPath = apiPath.split("?")[0] ?? "";
+  const fileName = decodeURIComponent(plainPath.split(/[\\/]/).pop() ?? "");
+  if (!module || !fileName) {
+    return apiPath;
+  }
+
+  const encodedFileName = encodeURIComponent(fileName);
+  return module === "maintenance"
+    ? `/api/maintenance/files/${encodedFileName}`
+    : `/api/rentals/files/${encodedFileName}`;
+}
+
 function storedFileNameFromUrl(pathOrUrl: string): string {
   if (isSupabaseReference(pathOrUrl)) {
     return decodeURIComponent(storagePathFromReference(pathOrUrl).split("/").pop() ?? "");
@@ -71,7 +95,10 @@ export function documentDisplayName(pathOrUrl: string | null, fallback: string):
   return storedName || fallback;
 }
 
-export async function openAuthenticatedDocument(pathOrUrl: string): Promise<void> {
+export async function openAuthenticatedDocument(
+  pathOrUrl: string,
+  module?: FleetDocumentModule,
+): Promise<void> {
   const targetWindow = window.open("about:blank", "_blank");
 
   try {
@@ -85,7 +112,7 @@ export async function openAuthenticatedDocument(pathOrUrl: string): Promise<void
       return;
     }
 
-    const response = await api.get<Blob>(apiPathFromDocumentUrl(pathOrUrl), {
+    const response = await api.get<Blob>(legacyDocumentApiPath(pathOrUrl, module), {
       responseType: "blob",
     });
 

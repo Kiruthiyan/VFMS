@@ -1,11 +1,10 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   CheckCircle2,
   RefreshCw,
-  ShieldAlert,
-  ShieldCheck,
   Trash2,
   Truck,
   UserPlus,
@@ -26,9 +25,8 @@ import {
   getAllUsersApi,
   getErrorMessage,
   getUserCountsApi,
-  type UserCounts,
-  type UserSummary,
 } from "@/lib/api/admin";
+import { queryKeys } from "@/lib/query-keys";
 
 const SUMMARY_CARDS = [
   {
@@ -74,33 +72,26 @@ function formatDate(dateStr: string): string {
 }
 
 export default function UserManagementDashboardPage() {
-  const [users, setUsers] = useState<UserSummary[]>([]);
-  const [counts, setCounts] = useState<UserCounts | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchDashboard = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const {
+    data,
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: [...queryKeys.adminUsers, "dashboard"],
+    queryFn: async () => {
       const [usersData, countsData] = await Promise.all([
         getAllUsersApi(),
         getUserCountsApi(),
       ]);
-
-      setUsers(usersData);
-      setCounts(countsData);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+      return { users: usersData, counts: countsData };
+    },
+    placeholderData: (previous) => previous,
+  });
+  const users = useMemo(() => data?.users ?? [], [data?.users]);
+  const counts = data?.counts ?? null;
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   const recentUsers = useMemo(
     () =>
@@ -158,7 +149,7 @@ export default function UserManagementDashboardPage() {
       <div className="space-y-6">
         <PageHeader
           title="User Management"
-          description="Manage user accounts, access control, roles, and lifecycle decisions from one professional FleetPro workspace."
+          description="Manage accounts, roles, and lifecycle status."
           icon={Users}
           actions={
             <>
@@ -166,14 +157,14 @@ export default function UserManagementDashboardPage() {
                 variant="outline"
                 size="icon"
                 className="vfms-refresh-button"
-                onClick={fetchDashboard}
-                disabled={loading}
+                onClick={() => void refetch()}
+                disabled={isFetching}
                 aria-label="Refresh user management"
                 title="Refresh user management"
               >
                 <RefreshCw
                   size={16}
-                  className={loading ? "animate-spin" : ""}
+                  className={isFetching ? "animate-spin" : ""}
                 />
               </Button>
 
@@ -198,25 +189,17 @@ export default function UserManagementDashboardPage() {
               </p>
             </div>
           </div>
-        ) : error ? (
-          <FormMessage type="error" message={error} />
+        ) : errorMessage ? (
+          <FormMessage type="error" message={errorMessage} />
         ) : (
           <>
             <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
-              <div className="vfms-card-header flex flex-col gap-2 px-6 py-5 pl-8 sm:flex-row sm:items-end sm:justify-between">
+              <div className="vfms-card-header px-6 py-5 pl-8">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  <CardTitle className="text-base font-bold text-slate-950">
                     Account Overview
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-                    FleetPro user access summary
-                  </h2>
+                  </CardTitle>
                 </div>
-
-                <p className="max-w-xl text-sm leading-6 text-slate-500">
-                  Monitor registered accounts, staff access, driver profiles,
-                  and archived records in one place.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 xl:grid-cols-4">
@@ -258,24 +241,6 @@ export default function UserManagementDashboardPage() {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
-              <div className="vfms-card-header flex items-start gap-4 px-6 py-5 pl-8">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-sm">
-                  <ShieldAlert className="h-5 w-5" />
-                </div>
-
-                <div className="min-w-0">
-                  <h2 className="text-xl font-black tracking-tight text-slate-950">
-                    Onboarding Standard
-                  </h2>
-                  <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
-                    Staff self-registration is matched with verified company records and email verification. Driver,
-                    approver, and administrator accounts remain controlled by the admin team.
-                  </p>
-                </div>
-              </div>
-            </section>
-
             <section className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
               <Card className="overflow-hidden rounded-[30px] border-slate-200 bg-white shadow-sm">
                 <CardContent className="p-0">
@@ -284,9 +249,6 @@ export default function UserManagementDashboardPage() {
                       <CardTitle className="text-base font-bold text-slate-950">
                         Recent Accounts
                       </CardTitle>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Latest user accounts created in FleetPro.
-                      </p>
                     </div>
 
                     <Button asChild variant="outline" size="sm">
@@ -341,9 +303,6 @@ export default function UserManagementDashboardPage() {
                     <CardTitle className="text-base font-bold text-slate-950">
                       Access Overview
                     </CardTitle>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Role distribution and account lifecycle status.
-                    </p>
                   </div>
 
                   <div className="space-y-3 p-6">
@@ -383,25 +342,6 @@ export default function UserManagementDashboardPage() {
                           </p>
                         </div>
                       ))}
-                    </div>
-                  </div>
-
-                  <div className="m-6 rounded-[24px] border border-slate-200 bg-slate-950 p-4 text-white">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-300/15 text-amber-300">
-                        <ShieldCheck className="h-4 w-4" />
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-bold text-white">
-                          Access Governance
-                        </p>
-
-                        <p className="mt-1 text-sm leading-6 text-slate-300">
-                          Review role distribution regularly and keep
-                          high-privilege access limited to approved users.
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </CardContent>

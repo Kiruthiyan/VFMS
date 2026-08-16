@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 import { AUTH_ROUTES } from "@/lib/constants/routes";
+import { invalidateQueriesForMutation } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -30,6 +31,7 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
   timeout: 15000,
 });
 
@@ -94,9 +96,6 @@ let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = useAuthStore.getState().refreshToken;
-  if (!refreshToken) {
-    return null;
-  }
 
   try {
     const response = await axios.post<{
@@ -111,7 +110,11 @@ async function refreshAccessToken(): Promise<string | null> {
         status: string;
         passwordChangeRequired?: boolean;
       };
-    }>(`${API_BASE_URL}/api/auth/refresh`, { refreshToken });
+    }>(
+      `${API_BASE_URL}/api/auth/refresh`,
+      refreshToken ? { refreshToken } : undefined,
+      { withCredentials: true }
+    );
 
     const authData = response.data.data;
     useAuthStore.getState().setAuth({
@@ -121,7 +124,7 @@ async function refreshAccessToken(): Promise<string | null> {
       role: authData.role as import("@/lib/auth").UserRole,
       status: authData.status as import("@/lib/auth").UserStatus,
       accessToken: authData.accessToken,
-      refreshToken: authData.refreshToken,
+      refreshToken: null,
       passwordChangeRequired: authData.passwordChangeRequired,
     });
 
@@ -156,7 +159,13 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toUpperCase();
+    if (method && ["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+      invalidateQueriesForMutation(response.config.url);
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as RetriableRequestConfig | undefined;
 

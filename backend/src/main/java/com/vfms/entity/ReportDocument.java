@@ -44,6 +44,9 @@ public class ReportDocument {
     @Builder.Default
     private LocalDateTime uploadedAt = LocalDateTime.now();
 
+    @Column(name = "removed_from_history_at")
+    private LocalDateTime removedFromHistoryAt;
+
     @Transient
     private String fileUrl;
 }

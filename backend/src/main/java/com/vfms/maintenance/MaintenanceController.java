@@ -96,6 +96,8 @@ public class MaintenanceController {
     @PostMapping("/{id}/quotation")
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadQuotation(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        fleetDocumentStorageService.validateFleetDocument(file);
+        maintenanceService.assertQuotationUploadAllowed(id);
         String fileReference = fleetDocumentStorageService.uploadMaintenanceDocument(id, "quotation", file);
         MaintenanceResponseDto response = maintenanceService.uploadQuotation(id, fileReference);
         return ResponseEntity.ok(ApiResponse.success("Quotation uploaded", response));
@@ -104,6 +106,8 @@ public class MaintenanceController {
     @PostMapping("/{id}/invoice")
     public ResponseEntity<ApiResponse<MaintenanceResponseDto>> uploadInvoice(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        fleetDocumentStorageService.validateFleetDocument(file);
+        maintenanceService.assertInvoiceUploadAllowed(id);
         String fileReference = fleetDocumentStorageService.uploadMaintenanceDocument(id, "invoice", file);
         MaintenanceResponseDto response = maintenanceService.uploadInvoice(id, fileReference);
         return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));

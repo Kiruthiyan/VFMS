@@ -81,10 +81,7 @@ public class AdminUserService {
             ));
         }
 
-        if (userRepository.existsByEmailAndDeletedAtIsNull(email)) {
-            throw new ValidationException(
-                    "An active account with this email already exists.");
-        }
+        assertEmailAvailableForAccount(email, null);
 
         validateRoleSpecificFields(request.getRole(), request.getLicenseNumber(),
                 request.getLicenseExpiryDate(), request.getEmployeeId(),
@@ -346,10 +343,7 @@ public class AdminUserService {
 
         if (verifiedStaffRecord == null && request.getEmail() != null) {
             String normalizedEmail = normalizeEmail(request.getEmail());
-            if (!normalizedEmail.equals(user.getEmail())
-                    && userRepository.existsByEmailAndDeletedAtIsNull(normalizedEmail)) {
-                throw new ValidationException("An active account with this email already exists.");
-            }
+            assertEmailAvailableForAccount(normalizedEmail, user.getId());
             user.setEmail(normalizedEmail);
         }
 
@@ -456,6 +450,24 @@ public class AdminUserService {
 
     private void revokeUserSessions(User user) {
         refreshTokenService.deleteByUser(user);
+    }
+
+    private void assertEmailAvailableForAccount(String email, UUID excludeUserId) {
+        userRepository.findByEmail(email)
+                .filter(existing -> excludeUserId == null || !existing.getId().equals(excludeUserId))
+                .ifPresent(existing -> {
+                    if (existing.getDeletedAt() != null) {
+                        throw new ValidationException("Validation failed", Map.of(
+                                "email",
+                                "An archived account with this email already exists. Restore the deleted user instead of creating a duplicate."
+                        ));
+                    }
+
+                    throw new ValidationException("Validation failed", Map.of(
+                            "email",
+                            "An active account with this email already exists."
+                    ));
+                });
     }
 
     private String generateTempPassword() {
@@ -724,9 +736,10 @@ public class AdminUserService {
             ));
         }
 
+        String accountState = conflictingUser.getDeletedAt() != null ? "archived" : "active";
         throw new ValidationException("Validation failed", Map.of(
                 "email",
-                "An active account with this staff email already exists (existing role: "
+                "An " + accountState + " account with this staff email already exists (existing role: "
                         + roleLabel + "). Review the account in All Users."
         ));
     }
@@ -736,16 +749,16 @@ public class AdminUserService {
             UUID excludeUserId
     ) {
         java.util.Optional<User> byEmployeeId = excludeUserId == null
-                ? userRepository.findByEmployeeIdAndDeletedAtIsNull(staffRecord.getEmployeeId())
-                : userRepository.findByEmployeeIdAndDeletedAtIsNull(staffRecord.getEmployeeId())
+                ? userRepository.findByEmployeeId(staffRecord.getEmployeeId())
+                : userRepository.findByEmployeeId(staffRecord.getEmployeeId())
                         .filter(user -> !user.getId().equals(excludeUserId));
         if (byEmployeeId.isPresent()) {
             return byEmployeeId;
         }
 
         java.util.Optional<User> byEmail = excludeUserId == null
-                ? userRepository.findByEmailAndDeletedAtIsNull(staffRecord.getEmail())
-                : userRepository.findByEmailAndDeletedAtIsNull(staffRecord.getEmail())
+                ? userRepository.findByEmail(staffRecord.getEmail())
+                : userRepository.findByEmail(staffRecord.getEmail())
                         .filter(user -> !user.getId().equals(excludeUserId));
         return byEmail;
     }

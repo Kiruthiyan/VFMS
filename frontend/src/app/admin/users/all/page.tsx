@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft,
   ChevronRight,
@@ -33,9 +34,8 @@ import {
   getAllUsersApi,
   getErrorMessage,
   getUserCountsApi,
-  type UserCounts,
-  type UserSummary,
 } from "@/lib/api/admin";
+import { queryKeys } from "@/lib/query-keys";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -55,37 +55,31 @@ const ROLE_FILTER_OPTIONS: { label: string; value: UserRole | "ALL" }[] = [
 ];
 
 export default function AllUsersPage() {
-  const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
-  const [counts, setCounts] = useState<UserCounts | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const {
+    data,
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: [...queryKeys.adminUsers, "all"],
+    queryFn: async () => {
       const [usersData, countsData] = await Promise.all([
         getAllUsersApi(),
         getUserCountsApi(),
       ]);
-
-      setAllUsers(usersData);
-      setCounts(countsData);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+      return { allUsers: usersData, counts: countsData };
+    },
+    placeholderData: (previous) => previous,
+  });
+  const allUsers = useMemo(() => data?.allUsers ?? [], [data?.allUsers]);
+  const counts = data?.counts ?? null;
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   const filtered = useMemo(() => {
     let result = allUsers;
@@ -164,14 +158,14 @@ export default function AllUsersPage() {
                 variant="outline"
                 size="icon"
                 className="vfms-refresh-button"
-                onClick={fetchAll}
-                disabled={loading}
+                onClick={() => void refetch()}
+                disabled={isFetching}
                 aria-label="Refresh all users"
                 title="Refresh all users"
               >
                 <RefreshCw
                   size={16}
-                  className={loading ? "animate-spin" : ""}
+                  className={isFetching ? "animate-spin" : ""}
                 />
               </Button>
 
@@ -299,8 +293,8 @@ export default function AllUsersPage() {
               </p>
             </div>
           </div>
-        ) : error ? (
-          <FormMessage type="error" message={error} />
+        ) : errorMessage ? (
+          <FormMessage type="error" message={errorMessage} />
         ) : (
           <>
             <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
@@ -329,7 +323,7 @@ export default function AllUsersPage() {
                 users={paginatedUsers}
                 showReviewActions={true}
                 showDeletedActions={false}
-                onRefresh={fetchAll}
+                onRefresh={() => void refetch()}
               />
             </section>
 

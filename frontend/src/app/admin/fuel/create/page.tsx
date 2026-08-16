@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 
@@ -12,34 +12,21 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   getFuelFormMetadataApi,
   getErrorMessage,
-  type FuelLookupOption,
 } from "@/lib/api/fuel";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function CreateFuelEntryPage() {
   const router = useRouter();
-  const [vehicles, setVehicles] = useState<FuelLookupOption[]>([]);
-  const [drivers, setDrivers] = useState<FuelLookupOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadMetadata = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const metadata = await getFuelFormMetadataApi();
-      setVehicles(metadata.vehicles);
-      setDrivers(metadata.drivers);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadMetadata();
-  }, [loadMetadata]);
+  const {
+    data: metadata,
+    error,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.fuelMetadata,
+    queryFn: getFuelFormMetadataApi,
+    placeholderData: (previous) => previous,
+  });
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   const handleSuccess = () => {
     router.push("/admin/fuel");
@@ -70,12 +57,12 @@ export default function CreateFuelEntryPage() {
                 <div className="flex justify-center py-10">
                   <LoadingSpinner size={24} className="text-slate-950" />
                 </div>
-              ) : error ? (
-                <FormMessage type="error" message={error} />
+              ) : errorMessage ? (
+                <FormMessage type="error" message={errorMessage} />
               ) : (
                 <FuelEntryForm
-                  vehicles={vehicles}
-                  drivers={drivers}
+                  vehicles={metadata?.vehicles ?? []}
+                  drivers={metadata?.drivers ?? []}
                   onSuccess={handleSuccess}
                 />
               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BookUser, RefreshCw, UserPlus } from "lucide-react";
 
 import { EmployeeRegistryForm } from "@/components/admin/users/employee-registry-form";
@@ -14,31 +14,22 @@ import { PageHeader } from "@/components/ui/page-header";
 import {
   getEmployeeRegistryApi,
   getErrorMessage,
-  type EmployeeRegistryRecord,
 } from "@/lib/api/admin";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function EmployeeRegistryPage() {
-  const [records, setRecords] = useState<EmployeeRegistryRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadRecords = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await getEmployeeRegistryApi();
-      setRecords(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadRecords();
-  }, [loadRecords]);
+  const {
+    data: records = [],
+    error,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.employeeRegistry,
+    queryFn: getEmployeeRegistryApi,
+    placeholderData: (previous) => previous,
+  });
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   return (
     <div className="space-y-6">
@@ -67,18 +58,18 @@ export default function EmployeeRegistryPage() {
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => void loadRecords()}
-                disabled={isLoading}
+                onClick={() => void refetch()}
+                disabled={isFetching}
                 className="vfms-refresh-button"
                 aria-label="Refresh user registry"
                 title="Refresh user registry"
               >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
               </Button>
             </div>
 
             <div className="p-5 sm:p-8">
-              {error && <FormMessage type="error" message={error} />}
+              {errorMessage && <FormMessage type="error" message={errorMessage} />}
 
               {isLoading ? (
                 <div className="flex min-h-40 items-center justify-center">
@@ -157,7 +148,7 @@ export default function EmployeeRegistryPage() {
             </div>
 
             <div className="p-5 sm:p-8">
-              <EmployeeRegistryForm onSuccess={() => void loadRecords()} />
+              <EmployeeRegistryForm onSuccess={() => void refetch()} />
             </div>
           </CardContent>
         </Card>

@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
             passwordChangeRequired: data.passwordChangeRequired,
           },
           accessToken: data.accessToken ?? null,
-          refreshToken: data.refreshToken ?? null,
+          refreshToken: null,
         });
         if (data.accessToken) {
           setAuthCookies(data.accessToken, data.role);
@@ -55,9 +55,9 @@ export const useAuthStore = create<AuthState>()(
       },
 
       syncSessionFromServer: async () => {
-        const { accessToken, refreshToken } = get();
+        const { accessToken } = get();
         if (!accessToken) {
-          set({ hydrated: true });
+          set({ hydrated: true, refreshToken: null });
           return;
         }
 
@@ -74,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
               passwordChangeRequired: profile.passwordChangeRequired,
             },
             accessToken: profile.accessToken ?? accessToken,
-            refreshToken: profile.refreshToken ?? refreshToken,
+            refreshToken: null,
           });
 
           const nextAccessToken = profile.accessToken ?? accessToken;
@@ -92,7 +92,7 @@ export const useAuthStore = create<AuthState>()(
           if (unauthorized) {
             get().clearAuth();
           } else {
-            set({ hydrated: true });
+            set({ hydrated: true, refreshToken: null });
           }
         }
       },
@@ -115,7 +115,6 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
       }),
       onRehydrateStorage: () => (state) => {
         void state?.syncSessionFromServer();

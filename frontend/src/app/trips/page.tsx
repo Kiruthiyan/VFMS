@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/role-context";
 import api, { getErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Trip {
     id: string;
@@ -77,8 +79,6 @@ const formatDate = (dateStr: string) =>
     });
 
 export default function TripsPage() {
-    const [trips, setTrips] = useState<Trip[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchDestination, setSearchDestination] = useState("");
     const [searchPurpose, setSearchPurpose] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -87,23 +87,14 @@ export default function TripsPage() {
     const { currentUser } = useRole();
     const authHydrated = useAuthStore((state) => state.hydrated);
 
-    useEffect(() => {
-        if (!authHydrated) {
-            return;
-        }
-
-        if (currentUser.id === "anonymous") {
-            setTrips([]);
-            setLoading(false);
-            return;
-        }
-
-        fetchTrips();
-    }, [authHydrated, currentUser.id, currentUser.role]);
-
-    const fetchTrips = async () => {
-        setLoading(true);
-        try {
+    const {
+        data: trips = [],
+        error,
+        isLoading,
+    } = useQuery({
+        queryKey: queryKeys.trips(currentUser.role, currentUser.id),
+        enabled: authHydrated && currentUser.id !== "anonymous",
+        queryFn: async (): Promise<Trip[]> => {
             let response;
             if (currentUser.role === "SYSTEM_USER") {
                 response = await api.get(`/trips/requester/${currentUser.id}/history`);
@@ -113,13 +104,16 @@ export default function TripsPage() {
                 // ADMIN and APPROVER see all trips
                 response = await api.get("/trips");
             }
-            setTrips(response.data);
-        } catch (error) {
+            return response.data;
+        },
+    });
+    const loading = !authHydrated || isLoading;
+
+    useEffect(() => {
+        if (error) {
             console.warn("Failed to fetch trips:", getErrorMessage(error));
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [error]);
 
     const filteredTrips = trips.filter(t => {
         const matchesDestination = searchDestination === "" ||

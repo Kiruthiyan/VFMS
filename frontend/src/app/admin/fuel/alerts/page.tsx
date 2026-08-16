@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   Car,
@@ -44,6 +45,7 @@ import {
   getErrorMessage,
   type FuelRecord,
 } from "@/lib/api/fuel";
+import { queryKeys } from "@/lib/query-keys";
 
 interface FuelAlert {
   id: string;
@@ -282,39 +284,32 @@ function statusClasses(status: FuelAlert["status"]) {
 }
 
 export default function FuelAlertsPage() {
-  const [alerts, setAlerts] = useState<FuelAlert[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterStatus>("ALL");
   const [alertStates, setAlertStates] = useState<
     Record<string, FuelAlert["status"]>
   >({});
-
-  const fetchAndAnalyze = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const records = await getAllFuelRecordsApi();
-      const detectedAlerts = analyzeAlerts(records);
-      setAlerts(detectedAlerts);
-
-      const states: Record<string, FuelAlert["status"]> = {};
-      detectedAlerts.forEach((alert) => {
-        states[alert.id] = alert.status;
-      });
-      setAlertStates(states);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      setAlerts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: records = [],
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.fuelRecords,
+    queryFn: getAllFuelRecordsApi,
+  });
+  const alerts = useMemo(() => analyzeAlerts(records), [records]);
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   useEffect(() => {
-    fetchAndAnalyze();
-  }, [fetchAndAnalyze]);
+    setAlertStates((current) => {
+      const states: Record<string, FuelAlert["status"]> = {};
+      alerts.forEach((alert) => {
+        states[alert.id] = current[alert.id] ?? alert.status;
+      });
+      return states;
+    });
+  }, [alerts]);
 
   const handleMarkReviewed = (alertId: string) => {
     setAlertStates((prev) => ({ ...prev, [alertId]: "REVIEWED" }));
@@ -376,14 +371,14 @@ export default function FuelAlertsPage() {
                 variant="outline"
                 size="icon"
                 className="vfms-refresh-button"
-                onClick={fetchAndAnalyze}
-                disabled={loading}
+                onClick={() => refetch()}
+                disabled={isFetching}
                 aria-label="Refresh fuel alerts"
                 title="Refresh fuel alerts"
               >
                 <RefreshCw
                   size={16}
-                  className={loading ? "animate-spin" : ""}
+                  className={isFetching ? "animate-spin" : ""}
                 />
               </Button>
             </>
@@ -399,9 +394,9 @@ export default function FuelAlertsPage() {
           </div>
         )}
 
-        {error && !loading && <FormMessage type="error" message={error} />}
+        {errorMessage && !loading && <FormMessage type="error" message={errorMessage} />}
 
-        {!loading && !error && (
+        {!loading && !errorMessage && (
           <>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
               <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">

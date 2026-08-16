@@ -1,8 +1,10 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Flag, Link2, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +27,7 @@ import {
   type FuelRecord,
   unflagFuelRecordApi,
 } from "@/lib/api/fuel";
+import { queryKeys } from "@/lib/query-keys";
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-IN", {
@@ -46,35 +49,32 @@ function riskClasses(reason: string | null) {
 }
 
 export default function FlaggedRecordsPage() {
-  const [records, setRecords] = useState<FuelRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const {
+    data: records = [],
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.flaggedFuelRecords,
+    queryFn: getFlaggedFuelRecordsApi,
+  });
+  const errorMessage = error ? getErrorMessage(error) : null;
   const [unflaggingId, setUnflaggingId] = useState<string | null>(null);
-
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getFlaggedFuelRecordsApi();
-      setRecords(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
 
   const handleUnflag = async (recordId: string) => {
     setUnflaggingId(recordId);
     try {
       await unflagFuelRecordApi(recordId);
-      await fetchAll();
+      queryClient.setQueryData<FuelRecord[]>(queryKeys.flaggedFuelRecords, (current = []) =>
+        current.filter((record) => record.id !== recordId)
+      );
+      await queryClient.invalidateQueries({ queryKey: queryKeys.flaggedFuelRecords });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.fuelRecords });
     } catch (err) {
-      setError(getErrorMessage(err));
+      queryClient.setQueryData(queryKeys.flaggedFuelRecords, records);
+      toast.error(getErrorMessage(err));
     } finally {
       setUnflaggingId(null);
     }
@@ -99,14 +99,14 @@ export default function FlaggedRecordsPage() {
                 variant="outline"
                 size="icon"
                 className="vfms-refresh-button"
-                onClick={fetchAll}
-                disabled={loading}
+                onClick={() => refetch()}
+                disabled={isFetching}
                 aria-label="Refresh flagged fuel records"
                 title="Refresh flagged fuel records"
               >
                 <RefreshCw
                   size={16}
-                  className={loading ? "animate-spin" : ""}
+                  className={isFetching ? "animate-spin" : ""}
                 />
               </Button>
             </>
@@ -122,9 +122,9 @@ export default function FlaggedRecordsPage() {
           </div>
         )}
 
-        {error && !loading && <FormMessage type="error" message={error} />}
+        {errorMessage && !loading && <FormMessage type="error" message={errorMessage} />}
 
-        {!loading && !error && (
+        {!loading && !errorMessage && (
           <>
             <Card>
               <CardContent className="p-5">

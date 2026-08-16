@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/api";
 import { documentDisplayName, openAuthenticatedDocument } from "@/lib/fleet-documents";
@@ -9,7 +9,14 @@ import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStat
 import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -28,6 +35,8 @@ import {
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
 
+type MaintenanceConfirmAction = "submit" | "approve" | "closeRejected";
+
 export default function MaintenanceDetailPage({
   params,
 }: {
@@ -44,8 +53,10 @@ export default function MaintenanceDetailPage({
   const [rejectReason, setRejectReason] = useState("");
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [closeCost, setCloseCost] = useState("");
+  const [confirmAction, setConfirmAction] =
+    useState<MaintenanceConfirmAction | null>(null);
 
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     try {
       const res = await maintenanceApi.getById(Number(id));
       setRequest(res.data);
@@ -54,34 +65,18 @@ export default function MaintenanceDetailPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchRequest();
-  }, [id]);
+  }, [fetchRequest]);
 
-  const handleSubmit = async () => {
-    if (confirm("Submit this request for approval?")) {
-      try {
-        await maintenanceApi.submit(Number(id));
-        toast.success("Request submitted");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to submit");
-      }
-    }
+  const handleSubmit = () => {
+    setConfirmAction("submit");
   };
 
-  const handleApprove = async () => {
-    if (confirm("Approve this request?")) {
-      try {
-        await maintenanceApi.approve(Number(id));
-        toast.success("Request approved");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to approve");
-      }
-    }
+  const handleApprove = () => {
+    setConfirmAction("approve");
   };
 
   const handleReject = () => {
@@ -108,19 +103,38 @@ export default function MaintenanceDetailPage({
     if (!request) return;
 
     if (request.status === "REJECTED") {
-      // Rejected = no work done, no cost needed
-      if (!confirm("Acknowledge and close this rejected request?")) return;
-      try {
-        await maintenanceApi.close(Number(id), 0);
-        toast.success("Request closed");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to close");
-      }
+      setConfirmAction("closeRejected");
     } else {
       // Approved = maintenance was done, ask for actual cost (optional)
       setCloseCost("");
       setCloseDialogOpen(true);
+    }
+  };
+
+  const confirmSimpleAction = async () => {
+    if (!confirmAction) return;
+
+    const action = confirmAction;
+    setConfirmAction(null);
+
+    try {
+      if (action === "submit") {
+        await maintenanceApi.submit(Number(id));
+        toast.success("Request submitted");
+      }
+      if (action === "approve") {
+        await maintenanceApi.approve(Number(id));
+        toast.success("Request approved");
+      }
+      if (action === "closeRejected") {
+        await maintenanceApi.close(Number(id), 0);
+        toast.success("Request closed");
+      }
+      fetchRequest();
+    } catch {
+      if (action === "submit") toast.error("Failed to submit");
+      if (action === "approve") toast.error("Failed to approve");
+      if (action === "closeRejected") toast.error("Failed to close");
     }
   };
 
@@ -162,7 +176,7 @@ export default function MaintenanceDetailPage({
 
   const handleOpenDocument = async (url: string) => {
     try {
-      await openAuthenticatedDocument(url);
+      await openAuthenticatedDocument(url, "maintenance");
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -183,6 +197,40 @@ export default function MaintenanceDetailPage({
       </div>
     );
   }
+
+  const confirmationDetails: Record<
+    MaintenanceConfirmAction,
+    {
+      title: string;
+      description: string;
+      confirmLabel: string;
+      variant?: "default" | "success" | "destructive" | "outline";
+    }
+  > = {
+    submit: {
+      title: "Submit maintenance request?",
+      description:
+        "This request will move to approver review. You will not be able to edit it while it is submitted.",
+      confirmLabel: "Submit Request",
+    },
+    approve: {
+      title: "Approve maintenance request?",
+      description:
+        "This will authorize the maintenance work for the selected vehicle.",
+      confirmLabel: "Approve Request",
+      variant: "success",
+    },
+    closeRejected: {
+      title: "Acknowledge and close request?",
+      description:
+        "This rejected request will be closed with no maintenance cost recorded.",
+      confirmLabel: "Close Request",
+      variant: "destructive",
+    },
+  };
+  const activeConfirmation = confirmAction
+    ? confirmationDetails[confirmAction]
+    : null;
 
   return (
     <div className="vfms-detail-page">
@@ -463,6 +511,43 @@ export default function MaintenanceDetailPage({
                 Confirm Close
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={Boolean(activeConfirmation)}
+          onOpenChange={(open) => {
+            if (!open) setConfirmAction(null);
+          }}
+        >
+          <DialogContent>
+            {activeConfirmation && (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{activeConfirmation.title}</DialogTitle>
+                  <DialogDescription>
+                    {activeConfirmation.description}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <span className="font-medium text-slate-900">
+                    Maintenance Request #{request.id}
+                  </span>{" "}
+                  for {request.vehicleBrandModel}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setConfirmAction(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant={activeConfirmation.variant ?? "default"}
+                    onClick={confirmSimpleAction}
+                  >
+                    {activeConfirmation.confirmLabel}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       </div>

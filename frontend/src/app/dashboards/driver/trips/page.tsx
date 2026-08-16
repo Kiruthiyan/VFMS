@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, Users, Car, Loader2, ArrowRight, Check, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -21,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import api from '@/lib/api';
 import { useRole } from '@/lib/role-context';
+import { queryKeys } from '@/lib/query-keys';
 
 interface Trip {
   id: string;
@@ -49,35 +51,36 @@ const formatDate = (dateStr: string) =>
 export default function DriverTripsPage() {
   const router = useRouter();
   const { currentUser } = useRole();
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [rejectingTripId, setRejectingTripId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (currentUser?.id && currentUser.id !== "anonymous") {
-      fetchTrips();
-    }
-  }, [currentUser]);
-
-  const fetchTrips = async () => {
-    try {
+  const {
+    data: trips = [],
+    error,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.trips("DRIVER", currentUser.id),
+    enabled: !!currentUser?.id && currentUser.id !== "anonymous",
+    queryFn: async (): Promise<Trip[]> => {
       const res = await api.get(`/trips/driver/${currentUser.id}`);
-      setTrips(res.data);
-    } catch (err) {
-      console.error("Failed to fetch driver trips", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+  });
+
+  useEffect(() => {
+    if (error) console.error("Failed to fetch driver trips", error);
+  }, [error]);
 
   const handleConfirm = async (tripId: string) => {
     try {
       setActionLoading(tripId);
       await api.patch(`/trips/${tripId}/driver-accept`);
       toast.success("Trip confirmed successfully!");
-      fetchTrips();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.trips("DRIVER", currentUser.id) });
+      await refetch();
     } catch (err) {
       console.error(err);
       toast.error("Failed to confirm trip.");
@@ -100,7 +103,8 @@ export default function DriverTripsPage() {
       toast.success("Trip rejected.");
       setRejectingTripId(null);
       setRejectReason("");
-      fetchTrips();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.trips("DRIVER", currentUser.id) });
+      await refetch();
     } catch (err) {
       console.error(err);
       toast.error("Failed to reject trip.");

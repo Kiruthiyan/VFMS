@@ -54,6 +54,10 @@ public class FleetDocumentStorageService {
         return parseReference(value) != null;
     }
 
+    public void validateFleetDocument(MultipartFile file) {
+        validatePdf(file);
+    }
+
     private StoredObject uploadDocument(String module, Long ownerId, String documentType, MultipartFile file) {
         validatePdf(file);
         requireConfigured();

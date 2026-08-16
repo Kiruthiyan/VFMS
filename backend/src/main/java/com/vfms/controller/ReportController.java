@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -96,7 +97,7 @@ public class ReportController {
 
     @GetMapping("/documents")
     public ResponseEntity<List<ReportDocument>> getReportDocuments() {
-        List<ReportDocument> docs = reportDocumentRepository.findAll();
+        List<ReportDocument> docs = reportDocumentRepository.findByRemovedFromHistoryAtIsNullOrderByUploadedAtDesc();
         for (ReportDocument doc : docs) {
             try {
                 doc.setFileUrl(reportSupabaseStorageService.createSignedUrl(doc.getBucketName(), doc.getStoragePath()));
@@ -111,8 +112,10 @@ public class ReportController {
     public ResponseEntity<Void> deleteReportDocument(@PathVariable Long id) {
         ReportDocument doc = reportDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report document not found: " + id));
-        reportSupabaseStorageService.deleteObjectQuietly(doc.getBucketName(), doc.getStoragePath());
-        reportDocumentRepository.delete(doc);
+        if (doc.getRemovedFromHistoryAt() == null) {
+            doc.setRemovedFromHistoryAt(LocalDateTime.now());
+            reportDocumentRepository.save(doc);
+        }
         return ResponseEntity.noContent().build();
     }
 }

@@ -141,9 +141,7 @@ export async function updateMyProfile(data: DriverProfileUpdatePayload): Promise
 export async function uploadProfilePicture(file: File): Promise<DocumentItem> {
   const form = new FormData();
   form.append('file', file);
-  const res = await api.post<DocumentItem>('/api/driver/profile/picture', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const res = await api.post<DocumentItem>('/api/driver/profile/picture', form);
   return res.data;
 }
 

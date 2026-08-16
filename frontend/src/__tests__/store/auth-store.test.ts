@@ -39,7 +39,7 @@ describe("useAuthStore", () => {
     expect(state.isAuthenticated()).toBe(false);
   });
 
-  it("stores auth data correctly", async () => {
+  it("stores auth data without persisting the refresh token", async () => {
     const useAuthStore = await getStore();
     useAuthStore.getState().setAuth({
       userId: "user123",
@@ -61,7 +61,7 @@ describe("useAuthStore", () => {
       status: "APPROVED",
     });
     expect(state.accessToken).toBe("jwt_token_123");
-    expect(state.refreshToken).toBe("refresh_token_123");
+    expect(state.refreshToken).toBeNull();
     expect(state.isAuthenticated()).toBe(true);
   });
 
@@ -126,6 +126,7 @@ describe("useAuthStore", () => {
     const state = useAuthStore.getState();
     expect(state.hydrated).toBe(true);
     expect(state.accessToken).toBe("jwt_token_123");
+    expect(state.refreshToken).toBeNull();
     expect(state.user?.role).toBe("SYSTEM_USER");
     expect(state.isAuthenticated()).toBe(true);
     expect(getMeApiMock).toHaveBeenCalledOnce();

@@ -100,7 +100,7 @@ export default function EditMaintenancePage({
     }
 
     try {
-      await openAuthenticatedDocument(request.quotationUrl);
+      await openAuthenticatedDocument(request.quotationUrl, "maintenance");
     } catch (error) {
       toast.error(getErrorMessage(error));
     }

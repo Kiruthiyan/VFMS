@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { CheckCircle2, XCircle, X } from "lucide-react";
 import { reviewUserApi, getErrorMessage } from "@/lib/api/admin";
 import type { UserSummary } from "@/lib/api/admin";
-import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { FormMessage } from "@/components/ui/form-message";
 

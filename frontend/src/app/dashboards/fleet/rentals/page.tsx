@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { rentalApi, RentalRecord, RentalStatus } from "@/lib/api/rental";
 import {
@@ -30,21 +31,23 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function RentalsPage() {
   const router = useRouter();
   const { canCreate } = useRole();
-  const [rentals, setRentals] = useState<RentalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [activeTripVehicleIds, setActiveTripVehicleIds] = useState<Set<number>>(
-    new Set(),
-  );
-
-  const fetchRentals = useCallback(async () => {
-    setLoading(true);
-    try {
+  const {
+    data,
+    error,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.rentals(statusFilter),
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
       const rentalsRequest =
         statusFilter !== "ALL"
           ? rentalApi.getByStatus(statusFilter as RentalStatus)
@@ -53,18 +56,22 @@ export default function RentalsPage() {
         rentalsRequest,
         tripAvailabilityApi.getActiveVehicleIds().catch((): number[] => []),
       ]);
-      setRentals(res.data);
-      setActiveTripVehicleIds(new Set(tripVehicleIds));
-    } catch {
-      toast.error("Failed to load rentals");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter]);
+      return {
+        rentals: res.data,
+        activeTripVehicleIds: new Set(tripVehicleIds),
+      };
+    },
+  });
+
+  const rentals = data?.rentals ?? [];
+  const activeTripVehicleIds = data?.activeTripVehicleIds ?? new Set<number>();
+  const loading = isLoading;
 
   useEffect(() => {
-    fetchRentals();
-  }, [fetchRentals]);
+    if (error) {
+      toast.error("Failed to load rentals");
+    }
+  }, [error]);
 
   const filtered = rentals.filter((r) => {
     const q = search.toLowerCase();
@@ -111,13 +118,13 @@ export default function RentalsPage() {
               variant="outline"
               size="icon"
               className="vfms-refresh-button"
-              onClick={fetchRentals}
-              disabled={loading}
+              onClick={() => refetch()}
+              disabled={isFetching}
               aria-label="Refresh rentals"
               title="Refresh rentals"
             >
               <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
               />
             </Button>
             {canCreate && (

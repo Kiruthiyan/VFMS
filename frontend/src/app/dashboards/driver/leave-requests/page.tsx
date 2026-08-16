@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Loader2, Plus, X, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
@@ -16,6 +17,7 @@ import {
   type LeaveRequestItem,
   type LeaveRequestPayload,
 } from '@/lib/api/driver-portal';
+import { queryKeys } from '@/lib/query-keys';
 
 const LEAVE_TYPES = ['ANNUAL', 'MEDICAL', 'EMERGENCY', 'UNPAID'];
 type LeaveFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -41,12 +43,19 @@ function errorMessage(error: unknown, fallback: string) {
 }
 
 export default function DriverLeaveRequestsPage() {
-  const [requests, setRequests] = useState<LeaveRequestItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<LeaveRequestPayload>({ ...EMPTY_FORM });
   const [submitting, setSubmitting] = useState(false);
   const [filter, setFilter] = useState<LeaveFilter>('ALL');
+  const {
+    data: requests = [],
+    error,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.driverLeaves,
+    queryFn: getMyLeaveRequests,
+  });
 
   const counts: Record<LeaveFilter, number> = {
     ALL: requests.length,
@@ -59,18 +68,16 @@ export default function DriverLeaveRequestsPage() {
     filter === 'ALL' ? requests : requests.filter((r) => (r.status ?? 'PENDING') === filter);
 
   useEffect(() => {
-    getMyLeaveRequests()
-      .then(setRequests)
-      .catch((error) => toast.error(errorMessage(error, 'Failed to load leave requests')))
-      .finally(() => setLoading(false));
-  }, []);
+    if (error) toast.error(errorMessage(error, 'Failed to load leave requests'));
+  }, [error]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
     try {
       const added = await submitLeaveRequest(form);
-      setRequests((current) => [added, ...current]);
+      queryClient.setQueryData<LeaveRequestItem[]>(queryKeys.driverLeaves, (current = []) => [added, ...current]);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverLeaves });
       setForm({ ...EMPTY_FORM });
       setOpen(false);
       toast.success('Leave request submitted');
@@ -85,7 +92,8 @@ export default function DriverLeaveRequestsPage() {
     if (!window.confirm('Are you sure you want to cancel this leave request?')) return;
     try {
       await deleteLeaveRequest(id);
-      setRequests((current) => current.filter((r) => r.id !== id));
+      queryClient.setQueryData<LeaveRequestItem[]>(queryKeys.driverLeaves, (current = []) => current.filter((r) => r.id !== id));
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverLeaves });
       toast.success('Leave request cancelled');
     } catch (error: unknown) {
       toast.error(errorMessage(error, 'Failed to cancel leave request'));

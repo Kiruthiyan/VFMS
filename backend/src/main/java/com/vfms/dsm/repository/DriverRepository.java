@@ -147,15 +147,58 @@ public class DriverRepository {
     }
 
     public DriverCertification saveCertification(DriverCertification value) {
-        return save(value, DriverAggregate::getCertifications, DriverAggregate::setCertifications);
+        User user = Objects.requireNonNull(value.getUser(), "Driver resource requires an owner");
+        UUID userId = user.getId();
+        LocalDateTime now = LocalDateTime.now();
+        ensureDriverRow(user);
+        String current = jdbcTemplate.queryForObject(
+                "select coalesce(certifications, '[]'::jsonb)::text from drivers where id = ? for update",
+                String.class, userId
+        );
+        List<DriverCertification> items = new ArrayList<>(
+                parseList(current, new TypeReference<List<DriverCertification>>() {})
+        );
+        if (value.getId() == null) {
+            value.setId(nextId());
+            value.setCreatedAt(now);
+            items.add(value);
+        } else {
+            boolean replaced = false;
+            for (int i = 0; i < items.size(); i++) {
+                if (value.getId().equals(items.get(i).getId())) {
+                    if (value.getCreatedAt() == null) value.setCreatedAt(items.get(i).getCreatedAt());
+                    items.set(i, value);
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) items.add(value);
+        }
+        value.setUpdatedAt(now);
+        try {
+            String json = objectMapper.writeValueAsString(items);
+            jdbcTemplate.update(
+                    "update drivers set certifications = cast(? as jsonb), updated_at = LOCALTIMESTAMP, version = coalesce(version,0) + 1 where id = ?",
+                    json, userId
+            );
+        } catch (Exception e) {
+            throw new InvalidDataAccessApiUsageException("Could not serialize certifications JSON for drivers table", e);
+        }
+        value.setUser(user);
+        return value;
     }
-    public Optional<DriverCertification> findCertificationById(Long id) { return findById(id, DriverAggregate::getCertifications); }
+    public Optional<DriverCertification> findCertificationById(Long id) {
+        return findAllCertificationsColumnScoped().stream()
+                .filter(certification -> id.equals(certification.getId()))
+                .findFirst();
+    }
     public List<DriverCertification> findCertificationsByDriver(UUID id) {
         // Load only the 'certifications' JSON to avoid deserialization issues in unrelated JSON columns
-        return aggregates.findCertificationsJsonById(id)
+        List<DriverCertification> certifications = aggregates.findCertificationsJsonById(id)
                 .map(json -> parseList(json, new TypeReference<List<DriverCertification>>() {}))
-                .map(this::byCreated)
                 .orElseGet(List::of);
+        users.findById(id).ifPresent(user -> certifications.forEach(certification -> certification.setUser(user)));
+        return byCreated(certifications);
     }
     public List<DriverCertification> findExpiredCertifications(LocalDate date, DriverCertification.CertStatus status) {
         return findEvery(DriverAggregate::getCertifications).stream()
@@ -167,7 +210,31 @@ public class DriverRepository {
                         && !v.getExpiryDate().isAfter(to) && v.getStatus() != DriverCertification.CertStatus.EXPIRED).toList();
     }
     public void deleteCertification(Long id) {
-        findCertificationById(id).ifPresent(v -> delete(v, DriverAggregate::getCertifications, DriverAggregate::setCertifications));
+        findCertificationById(id).ifPresent(value -> {
+            UUID userId = value.getUser() == null ? null : value.getUser().getId();
+            if (userId == null) {
+                log.warn("deleteCertification called with certification {} that has no user - skipping", value.getId());
+                return;
+            }
+            String current = jdbcTemplate.queryForObject(
+                    "select coalesce(certifications, '[]'::jsonb)::text from drivers where id = ? for update",
+                    String.class, userId
+            );
+            List<DriverCertification> items = new ArrayList<>(
+                    parseList(current, new TypeReference<List<DriverCertification>>() {})
+            );
+            items.removeIf(certification -> value.getId().equals(certification.getId()));
+            try {
+                String json = objectMapper.writeValueAsString(items);
+                jdbcTemplate.update(
+                        "update drivers set certifications = cast(? as jsonb), updated_at = LOCALTIMESTAMP, " +
+                                "version = coalesce(version,0) + 1 where id = ?",
+                        json, userId
+                );
+            } catch (Exception e) {
+                throw new InvalidDataAccessApiUsageException("Could not serialize certifications JSON for drivers table", e);
+            }
+        });
     }
 
     public DriverDocument saveDocument(DriverDocument value) {
@@ -621,6 +688,20 @@ public class DriverRepository {
                     users.findById(entry.getKey()).ifPresent(user ->
                             licenses.forEach(license -> license.setUser(user)));
                     return licenses.stream();
+                })
+                .toList();
+    }
+    private List<DriverCertification> findAllCertificationsColumnScoped() {
+        return jdbcTemplate.query(
+                        "select id, coalesce(certifications, '[]'::jsonb)::text as certifications_json from drivers",
+                        (rs, rowNum) -> Map.entry((UUID) rs.getObject("id"), rs.getString("certifications_json")))
+                .stream()
+                .flatMap(entry -> {
+                    List<DriverCertification> certifications = parseList(
+                            entry.getValue(), new TypeReference<List<DriverCertification>>() {});
+                    users.findById(entry.getKey()).ifPresent(user ->
+                            certifications.forEach(certification -> certification.setUser(user)));
+                    return certifications.stream();
                 })
                 .toList();
     }

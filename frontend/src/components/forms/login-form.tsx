@@ -89,7 +89,11 @@ export function LoginForm() {
       className="space-y-4"
       noValidate
     >
-      <AuthInlineMessage type="error" message={serverError} />
+      <AuthInlineMessage
+        type="error"
+        title="Unable to sign in"
+        message={serverError}
+      />
 
       <div className="space-y-4">
         <AuthField

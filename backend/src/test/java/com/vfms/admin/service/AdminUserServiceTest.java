@@ -105,9 +105,33 @@ class AdminUserServiceTest {
         req.setLicenseNumber("DL123456");
         req.setLicenseExpiryDate("2030-05-01");
 
-        when(userRepository.existsByEmailAndDeletedAtIsNull(req.getEmail())).thenReturn(true);
+        when(userRepository.findByEmail(req.getEmail())).thenReturn(Optional.of(baseApprovedUser(UUID.randomUUID())));
 
         assertThrows(ValidationException.class, () -> adminUserService.createUser(req));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("createUser should reject email already used by archived user")
+    void createUser_shouldRejectArchivedDuplicateEmail() {
+        CreateUserRequest req = new CreateUserRequest();
+        req.setFullName("Test User");
+        req.setEmail("archived@vfms.com");
+        req.setPhone("0771234567");
+        req.setNic("200012345678");
+        req.setRole(Role.DRIVER);
+        req.setLicenseNumber("DL123456");
+        req.setLicenseExpiryDate("2030-05-01");
+
+        User archived = baseApprovedUser(UUID.randomUUID());
+        archived.setEmail("archived@vfms.com");
+        archived.setDeletedAt(LocalDateTime.now());
+        when(userRepository.findByEmail("archived@vfms.com")).thenReturn(Optional.of(archived));
+
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> adminUserService.createUser(req));
+
+        assertTrue(exception.getErrors().get("email").contains("Restore the deleted user"));
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -282,9 +306,34 @@ class AdminUserServiceTest {
         req.setEmail("new@vfms.com");
 
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
-        when(userRepository.existsByEmailAndDeletedAtIsNull("new@vfms.com")).thenReturn(true);
+        when(userRepository.findByEmail("new@vfms.com")).thenReturn(Optional.of(baseApprovedUser(UUID.randomUUID())));
 
         assertThrows(ValidationException.class, () -> adminUserService.updateUser(id, req));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("updateUser should reject email already used by archived user")
+    void updateUser_shouldRejectArchivedDuplicateEmail() {
+        UUID id = UUID.randomUUID();
+        User user = baseApprovedUser(id);
+        user.setRole(Role.DRIVER);
+        user.setEmail("old@vfms.com");
+
+        User archived = baseApprovedUser(UUID.randomUUID());
+        archived.setEmail("archived@vfms.com");
+        archived.setDeletedAt(LocalDateTime.now());
+
+        UpdateUserRequest req = new UpdateUserRequest();
+        req.setEmail("archived@vfms.com");
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("archived@vfms.com")).thenReturn(Optional.of(archived));
+
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> adminUserService.updateUser(id, req));
+
+        assertTrue(exception.getErrors().get("email").contains("Restore the deleted user"));
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -300,8 +349,7 @@ class AdminUserServiceTest {
         req.setLicenseNumber("DL123456");
         req.setLicenseExpiryDate("2030-05-01");
 
-        when(userRepository.existsByEmailAndDeletedAtIsNull("driver@vfms.com"))
-                .thenReturn(false);
+        when(userRepository.findByEmail("driver@vfms.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("hashed-temp-password");
 
         adminUserService.createUser(req);
@@ -344,8 +392,8 @@ class AdminUserServiceTest {
                         .active(true)
                         .build()
         ));
-        when(userRepository.findByEmployeeIdAndDeletedAtIsNull("EMP001")).thenReturn(Optional.empty());
-        when(userRepository.findByEmailAndDeletedAtIsNull("staff@vfms.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmployeeId("EMP001")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("staff@vfms.com")).thenReturn(Optional.empty());
 
         adminUserService.updateUser(id, req);
 
@@ -385,9 +433,9 @@ class AdminUserServiceTest {
 
         when(employeeRegistryRepository.findByEmployeeIdIgnoreCase("EMP001"))
                 .thenReturn(Optional.of(registryRecord));
-        when(userRepository.findByEmployeeIdAndDeletedAtIsNull("EMP001"))
+        when(userRepository.findByEmployeeId("EMP001"))
                 .thenReturn(Optional.empty());
-        when(userRepository.findByEmailAndDeletedAtIsNull("shared@vfms.com"))
+        when(userRepository.findByEmail("shared@vfms.com"))
                 .thenReturn(Optional.of(existingAdmin));
 
         VerifiedStaffProfileResponse profile =
@@ -424,9 +472,9 @@ class AdminUserServiceTest {
 
         when(employeeRegistryRepository.findByEmployeeIdIgnoreCase("EMP001"))
                 .thenReturn(Optional.of(registryRecord));
-        when(userRepository.findByEmployeeIdAndDeletedAtIsNull("EMP001"))
+        when(userRepository.findByEmployeeId("EMP001"))
                 .thenReturn(Optional.empty());
-        when(userRepository.findByEmailAndDeletedAtIsNull("shared@vfms.com"))
+        when(userRepository.findByEmail("shared@vfms.com"))
                 .thenReturn(Optional.of(User.builder()
                         .id(UUID.randomUUID())
                         .fullName("Admin User")

@@ -567,7 +567,7 @@ export function EditUserDialog({
                   Driver Details
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Keep licence and experience details aligned with the driver's active company profile.
+                  Keep licence and experience details aligned with the driver&apos;s active company profile.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

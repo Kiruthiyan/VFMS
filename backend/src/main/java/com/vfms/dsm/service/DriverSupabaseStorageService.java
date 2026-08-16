@@ -33,6 +33,11 @@ public class DriverSupabaseStorageService {
             "image/png",
             "image/webp"
     );
+    private static final Set<String> ALLOWED_PROFILE_PICTURE_CONTENT_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+    );
     private static final Map<String, Set<String>> ALLOWED_EXTENSIONS_BY_TYPE = Map.of(
             "application/pdf", Set.of("pdf"),
             "image/jpeg", Set.of("jpg", "jpeg"),
@@ -44,7 +49,7 @@ public class DriverSupabaseStorageService {
     private final RestTemplate restTemplate;
 
     public StoredObject uploadDriverFile(UUID driverId, DriverDocument.DocumentEntityType type, MultipartFile file) {
-        validateFile(file);
+        validateFile(file, type);
         requireConfigured();
 
         String extension = extensionFor(file);
@@ -166,32 +171,39 @@ public class DriverSupabaseStorageService {
         return "drivers/" + driverId + "/" + folder + "/" + UUID.randomUUID() + "." + extension;
     }
 
-    private void validateFile(MultipartFile file) {
+    private void validateFile(MultipartFile file, DriverDocument.DocumentEntityType type) {
+        boolean profilePicture = type == DriverDocument.DocumentEntityType.PROFILE;
         if (file == null || file.isEmpty()) {
-            throw new ValidationException("Document file is required.");
+            throw new ValidationException(profilePicture ? "Profile picture file is required." : "Document file is required.");
         }
         if (file.getSize() > MAX_FILE_BYTES) {
             throw new ValidationException(
-                    "Document file is too large.",
-                    Map.of("file", "Document must be 5 MB or smaller.")
+                    profilePicture ? "Profile picture file is too large." : "Document file is too large.",
+                    Map.of("file", profilePicture ? "Profile picture must be 5 MB or smaller." : "Document must be 5 MB or smaller.")
             );
         }
 
-        validateSafeOriginalFilename(file.getOriginalFilename());
+        validateSafeOriginalFilename(file.getOriginalFilename(), profilePicture);
 
         String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+        String normalizedContentType = contentType == null ? "" : contentType.toLowerCase(Locale.ROOT);
+        Set<String> allowedTypes = profilePicture ? ALLOWED_PROFILE_PICTURE_CONTENT_TYPES : ALLOWED_CONTENT_TYPES;
+        if (!allowedTypes.contains(normalizedContentType)) {
             throw new ValidationException(
-                    "Invalid document file type.",
-                    Map.of("file", "Document must be a PDF, JPEG, PNG, or WebP file.")
+                    profilePicture ? "Invalid profile picture file type." : "Invalid document file type.",
+                    Map.of("file", profilePicture
+                            ? "Profile picture must be a JPEG, PNG, or WebP image."
+                            : "Document must be a PDF, JPEG, PNG, or WebP file.")
             );
         }
 
         String extension = extensionFor(file);
-        if (!ALLOWED_EXTENSIONS_BY_TYPE.get(contentType.toLowerCase(Locale.ROOT)).contains(extension)) {
+        if (!ALLOWED_EXTENSIONS_BY_TYPE.get(normalizedContentType).contains(extension)) {
             throw new ValidationException(
-                    "Invalid document file extension.",
-                    Map.of("file", "Document extension does not match the uploaded file type.")
+                    profilePicture ? "Invalid profile picture file extension." : "Invalid document file extension.",
+                    Map.of("file", profilePicture
+                            ? "Profile picture extension does not match the uploaded image type."
+                            : "Document extension does not match the uploaded file type.")
             );
         }
     }
@@ -208,12 +220,12 @@ public class DriverSupabaseStorageService {
         return extension;
     }
 
-    private void validateSafeOriginalFilename(String original) {
+    private void validateSafeOriginalFilename(String original, boolean profilePicture) {
         if (original == null || original.isBlank()) {
-            throw new ValidationException("Document original file name is required.");
+            throw new ValidationException(profilePicture ? "Profile picture file name is required." : "Document original file name is required.");
         }
         if (original.contains("/") || original.contains("\\") || original.contains("..")) {
-            throw new ValidationException("Unsafe document file name.");
+            throw new ValidationException(profilePicture ? "Unsafe profile picture file name." : "Unsafe document file name.");
         }
     }
 

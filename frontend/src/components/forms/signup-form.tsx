@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm, useWatch, type FieldError, type FieldErrors, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, ChevronLeft, ChevronRight, CircleCheck } from 'lucide-react';

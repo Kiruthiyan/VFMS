@@ -1,22 +1,38 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { motion, AnimatePresence, useScroll, useSpring, useInView } from 'framer-motion';
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import {
-  Shield, Fuel, Car, Users, Calendar, FileText, ArrowRight,
-  BarChart3, CheckCircle2, Truck, MapPin, Layout, Star,
-  Smartphone, Zap, Clock, ChevronRight, Play, Globe, Menu, X,
-  TrendingUp, Check, Coins
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+  ArrowRight,
+  BarChart3,
+  Check,
+  ChevronRight,
+  Fuel,
+  Globe,
+  MapPin,
+  Menu,
+  Play,
+  Shield,
+  Smartphone,
+  Star,
+  TrendingUp,
+  Truck,
+  X,
+  Zap,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const navItems = ["Features", "Solutions", "Process", "Access"];
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
-  }
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+  },
 };
 
 const itemVariants = {
@@ -24,252 +40,396 @@ const itemVariants = {
   visible: {
     y: 0,
     opacity: 1,
-    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }
-  }
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const },
+  },
 };
 
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
+const roleCopy = {
+  admin:
+    "Manage users, vehicles, fuel, maintenance, rentals, reports, and full system oversight from one dashboard.",
+  staff:
+    "Review requests, assign vehicles and drivers, manage documents, and coordinate daily fleet operations.",
+  "system user":
+    "Request trips, track approval status, and view your own fleet service activity without manual paperwork.",
+  driver:
+    "View assigned trips, update journey progress, and complete required driver actions from your dashboard.",
+} as const;
+
+function NavLink({
+  href,
+  children,
+  onClick,
+}: {
+  href: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="relative text-sm font-semibold text-slate-600 transition-colors hover:text-black group"
+    >
+      {children}
+      <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-amber-500 transition-all group-hover:w-full" />
+    </Link>
+  );
 }
 
-const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
-  <Link
-    href={href}
-    className="relative text-sm font-semibold text-slate-600 hover:text-black transition-colors group"
-  >
-    {children}
-    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-500 transition-all group-hover:w-full" />
-  </Link>
-);
-
-const CountUp = ({ value, label, suffix = "" }: { value: number, label: string, suffix?: string }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (isInView) {
-      let start = 0;
-      const end = value;
-      const timer = setInterval(() => {
-        start += Math.ceil(end / 40);
-        if (start >= end) { setCount(end); clearInterval(timer); }
-        else setCount(start);
-      }, 30);
-      return () => clearInterval(timer);
-    }
-  }, [isInView, value]);
-
+function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div ref={ref} className="flex flex-col">
-      <span className="text-4xl font-black text-slate-900 tracking-tighter">
-        {count.toLocaleString()}{suffix}
+    <div className="flex flex-col">
+      <span className="text-4xl font-black tracking-tighter text-slate-900">
+        {value}
       </span>
-      <span className="text-xs font-bold text-amber-600 uppercase tracking-widest mt-1">{label}</span>
+      <span className="mt-1 text-xs font-bold uppercase tracking-widest text-amber-600">
+        {label}
+      </span>
     </div>
   );
-};
+}
+
+function DashboardPreview() {
+  const cards = [
+    { label: "Active Trips", value: "12", color: "text-amber-300" },
+    { label: "Drivers Ready", value: "18", color: "text-emerald-300" },
+    { label: "Fuel Logs", value: "36", color: "text-sky-300" },
+    { label: "Pending Tasks", value: "05", color: "text-orange-300" },
+  ];
+
+  return (
+    <div className="relative bg-white rounded-[2rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border border-slate-100 p-4 overflow-hidden">
+      <div className="rounded-xl bg-slate-950 p-6 text-white">
+        <div className="mb-5 flex items-center justify-between">
+          <span className="text-sm font-bold text-slate-300">Fleet Overview</span>
+          <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-300">
+            Live
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          {cards.map((card) => (
+            <div key={card.label} className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className={cn("text-3xl font-black", card.color)}>{card.value}</div>
+              <div className="mt-1 text-xs font-semibold text-slate-400">{card.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {["Colombo to Kandy", "Galle to Colombo", "Jaffna to Colombo"].map((route, index) => (
+            <div key={route} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+              <span className="text-xs font-medium text-slate-300">{route}</span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                  index === 0 && "bg-emerald-500/15 text-emerald-300",
+                  index === 1 && "bg-amber-500/15 text-amber-300",
+                  index === 2 && "bg-sky-500/15 text-sky-300"
+                )}
+              >
+                {index === 0 ? "ONGOING" : index === 1 ? "APPROVED" : "PENDING"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <motion.div
+        animate={{ y: [0, -16, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-10 -left-10 flex items-center gap-4 rounded-2xl border border-slate-50 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+          <TrendingUp />
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase text-slate-400">Status</p>
+          <p className="text-xl font-black text-slate-900">Ready</p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeTab, setActiveTab] = useState('admin');
+  const [activeTab, setActiveTab] = useState<keyof typeof roleCopy>("admin");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-white text-slate-900 selection:bg-amber-200 scroll-smooth">
+    <div className="relative min-h-screen scroll-smooth bg-white text-slate-900 selection:bg-amber-200">
+      <motion.div
+        className="fixed left-0 right-0 top-0 z-[60] h-1 origin-left bg-amber-500"
+        style={{ scaleX }}
+      />
 
-      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-amber-500 origin-left z-[60]" style={{ scaleX }} />
-
-      {/* NAVIGATION */}
-      <nav className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-500 px-6 py-4",
-        isScrolled ? "bg-white/90 backdrop-blur-xl border-b border-slate-100 shadow-sm" : "bg-transparent"
-      )}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center transition-transform group-hover:rotate-12">
-              <Truck className="text-amber-400 w-6 h-6" />
+      <nav
+        className={cn(
+          "fixed top-0 z-50 w-full px-6 py-4 transition-all duration-500",
+          isScrolled
+            ? "border-b border-slate-100 bg-white/90 shadow-sm backdrop-blur-xl"
+            : "bg-transparent"
+        )}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <Link href="/" className="flex cursor-pointer items-center gap-2 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 transition-transform group-hover:rotate-12">
+              <Truck className="h-6 w-6 text-amber-400" />
             </div>
-            <span className="text-xl font-black tracking-tighter">FLEETPRO<span className="text-amber-500">.</span></span>
+            <span className="text-xl font-black tracking-tighter">
+              FLEETPRO<span className="text-amber-500">.</span>
+            </span>
           </Link>
-          <div className="hidden md:flex items-center gap-10">
-            {['Features', 'Solutions', 'Process', 'Pricing'].map((item) => (
-              <NavLink key={item} href={`#${item.toLowerCase()}`}>{item}</NavLink>
+
+          <div className="hidden items-center gap-10 md:flex">
+            {navItems.map((item) => (
+              <NavLink key={item} href={`#${item.toLowerCase()}`}>
+                {item}
+              </NavLink>
             ))}
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="hidden items-center gap-4 sm:flex">
             <Link href="/auth/login">
-              <Button variant="ghost" className="font-bold hidden sm:flex hover:bg-slate-50">Log In</Button>
+              <Button variant="ghost" className="hidden font-bold hover:bg-slate-50 sm:flex">
+                Log In
+              </Button>
             </Link>
-            <Link href="/auth/login">
-              <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-6 font-bold shadow-lg shadow-slate-200">
+            <Link href="/auth/signup">
+              <Button className="rounded-full bg-slate-900 px-6 font-bold text-white shadow-lg shadow-slate-200 hover:bg-slate-800">
                 Get Started
               </Button>
             </Link>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm sm:hidden"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
+
+        {isMobileMenuOpen ? (
+          <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:hidden">
+            <div className="grid gap-4">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item}
+                </NavLink>
+              ))}
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full font-bold">
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/auth/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button className="w-full bg-slate-900 font-bold text-white hover:bg-slate-800">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </nav>
 
-      {/* HERO */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-100/50 blur-[120px] rounded-full animate-pulse" />
-          <div className="absolute bottom-[10%] right-[-5%] w-[40%] h-[40%] bg-blue-50/50 blur-[120px] rounded-full" />
+      <section className="relative overflow-hidden pb-20 pt-32 lg:pb-32 lg:pt-48">
+        <div className="absolute left-1/2 top-0 -z-10 h-full w-full -translate-x-1/2">
+          <div className="absolute left-[-10%] top-[-10%] h-[50%] w-[50%] animate-pulse rounded-full bg-amber-100/50 blur-[120px]" />
+          <div className="absolute bottom-[10%] right-[-5%] h-[40%] w-[40%] rounded-full bg-blue-50/50 blur-[120px]" />
         </div>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid items-center gap-16 lg:grid-cols-2">
             <motion.div variants={containerVariants} initial="hidden" animate="visible">
-              <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-100 text-amber-700 text-xs font-bold uppercase tracking-widest mb-6">
+              <motion.div
+                variants={itemVariants}
+                className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-amber-700"
+              >
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
                 </span>
-                v2.0 is now live
+                Vehicle Fleet Management System
               </motion.div>
-              <motion.h1 variants={itemVariants} className="text-6xl lg:text-8xl font-black tracking-tight text-slate-900 leading-[0.9] mb-8">
+
+              <motion.h1
+                variants={itemVariants}
+                className="mb-8 text-6xl font-black leading-[0.9] tracking-tight text-slate-900 lg:text-8xl"
+              >
                 Run your <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-700 to-amber-600">
-                  Fleet like Magic.
+                <span className="bg-gradient-to-r from-slate-900 via-slate-700 to-amber-600 bg-clip-text text-transparent">
+                  Fleet with Control.
                 </span>
               </motion.h1>
-              <motion.p variants={itemVariants} className="text-xl text-slate-600 max-w-lg leading-relaxed mb-10 font-medium">
-                The world's most intuitive fleet management system. Automate dispatch, track fuel, and empower drivers with one platform.
+
+              <motion.p
+                variants={itemVariants}
+                className="mb-10 max-w-lg text-xl font-medium leading-relaxed text-slate-600"
+              >
+                A secure fleet management platform for trips, vehicles, fuel, maintenance,
+                rentals, drivers, users, and reporting.
               </motion.p>
-              <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
+
+              <motion.div variants={itemVariants} className="flex flex-col gap-4 sm:flex-row">
                 <Link href="/auth/login">
-                  <Button size="lg" className="h-16 px-8 rounded-2xl bg-slate-900 text-white hover:bg-black text-lg font-bold group">
-                    Go to Dashboard
-                    <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <Button
+                    size="lg"
+                    className="h-16 rounded-2xl bg-slate-900 px-8 text-lg font-bold text-white hover:bg-black group"
+                  >
+                    Open Dashboard
+                    <ChevronRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
-                <Link href="#features">
-                  <Button size="lg" variant="outline" className="h-16 px-8 rounded-2xl border-2 text-lg font-bold hover:bg-slate-50">
-                    <Play className="mr-2 w-5 h-5 fill-current" /> Learn More
+                <Link href="/auth/signup">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-16 rounded-2xl border-2 px-8 text-lg font-bold hover:bg-slate-50"
+                  >
+                    <Play className="mr-2 h-5 w-5 fill-current" />
+                    Staff Signup
                   </Button>
                 </Link>
               </motion.div>
-              <motion.div variants={itemVariants} className="mt-12 flex items-center gap-8 border-t border-slate-100 pt-8">
-                <CountUp value={2400} label="Active Fleets" suffix="+" />
+
+              <motion.div
+                variants={itemVariants}
+                className="mt-12 flex items-center gap-8 border-t border-slate-100 pt-8"
+              >
+                <Stat value="8" label="Core Modules" />
                 <div className="h-10 w-px bg-slate-100" />
-                <CountUp value={99} label="Efficiency" suffix="%" />
+                <Stat value="4" label="Role Portals" />
                 <div className="h-10 w-px bg-slate-100" />
                 <div className="flex flex-col">
                   <div className="flex text-amber-400">
-                    {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star key={i} className="h-4 w-4 fill-current" />
+                    ))}
                   </div>
-                  <span className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-tighter">Top Rated</span>
+                  <span className="mt-1 text-xs font-bold uppercase tracking-tighter text-slate-400">
+                    Production Ready
+                  </span>
                 </div>
               </motion.div>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.8, rotateY: -20 }}
+              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
               transition={{ duration: 1.2, ease: "easeOut" }}
               className="relative hidden lg:block"
             >
-              <div className="relative bg-white rounded-[2rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border border-slate-100 p-4 overflow-hidden">
-                <div className="bg-slate-900 rounded-xl p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-bold text-slate-400">Fleet Overview</span>
-                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full font-bold">Live</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    {[
-                      { label: "Active Trips", value: "12", color: "text-amber-400" },
-                      { label: "Drivers Online", value: "8", color: "text-green-400" },
-                      { label: "Pending Approval", value: "3", color: "text-blue-400" },
-                      { label: "Completed Today", value: "24", color: "text-purple-400" },
-                    ].map(item => (
-                      <div key={item.label} className="bg-white/5 rounded-xl p-3">
-                        <div className={`text-2xl font-black ${item.color}`}>{item.value}</div>
-                        <div className="text-xs text-slate-400 mt-1">{item.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    {["Colombo → Kandy", "Galle → Colombo", "Jaffna → Colombo"].map((route, i) => (
-                      <div key={i} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
-                        <span className="text-xs text-slate-300">{route}</span>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          i === 0 ? "bg-green-500/20 text-green-400" :
-                          i === 1 ? "bg-amber-500/20 text-amber-400" :
-                          "bg-blue-500/20 text-blue-400"
-                        }`}>
-                          {i === 0 ? "ONGOING" : i === 1 ? "APPROVED" : "PENDING"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute top-4 -left-8 bg-white p-4 rounded-2xl shadow-2xl border border-slate-50 flex items-center gap-3"
-                >
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                    <TrendingUp className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400">Efficiency</p>
-                    <p className="text-lg font-black text-slate-900">+24%</p>
-                  </div>
-                </motion.div>
-              </div>
+              <DashboardPreview />
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section id="features" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-sm font-black text-amber-500 uppercase tracking-[0.3em] mb-4">The Platform</h2>
-            <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Everything you need.</h3>
+      <section id="features" className="bg-slate-50 py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-sm font-black uppercase tracking-[0.3em] text-amber-500">
+              The Platform
+            </h2>
+            <h3 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
+              Everything your fleet team needs.
+            </h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <motion.div whileHover={{ y: -5 }} className="md:col-span-2 bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-sm overflow-hidden relative group">
-              <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform">
-                <MapPin className="text-amber-400" />
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-white p-10 shadow-sm group md:col-span-2"
+            >
+              <div className="relative z-10">
+                <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 transition-transform group-hover:rotate-6">
+                  <MapPin className="text-amber-400" />
+                </div>
+                <h4 className="mb-4 text-3xl font-black">Trip Booking & Scheduling</h4>
+                <p className="max-w-sm font-medium leading-relaxed text-slate-500">
+                  Submit requests, approve trips, assign vehicles and drivers, and follow trip
+                  progress from one workflow.
+                </p>
               </div>
-              <h4 className="text-3xl font-black mb-4">Trip Scheduling</h4>
-              <p className="text-slate-500 max-w-sm font-medium leading-relaxed">Complete trip lifecycle management — from request to completion with real-time status tracking and conflict prevention.</p>
+              <div className="absolute bottom-0 right-0 w-1/2 opacity-10 transition-opacity group-hover:opacity-20">
+                <Globe className="h-64 w-64 translate-x-10 translate-y-10" />
+              </div>
             </motion.div>
-            <motion.div whileHover={{ y: -5 }} className="bg-slate-900 rounded-[2.5rem] p-10 text-white flex flex-col justify-between">
-              <Fuel className="text-amber-400 w-12 h-12" />
+
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="flex flex-col justify-between rounded-[2.5rem] bg-slate-900 p-10 text-white"
+            >
+              <Fuel className="h-12 w-12 text-amber-400" />
               <div>
-                <h4 className="text-2xl font-bold mb-2">Fuel Management</h4>
-                <p className="text-slate-400 text-sm font-medium">Track consumption, detect anomalies, and optimize fuel usage.</p>
+                <h4 className="mb-2 text-2xl font-bold">Fuel Management</h4>
+                <p className="text-sm font-medium text-slate-400">
+                  Record fuel logs, monitor usage, and support accurate operational cost tracking.
+                </p>
               </div>
             </motion.div>
-            <motion.div whileHover={{ y: -5 }} className="bg-amber-400 rounded-[2.5rem] p-10 flex flex-col justify-between">
-              <Shield className="text-slate-900 w-12 h-12" />
+
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="flex flex-col justify-between rounded-[2.5rem] bg-amber-400 p-10"
+            >
+              <Shield className="h-12 w-12 text-slate-900" />
               <div>
-                <h4 className="text-2xl font-bold mb-2 text-slate-900">Driver Management</h4>
-                <p className="text-slate-800 text-sm font-medium opacity-80">License tracking, performance monitoring, and assignment management.</p>
+                <h4 className="mb-2 text-2xl font-bold text-slate-900">User Authentication</h4>
+                <p className="text-sm font-medium text-slate-800 opacity-80">
+                  Verified signup, secure login, password reset, and role-based access.
+                </p>
               </div>
             </motion.div>
-            <motion.div whileHover={{ y: -5 }} className="md:col-span-2 bg-white rounded-[2.5rem] p-10 border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-10">
+
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="flex flex-col items-center gap-10 rounded-[2.5rem] border border-slate-200/60 bg-white p-10 shadow-sm md:col-span-2 md:flex-row"
+            >
               <div className="flex-1">
-                <h4 className="text-3xl font-black mb-4">Analytics Dashboard</h4>
-                <p className="text-slate-500 font-medium mb-6">Cost analysis, utilization reports, and driver performance insights exported to PDF or Excel.</p>
+                <h4 className="mb-4 text-3xl font-black">Fleet Records & Reports</h4>
+                <p className="mb-6 font-medium text-slate-500">
+                  Track vehicles, maintenance, rental records, driver performance, fuel usage,
+                  and admin reports clearly.
+                </p>
                 <Link href="/auth/login">
-                  <Button variant="link" className="p-0 font-bold text-amber-600 text-lg">Go to Dashboard <ArrowRight className="ml-2 w-5 h-5" /></Button>
+                  <Button variant="link" className="p-0 text-lg font-bold text-amber-600">
+                    Open dashboard <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
                 </Link>
               </div>
-              <div className="w-full md:w-1/3 bg-slate-50 rounded-2xl p-6">
+              <div className="w-full rounded-2xl bg-slate-50 p-6 md:w-1/3">
                 <div className="space-y-4">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} whileInView={{ width: `${60 + i * 10}%` }} className="h-full bg-amber-400" />
+                  {[72, 84, 63].map((width) => (
+                    <div key={width} className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${width}%` }}
+                        viewport={{ once: true }}
+                        className="h-full bg-amber-400"
+                      />
                     </div>
                   ))}
                 </div>
@@ -279,36 +439,52 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SOLUTIONS */}
-      <section id="solutions" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-sm font-black text-amber-500 uppercase tracking-[0.3em] mb-4">Solutions</h2>
-            <h3 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">Built for every role.</h3>
+      <section id="solutions" className="bg-white py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-sm font-black uppercase tracking-[0.3em] text-amber-500">
+              Solutions
+            </h2>
+            <h3 className="text-3xl font-black tracking-tight text-slate-900 md:text-5xl">
+              Built for every role.
+            </h3>
           </div>
-          <div className="flex flex-col md:flex-row gap-8 items-center">
-            <div className="w-full md:w-1/3 flex flex-col gap-3">
-              {['admin', 'staff', 'system_user', 'driver'].map((role) => (
+
+          <div className="flex flex-col items-center gap-8 md:flex-row">
+            <div className="flex w-full flex-col gap-3 md:w-1/3">
+              {(Object.keys(roleCopy) as Array<keyof typeof roleCopy>).map((role) => (
                 <button
                   key={role}
+                  type="button"
                   onClick={() => setActiveTab(role)}
                   className={cn(
-                    "flex items-center gap-4 p-4 rounded-2xl text-left border-2 transition-all",
-                    activeTab === role ? "border-amber-400 bg-amber-50" : "border-slate-100 hover:border-slate-200"
+                    "flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition-all",
+                    activeTab === role
+                      ? "border-amber-400 bg-amber-50"
+                      : "border-slate-100 hover:border-slate-200"
                   )}
                 >
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold uppercase", activeTab === role ? "bg-amber-400 text-slate-900" : "bg-slate-100 text-slate-400")}>
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-full font-bold uppercase",
+                      activeTab === role
+                        ? "bg-amber-400 text-slate-900"
+                        : "bg-slate-100 text-slate-400"
+                    )}
+                  >
                     {role.charAt(0)}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 uppercase tracking-wide">{role.replace('_', ' ')}</div>
-                    <div className="text-xs text-slate-500 font-medium capitalize">{role.replace('_', ' ')} Portal</div>
+                    <div className="font-bold uppercase tracking-wide text-slate-900">{role}</div>
+                    <div className="text-xs font-medium capitalize text-slate-500">{role} Portal</div>
                   </div>
                 </button>
               ))}
             </div>
-            <div className="w-full md:w-2/3 bg-slate-900 rounded-[3rem] p-10 md:p-16 text-white min-h-[400px] flex flex-col justify-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
+
+            <div className="relative flex min-h-[400px] w-full flex-col justify-center overflow-hidden rounded-[3rem] bg-slate-900 p-10 text-center text-white md:w-2/3 md:p-16 md:text-left">
+              <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
@@ -318,16 +494,15 @@ export default function LandingPage() {
                   transition={{ duration: 0.3 }}
                   className="relative z-10"
                 >
-                  <h4 className="text-3xl font-black mb-6 capitalize text-amber-400">{activeTab.replace('_', ' ')} Dashboard</h4>
-                  <p className="text-slate-300 text-lg mb-8 leading-relaxed max-w-lg">
-                    {activeTab === 'admin' && "Full system control. Manage users, monitor all modules, and ensure compliance across the entire fleet."}
-                    {activeTab === 'staff' && "Review trip requests, approve or reject with reasons, assign drivers and vehicles, and prevent double bookings."}
-                    {activeTab === 'system_user' && "Request vehicles for trips, track your request status in real-time, and manage your travel schedule."}
-                    {activeTab === 'driver' && "View your assigned trips, start and complete journeys, and access all trip details from one place."}
+                  <h4 className="mb-6 text-3xl font-black capitalize text-amber-400">
+                    {activeTab} Dashboard
+                  </h4>
+                  <p className="mb-8 max-w-lg text-lg leading-relaxed text-slate-300">
+                    {roleCopy[activeTab]}
                   </p>
                   <Link href="/auth/login">
-                    <Button className="bg-white text-slate-900 hover:bg-amber-50 font-bold rounded-full px-8 h-12">
-                      Launch Dashboard
+                    <Button className="h-12 rounded-full bg-white px-8 font-bold text-slate-900 hover:bg-amber-50">
+                      Open Dashboard
                     </Button>
                   </Link>
                 </motion.div>
@@ -337,78 +512,280 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* PROCESS */}
-      <section id="process" className="py-24 bg-slate-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-20">
-            <h2 className="text-sm font-black text-amber-500 uppercase tracking-[0.3em] mb-4">The Process</h2>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">How it works.</h2>
+      <section id="process" className="overflow-hidden bg-slate-50 py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-20 flex flex-col items-end justify-between gap-8 md:flex-row">
+            <div className="max-w-xl">
+              <h2 className="mb-4 text-sm font-black uppercase tracking-[0.3em] text-amber-500">
+                The Process
+              </h2>
+              <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
+                Built for daily <span className="text-6xl text-amber-500">Control.</span>
+              </h2>
+              <p className="mt-6 text-lg font-medium text-slate-500">
+                A clear journey from trip request to approval, assignment, completion, and reporting.
+              </p>
+            </div>
           </div>
-          <div className="grid md:grid-cols-4 gap-8 relative">
+
+          <div className="relative grid gap-12 md:grid-cols-3">
+            <div className="absolute left-0 top-1/2 -z-10 hidden h-px w-full bg-slate-200 md:block" />
+
             {[
-              { title: 'Request', icon: FileText, desc: 'System User submits a trip request with destination, time, and passenger details.', step: '01' },
-              { title: 'Approve', icon: CheckCircle2, desc: 'Staff reviews the request and assigns a vehicle and driver with conflict prevention.', step: '02' },
-              { title: 'Execute', icon: Truck, desc: 'Driver starts the trip, system tracks status in real-time until completion.', step: '03' },
-              { title: 'Report', icon: BarChart3, desc: 'Analytics dashboard generates cost and performance reports automatically.', step: '04' },
-            ].map((step, idx) => (
+              {
+                title: "Request & Approve",
+                icon: Zap,
+                desc: "Users submit requests and staff approve or reject them with clear operational context.",
+              },
+              {
+                title: "Assign & Track",
+                icon: MapPin,
+                desc: "Vehicles, rentals, and drivers are assigned while teams follow trip progress.",
+              },
+              {
+                title: "Review & Report",
+                icon: BarChart3,
+                desc: "Admins review cost, utilization, driver performance, fuel, and maintenance reports.",
+              },
+            ].map((step, index) => (
               <motion.div
-                key={idx}
+                key={step.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.2 }}
-                className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50"
+                transition={{ delay: index * 0.2 }}
+                className="rounded-[2rem] border border-slate-100 bg-white p-8 shadow-xl shadow-slate-200/50"
               >
-                <div className="text-4xl font-black text-slate-100 mb-4">{step.step}</div>
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center mb-4 border border-amber-100">
-                  <step.icon className="w-6 h-6 text-amber-600" />
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-100 bg-amber-50">
+                  <step.icon className="h-8 w-8 text-amber-600" />
                 </div>
-                <h4 className="text-xl font-black mb-3">{step.title}</h4>
-                <p className="text-slate-500 font-medium leading-relaxed text-sm">{step.desc}</p>
+                <h4 className="mb-4 text-2xl font-black">{step.title}</h4>
+                <p className="font-medium leading-relaxed text-slate-500">{step.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-slate-900 rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} className="relative z-10">
-              <h2 className="text-4xl md:text-7xl font-black text-white mb-8 tracking-tighter">
+      <section id="access" className="bg-white py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-sm font-black uppercase tracking-[0.3em] text-amber-500">
+              Access
+            </h2>
+            <h3 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
+              Secure access for every user.
+            </h3>
+          </div>
+
+          <div className="grid items-start gap-8 md:grid-cols-3">
+            {[
+              {
+                title: "Login",
+                value: "Secure",
+                href: "/auth/login",
+                action: "Log In",
+                features: ["Company email login", "Role-based dashboard", "Protected routes", "Session handling"],
+              },
+              {
+                title: "Staff Signup",
+                value: "Verified",
+                href: "/auth/signup",
+                action: "Create Account",
+                featured: true,
+                features: ["Company email check", "Staff profile validation", "Employee ID verification", "Email activation"],
+              },
+              {
+                title: "Recovery",
+                value: "Reset",
+                href: "/auth/forgot-password",
+                action: "Reset Password",
+                features: ["Forgot password flow", "Secure reset link", "Email verification", "Clear user messages"],
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className={cn(
+                  "rounded-[2.5rem] p-8",
+                  card.featured
+                    ? "relative bg-slate-900 text-white shadow-2xl shadow-slate-900/20 md:-translate-y-4 md:p-10"
+                    : "border border-slate-200 bg-white"
+                )}
+              >
+                {card.featured ? (
+                  <div className="absolute right-0 top-0 rounded-bl-xl rounded-tr-[2.5rem] bg-amber-400 px-4 py-2 text-xs font-bold text-slate-900">
+                    VERIFIED
+                  </div>
+                ) : null}
+                <h4 className={cn("mb-2 text-xl font-bold", card.featured ? "text-amber-400" : "text-slate-900")}>
+                  {card.title}
+                </h4>
+                <div className="mb-6 text-4xl font-black">{card.value}</div>
+                <ul className="mb-8 space-y-4">
+                  {card.features.map((feature) => (
+                    <li
+                      key={feature}
+                      className={cn(
+                        "flex items-center gap-2 text-sm font-medium",
+                        card.featured ? "text-slate-300" : "text-slate-600"
+                      )}
+                    >
+                      <Check className={cn("h-4 w-4", card.featured ? "text-amber-400" : "text-green-500")} />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={card.href}>
+                  <Button
+                    variant={card.featured ? "default" : "outline"}
+                    className={cn(
+                      "h-12 w-full rounded-xl font-bold",
+                      card.featured && "h-14 bg-amber-400 text-slate-900 hover:bg-amber-300"
+                    )}
+                  >
+                    {card.action}
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 p-12 text-center md:p-24">
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage: "radial-gradient(#fff 1px, transparent 1px)",
+                backgroundSize: "40px 40px",
+              }}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="relative z-10"
+            >
+              <h2 className="mb-8 text-4xl font-black tracking-tighter text-white md:text-7xl">
                 Ready to manage <br /> your fleet?
               </h2>
-              <p className="text-slate-400 text-xl max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
-                Your complete Vehicle Fleet Management System is ready to use.
+              <p className="mx-auto mb-12 max-w-2xl text-xl font-medium leading-relaxed text-slate-400">
+                Continue to your FleetPro dashboard or create a verified staff account to begin
+                using the system.
               </p>
-              <Link href="/auth/login">
-                <Button size="lg" className="h-16 px-12 rounded-2xl bg-amber-400 text-slate-900 hover:bg-amber-300 text-lg font-black">
-                  Open Dashboard
-                </Button>
-              </Link>
+              <div className="flex flex-col justify-center gap-6 sm:flex-row">
+                <Link href="/auth/signup">
+                  <Button
+                    size="lg"
+                    className="h-16 rounded-2xl bg-amber-400 px-12 text-lg font-black text-slate-900 hover:bg-amber-300"
+                  >
+                    Create Staff Account
+                  </Button>
+                </Link>
+                <Link href="/auth/login">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-16 rounded-2xl border-white/20 px-12 text-lg font-black text-white hover:bg-white/5"
+                  >
+                    Log In
+                  </Button>
+                </Link>
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-white py-12 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-              <Truck className="text-amber-400 w-5 h-5" />
+      <footer id="contact" className="border-t border-slate-100 bg-white py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-20 grid grid-cols-2 gap-12 md:grid-cols-5">
+            <div className="col-span-2">
+              <div className="mb-6 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900">
+                  <Truck className="h-5 w-5 text-amber-400" />
+                </div>
+                <span className="text-lg font-black uppercase tracking-tighter">FleetPro</span>
+              </div>
+              <p className="mb-8 max-w-xs font-medium text-slate-500">
+                Vehicle Fleet Management System for secure daily fleet operations.
+              </p>
+              <div className="flex gap-4">
+                {[Globe, Smartphone, Star].map((Icon, index) => (
+                  <div
+                    key={index}
+                    className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-100 transition-colors hover:bg-slate-50"
+                  >
+                    <Icon className="h-4 w-4 text-slate-400" />
+                  </div>
+                ))}
+              </div>
             </div>
-            <span className="text-lg font-black tracking-tighter uppercase">FleetPro</span>
+
+            {[
+              {
+                title: "Product",
+                links: [
+                  { label: "Features", href: "#features" },
+                  { label: "Solutions", href: "#solutions" },
+                  { label: "Access", href: "#access" },
+                ],
+              },
+              {
+                title: "Account",
+                links: [
+                  { label: "Log In", href: "/auth/login" },
+                  { label: "Staff Signup", href: "/auth/signup" },
+                  { label: "Reset Password", href: "/auth/forgot-password" },
+                ],
+              },
+              {
+                title: "Modules",
+                links: [
+                  { label: "Trips", href: "#process" },
+                  { label: "Fuel", href: "#features" },
+                  { label: "Reports", href: "#features" },
+                ],
+              },
+            ].map((column) => (
+              <div key={column.title}>
+                <h4 className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-slate-900">
+                  {column.title}
+                </h4>
+                <ul className="space-y-4">
+                  {column.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="text-sm font-bold text-slate-500 transition-colors hover:text-amber-600"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <p className="text-sm font-bold text-slate-400">© 2026 VFMS — Vehicle Fleet Management System. University of Moratuwa.</p>
-          <Link href="/auth/login">
-            <Button variant="outline" className="font-bold rounded-full">Go to Dashboard</Button>
-          </Link>
+
+          <div className="flex flex-col items-center justify-between gap-6 border-t border-slate-100 pt-8 md:flex-row">
+            <p className="text-sm font-bold text-slate-400">
+              (c) 2026 FleetPro VFMS. Vehicle Fleet Management System.
+            </p>
+            <div className="flex gap-8">
+              <Link href="/auth/login" className="text-sm font-bold text-slate-400 hover:text-slate-900">
+                Login
+              </Link>
+              <Link href="/auth/signup" className="text-sm font-bold text-slate-400 hover:text-slate-900">
+                Signup
+              </Link>
+            </div>
+          </div>
         </div>
       </footer>
-
     </div>
   );
 }

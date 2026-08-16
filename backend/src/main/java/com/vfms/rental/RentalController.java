@@ -69,6 +69,8 @@ public class RentalController {
     @PostMapping("/{id}/agreement")
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadAgreement(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        fleetDocumentStorageService.validateFleetDocument(file);
+        rentalService.assertAgreementUploadAllowed(id);
         String fileReference = fleetDocumentStorageService.uploadRentalDocument(id, "agreement", file);
         RentalResponseDto response = rentalService.uploadAgreement(id, fileReference);
         return ResponseEntity.ok(ApiResponse.success("Agreement uploaded", response));
@@ -77,6 +79,8 @@ public class RentalController {
     @PostMapping("/{id}/invoice")
     public ResponseEntity<ApiResponse<RentalResponseDto>> uploadInvoice(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        fleetDocumentStorageService.validateFleetDocument(file);
+        rentalService.assertInvoiceUploadAllowed(id);
         String fileReference = fleetDocumentStorageService.uploadRentalDocument(id, "invoice", file);
         RentalResponseDto response = rentalService.uploadInvoice(id, fileReference);
         return ResponseEntity.ok(ApiResponse.success("Invoice uploaded", response));

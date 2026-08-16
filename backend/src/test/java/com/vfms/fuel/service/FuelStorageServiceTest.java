@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.util.Map;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,10 +71,12 @@ class FuelStorageServiceTest {
 
     @Test
     @DisplayName("uploadReceipt rejects valid files when Supabase is not configured")
-    void uploadReceipt_rejectsWhenStorageIsNotConfigured() {
+    void uploadReceipt_rejectsWhenStorageIsNotConfigured() throws Exception {
         when(file.isEmpty()).thenReturn(false);
         when(file.getSize()).thenReturn(1024L);
         when(file.getContentType()).thenReturn("application/pdf");
+        when(file.getOriginalFilename()).thenReturn("receipt.pdf");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream("%PDF-1.7".getBytes()));
 
         ValidationException ex = assertThrows(ValidationException.class,
                 () -> fuelStorageService.uploadReceipt(file));
@@ -88,6 +91,9 @@ class FuelStorageServiceTest {
         when(file.getSize()).thenReturn(1024L);
         when(file.getContentType()).thenReturn("image/webp");
         when(file.getOriginalFilename()).thenReturn("receipt.webp");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[] {
+                'R', 'I', 'F', 'F', 1, 2, 3, 4, 'W', 'E', 'B', 'P'
+        }));
         when(file.getBytes()).thenReturn(new byte[] {1, 2, 3});
         when(config.getStorageUrl()).thenReturn("https://project.supabase.co/storage/v1");
         when(config.getBucket()).thenReturn("fuel-receipts");
@@ -99,6 +105,33 @@ class FuelStorageServiceTest {
 
         assertTrue(storedPath.startsWith("receipts/"));
         assertTrue(storedPath.endsWith("_receipt.webp"));
+    }
+
+    @Test
+    @DisplayName("uploadReceipt rejects files with unsupported extensions")
+    void uploadReceipt_rejectsUnsupportedExtensions() {
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getContentType()).thenReturn("application/pdf");
+        when(file.getOriginalFilename()).thenReturn("receipt.exe");
+
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> fuelStorageService.uploadReceipt(file));
+        assertEquals("Invalid receipt file type.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("uploadReceipt rejects content that does not match MIME type")
+    void uploadReceipt_rejectsMismatchedFileSignature() throws Exception {
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getContentType()).thenReturn("application/pdf");
+        when(file.getOriginalFilename()).thenReturn("receipt.pdf");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream("not a pdf".getBytes()));
+
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> fuelStorageService.uploadReceipt(file));
+        assertEquals("Invalid receipt file type.", ex.getMessage());
     }
 
     @Test

@@ -63,6 +63,9 @@ public class FuelService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Vehicle not found: " + request.getVehicleId()));
         validateVehicleEligibility(vehicle);
+        validateFuelDateNotFuture(request.getFuelDate());
+        validateOdometerSequence(vehicle.getId(), null,
+                request.getFuelDate(), request.getOdometerReading());
 
         User driver = null;
         if (request.getDriverId() != null) {
@@ -94,8 +97,7 @@ public class FuelService {
         reEvaluateMisuse(record);
 
         FuelRecord saved = fuelRecordRepository.save(record);
-        vehicle.setOdometerReading(request.getOdometerReading());
-        vehicleRepository.save(vehicle);
+        syncVehicleOdometer(vehicle, request.getOdometerReading());
 
         return toResponse(saved);
     }
@@ -211,6 +213,9 @@ public class FuelService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Vehicle not found in database: " + request.getVehicleId()));
         validateVehicleEligibility(vehicle);
+        validateFuelDateNotFuture(request.getFuelDate());
+        validateOdometerSequence(vehicle.getId(), record.getId(),
+                request.getFuelDate(), request.getOdometerReading());
 
         User driver = null;
         if (request.getDriverId() != null) {
@@ -232,8 +237,7 @@ public class FuelService {
         reEvaluateMisuse(record);
 
         FuelRecord saved = fuelRecordRepository.save(record);
-        vehicle.setOdometerReading(request.getOdometerReading());
-        vehicleRepository.save(vehicle);
+        syncVehicleOdometer(vehicle, request.getOdometerReading());
 
         return toResponse(saved);
     }
@@ -281,15 +285,16 @@ public class FuelService {
         if (record.getQuantity() == null || record.getCostPerLitre() == null) {
             throw new ValidationException("Quantity and costPerLitre must be set to compute total cost.");
         }
+        validateFuelDateNotFuture(record.getFuelDate());
+        validateOdometerSequence(record.getVehicle().getId(), record.getId(),
+                record.getFuelDate(), record.getOdometerReading());
         record.setTotalCost(calculateTotalCost(record.getQuantity(), record.getCostPerLitre()));
 
         reEvaluateMisuse(record);
 
         FuelRecord saved = fuelRecordRepository.save(record);
         if (updates.getOdometerReading() != null) {
-            Vehicle vehicle = saved.getVehicle();
-            vehicle.setOdometerReading(updates.getOdometerReading());
-            vehicleRepository.save(vehicle);
+            syncVehicleOdometer(saved.getVehicle(), updates.getOdometerReading());
         }
 
         return toResponse(saved);
@@ -436,6 +441,63 @@ public class FuelService {
         UserStatus status = driver.getStatus();
         if (status != UserStatus.APPROVED) {
             throw new ValidationException("Only active drivers can be assigned to fuel entries.");
+        }
+    }
+
+    private void validateFuelDateNotFuture(LocalDate fuelDate) {
+        if (fuelDate != null && fuelDate.isAfter(LocalDate.now())) {
+            throw new ValidationException("Fuel date cannot be in the future.");
+        }
+    }
+
+    private void validateOdometerSequence(
+            Long vehicleId,
+            UUID currentRecordId,
+            LocalDate fuelDate,
+            Double odometerReading
+    ) {
+        if (vehicleId == null || fuelDate == null || odometerReading == null) {
+            return;
+        }
+
+        List<FuelRecord> vehicleRecords = currentRecordId == null
+                ? fuelRecordRepository.findLatestByVehicle(vehicleId)
+                : fuelRecordRepository.findLatestByVehicleExcluding(vehicleId, currentRecordId);
+        if (vehicleRecords == null) {
+            return;
+        }
+
+        for (FuelRecord existing : vehicleRecords) {
+            if (existing.getFuelDate() == null || existing.getOdometerReading() == null) {
+                continue;
+            }
+
+            boolean previousOrSameNewEntry = existing.getFuelDate().isBefore(fuelDate)
+                    || (currentRecordId == null && existing.getFuelDate().isEqual(fuelDate));
+            if (previousOrSameNewEntry && existing.getOdometerReading() > odometerReading) {
+                throw new ValidationException(
+                        "Odometer reading cannot be lower than the latest recorded reading for this vehicle."
+                );
+            }
+
+            if (existing.getFuelDate().isAfter(fuelDate)
+                    && existing.getOdometerReading() < odometerReading) {
+                throw new ValidationException(
+                        "Odometer reading cannot be greater than a later fuel record for this vehicle."
+                );
+            }
+        }
+    }
+
+    private void syncVehicleOdometer(Vehicle vehicle, Double odometerReading) {
+        if (vehicle == null || odometerReading == null) {
+            return;
+        }
+
+        Double currentOdometer = vehicle.getOdometerReading();
+        if (currentOdometer == null || odometerReading > currentOdometer) {
+            vehicle.setOdometerReading(odometerReading);
+            vehicleRepository.save(vehicle);
         }
     }
 

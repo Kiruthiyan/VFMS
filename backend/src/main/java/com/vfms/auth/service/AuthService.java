@@ -64,7 +64,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(email, request.getPassword())
             );
         } catch (DisabledException ex) {
-            throw new AuthorizationException("This account is deactivated. Please contact your administrator.");
+            throw new AuthorizationException("Your account is currently deactivated. Please contact your administrator to restore access.");
         } catch (BadCredentialsException ex) {
             throw new AuthenticationException("Invalid email or password.");
         } catch (org.springframework.security.core.AuthenticationException ex) {
@@ -78,7 +78,16 @@ public class AuthService {
 
     @Transactional
     public AuthResponse refresh(RefreshTokenRequest request) {
-        RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken())
+        return refresh(request != null ? request.getRefreshToken() : null);
+    }
+
+    @Transactional
+    public AuthResponse refresh(String refreshTokenValue) {
+        if (refreshTokenValue == null || refreshTokenValue.isBlank()) {
+            throw new AuthenticationException("Refresh token is required.");
+        }
+
+        RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenValue)
                 .orElseThrow(() -> new AuthenticationException("Invalid refresh token."));
 
         if (refreshToken.isExpired()) {
@@ -439,7 +448,7 @@ public class AuthService {
      */
     private void validateLoginStatus(User user) {
         if (user.getDeletedAt() != null) {
-            throw new AuthorizationException("This account has been deleted. Please contact an administrator.");
+            throw new AuthorizationException("This account is archived. Please ask an administrator to restore it from Deleted Users.");
         }
         if (!user.isEmailVerified() || user.getStatus() == UserStatus.EMAIL_UNVERIFIED) {
             throw new ValidationException("Please verify your email before signing in.");
@@ -451,7 +460,7 @@ public class AuthService {
             throw new AuthorizationException("Your registration was rejected. Please contact an administrator.");
         }
         if (user.getStatus() == UserStatus.DEACTIVATED) {
-            throw new AuthorizationException("This account is deactivated. Please contact your administrator.");
+            throw new AuthorizationException("Your account is currently deactivated. Please contact your administrator to restore access.");
         }
     }
 

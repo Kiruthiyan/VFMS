@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   BarChart3,
@@ -19,41 +19,26 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
-  extractUniqVehicles,
-  extractUniqueDrivers,
   getAllFuelRecordsApi,
   getErrorMessage,
-  type FuelRecord,
 } from "@/lib/api/fuel";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function FuelDashboardPage() {
-  const [records, setRecords] = useState<FuelRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: records = [],
+    error,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.fuelRecords,
+    queryFn: getAllFuelRecordsApi,
+  });
+  const errorMessage = error ? getErrorMessage(error) : null;
 
-  const vehicles = extractUniqVehicles(records);
-  const drivers = extractUniqueDrivers(records);
   const totalSpend = records.reduce((sum, r) => sum + (r.totalCost || 0), 0);
   const totalVolume = records.reduce((sum, r) => sum + (r.quantity || 0), 0);
   const avgCostPerLiter =
     totalVolume > 0 ? (totalSpend / totalVolume).toFixed(2) : "0.00";
-
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getAllFuelRecordsApi();
-      setRecords(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
 
   const statCards = [
     {
@@ -85,28 +70,24 @@ export default function FuelDashboardPage() {
   const operationCards = [
     {
       title: "Fuel Logs",
-      description: "View and filter every fuel transaction recorded.",
       href: "/admin/fuel/logs",
       icon: FileText,
       action: "View",
     },
     {
       title: "New Fuel Entry",
-      description: "Record a new fuel purchase for the fleet.",
       href: "/admin/fuel/create",
       icon: Plus,
       action: "Create",
     },
     {
       title: "Fuel Alerts",
-      description: "Review unusual usage and suspicious patterns.",
       href: "/admin/fuel/alerts",
       icon: AlertCircle,
       action: "Review",
     },
     {
       title: "Flagged Records",
-      description: "Open records that need operational follow-up.",
       href: "/admin/fuel/alerts/flagged",
       icon: Flag,
       action: "Resolve",
@@ -117,7 +98,7 @@ export default function FuelDashboardPage() {
       <div className="space-y-6">
         <PageHeader
           title="Fuel Management"
-          description="Monitor fuel usage, operating cost, and fleet activity from one consistent workspace."
+          description="Track fuel records, cost, volume, and flagged activity."
           icon={Fuel}
           actions={
             <>
@@ -148,9 +129,9 @@ export default function FuelDashboardPage() {
           </div>
         )}
 
-        {error && !loading && <FormMessage type="error" message={error} />}
+        {errorMessage && !loading && <FormMessage type="error" message={errorMessage} />}
 
-        {!loading && !error && (
+        {!loading && !errorMessage && (
           <>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {statCards.map((card) => {
@@ -193,9 +174,6 @@ export default function FuelDashboardPage() {
                     <Fuel className="text-amber-600" size={22} />
                     Fuel Operations
                   </CardTitle>
-                  <p className="mt-1 text-sm font-medium text-slate-500">
-                    Common fuel workflows are available here without crowding the sidebar.
-                  </p>
                 </div>
               </div>
               <CardContent className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -218,79 +196,12 @@ export default function FuelDashboardPage() {
                       <h3 className="mt-4 text-base font-bold text-slate-950">
                         {card.title}
                       </h3>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {card.description}
-                      </p>
                     </Link>
                   );
                 })}
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="vfms-card-header px-6 py-5">
-                  <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                    <Fuel size={18} className="text-amber-700" />
-                    Fleet Overview
-                  </CardTitle>
-                </div>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                      <span className="text-sm font-medium text-slate-700">
-                        Active Vehicles
-                      </span>
-                      <span className="text-2xl font-bold text-slate-950">
-                        {vehicles.length}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700">
-                        Active Drivers
-                      </span>
-                      <span className="text-2xl font-bold text-slate-950">
-                        {drivers.length}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="vfms-card-header px-6 py-5">
-                  <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                    <BarChart3 size={18} className="text-amber-700" />
-                    Quick Stats
-                  </CardTitle>
-                </div>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                      <span className="text-sm font-medium text-slate-700">
-                        Records per Vehicle
-                      </span>
-                      <span className="text-2xl font-bold text-slate-950">
-                        {vehicles.length > 0
-                          ? (records.length / vehicles.length).toFixed(1)
-                          : "0"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700">
-                        Avg Spend per Vehicle
-                      </span>
-                      <span className="text-lg font-bold text-slate-950">
-                        LKR{" "}
-                        {vehicles.length > 0
-                          ? (totalSpend / vehicles.length).toFixed(0)
-                          : "0"}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </>
         )}
       </div>

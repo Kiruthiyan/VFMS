@@ -29,6 +29,7 @@ public class VfmsApplication {
                     .load();
 
             String[] keys = {
+                "SPRING_PROFILES_ACTIVE",
                 "DB_URL",
                 "DB_USER",
                 "DB_PASSWORD",

@@ -16,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -33,6 +32,7 @@ import java.util.List;
 public class DataSeeder implements ApplicationRunner {
 
     private static final String SYSTEM_ACTOR = "system";
+    private static final String LEGACY_DEMO_CLEANUP_REASON = "Demo user cleanup";
 
     private final UserRepository userRepository;
     private final EmployeeRegistryRepository employeeRegistryRepository;
@@ -46,6 +46,7 @@ public class DataSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         logEmployeeRegistryState();
+        restoreUsersSoftDeletedByLegacyDemoCleanup();
 
         if (teamUsersSeedEnabled) {
             seedTeamUsers();
@@ -65,7 +66,7 @@ public class DataSeeder implements ApplicationRunner {
         }
 
         if (adminSeedProperties.isCleanupDemoUsers()) {
-            cleanupDemoUsers();
+            log.warn("[SEED] vfms.admin.seed.cleanup-demo-users is enabled, but automatic user cleanup is disabled to protect real accounts.");
         }
 
         seedAdminUser();
@@ -181,31 +182,33 @@ public class DataSeeder implements ApplicationRunner {
         );
     }
 
-    private void cleanupDemoUsers() {
-        String protectedEmail = normalizeEmail(adminSeedProperties.getEmail());
-        List<User> activeUsers = userRepository.findByDeletedAtIsNullOrderByCreatedAtDesc();
-        int cleaned = 0;
+    private void restoreUsersSoftDeletedByLegacyDemoCleanup() {
+        List<User> users = userRepository
+                .findByDeletedAtIsNotNullAndDeletedByAndDeletedReasonOrderByDeletedAtDesc(
+                        SYSTEM_ACTOR,
+                        LEGACY_DEMO_CLEANUP_REASON
+                );
 
-        for (User user : activeUsers) {
-            if (protectedEmail.equals(normalizeEmail(user.getEmail()))) {
-                continue;
-            }
+        if (users.isEmpty()) {
+            return;
+        }
 
-            user.setStatusBeforeDeletion(user.getStatus());
-            user.setDeletedAt(LocalDateTime.now());
-            user.setDeletedBy(SYSTEM_ACTOR);
-            user.setDeletedReason("Demo user cleanup");
-            user.setStatus(UserStatus.DEACTIVATED);
-            user.setEnabled(false);
+        for (User user : users) {
+            UserStatus restoredStatus = user.getStatusBeforeDeletion() != null
+                    ? user.getStatusBeforeDeletion()
+                    : UserStatus.APPROVED;
+
+            user.setStatus(restoredStatus);
+            user.setDeletedAt(null);
+            user.setDeletedReason(null);
+            user.setDeletedBy(null);
+            user.setStatusBeforeDeletion(null);
+            user.setRestoredBy(SYSTEM_ACTOR);
+            user.setEnabled(true);
             userRepository.save(user);
-            cleaned++;
         }
 
-        if (cleaned > 0) {
-            log.info("[SEED] Soft-deleted {} demo user account(s). Protected admin: {}", cleaned, protectedEmail);
-        } else {
-            log.info("[SEED] No demo user accounts required cleanup.");
-        }
+        log.warn("[SEED] Restored {} account(s) previously soft-deleted by legacy demo cleanup.", users.size());
     }
 
     private void logEmployeeRegistryState() {
