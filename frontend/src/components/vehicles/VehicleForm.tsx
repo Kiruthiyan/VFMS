@@ -64,7 +64,7 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
   };
 
   return (
-    <div className="p-8 max-w-3xl mx-auto animate-in fade-in duration-500">
+    <div className="p-8 max-w-none mx-auto animate-in fade-in duration-500">
       <Button
         variant="ghost"
         onClick={() => router.back()}

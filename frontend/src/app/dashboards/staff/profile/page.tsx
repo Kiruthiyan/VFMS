@@ -5,9 +5,9 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import {
   User, Mail, Phone, MapPin, Activity, 
-  Camera, Loader2, Badge, Briefcase, Building, Trash2, X
+  Camera, Loader2, Badge, Briefcase, Building, Trash2, X, UserRound
 } from 'lucide-react';
-import { DashboardShell } from '@/components/layout/dashboard-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   getMyStaffProfile, updateMyStaffProfile, uploadStaffProfilePicture, removeStaffProfilePicture,
   type StaffProfileResponse, type StaffProfileUpdateRequest
@@ -17,37 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid hsl(var(--border))' }}>
-      <span style={{
-        width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem',
-        background: 'hsl(var(--muted))', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', flexShrink: 0, marginTop: '0.125rem',
-      }}>
-        <Icon style={{ width: '0.875rem', height: '0.875rem', color: 'hsl(var(--muted-foreground))' }} />
-      </span>
-      <div>
-        <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}>{label}</p>
-        <p style={{ fontSize: '0.875rem', color: 'hsl(var(--foreground))', margin: '0.125rem 0 0', fontWeight: 500 }}>{value || '—'}</p>
-      </div>
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const colors: Record<string, { bg: string; text: string; border: string }> = {
-    APPROVED: { bg: 'hsl(145 63% 94%)', text: 'hsl(145 63% 25%)', border: 'hsl(145 63% 70%)' },
-    PENDING: { bg: 'hsl(42 100% 94%)', text: 'hsl(42 100% 25%)', border: 'hsl(42 100% 70%)' },
-    REJECTED: { bg: 'hsl(360 79% 95%)', text: 'hsl(360 79% 30%)', border: 'hsl(360 79% 75%)' },
-  };
-  const c = colors[status] ?? colors.PENDING;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, border: `1px solid ${c.border}`, background: c.bg, color: c.text }}>
-      {status}
-    </span>
-  );
-}
+import { StatusBadge } from '@/components/StatusBadge';
 
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
@@ -126,175 +96,170 @@ export default function StaffProfilePage() {
   const avatarSrc = profile?.photoUrl ? resolveBackendAssetUrl(profile.photoUrl) : null;
 
   return (
-    <DashboardShell title="My Profile" description="View and manage your personal information">
+    <div className="space-y-6">
+      <PageHeader 
+        title="My Profile" 
+        description="View and manage your personal information" 
+        icon={UserRound} 
+      />
       {loading ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: 'hsl(var(--muted-foreground))' }}>
-          <Loader2 style={{ width: '1.5rem', height: '1.5rem', animation: 'spin 1s linear infinite' }} />
+        <div className="flex min-h-[60vh] items-center justify-center text-slate-500">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : !profile ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'hsl(var(--muted-foreground))' }}>
+        <div className="p-12 text-center text-slate-500">
           <p>No profile linked to your account. Contact an administrator.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(18rem, 22rem) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start', maxWidth: '74rem', margin: '0 auto', width: '100%' }}>
+        <div className="flex w-full flex-col gap-6 xl:flex-row xl:items-start">
 
           {/* Left: Avatar + identity card */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="flex w-full flex-shrink-0 flex-col gap-6 xl:w-80">
+            
             {/* Avatar card */}
-            <div style={{
-              borderRadius: '1.25rem', border: '1px solid hsl(var(--border))',
-              background: 'hsl(var(--card))', overflow: 'hidden',
-              boxShadow: '0 16px 40px hsl(220 30% 10% / 0.08)',
-            }}>
-              {/* Gradient banner */}
-              <div style={{ height: '5.5rem', background: 'linear-gradient(135deg, hsl(220 30% 15%), hsl(42 100% 30%))' }} />
-              <div style={{ padding: '0 1.5rem 1.5rem', position: 'relative', textAlign: 'center' }}>
-                {/* Avatar */}
-                <div style={{ position: 'relative', display: 'inline-block', marginTop: '-2.5rem', marginBottom: '0.75rem' }}>
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="relative mb-4">
+                <button
+                  type="button"
+                  onClick={() => avatarSrc && setShowProfilePicturePreview(true)}
+                  aria-label={avatarSrc ? "View uploaded profile picture" : "No profile picture"}
+                  className={`flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-slate-50 bg-slate-100 shadow-sm ${avatarSrc ? 'cursor-pointer transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2' : 'cursor-default'}`}
+                >
                   {avatarSrc ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowProfilePicturePreview(true)}
-                      aria-label="View uploaded profile picture"
-                      style={{
-                        width: '5rem',
-                        height: '5rem',
-                        borderRadius: '50%',
-                        border: '3px solid hsl(var(--background))',
-                        padding: 0,
-                        overflow: 'hidden',
-                        display: 'block',
-                        background: 'transparent',
-                        cursor: 'zoom-in',
-                      }}
-                    >
-                      <img
-                        src={avatarSrc}
-                        alt="Profile"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                    </button>
+                    <img src={avatarSrc} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
-                    <div style={{
-                      width: '5rem', height: '5rem', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, hsl(220 30% 25%), hsl(42 100% 40%))',
-                      border: '3px solid hsl(var(--background))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <User style={{ width: '2rem', height: '2rem', color: '#fff' }} />
-                    </div>
+                    <User className="h-12 w-12 text-slate-300" />
                   )}
-                  {avatarSrc && (
-                    <button
-                      onClick={handlePhotoRemove}
-                      disabled={uploadingPic}
-                      aria-label="Remove profile picture"
-                      style={{
-                        position: 'absolute', top: '0.25rem', right: '-2rem',
-                        width: '1.5rem', height: '1.5rem', borderRadius: '50%',
-                        background: '#fff', border: '1px solid hsl(var(--border))',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px hsl(0 0% 0% / 0.12)'
-                      }}
-                    >
-                      <Trash2 style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(0 84% 45%)' }} />
-                    </button>
-                  )}
-                  {/* Upload overlay */}
+                </button>
+                {avatarSrc && (
                   <button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={handlePhotoRemove}
                     disabled={uploadingPic}
-                    aria-label="Change profile picture"
-                    style={{
-                      position: 'absolute', top: avatarSrc ? '2.1rem' : '0.25rem', right: '-2rem',
-                      width: '1.5rem', height: '1.5rem', borderRadius: '50%',
-                      background: '#fff', border: '1px solid hsl(var(--border))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px hsl(0 0% 0% / 0.12)'
-                    }}
+                    aria-label="Remove profile picture"
+                    className="absolute -right-2 top-0 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-red-500 shadow-sm transition-colors hover:bg-red-50 hover:text-red-600"
                   >
-                    {uploadingPic
-                      ? <Loader2 style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(var(--foreground))', animation: 'spin 1s linear infinite' }} />
-                      : <Camera style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(var(--foreground))' }} />
-                    }
+                    <Trash2 className="h-4 w-4" />
                   </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
-                </div>
-
-                <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--foreground))', margin: 0 }}>
-                  {profile.fullName}
-                </h2>
-                <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.25rem 0 0.75rem' }}>
-                  {profile.designation || 'Staff'}
-                </p>
-
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <StatusPill status={profile.status} />
-                </div>
+                )}
+                {/* Upload overlay */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPic}
+                  aria-label="Change profile picture"
+                  className={`absolute -right-2 ${avatarSrc ? 'bottom-4' : 'bottom-0'} z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50`}
+                >
+                  {uploadingPic ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
               </div>
+
+              <h2 className="text-center text-lg font-bold text-slate-900">{profile.fullName}</h2>
+              <p className="mb-4 text-center text-sm font-medium text-slate-500">{profile.designation || 'Staff'}</p>
+              <StatusBadge status={profile.status} />
             </div>
 
             {/* Identity card */}
-            <div style={{ borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1rem 1.25rem', boxShadow: '0 8px 24px hsl(220 30% 10% / 0.04)' }}>
-              <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 System Identity
               </p>
-              <InfoRow icon={Badge} label="Employee ID" value={profile.employeeId} />
-              <InfoRow icon={Building} label="Department" value={profile.department} />
-              <InfoRow icon={Briefcase} label="Office Location" value={profile.officeLocation} />
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Employee ID</p>
+                  <p className="text-sm font-semibold text-slate-900 mt-1">{profile.employeeId || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Department</p>
+                  <p className="text-sm font-semibold text-slate-900 mt-1">{profile.department || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Office Location</p>
+                  <p className="text-sm font-semibold text-slate-900 mt-1">{profile.officeLocation || '-'}</p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Right: Editable contact info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
-            <div style={{ borderRadius: '1.25rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', padding: '1.5rem', boxShadow: '0 12px 32px hsl(220 30% 10% / 0.06)' }}>
-              <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                <div>
-                  <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>Personal Information</h3>
-                  <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: '0.125rem 0 0' }}>Your contact details and emergency contacts</p>
-                </div>
-                {!isEditing && (
-                  <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>Edit Details</Button>
-                )}
+          <div className="flex-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Personal Information</h3>
+                <p className="mt-1 text-sm text-slate-500">Your contact details and emergency contacts</p>
               </div>
-
-              {!isEditing ? (
-                <>
-                  <InfoRow icon={Mail} label="Email Address" value={profile.email} />
-                  <InfoRow icon={Phone} label="Phone Number" value={profile.phone} />
-                  <InfoRow icon={MapPin} label="Address" value={profile.address} />
-                  <InfoRow icon={User} label="Emergency Contact Name" value={profile.emergencyContactName} />
-                  <InfoRow icon={Activity} label="Emergency Contact Phone" value={profile.emergencyContactPhone} />
-                </>
-              ) : (
-                <form onSubmit={handleSubmit(onSubmitUpdate)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <Label className="text-xs">Phone Number</Label>
-                      <Input {...register('phone')} className="h-9 mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Address</Label>
-                      <Input {...register('address')} className="h-9 mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Emergency Contact Name</Label>
-                      <Input {...register('emergencyContactName')} className="h-9 mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Emergency Contact Phone</Label>
-                      <Input {...register('emergencyContactPhone')} className="h-9 mt-1" />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="ghost" onClick={() => setIsEditing(false)} type="button">Cancel</Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </div>
-                </form>
+              {!isEditing && (
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                  Edit Details
+                </Button>
               )}
             </div>
+
+            {!isEditing ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="vfms-detail-tile">
+                  <Mail className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="vfms-detail-label">Email Address</p>
+                    <p className="vfms-detail-value">{profile.email || '-'}</p>
+                  </div>
+                </div>
+                <div className="vfms-detail-tile">
+                  <Phone className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="vfms-detail-label">Phone Number</p>
+                    <p className="vfms-detail-value">{profile.phone || '-'}</p>
+                  </div>
+                </div>
+                <div className="vfms-detail-tile">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="vfms-detail-label">Address</p>
+                    <p className="vfms-detail-value">{profile.address || '-'}</p>
+                  </div>
+                </div>
+                <div className="vfms-detail-tile">
+                  <User className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="vfms-detail-label">Emergency Contact Name</p>
+                    <p className="vfms-detail-value">{profile.emergencyContactName || '-'}</p>
+                  </div>
+                </div>
+                <div className="vfms-detail-tile">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="vfms-detail-label">Emergency Contact Phone</p>
+                    <p className="vfms-detail-value">{profile.emergencyContactPhone || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit(onSubmitUpdate)} className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label className="text-xs">Phone Number</Label>
+                    <Input {...register('phone')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Address</Label>
+                    <Input {...register('address')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Emergency Contact Name</Label>
+                    <Input {...register('emergencyContactName')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Emergency Contact Phone</Label>
+                    <Input {...register('emergencyContactPhone')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="ghost" className="h-11 rounded-xl" onClick={() => setIsEditing(false)} type="button">Cancel</Button>
+                  <Button type="submit" disabled={isSubmitting} className="h-11 rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500">
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -305,69 +270,28 @@ export default function StaffProfilePage() {
           aria-modal="true"
           aria-label="Staff profile picture preview"
           onClick={() => setShowProfilePicturePreview(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 60,
-            background: 'hsl(220 30% 5% / 0.78)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.5rem',
-          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
         >
           <div
             onClick={(event) => event.stopPropagation()}
-            style={{
-              position: 'relative',
-              maxWidth: 'min(34rem, 92vw)',
-              maxHeight: '86vh',
-              borderRadius: '1.25rem',
-              background: 'hsl(var(--card))',
-              border: '1px solid hsl(var(--border))',
-              boxShadow: '0 24px 80px hsl(220 35% 5% / 0.45)',
-              padding: '0.75rem',
-            }}
+            className="relative max-h-[86vh] max-w-[92vw] sm:max-w-xl rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
           >
             <button
               type="button"
               aria-label="Close profile picture preview"
               onClick={() => setShowProfilePicturePreview(false)}
-              style={{
-                position: 'absolute',
-                top: '-0.75rem',
-                right: '-0.75rem',
-                width: '2rem',
-                height: '2rem',
-                borderRadius: '9999px',
-                border: '1px solid hsl(var(--border))',
-                background: '#fff',
-                color: 'hsl(var(--foreground))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 8px 24px hsl(220 30% 10% / 0.18)',
-              }}
+              className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-md transition-colors hover:bg-slate-50"
             >
-              <X style={{ width: '1rem', height: '1rem' }} />
+              <X className="h-4 w-4" />
             </button>
             <img
               src={avatarSrc}
               alt="Staff profile picture preview"
-              style={{
-                display: 'block',
-                width: '100%',
-                maxHeight: '78vh',
-                borderRadius: '0.9rem',
-                objectFit: 'contain',
-              }}
+              className="block max-h-[78vh] w-full rounded-xl object-contain"
             />
           </div>
         </div>
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </DashboardShell>
+    </div>
   );
 }

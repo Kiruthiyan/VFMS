@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { FileText, Filter, Plus, RefreshCw } from "lucide-react";
+import { FileText, Filter, Plus, RefreshCw, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import {
   getAllFuelRecordsApi,
@@ -65,6 +65,19 @@ export default function FuelEntryLogsPage() {
   return (
 
       <div className="space-y-6">
+        <div>
+          <Button
+            asChild
+            variant="ghost"
+            className="text-slate-600 hover:text-slate-900 -ml-4"
+          >
+            <Link href="/admin/fuel">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Fuel Dashboard
+            </Link>
+          </Button>
+        </div>
+
         <PageHeader
           title="Fuel Entry Logs"
           description="Browse, filter, and review fuel records using one consistent data-friendly layout."

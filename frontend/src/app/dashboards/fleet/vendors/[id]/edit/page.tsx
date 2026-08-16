@@ -10,7 +10,7 @@ import { vendorFormSchema } from "@/lib/validators/fleet-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, ArrowLeft, Save, Loader2 } from "lucide-react";
+import { Building2, ArrowLeft, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function EditVendorPage() {
@@ -65,15 +65,22 @@ export default function EditVendorPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      <div className="min-h-screen bg-slate-50">
+        <div className="p-8 max-w-none mx-auto animate-in fade-in duration-500">
+          <div className="mb-4 opacity-50 pointer-events-none inline-flex items-center text-sm font-medium text-slate-600 h-10 px-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </div>
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="p-8 max-w-2xl mx-auto animate-in fade-in duration-500">
+    <div className="vfms-detail-page">
+      <div className="vfms-detail-container animate-in fade-in duration-500">
         <Button
           variant="ghost"
           onClick={() => router.push(`/dashboards/fleet/vendors/${id}`)}
@@ -184,11 +191,10 @@ export default function EditVendorPage() {
               <div className="flex gap-3 pt-3 border-t border-slate-200">
                 <Button
                   type="submit"
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
                   disabled={isSubmitting}
                 >
-                  <Save className="mr-2 h-4 w-4" />{" "}
-                  {isSubmitting ? "Saving..." : "Update Vendor"}
+                  <Save className="mr-2 h-4 w-4" />
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
                 <Button
                   type="button"

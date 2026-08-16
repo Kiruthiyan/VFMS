@@ -58,8 +58,11 @@ export function FleetFileDropzone({
       <div
         {...getRootProps()}
         className={cn(
-          "rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-4 shadow-sm transition-colors hover:border-slate-400 hover:bg-white",
-          isDragActive && "border-blue-400 bg-blue-50",
+          "rounded-xl p-4 shadow-sm transition-colors",
+          readonly
+            ? "border border-slate-200 bg-white"
+            : "border border-dashed border-slate-300 bg-slate-50/80 hover:border-slate-400 hover:bg-white",
+          isDragActive && !readonly && "border-blue-400 bg-blue-50",
         )}
       >
         <input {...getInputProps()} />

@@ -51,7 +51,7 @@ export default function LeavesLog() {
   }, [filter]);
 
   return (
-    <div className="p-6 md:p-8 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         icon={<CalendarDays className="w-5 h-5" />}
         title="Leave Requests - Log"
@@ -76,9 +76,9 @@ export default function LeavesLog() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent bg-muted/40">
+              <TableRow className="hover:bg-slate-950 bg-slate-950">
                 {['Driver', 'Type', 'From', 'To', 'Reason', 'Status'].map((header) => (
-                  <TableHead key={header} className="text-xs font-medium text-muted-foreground">
+                  <TableHead key={header} className="text-xs font-bold uppercase tracking-[0.18em] text-white">
                     {header}
                   </TableHead>
                 ))}

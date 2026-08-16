@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 import { CalendarDays, Loader2, Plus, X, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { DashboardShell } from '@/components/layout/dashboard-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import {
   deleteLeaveRequest,
   getMyLeaveRequests,
@@ -29,6 +27,13 @@ const STATUS_STYLES: Record<string, string> = {
   CANCELLED: 'border-slate-300 bg-slate-100 text-slate-700',
 };
 
+const inputClass =
+  'h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 ' +
+  'text-sm font-medium text-slate-900 placeholder:text-slate-500 ' +
+  'focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 ' +
+  'disabled:opacity-60 disabled:bg-slate-50 transition-all duration-200 ' +
+  'shadow-sm hover:border-slate-300';
+
 function errorMessage(error: unknown, fallback: string) {
   if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
   const response = (error as { response?: { data?: { message?: unknown } } }).response;
@@ -45,13 +50,13 @@ export default function DriverLeaveRequestsPage() {
 
   const counts: Record<LeaveFilter, number> = {
     ALL: requests.length,
-    PENDING: requests.filter((request) => (request.status ?? 'PENDING') === 'PENDING').length,
-    APPROVED: requests.filter((request) => request.status === 'APPROVED').length,
-    REJECTED: requests.filter((request) => request.status === 'REJECTED').length,
+    PENDING: requests.filter((r) => (r.status ?? 'PENDING') === 'PENDING').length,
+    APPROVED: requests.filter((r) => r.status === 'APPROVED').length,
+    REJECTED: requests.filter((r) => r.status === 'REJECTED').length,
   };
-  const filteredRequests = filter === 'ALL'
-    ? requests
-    : requests.filter((request) => (request.status ?? 'PENDING') === filter);
+
+  const filteredRequests =
+    filter === 'ALL' ? requests : requests.filter((r) => (r.status ?? 'PENDING') === filter);
 
   useEffect(() => {
     getMyLeaveRequests()
@@ -80,7 +85,7 @@ export default function DriverLeaveRequestsPage() {
     if (!window.confirm('Are you sure you want to cancel this leave request?')) return;
     try {
       await deleteLeaveRequest(id);
-      setRequests((current) => current.filter((request) => request.id !== id));
+      setRequests((current) => current.filter((r) => r.id !== id));
       toast.success('Leave request cancelled');
     } catch (error: unknown) {
       toast.error(errorMessage(error, 'Failed to cancel leave request'));
@@ -88,7 +93,13 @@ export default function DriverLeaveRequestsPage() {
   };
 
   return (
-    <DashboardShell title="Leave Requests" description="Request leave and track its approval status">
+    <div className="space-y-6">
+      <PageHeader
+        title="Leave Requests"
+        description="Request leave and track its approval status"
+        icon={CalendarDays}
+      />
+
       <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
         <CardHeader className="vfms-card-header flex flex-col gap-4 px-5 py-5 pl-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -97,60 +108,140 @@ export default function DriverLeaveRequestsPage() {
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => setForm({ ...EMPTY_FORM })} className="bg-amber-400 text-slate-950 hover:bg-amber-300">
-                <Plus className="mr-2 h-4 w-4" />Request Leave
+              <Button
+                onClick={() => setForm({ ...EMPTY_FORM })}
+                className="bg-amber-400 text-slate-950 hover:bg-amber-300"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Request Leave
               </Button>
             </DialogTrigger>
-            <DialogContent showCloseButton={false} className="!max-w-2xl !gap-0 overflow-hidden rounded-2xl border-slate-200 !p-0 shadow-2xl sm:!max-w-2xl">
-              <DialogHeader className="vfms-form-header flex-row items-center justify-between gap-4 px-6 py-5 pl-8">
-                <DialogTitle className="text-white">Request Leave</DialogTitle>
+            <DialogContent
+              showCloseButton={false}
+              className="!max-w-2xl !gap-0 overflow-hidden rounded-xl border-slate-200 !p-0 shadow-2xl sm:!max-w-2xl"
+            >
+              <DialogHeader className="vfms-form-header flex-row items-center justify-between gap-4 px-8 py-5">
+                <div className="relative z-10 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-slate-950">
+                    <CalendarDays className="h-5 w-5" />
+                  </div>
+                  <DialogTitle className="text-lg font-bold text-white">Request Leave</DialogTitle>
+                </div>
                 <button
                   type="button"
                   aria-label="Close leave request form"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 text-white transition hover:bg-white/10"
+                  className="relative z-10 inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/10 hover:text-white"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </DialogHeader>
+
               <form onSubmit={submit}>
-                <div className="grid gap-4 px-6 py-6">
-                <div>
-                  <Label htmlFor="leave-type" className="mb-2 block text-sm font-semibold text-slate-700">Leave Type</Label>
-                  <Select value={form.leaveType} onValueChange={(value) => setForm((current) => ({ ...current, leaveType: value }))}>
-                    <SelectTrigger id="leave-type" className="h-11 rounded-lg border-slate-300 bg-white text-sm font-medium text-slate-950 shadow-sm focus:ring-4 focus:ring-slate-100">
-                      <SelectValue placeholder="Select leave type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LEAVE_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid gap-5 px-6 py-6">
+                  <div className="space-y-2">
+                    <label htmlFor="leave-type" className="block text-sm font-semibold text-slate-900">
+                      Leave Type <span className="text-red-600">*</span>
+                    </label>
+                    <Select
+                      value={form.leaveType}
+                      onValueChange={(value) => setForm((c) => ({ ...c, leaveType: value }))}
+                    >
+                      <SelectTrigger
+                        id="leave-type"
+                        className="h-11 rounded-xl border-slate-200 bg-white text-sm font-medium text-slate-900 shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                      >
+                        <SelectValue placeholder="Select leave type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LEAVE_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <label htmlFor="leave-start" className="block text-sm font-semibold text-slate-900">
+                        Start Date <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        id="leave-start"
+                        type="date"
+                        required
+                        value={form.startDate}
+                        onChange={(e) => setForm((c) => ({ ...c, startDate: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="leave-end" className="block text-sm font-semibold text-slate-900">
+                        End Date <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        id="leave-end"
+                        type="date"
+                        required
+                        min={form.startDate || undefined}
+                        value={form.endDate}
+                        onChange={(e) => setForm((c) => ({ ...c, endDate: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="leave-reason" className="block text-sm font-semibold text-slate-900">
+                      Reason
+                    </label>
+                    <textarea
+                      id="leave-reason"
+                      value={form.reason ?? ''}
+                      onChange={(e) => setForm((c) => ({ ...c, reason: e.target.value }))}
+                      rows={4}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300 resize-none"
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div><Label htmlFor="leave-start" className="mb-2 block text-sm font-semibold text-slate-700">Start Date</Label><Input id="leave-start" type="date" required value={form.startDate} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} className="h-11 rounded-lg border-slate-300 text-sm font-medium shadow-sm focus:border-slate-500 focus:ring-4 focus:ring-slate-100" /></div>
-                  <div><Label htmlFor="leave-end" className="mb-2 block text-sm font-semibold text-slate-700">End Date</Label><Input id="leave-end" type="date" required min={form.startDate || undefined} value={form.endDate} onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))} className="h-11 rounded-lg border-slate-300 text-sm font-medium shadow-sm focus:border-slate-500 focus:ring-4 focus:ring-slate-100" /></div>
-                </div>
-                <div><Label htmlFor="leave-reason" className="mb-2 block text-sm font-semibold text-slate-700">Reason</Label><Textarea id="leave-reason" value={form.reason ?? ''} onChange={(event) => setForm((current) => ({ ...current, reason: event.target.value }))} rows={4} className="rounded-lg border-slate-300 text-sm shadow-sm focus:border-slate-500 focus:ring-4 focus:ring-slate-100" /></div>
-                </div>
-                <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button type="submit" disabled={submitting}>{submitting ? 'Submitting...' : 'Submit Request'}</Button>
+
+                <div className="flex gap-3 border-t border-slate-100 px-6 pb-6 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="h-11 flex-1 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 transition-all hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 text-white hover:bg-slate-800"
+                  >
+                    {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {submitting ? 'Submitting...' : 'Submit Request'}
+                  </Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
         </CardHeader>
+
         <CardContent className="px-5 py-5">
           <div className="mb-5 flex flex-col gap-2 sm:max-w-xs" aria-label="Filter leave requests by status">
-            <Label htmlFor="leave-status-filter" className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <Label
+              htmlFor="leave-status-filter"
+              className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500"
+            >
               Status
             </Label>
             <Select value={filter} onValueChange={(value) => setFilter(value as LeaveFilter)}>
-              <SelectTrigger id="leave-status-filter" className="h-11 rounded-2xl bg-white text-slate-900">
+              <SelectTrigger
+                id="leave-status-filter"
+                className="h-11 rounded-xl border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+              >
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -162,10 +253,16 @@ export default function DriverLeaveRequestsPage() {
               </SelectContent>
             </Select>
           </div>
+
           {loading ? (
-            <div className="flex justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            <div className="flex justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
           ) : filteredRequests.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-slate-200 bg-slate-50 py-16 text-muted-foreground"><CalendarDays className="mb-3 h-9 w-9 opacity-40" /><p>No matching leave requests.</p></div>
+            <div className="flex flex-col items-center rounded-xl border border-dashed border-slate-200 bg-slate-50 py-16 text-muted-foreground">
+              <CalendarDays className="mb-3 h-9 w-9 opacity-40" />
+              <p>No matching leave requests.</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {filteredRequests.map((request) => {
@@ -174,12 +271,30 @@ export default function DriverLeaveRequestsPage() {
                   <div key={request.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <strong className="text-sm">{(request.leaveType ?? 'ANNUAL').replace(/_/g, ' ')}</strong>
-                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[status] ?? STATUS_STYLES.PENDING}`}>{status}</span>
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[status] ?? STATUS_STYLES.PENDING}`}
+                      >
+                        {status}
+                      </span>
                     </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{request.startDate ?? 'Unknown'} — {request.endDate ?? 'Unknown'}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {request.startDate ?? 'Unknown'} — {request.endDate ?? 'Unknown'}
+                    </p>
                     {request.reason && <p className="mt-2 text-sm">{request.reason}</p>}
-                    {request.approvalNotes && <p className="mt-2 text-sm text-muted-foreground">Office note: {request.approvalNotes}</p>}
-                    {status === 'PENDING' && <Button variant="outline" size="sm" onClick={() => void remove(request.id)} className="mt-3 text-red-600"><XCircle className="mr-2 h-4 w-4" />Cancel Request</Button>}
+                    {request.approvalNotes && (
+                      <p className="mt-2 text-sm text-muted-foreground">Office note: {request.approvalNotes}</p>
+                    )}
+                    {status === 'PENDING' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void remove(request.id)}
+                        className="mt-3 text-red-600"
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Cancel Request
+                      </Button>
+                    )}
                   </div>
                 );
               })}
@@ -187,6 +302,6 @@ export default function DriverLeaveRequestsPage() {
           )}
         </CardContent>
       </Card>
-    </DashboardShell>
+    </div>
   );
 }

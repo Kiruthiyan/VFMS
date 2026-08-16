@@ -13,6 +13,8 @@ import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
 import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Loader2,
   ArrowLeft,
@@ -20,6 +22,11 @@ import {
   CheckCircle,
   XCircle,
   Car,
+  Building2,
+  Hash,
+  Calendar,
+  DollarSign,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
@@ -31,6 +38,10 @@ export default function RentalDetailPage() {
   const [rental, setRental] = useState<RentalRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInTripUse, setIsInTripUse] = useState(false);
+
+  // Dialog state
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [returnDate, setReturnDate] = useState("");
 
   const fetchRental = useCallback(async () => {
     try {
@@ -54,19 +65,23 @@ export default function RentalDetailPage() {
     fetchRental();
   }, [fetchRental]);
 
-  const handleConfirmReturn = async () => {
-    const date = prompt(
-      "Enter return date (YYYY-MM-DD):",
-      new Date().toISOString().split("T")[0],
-    );
-    if (date) {
-      try {
-        await rentalApi.confirmReturn(Number(id), date);
-        toast.success("Vehicle return confirmed");
-        fetchRental();
-      } catch {
-        toast.error("Failed to confirm return");
-      }
+  const handleConfirmReturnClick = () => {
+    setReturnDate(new Date().toISOString().split("T")[0]);
+    setReturnDialogOpen(true);
+  };
+
+  const submitConfirmReturn = async () => {
+    if (!returnDate) {
+      toast.error("Return date is required");
+      return;
+    }
+    setReturnDialogOpen(false);
+    try {
+      await rentalApi.confirmReturn(Number(id), returnDate);
+      toast.success("Vehicle return confirmed");
+      fetchRental();
+    } catch {
+      toast.error("Failed to confirm return");
     }
   };
 
@@ -160,79 +175,93 @@ export default function RentalDetailPage() {
           <CardContent className="pt-6 space-y-6">
             {/* Info Grid */}
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Vendor
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {rental.vendorName}
-                </p>
+              <div className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:bg-slate-100/50">
+                <div className="mt-0.5 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm">
+                   <Building2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vendor</p>
+                  <p className="font-semibold text-slate-800 text-[15px]">{rental.vendorName}</p>
+                </div>
               </div>
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Vehicle Type
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {rental.vehicleType}
-                </p>
+              
+              <div className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:bg-slate-100/50">
+                <div className="mt-0.5 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm">
+                   <Car className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vehicle Type</p>
+                  <p className="font-semibold text-slate-800 text-[15px]">{rental.vehicleType}</p>
+                </div>
               </div>
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Plate Number
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {rental.plateNumber}
-                </p>
+
+              <div className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:bg-slate-100/50">
+                <div className="mt-0.5 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm">
+                   <Hash className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Plate Number</p>
+                  <p className="font-semibold text-slate-800 text-[15px]">{rental.plateNumber}</p>
+                </div>
               </div>
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Start Date
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {rental.startDate}
-                </p>
+
+              <div className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:bg-slate-100/50">
+                <div className="mt-0.5 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm">
+                   <Calendar className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Start Date</p>
+                  <p className="font-semibold text-slate-800 text-[15px]">{rental.startDate}</p>
+                </div>
               </div>
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  End Date
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {rental.endDate || "Ongoing"}
-                </p>
+
+              <div className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:bg-slate-100/50">
+                <div className="mt-0.5 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm">
+                   <Calendar className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">End Date</p>
+                  <p className="font-semibold text-slate-800 text-[15px]">{rental.endDate || "Ongoing"}</p>
+                </div>
               </div>
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Vendor&apos;s Daily Rate
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  Rs.{rental.costPerDay.toLocaleString()}
-                  <span className="text-xs text-slate-400 font-normal">
-                    {" "}
-                    /day (as quoted)
-                  </span>
-                </p>
+
+              <div className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:bg-slate-100/50">
+                <div className="mt-0.5 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm">
+                   <DollarSign className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vendor's Daily Rate</p>
+                  <p className="font-semibold text-slate-800 text-[15px]">
+                    Rs.{rental.costPerDay.toLocaleString()} <span className="text-xs text-slate-400 font-normal">/day (as quoted)</span>
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Total Cost & Purpose */}
-            <div className="grid gap-4 pt-6 border-t border-slate-200 md:grid-cols-2">
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Total Cost
-                </p>
-                <p className="text-lg font-bold text-emerald-600">
-                  {rental.totalCost
-                    ? `Rs.${rental.totalCost.toLocaleString()}`
-                    : "Pending"}
-                </p>
+            <div className="grid gap-4 pt-6 border-t border-slate-100 md:grid-cols-2">
+              <div className="flex items-start gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 transition hover:bg-emerald-50">
+                <div className="mt-0.5 rounded-xl border border-emerald-200 bg-white p-2.5 text-emerald-600 shadow-sm">
+                   <DollarSign className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Cost</p>
+                  <p className="text-lg font-bold text-emerald-600">
+                    {rental.totalCost ? `Rs.${rental.totalCost.toLocaleString()}` : "Pending"}
+                  </p>
+                </div>
               </div>
-              <div className="vfms-detail-tile">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
-                  Purpose
-                </p>
-                <p className="text-sm text-slate-700">
-                  {rental.purpose || "Not specified"}
-                </p>
+              
+              <div className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:bg-slate-100/50">
+                <div className="mt-0.5 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm">
+                   <ClipboardList className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Purpose</p>
+                  <p className="text-[14px] text-slate-700 leading-snug">
+                    {rental.purpose || "Not specified"}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -288,29 +317,55 @@ export default function RentalDetailPage() {
                   <Button
                     onClick={() => router.push(`/dashboards/fleet/rentals/${id}/edit`)}
                     variant="outline"
-                    className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                   >
-                    <Edit className="h-4 w-4 mr-2" /> Edit
+                    <Edit className="mr-2 h-4 w-4" /> Edit
                   </Button>
                   <Button
-                    onClick={handleConfirmReturn}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                    onClick={handleConfirmReturnClick}
+                    variant="success"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" /> Confirm Return
+                    <CheckCircle className="mr-2 h-4 w-4" /> Confirm Return
                   </Button>
                 </>
               )}
               {canCreate && rental.status === "RETURNED" && (
                 <Button
                   onClick={handleClose}
-                  className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+                  variant="destructive"
                 >
-                  <XCircle className="h-4 w-4 mr-2" /> Close Rental
+                  <XCircle className="mr-2 h-4 w-4" /> Close Rental
                 </Button>
               )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Return Dialog */}
+        <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Vehicle Return</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Return Date
+              </label>
+              <Input
+                type="date"
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReturnDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="success" onClick={submitConfirmReturn}>
+                Confirm Return
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

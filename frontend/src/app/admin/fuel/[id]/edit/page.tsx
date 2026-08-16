@@ -80,7 +80,7 @@ export default function EditFuelEntryPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl animate-in fade-in duration-500">
+    <div className="mx-auto max-w-none animate-in fade-in duration-500">
       <Button
         variant="ghost"
         onClick={() => router.push(recordId ? `/admin/fuel/${recordId}` : "/admin/fuel")}

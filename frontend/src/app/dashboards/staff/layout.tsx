@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 /**
  * Staff Dashboard Layout
@@ -18,7 +19,7 @@ export default function StaffDashboardLayout({
   return (
     <Suspense>
       <RoleGuard allowedRole="SYSTEM_USER">
-        {children}
+        <DashboardShell>{children}</DashboardShell>
       </RoleGuard>
     </Suspense>
   );

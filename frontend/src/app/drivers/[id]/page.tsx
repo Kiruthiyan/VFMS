@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Star, UserRound, X } from 'lucide-react';
+import { ArrowLeft, Star, UserRound, X, Hash, User, CreditCard, Mail, Phone, FileText, Calendar, Award, Briefcase } from 'lucide-react';
 import { apiFetch, getErrorMessage, resolveBackendAssetUrl } from '@/lib/api';
 import { DriverDocument } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,27 +144,27 @@ export default function DriverDetailsPage() {
 
 							{!loading && !error && driverUser && id && (
 								<Tabs defaultValue={initialTab} className="w-full">
-									<div className="w-full overflow-x-auto border-b border-border mb-4 pb-px">
-										<TabsList className="flex gap-2 w-max whitespace-nowrap bg-transparent h-auto p-0">
-											<TabsTrigger value="overview" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Overview</TabsTrigger>
-											<TabsTrigger value="licenses" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Licenses</TabsTrigger>
-											<TabsTrigger value="certifications" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Certs</TabsTrigger>
-											<TabsTrigger value="documents" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Documents</TabsTrigger>
-											<TabsTrigger value="trips" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Trips</TabsTrigger>
-											<TabsTrigger value="feedbacks" className="px-4 py-2 rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground inline-flex">Feedbacks</TabsTrigger>
+									<div className="w-full overflow-x-auto mb-6">
+										<TabsList className="w-full flex border-b border-slate-200 bg-transparent h-auto p-0 rounded-none justify-start">
+											<TabsTrigger value="overview" className="px-6 py-3 text-sm font-medium transition-colors border-b-2 border-transparent data-[state=active]:border-blue-950 data-[state=active]:text-blue-950 text-slate-500 hover:text-slate-800 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none">Overview</TabsTrigger>
+											<TabsTrigger value="licenses" className="px-6 py-3 text-sm font-medium transition-colors border-b-2 border-transparent data-[state=active]:border-blue-950 data-[state=active]:text-blue-950 text-slate-500 hover:text-slate-800 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none">Licenses</TabsTrigger>
+											<TabsTrigger value="certifications" className="px-6 py-3 text-sm font-medium transition-colors border-b-2 border-transparent data-[state=active]:border-blue-950 data-[state=active]:text-blue-950 text-slate-500 hover:text-slate-800 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none">Certs</TabsTrigger>
+											<TabsTrigger value="documents" className="px-6 py-3 text-sm font-medium transition-colors border-b-2 border-transparent data-[state=active]:border-blue-950 data-[state=active]:text-blue-950 text-slate-500 hover:text-slate-800 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none">Documents</TabsTrigger>
+											<TabsTrigger value="trips" className="px-6 py-3 text-sm font-medium transition-colors border-b-2 border-transparent data-[state=active]:border-blue-950 data-[state=active]:text-blue-950 text-slate-500 hover:text-slate-800 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none">Trips</TabsTrigger>
+											<TabsTrigger value="feedbacks" className="px-6 py-3 text-sm font-medium transition-colors border-b-2 border-transparent data-[state=active]:border-blue-950 data-[state=active]:text-blue-950 text-slate-500 hover:text-slate-800 data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none">Feedbacks</TabsTrigger>
 										</TabsList>
 									</div>
 
 									<TabsContent value="overview" className="mt-0">
-										<div className="grid grid-cols-1 gap-6 text-sm md:grid-cols-3 bg-muted/20 p-6 rounded-lg border border-border">
-											{profilePicture && (
-												<div className="md:col-span-1 flex flex-col items-center">
-													<button
-														type="button"
-														onClick={() => setShowProfilePicturePreview(true)}
-														aria-label="View uploaded profile picture"
-														className="mb-4 h-32 w-32 overflow-hidden rounded-full border-4 border-background shadow-sm bg-muted flex items-center justify-center transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-													>
+										<div className="flex flex-col gap-6 md:flex-row">
+											<div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm md:w-64">
+												<button
+													type="button"
+													onClick={() => profilePicture && setShowProfilePicturePreview(true)}
+													aria-label={profilePicture ? "View uploaded profile picture" : "No profile picture"}
+													className={`h-32 w-32 overflow-hidden rounded-full border-4 border-slate-50 shadow-sm bg-slate-100 flex items-center justify-center ${profilePicture ? 'cursor-pointer transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2' : 'cursor-default'}`}
+												>
+													{profilePicture ? (
 														<img
 															src={profilePictureUrl}
 															alt="Driver Profile Picture"
@@ -173,24 +173,78 @@ export default function DriverDetailsPage() {
 																(e.target as HTMLImageElement).style.display = 'none';
 															}}
 														/>
-													</button>
-													<p className="text-center text-xs font-semibold text-muted-foreground">{driverUser.fullName}</p>
+													) : (
+														<UserRound className="h-12 w-12 text-slate-300" />
+													)}
+												</button>
+												<p className="text-center text-sm font-bold text-slate-900 mt-4">{driverUser.fullName}</p>
+												<div className="mt-2">
+													<StatusBadge status={driverUser.status} />
 												</div>
-											)}
-											<div className={profilePicture ? 'md:col-span-2' : 'md:col-span-3'}>
-												<div className="grid grid-cols-1 gap-y-5 gap-x-8 md:grid-cols-2">
-													<Detail label="Driver ID" value={driverUser.employeeId ?? undefined} />
-													<Detail label="Full Name" value={driverUser.fullName} />
-													<Detail label="NIC" value={driverUser.nic} />
-													<Detail label="Email" value={driverUser.email} />
-													<Detail label="Phone" value={driverUser.phone} />
-													<Detail label="License Number" value={driverUser.licenseNumber ?? undefined} />
-													<Detail label="License Expiry Date" value={driverUser.licenseExpiryDate ?? undefined} />
-													<Detail label="Certifications" value={driverUser.certifications ?? undefined} />
-													<Detail label="Experience (Years)" value={driverUser.experienceYears != null ? String(driverUser.experienceYears) : undefined} />
-													<div className="space-y-1.5">
-														<p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</p>
-														<StatusBadge status={driverUser.status} />
+											</div>
+
+											<div className="flex-1 grid gap-4 md:grid-cols-2">
+												<div className="vfms-detail-tile">
+													<Hash className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">Driver ID</p>
+														<p className="vfms-detail-value">{driverUser.employeeId || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<User className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">Full Name</p>
+														<p className="vfms-detail-value">{driverUser.fullName || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<CreditCard className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">NIC</p>
+														<p className="vfms-detail-value">{driverUser.nic || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<Mail className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">Email</p>
+														<p className="vfms-detail-value">{driverUser.email || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<Phone className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">Phone</p>
+														<p className="vfms-detail-value">{driverUser.phone || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<FileText className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">License Number</p>
+														<p className="vfms-detail-value">{driverUser.licenseNumber || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<Calendar className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">License Expiry Date</p>
+														<p className="vfms-detail-value">{driverUser.licenseExpiryDate || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<Award className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">Certifications</p>
+														<p className="vfms-detail-value">{driverUser.certifications || '-'}</p>
+													</div>
+												</div>
+												<div className="vfms-detail-tile">
+													<Briefcase className="h-5 w-5 text-blue-600" />
+													<div>
+														<p className="vfms-detail-label">Experience (Years)</p>
+														<p className="vfms-detail-value">{driverUser.experienceYears != null ? String(driverUser.experienceYears) : '-'}</p>
 													</div>
 												</div>
 											</div>

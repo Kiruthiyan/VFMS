@@ -256,7 +256,6 @@ export default function TripsPage() {
                 actions={
                   ["SYSTEM_USER", "ADMIN"].includes(currentUser.role) ? (
                     <Button
-                        className="bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-slate-950/15"
                         onClick={() => router.push("/trips/create")}
                     >
                         <Plus className="mr-2 h-4 w-4" /> New Trip Request

@@ -449,7 +449,7 @@ export default function TripDetailPage() {
                                                 <Button
                                                     type="submit"
                                                     disabled={submittingFeedback || (endDeviates && !staffTimelineReason.trim())}
-                                                    className="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold h-10 shadow-lg shadow-blue-100"
+                                                    className="w-full font-bold h-10"
                                                 >
                                                     {submittingFeedback ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Driver Feedback"}
                                                 </Button>
@@ -539,7 +539,7 @@ export default function TripDetailPage() {
                                     <Button
                                         onClick={() => handleAction("submit")}
                                         disabled={actionLoading === "submit"}
-                                        className="flex-1 bg-blue-950 hover:bg-blue-900 text-white"
+                                        className="flex-1"
                                     >
                                         {actionLoading === "submit"
                                             ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -553,7 +553,7 @@ export default function TripDetailPage() {
                                 ["SUBMITTED", "DRIVER_REJECTED"].includes(trip.status) && (
                                 <Button
                                     onClick={() => router.push(`/trips/${id}/approve`)}
-                                    className="flex-1 bg-blue-950 hover:bg-blue-900 text-white"
+                                    className="flex-1"
                                 >
                                     <CheckCircle className="mr-2 h-4 w-4" />
                                     {trip.status === "DRIVER_REJECTED" ? "Reassign Driver & Vehicle" : "Review & Approve"}
@@ -569,7 +569,8 @@ export default function TripDetailPage() {
                                             <Button
                                                 onClick={() => handleAction("driver-accept")}
                                                 disabled={actionLoading === "driver-accept"}
-                                                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white"
+                                                variant="success"
+                                                className="flex-1"
                                             >
                                                 {actionLoading === "driver-accept"
                                                     ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -611,7 +612,8 @@ export default function TripDetailPage() {
                                                 <Button
                                                     onClick={handleDriverReject}
                                                     disabled={actionLoading === "driver-reject" || driverRejectReason.trim().length < 10}
-                                                    className="flex-1 bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
+                                                    variant="destructive"
+                                                    className="flex-1 disabled:opacity-50"
                                                 >
                                                     {actionLoading === "driver-reject"
                                                         ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -628,7 +630,7 @@ export default function TripDetailPage() {
                                 <Button
                                     onClick={() => handleAction("start")}
                                     disabled={actionLoading === "start"}
-                                    className="flex-1 bg-blue-950 hover:bg-blue-900 text-white"
+                                    className="flex-1"
                                 >
                                     {actionLoading === "start"
                                         ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -648,7 +650,8 @@ export default function TripDetailPage() {
                                             }
                                         }}
                                         disabled={actionLoading === "complete"}
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                        variant="success"
+                                        className="flex-1"
                                     >
                                         {actionLoading === "complete"
                                             ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -680,7 +683,8 @@ export default function TripDetailPage() {
                                             <DialogFooter>
                                                 <Button variant="outline" onClick={() => { setCompleteReasonMode(false); setCompleteReason(""); }}>Cancel</Button>
                                                 <Button 
-                                                    className="bg-green-600 hover:bg-green-700 text-white font-bold" 
+                                                    variant="success"
+                                                    className="font-bold" 
                                                     disabled={!completeReason.trim() || actionLoading === "complete"}
                                                     onClick={async () => {
                                                         await handleAction("complete", { reason: completeReason });

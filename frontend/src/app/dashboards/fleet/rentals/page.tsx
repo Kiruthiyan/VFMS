@@ -122,7 +122,6 @@ export default function RentalsPage() {
             </Button>
             {canCreate && (
               <Button
-                className="bg-blue-950 hover:bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 onClick={() => router.push("/dashboards/fleet/rentals/create")}
               >
                 <Plus className="mr-2 h-4 w-4" /> Rent a Vehicle
@@ -207,6 +206,7 @@ export default function RentalsPage() {
               No rentals found.
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full border-separate border-spacing-0 text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
@@ -290,6 +290,7 @@ export default function RentalsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

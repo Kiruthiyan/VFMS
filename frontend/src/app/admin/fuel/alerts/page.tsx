@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -13,6 +13,7 @@ import {
   Gauge,
   RefreshCw,
   TrendingUp,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -347,6 +348,18 @@ export default function FuelAlertsPage() {
   return (
 
       <div className="space-y-6">
+        <div>
+          <Button
+            asChild
+            variant="ghost"
+            className="text-slate-600 hover:text-slate-900 -ml-4"
+          >
+            <Link href="/admin/fuel">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Fuel Dashboard
+            </Link>
+          </Button>
+        </div>
         <PageHeader
           title="Fuel Alerts"
           description="Review fuel anomalies, misuse indicators, and records that need operational follow-up."

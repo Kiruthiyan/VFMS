@@ -243,7 +243,7 @@ export default function EditTripPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
-            <div className="max-w-2xl mx-auto space-y-4">
+            <div className="max-w-none mx-auto space-y-4">
 
                 <button
                     onClick={() => router.push("/trips")}
@@ -477,7 +477,7 @@ export default function EditTripPage() {
                                 <Button
                                     type="submit"
                                     disabled={saving}
-                                    className="flex-1 bg-blue-950 hover:bg-blue-900 text-white shadow-lg shadow-blue-200"
+                                    className="flex-1"
                                 >
                                     {saving ? (
                                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>

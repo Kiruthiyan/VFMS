@@ -4,6 +4,7 @@ import { Suspense, useState, type ReactNode } from "react";
 import { Menu, Sparkles } from "lucide-react";
 
 import { DashboardSidebar } from "@/app/dashboards/shared-components/sidebar";
+import { Topbar } from "@/components/Topbar";
 import { cn } from "@/lib/utils";
 
 interface DashboardShellProps {
@@ -46,18 +47,9 @@ export function DashboardShell({
       </aside>
 
       <div className="lg:pl-64 xl:pl-[17rem]">
-        <div className="px-4 pt-4 sm:px-6 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open dashboard menu"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
-        </div>
+        <Topbar onMenuClick={() => setMobileOpen(true)} />
 
-        <main className="px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <main className="px-3 pb-4 pt-20 sm:px-6 sm:pb-6 lg:px-8">
           <div className="mx-auto w-full max-w-screen-2xl space-y-5 sm:space-y-6">
             {title && (
               <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-[28px]">

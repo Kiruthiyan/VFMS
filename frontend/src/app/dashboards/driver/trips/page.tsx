@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, Users, Car, Loader2, ArrowRight, Check, X } from 'lucide-react';
-import { DashboardShell } from '@/components/layout/dashboard-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -110,7 +110,8 @@ export default function DriverTripsPage() {
   };
 
   return (
-    <DashboardShell title="My Trips" description="View your assigned trip history">
+    <div className="space-y-6">
+      <PageHeader title="My Trips" description="View your assigned trip history" icon={MapPin} />
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -270,6 +271,6 @@ export default function DriverTripsPage() {
           ))}
         </div>
       )}
-    </DashboardShell>
+    </div>
   );
 }

@@ -259,7 +259,7 @@ function TripCard({ trip, actionLoading, onAction, onView }: {
                                 size="sm"
                                 onClick={() => onAction(trip.id, "start")}
                                 disabled={actionLoading === `${trip.id}-start`}
-                                className="bg-blue-950 hover:bg-blue-900 text-white text-xs"
+                                className="text-xs"
                             >
                                 {actionLoading === `${trip.id}-start` ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />
