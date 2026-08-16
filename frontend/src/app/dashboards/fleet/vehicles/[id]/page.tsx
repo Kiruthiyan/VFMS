@@ -9,6 +9,7 @@ import { VehicleStatusBadge } from "@/components/vehicles/VehicleStatusBadge";
 import { MaintenanceStatusBadge } from "@/components/maintenance/MaintenanceStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Car,
@@ -21,6 +22,7 @@ import {
   Clock,
   DollarSign,
   AlertCircle,
+  AlertTriangle,
   History,
   Palette,
   Users,
@@ -48,6 +50,7 @@ export default function VehicleDetailPage({
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [retiring, setRetiring] = useState(false);
+  const [retireDialogOpen, setRetireDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "history">("details");
   const [isInTripUse, setIsInTripUse] = useState(false);
 
@@ -85,13 +88,12 @@ export default function VehicleDetailPage({
     fetchHistory();
   }, [id]);
 
-  const handleRetire = async () => {
-    if (
-      !confirm(
-        `Are you sure you want to retire ${vehicle?.brand} ${vehicle?.model}? This cannot be undone.`,
-      )
-    )
-      return;
+  const handleRetire = () => {
+    setRetireDialogOpen(true);
+  };
+
+  const confirmRetire = async () => {
+    setRetireDialogOpen(false);
     setRetiring(true);
     try {
       await vehicleApi.retire(Number(id));
@@ -392,7 +394,7 @@ export default function VehicleDetailPage({
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 flex-wrap">
-                  {canAdmin && (
+                  {canAdmin && vehicle.status !== "RETIRED" && (
                     <Button
                       variant="outline"
                       onClick={() =>
@@ -597,6 +599,38 @@ export default function VehicleDetailPage({
           </CardContent>
         </Card>
       </div>
+
+        {/* Retire Confirmation Dialog */}
+        <Dialog open={retireDialogOpen} onOpenChange={setRetireDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                Retire Vehicle
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-3">
+              <p className="text-sm text-slate-700">
+                Are you sure you want to retire{" "}
+                <span className="font-semibold">
+                  {vehicle?.brand} {vehicle?.model}
+                </span>{" "}
+                ({vehicle?.plateNumber})?
+              </p>
+              <p className="text-xs text-red-500 mt-2 font-medium">
+                This action cannot be undone. The vehicle will be permanently removed from active fleet operations.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRetireDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmRetire} disabled={retiring}>
+                {retiring ? "Retiring..." : "Retire Vehicle"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }

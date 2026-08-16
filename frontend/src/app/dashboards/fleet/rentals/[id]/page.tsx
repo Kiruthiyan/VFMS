@@ -42,6 +42,7 @@ export default function RentalDetailPage() {
   // Dialog state
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [returnDate, setReturnDate] = useState("");
+  const [closeRentalDialogOpen, setCloseRentalDialogOpen] = useState(false);
 
   const fetchRental = useCallback(async () => {
     try {
@@ -85,15 +86,18 @@ export default function RentalDetailPage() {
     }
   };
 
-  const handleClose = async () => {
-    if (confirm("Close this rental permanently?")) {
-      try {
-        await rentalApi.close(Number(id));
-        toast.success("Rental closed");
-        fetchRental();
-      } catch {
-        toast.error("Failed to close rental");
-      }
+  const handleClose = () => {
+    setCloseRentalDialogOpen(true);
+  };
+
+  const confirmClose = async () => {
+    setCloseRentalDialogOpen(false);
+    try {
+      await rentalApi.close(Number(id));
+      toast.success("Rental closed");
+      fetchRental();
+    } catch {
+      toast.error("Failed to close rental");
     }
   };
 
@@ -273,7 +277,7 @@ export default function RentalDetailPage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FleetFileDropzone
                   title="Rental Agreement"
-                  readonly={Boolean(rental.agreementUrl) || !canCreate || rental.status !== "ACTIVE"}
+                  readonly={!canCreate || rental.status !== "ACTIVE"}
                   file={null}
                   existingFileName={
                     rental.agreementUrl
@@ -288,7 +292,6 @@ export default function RentalDetailPage() {
                 <FleetFileDropzone
                   title="Invoice"
                   readonly={
-                    Boolean(rental.invoiceUrl) ||
                     !canCreate ||
                     (rental.status !== "RETURNED" && rental.status !== "CLOSED")
                   }
@@ -339,6 +342,32 @@ export default function RentalDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Close Rental Dialog */}
+        <Dialog open={closeRentalDialogOpen} onOpenChange={setCloseRentalDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Close Rental</DialogTitle>
+            </DialogHeader>
+            <div className="py-3">
+              <p className="text-sm text-slate-700">
+                Close Rental{" "}
+                <span className="font-semibold">#{rental.id}</span> ({rental.plateNumber}) permanently?
+              </p>
+              <p className="text-xs text-slate-500 mt-2">
+                Closing this rental will finalise all records. Make sure the invoice has been uploaded before closing.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCloseRentalDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmClose}>
+                Close Rental
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Return Dialog */}
         <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>

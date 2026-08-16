@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { vendorApi, Vendor } from "@/lib/api/rental";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   Building2,
   ArrowLeft,
@@ -26,6 +27,7 @@ export default function VendorDetailPage() {
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchVendor();
@@ -42,10 +44,15 @@ export default function VendorDetailPage() {
     }
   };
 
-  const handleToggleStatus = async () => {
+  const handleToggleStatus = () => {
+    if (!vendor) return;
+    setToggleDialogOpen(true);
+  };
+
+  const confirmToggleStatus = async () => {
     if (!vendor) return;
     const action = vendor.active ? "Deactivate" : "Activate";
-    if (!confirm(`${action} this vendor?`)) return;
+    setToggleDialogOpen(false);
     setToggling(true);
     try {
       await vendorApi.toggleStatus(vendor.id);
@@ -188,6 +195,46 @@ export default function VendorDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+        {/* Toggle Vendor Status Dialog */}
+        {vendor && (
+          <Dialog open={toggleDialogOpen} onOpenChange={setToggleDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {vendor.active ? "Deactivate Vendor" : "Activate Vendor"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-3">
+                <p className="text-sm text-slate-700">
+                  {vendor.active ? "Deactivate" : "Activate"}{" "}
+                  <span className="font-semibold">{vendor.name}</span>?
+                </p>
+                <p className="text-xs text-slate-500 mt-2">
+                  {vendor.active
+                    ? "Deactivating this vendor will prevent them from being selected for new rentals."
+                    : "Reactivating this vendor will allow them to be selected for new rentals again."}
+                </p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setToggleDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant={vendor.active ? "destructive" : "success"}
+                  onClick={confirmToggleStatus}
+                  disabled={toggling}
+                >
+                  {toggling
+                    ? "Updating..."
+                    : vendor.active
+                      ? "Deactivate"
+                      : "Activate"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
     </div>
   );
 }

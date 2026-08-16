@@ -21,8 +21,6 @@ type FleetFileDropzoneProps = {
 
 const ACCEPTED_DOCUMENTS = {
   "application/pdf": [".pdf"],
-  "image/jpeg": [".jpg", ".jpeg"],
-  "image/png": [".png"],
 };
 
 export function FleetFileDropzone({
@@ -33,7 +31,7 @@ export function FleetFileDropzone({
   existingFileName,
   onFileChange,
   onOpenExisting,
-  emptyLabel = "Drag a PDF or image here, or choose a file",
+  emptyLabel = "Drag a PDF file here, or choose a file",
   uploadLabel = "Upload",
   replaceLabel = "Replace",
 }: FleetFileDropzoneProps) {

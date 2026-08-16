@@ -44,6 +44,9 @@ export default function MaintenanceDetailPage({
   const [rejectReason, setRejectReason] = useState("");
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [closeCost, setCloseCost] = useState("");
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [acknowledgeDialogOpen, setAcknowledgeDialogOpen] = useState(false);
 
   const fetchRequest = async () => {
     try {
@@ -60,27 +63,33 @@ export default function MaintenanceDetailPage({
     fetchRequest();
   }, [id]);
 
-  const handleSubmit = async () => {
-    if (confirm("Submit this request for approval?")) {
-      try {
-        await maintenanceApi.submit(Number(id));
-        toast.success("Request submitted");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to submit");
-      }
+  const handleSubmit = () => {
+    setSubmitDialogOpen(true);
+  };
+
+  const confirmSubmit = async () => {
+    setSubmitDialogOpen(false);
+    try {
+      await maintenanceApi.submit(Number(id));
+      toast.success("Request submitted");
+      fetchRequest();
+    } catch {
+      toast.error("Failed to submit");
     }
   };
 
-  const handleApprove = async () => {
-    if (confirm("Approve this request?")) {
-      try {
-        await maintenanceApi.approve(Number(id));
-        toast.success("Request approved");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to approve");
-      }
+  const handleApprove = () => {
+    setApproveDialogOpen(true);
+  };
+
+  const confirmApprove = async () => {
+    setApproveDialogOpen(false);
+    try {
+      await maintenanceApi.approve(Number(id));
+      toast.success("Request approved");
+      fetchRequest();
+    } catch {
+      toast.error("Failed to approve");
     }
   };
 
@@ -108,19 +117,23 @@ export default function MaintenanceDetailPage({
     if (!request) return;
 
     if (request.status === "REJECTED") {
-      // Rejected = no work done, no cost needed
-      if (!confirm("Acknowledge and close this rejected request?")) return;
-      try {
-        await maintenanceApi.close(Number(id), 0);
-        toast.success("Request closed");
-        fetchRequest();
-      } catch {
-        toast.error("Failed to close");
-      }
+      // Rejected = no work done, no cost needed — open acknowledgement dialog
+      setAcknowledgeDialogOpen(true);
     } else {
       // Approved = maintenance was done, ask for actual cost (optional)
       setCloseCost("");
       setCloseDialogOpen(true);
+    }
+  };
+
+  const confirmAcknowledge = async () => {
+    setAcknowledgeDialogOpen(false);
+    try {
+      await maintenanceApi.close(Number(id), 0);
+      toast.success("Request closed");
+      fetchRequest();
+    } catch {
+      toast.error("Failed to close");
     }
   };
 
@@ -310,7 +323,7 @@ export default function MaintenanceDetailPage({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FleetFileDropzone
                   title="Quotation"
-                  readonly={Boolean(request.quotationUrl) || !canCreate || request.status !== "NEW"}
+                  readonly={!canCreate || request.status !== "NEW"}
                   file={null}
                   existingFileName={
                     request.quotationUrl
@@ -325,7 +338,6 @@ export default function MaintenanceDetailPage({
                 <FleetFileDropzone
                   title="Invoice"
                   readonly={
-                    Boolean(request.invoiceUrl) ||
                     !canCreate ||
                     request.status === "NEW" ||
                     request.status === "SUBMITTED" ||
@@ -406,6 +418,81 @@ export default function MaintenanceDetailPage({
         </Card>
 
         {/* Dialogs */}
+        <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Submit for Approval</DialogTitle>
+            </DialogHeader>
+            <div className="py-3">
+              <p className="text-sm text-slate-700">
+                Submit Maintenance Request{" "}
+                <span className="font-semibold">#{request.id}</span> for approval?
+              </p>
+              <p className="text-xs text-slate-500 mt-2">
+                Once submitted, the request will enter the approval workflow and can no longer be edited.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSubmitDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={confirmSubmit}>
+                Submit for Approval
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Approve Request</DialogTitle>
+            </DialogHeader>
+            <div className="py-3">
+              <p className="text-sm text-slate-700">
+                Approve Maintenance Request{" "}
+                <span className="font-semibold">#{request.id}</span>?
+              </p>
+              <p className="text-xs text-slate-500 mt-2">
+                The request will be marked as approved and the maintenance team can proceed.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="success" onClick={confirmApprove}>
+                Approve
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={acknowledgeDialogOpen} onOpenChange={setAcknowledgeDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Acknowledge &amp; Close</DialogTitle>
+            </DialogHeader>
+            <div className="py-3">
+              <p className="text-sm text-slate-700">
+                Acknowledge and close Maintenance Request{" "}
+                <span className="font-semibold">#{request.id}</span>?
+              </p>
+              <p className="text-xs text-slate-500 mt-2">
+                This request was rejected — no maintenance cost will be recorded. Closing it will archive it for audit purposes.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAcknowledgeDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={confirmAcknowledge}>
+                Acknowledge &amp; Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
           <DialogContent>
             <DialogHeader>

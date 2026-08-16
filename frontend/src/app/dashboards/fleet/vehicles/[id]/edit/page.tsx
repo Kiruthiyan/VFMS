@@ -22,6 +22,14 @@ export default function EditVehiclePage({
       try {
         const res = await vehicleApi.getById(Number(id));
         const v = res.data;
+
+        // Retired vehicles must not be edited — redirect to the detail view
+        if (v.status === "RETIRED") {
+          toast.error("Retired vehicles cannot be edited.");
+          router.replace(`/dashboards/fleet/vehicles/${id}`);
+          return;
+        }
+
         setInitialData({
           plateNumber: v.plateNumber,
           brand: v.brand,
@@ -43,7 +51,7 @@ export default function EditVehiclePage({
       }
     };
     fetch();
-  }, [id]);
+  }, [id, router]);
 
   if (loading) {
     return (

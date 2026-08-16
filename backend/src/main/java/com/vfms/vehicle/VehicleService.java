@@ -73,6 +73,11 @@ public class VehicleService {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
+        // Retired vehicles are immutable — editing them would corrupt the historical audit trail
+        if (VehicleStatus.RETIRED.equals(vehicle.getStatus())) {
+            throw new IllegalStateException("Retired vehicles cannot be edited.");
+        }
+
         vehicle.setPlateNumber(request.getPlateNumber());
         vehicle.setBrand(request.getBrand());
         vehicle.setModel(request.getModel());
