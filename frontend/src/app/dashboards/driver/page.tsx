@@ -4,90 +4,97 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   UserCircle,
-  ShieldCheck,
   CheckCircle2,
-  Users,
   AlertTriangle,
   Droplets,
 } from "lucide-react";
 
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 import api from "@/lib/api";
-import { getUserCountsApi, type UserCounts } from "@/lib/api/admin";
-import { vehicleApi, type Vehicle } from "@/lib/api/vehicle";
-import { maintenanceApi, type MaintenanceRequest } from "@/lib/api/maintenance";
+import { useAuthStore } from "@/store/auth-store";
+
+interface DashboardTrip {
+  id?: string;
+  status?: string;
+}
 
 interface DashboardSnapshot {
-  counts: UserCounts | null;
-  vehicles: Vehicle[];
-  trips: any[];
-  maintenance: MaintenanceRequest[];
+  trips: DashboardTrip[];
 }
 
 const DEFAULT_SNAPSHOT: DashboardSnapshot = {
-  counts: null,
-  vehicles: [],
   trips: [],
-  maintenance: [],
 };
+
+function readTripArray(payload: unknown): DashboardTrip[] {
+  if (Array.isArray(payload)) {
+    return payload as DashboardTrip[];
+  }
+  if (payload && typeof payload === "object" && "data" in payload) {
+    const nested = (payload as { data?: unknown }).data;
+    return Array.isArray(nested) ? (nested as DashboardTrip[]) : [];
+  }
+  return [];
+}
 
 export default function DriverDashboardPage() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot>(DEFAULT_SNAPSHOT);
   const [loading, setLoading] = useState(true);
+  const currentUser = useAuthStore((state) => state.user);
 
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const [counts, vehicles, trips, maintenance] = await Promise.all([
-          getUserCountsApi().catch(() => null),
-          vehicleApi.getAll().then(r => r.data).catch(() => []),
-          api.get("/api/trips").then((r: any) => r.data.data || []).catch(() => []),
-          maintenanceApi.getAll().then(r => r.data).catch(() => []),
-        ]);
-        setSnapshot({ counts, vehicles, trips, maintenance });
+        if (!currentUser?.userId) {
+          setSnapshot(DEFAULT_SNAPSHOT);
+          return;
+        }
+        const trips = await api
+          .get<unknown>(`/api/trips/driver/${currentUser.userId}`)
+          .then((response) => readTripArray(response.data))
+          .catch(() => []);
+        setSnapshot({ trips });
       } finally {
         setLoading(false);
       }
     }
     loadDashboard();
-  }, []);
+  }, [currentUser?.userId]);
 
   const summaryCards = useMemo(() => {
-    const counts = snapshot.counts;
-    const activeMaintenance = snapshot.maintenance.filter(
-      (req) => req.status === "SUBMITTED" || req.status === "NEW" || req.status === "APPROVED"
-    ).length;
+    const needsAction = snapshot.trips.filter((trip) => trip.status === "APPROVED").length;
+    const ongoing = snapshot.trips.filter((trip) => trip.status === "ONGOING").length;
+    const completed = snapshot.trips.filter((trip) => trip.status === "COMPLETED").length;
 
     return [
       {
-        title: "Total Users",
-        value: counts?.total ?? 0,
-        description: "Across all active and archived accounts",
-        icon: Users,
+        title: "Assigned Trips",
+        value: snapshot.trips.length,
+        description: "Trips assigned to your driver profile",
+        icon: UserCircle,
         iconAccent: "bg-blue-50 text-blue-600",
       },
       {
-        title: "Fleet Size",
-        value: snapshot.vehicles.length,
-        description: "Total registered vehicles in the system",
-        icon: CheckCircle2,
+        title: "Pending Action",
+        value: needsAction,
+        description: "Approved trips waiting for your confirmation",
+        icon: AlertTriangle,
         iconAccent: "bg-emerald-50 text-emerald-600",
       },
       {
-        title: "Total Trips",
-        value: snapshot.trips.length,
-        description: "All recorded trip requests and histories",
+        title: "Ongoing",
+        value: ongoing,
+        description: "Trips currently in progress",
         icon: Droplets,
         iconAccent: "bg-sky-50 text-sky-600",
       },
       {
-        title: "Active Maintenance",
-        value: activeMaintenance,
-        description: "Vehicles currently requiring attention",
-        icon: AlertTriangle,
+        title: "Completed",
+        value: completed,
+        description: "Finished trip assignments",
+        icon: CheckCircle2,
         iconAccent: "bg-rose-50 text-rose-600",
       },
     ];

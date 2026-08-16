@@ -4,7 +4,6 @@ import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
 import com.vfms.common.enums.Role;
 import com.vfms.common.enums.UserStatus;
-import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelMetadataDriverProjection;
 import com.vfms.fuel.dto.FuelMetadataVehicleProjection;
@@ -42,7 +41,6 @@ class FuelServiceTest {
     @Mock private FuelRecordRepository fuelRecordRepository;
     @Mock private VehicleRepository vehicleRepository;
     @Mock private UserRepository userRepository;
-    @Mock private VehicleApiClient vehicleApiClient;
     @Mock private FuelStorageService fuelStorageService;
     @Mock private FuelMisuseService fuelMisuseService;
 

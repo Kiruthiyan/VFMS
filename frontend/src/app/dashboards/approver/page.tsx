@@ -2,29 +2,41 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, Droplets, FileCheck2, ShieldCheck, Users } from "lucide-react";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AlertTriangle, CheckCircle2, Droplets, ShieldCheck, Users } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 import api from "@/lib/api";
-import { getUserCountsApi, type UserCounts } from "@/lib/api/admin";
 import { vehicleApi, type Vehicle } from "@/lib/api/vehicle";
 import { maintenanceApi, type MaintenanceRequest } from "@/lib/api/maintenance";
 
+interface DashboardTrip {
+  id?: string;
+  status?: string;
+}
+
 interface DashboardSnapshot {
-  counts: UserCounts | null;
   vehicles: Vehicle[];
-  trips: any[];
+  trips: DashboardTrip[];
   maintenance: MaintenanceRequest[];
 }
 
 const DEFAULT_SNAPSHOT: DashboardSnapshot = {
-  counts: null,
   vehicles: [],
   trips: [],
   maintenance: [],
 };
+
+function readTripArray(payload: unknown): DashboardTrip[] {
+  if (Array.isArray(payload)) {
+    return payload as DashboardTrip[];
+  }
+  if (payload && typeof payload === "object" && "data" in payload) {
+    const nested = (payload as { data?: unknown }).data;
+    return Array.isArray(nested) ? (nested as DashboardTrip[]) : [];
+  }
+  return [];
+}
 
 export default function ApproverDashboardPage() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot>(DEFAULT_SNAPSHOT);
@@ -33,13 +45,12 @@ export default function ApproverDashboardPage() {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const [counts, vehicles, trips, maintenance] = await Promise.all([
-          getUserCountsApi().catch(() => null),
+        const [vehicles, trips, maintenance] = await Promise.all([
           vehicleApi.getAll().then(r => r.data).catch(() => []),
-          api.get("/api/trips").then((r: any) => r.data.data || []).catch(() => []),
+          api.get<unknown>("/api/trips").then((r) => readTripArray(r.data)).catch(() => []),
           maintenanceApi.getAll().then(r => r.data).catch(() => []),
         ]);
-        setSnapshot({ counts, vehicles, trips, maintenance });
+        setSnapshot({ vehicles, trips, maintenance });
       } finally {
         setLoading(false);
       }
@@ -48,16 +59,16 @@ export default function ApproverDashboardPage() {
   }, []);
 
   const summaryCards = useMemo(() => {
-    const counts = snapshot.counts;
+    const pendingTrips = snapshot.trips.filter((trip) => trip.status === "SUBMITTED").length;
     const activeMaintenance = snapshot.maintenance.filter(
       (req) => req.status === "SUBMITTED" || req.status === "NEW" || req.status === "APPROVED"
     ).length;
 
     return [
       {
-        title: "Total Users",
-        value: counts?.total ?? 0,
-        description: "Across all active and archived accounts",
+        title: "Pending Trips",
+        value: pendingTrips,
+        description: "Trip requests waiting for review",
         icon: Users,
         iconAccent: "bg-blue-50 text-blue-600",
       },

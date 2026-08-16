@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+import { RoleGuard } from "@/components/auth/role-guard";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export default function TripsLayout({
@@ -8,8 +10,12 @@ export default function TripsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardShell>
-      {children}
-    </DashboardShell>
+    <Suspense>
+      <RoleGuard allowedRoles={["ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER"]}>
+        <DashboardShell>
+          {children}
+        </DashboardShell>
+      </RoleGuard>
+    </Suspense>
   );
 }

@@ -33,6 +33,9 @@ public class TripRequestService {
                 dto.getReturnTime().isEqual(dto.getDepartureTime())) {
             throw new ValidationException("Return time must be after departure time");
         }
+        if (dto.getRequesterId() == null) {
+            throw new ValidationException("Requester ID is required");
+        }
         TripRequest trip = TripRequest.builder()
                 .requesterId(dto.getRequesterId())
                 .purpose(dto.getPurpose())

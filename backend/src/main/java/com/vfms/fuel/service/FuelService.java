@@ -7,7 +7,6 @@ import com.vfms.common.enums.UserStatus;
 import com.vfms.vehicle.VehicleStatus;
 import com.vfms.user.entity.User;
 import com.vfms.user.repository.UserRepository;
-import com.vfms.fuel.client.VehicleApiClient;
 import com.vfms.fuel.dto.CreateFuelRecordRequest;
 import com.vfms.fuel.dto.FuelMetadataDriverProjection;
 import com.vfms.fuel.dto.FuelMetadataVehicleProjection;
@@ -15,7 +14,6 @@ import com.vfms.fuel.dto.FuelFormMetadataResponse;
 import com.vfms.fuel.dto.FuelLookupOptionResponse;
 import com.vfms.fuel.dto.FuelRecordResponse;
 import com.vfms.fuel.dto.PatchFuelRecordRequest;
-import com.vfms.fuel.dto.VehicleDetailDto;
 import com.vfms.fuel.entity.FuelRecord;
 import com.vfms.fuel.repository.FuelRecordRepository;
 import com.vfms.vehicle.Vehicle;
@@ -52,7 +50,6 @@ public class FuelService {
     private final FuelRecordRepository fuelRecordRepository;
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
-    private final VehicleApiClient vehicleApiClient;
     private final FuelStorageService fuelStorageService;
     private final FuelMisuseService fuelMisuseService;
 
@@ -485,39 +482,7 @@ public class FuelService {
     }
 
     public FuelRecordResponse toResponseWithRealTimeData(FuelRecord record) {
-        try {
-            Vehicle vehicle = record.getVehicle();
-            if (vehicle == null) {
-                return toResponse(record);
-            }
-
-            VehicleDetailDto vehicleDetail = vehicleApiClient.getVehicleById(vehicle.getId());
-            DriverFields driverFields = resolveDriverFields(record);
-            return FuelRecordResponse.builder()
-                    .id(record.getId())
-                    .vehicleId(String.valueOf(vehicle.getId()))
-                    .vehiclePlate(vehicleDetail.getPlateNumber())
-                    .vehicleMakeModel(vehicleDetail.getMake() + " " + vehicleDetail.getModel())
-                    .driverId(driverFields.id())
-                    .driverName(driverFields.name())
-                    .fuelDate(record.getFuelDate())
-                    .quantity(record.getQuantity())
-                    .costPerLitre(record.getCostPerLitre())
-                    .totalCost(record.getTotalCost())
-                    .odometerReading(record.getOdometerReading())
-                    .fuelStation(record.getFuelStation())
-                    .notes(record.getNotes())
-                    .receiptUrl(protectedReceiptUrl(record))
-                    .receiptFileName(record.getReceiptFileName())
-                    .flaggedForMisuse(record.isFlaggedForMisuse())
-                    .flagReason(record.getFlagReason())
-                    .createdBy(record.getCreatedBy())
-                    .createdAt(record.getCreatedAt())
-                    .build();
-        } catch (Exception e) {
-            log.warn("Failed to fetch real-time vehicle data, using cached: {}", e.getMessage());
-            return toResponse(record);
-        }
+        return toResponse(record);
     }
 
     private FuelRecordResponse toResponseWithEfficiency(FuelRecord record) {

@@ -72,6 +72,12 @@ public class VehicleService {
     public VehicleResponseDto updateVehicle(Long id, VehicleRequestDto request) {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+        vehicleRepository.findByPlateNumber(request.getPlateNumber())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException(
+                            "Vehicle with plate number '" + request.getPlateNumber() + "' already exists");
+                });
 
         vehicle.setPlateNumber(request.getPlateNumber());
         vehicle.setBrand(request.getBrand());

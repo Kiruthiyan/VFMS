@@ -11,7 +11,6 @@ import java.util.UUID;
 @Data
 public class CreateTripRequestDTO {
 
-    @NotNull(message = "Requester ID is required")
     private UUID requesterId;
 
     // Core trip details

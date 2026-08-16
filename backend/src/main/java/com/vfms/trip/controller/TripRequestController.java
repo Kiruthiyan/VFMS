@@ -40,7 +40,12 @@ public class TripRequestController {
      * Validates the incoming DTO before passing it to the service.
      */
     @PostMapping
-    public ResponseEntity<TripRequest> createTrip(@Valid @RequestBody CreateTripRequestDTO dto) {
+    public ResponseEntity<TripRequest> createTrip(
+            @Valid @RequestBody CreateTripRequestDTO dto,
+            @AuthenticationPrincipal User user) {
+        if (isSystemUser(user)) {
+            dto.setRequesterId(user.getId());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createTrip(dto));
     }
 
@@ -48,7 +53,10 @@ public class TripRequestController {
      * Retrieves all trip requests in the system.
      */
     @GetMapping
-    public ResponseEntity<List<TripRequest>> getAllTrips() {
+    public ResponseEntity<List<TripRequest>> getAllTrips(@AuthenticationPrincipal User user) {
+        if (isSystemUser(user)) {
+            return ResponseEntity.ok(service.getTripsByRequester(user.getId()));
+        }
         return ResponseEntity.ok(service.getAllTrips());
     }
 
@@ -56,7 +64,12 @@ public class TripRequestController {
      * Retrieves trip requests filtered by a specific status (e.g., NEW, APPROVED, COMPLETED).
      */
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<TripRequest>> getTripsByStatus(@PathVariable TripStatus status) {
+    public ResponseEntity<List<TripRequest>> getTripsByStatus(
+            @PathVariable TripStatus status,
+            @AuthenticationPrincipal User user) {
+        if (isSystemUser(user)) {
+            return ResponseEntity.ok(service.searchTrips(null, status, user.getId()));
+        }
         return ResponseEntity.ok(service.getTripsByStatus(status));
     }
 
@@ -70,15 +83,19 @@ public class TripRequestController {
         if (isDriver(user)) {
             return ResponseEntity.ok(service.getDriverTripById(id, requireDriverId(user)));
         }
-        return ResponseEntity.ok(service.getTripById(id));
+        TripRequest trip = service.getTripById(id);
+        assertRequesterCanAccessTrip(trip, user);
+        return ResponseEntity.ok(trip);
     }
 
     /**
      * Retrieves all trips associated with a specific requester (user).
      */
     @GetMapping("/requester/{requesterId}")
-    public ResponseEntity<List<TripRequest>> getTripsByRequester(@PathVariable UUID requesterId) {
-        return ResponseEntity.ok(service.getTripsByRequester(requesterId));
+    public ResponseEntity<List<TripRequest>> getTripsByRequester(
+            @PathVariable UUID requesterId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(service.getTripsByRequester(resolveRequesterId(requesterId, user)));
     }
 
     // ==========================================
@@ -89,7 +106,14 @@ public class TripRequestController {
      * Fully updates/edits an existing trip request.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TripRequest> editTrip(@PathVariable UUID id, @Valid @RequestBody CreateTripRequestDTO dto) {
+    public ResponseEntity<TripRequest> editTrip(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateTripRequestDTO dto,
+            @AuthenticationPrincipal User user) {
+        assertRequesterCanAccessTrip(service.getTripById(id), user);
+        if (isSystemUser(user)) {
+            dto.setRequesterId(user.getId());
+        }
         return ResponseEntity.ok(service.editTrip(id, dto));
     }
 
@@ -97,7 +121,10 @@ public class TripRequestController {
      * Submits a draft/new trip request for admin/manager approval.
      */
     @PatchMapping("/{id}/submit")
-    public ResponseEntity<TripRequest> submitTrip(@PathVariable UUID id) {
+    public ResponseEntity<TripRequest> submitTrip(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user) {
+        assertRequesterCanAccessTrip(service.getTripById(id), user);
         return ResponseEntity.ok(service.submitTrip(id));
     }
 
@@ -266,16 +293,20 @@ public class TripRequestController {
      * Retrieves the past trip history (completed/cancelled) for a specific requester.
      */
     @GetMapping("/requester/{requesterId}/history")
-    public ResponseEntity<List<TripRequest>> getRequesterTripHistory(@PathVariable UUID requesterId) {
-        return ResponseEntity.ok(service.getRequesterTripHistory(requesterId));
+    public ResponseEntity<List<TripRequest>> getRequesterTripHistory(
+            @PathVariable UUID requesterId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(service.getRequesterTripHistory(resolveRequesterId(requesterId, user)));
     }
 
     /**
      * Retrieves currently active trips (new, submitted, approved, ongoing) for a requester.
      */
     @GetMapping("/requester/{requesterId}/active")
-    public ResponseEntity<List<TripRequest>> getRequesterActiveTrips(@PathVariable UUID requesterId) {
-        return ResponseEntity.ok(service.getRequesterActiveTrips(requesterId));
+    public ResponseEntity<List<TripRequest>> getRequesterActiveTrips(
+            @PathVariable UUID requesterId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(service.getRequesterActiveTrips(resolveRequesterId(requesterId, user)));
     }
 
     /**
@@ -284,8 +315,16 @@ public class TripRequestController {
     @GetMapping("/calendar")
     public ResponseEntity<List<TripRequest>> getTripsForCalendar(
             @RequestParam int year,
-            @RequestParam int month) {
-        return ResponseEntity.ok(service.getTripsForCalendar(year, month));
+            @RequestParam int month,
+            @AuthenticationPrincipal User user) {
+        List<TripRequest> trips = service.getTripsForCalendar(year, month);
+        if (isSystemUser(user)) {
+            UUID userId = user.getId();
+            trips = trips.stream()
+                    .filter(trip -> userId.equals(trip.getRequesterId()))
+                    .toList();
+        }
+        return ResponseEntity.ok(trips);
     }
 
     /**
@@ -295,15 +334,21 @@ public class TripRequestController {
     public ResponseEntity<List<TripRequest>> searchTrips(
             @RequestParam(required = false) String destination,
             @RequestParam(required = false) TripStatus status,
-            @RequestParam(required = false) UUID requesterId) {
-        return ResponseEntity.ok(service.searchTrips(destination, status, requesterId));
+            @RequestParam(required = false) UUID requesterId,
+            @AuthenticationPrincipal User user) {
+        UUID effectiveRequesterId = isSystemUser(user) ? user.getId() : requesterId;
+        return ResponseEntity.ok(service.searchTrips(destination, status, effectiveRequesterId));
     }
 
     /**
      * Submits driver rating and feedback for a completed trip.
      */
     @PatchMapping("/{id}/feedback")
-    public ResponseEntity<TripRequest> submitDriverFeedback(@PathVariable UUID id, @Valid @RequestBody FeedbackDTO dto) {
+    public ResponseEntity<TripRequest> submitDriverFeedback(
+            @PathVariable UUID id,
+            @Valid @RequestBody FeedbackDTO dto,
+            @AuthenticationPrincipal User user) {
+        assertRequesterCanAccessTrip(service.getTripById(id), user);
         return ResponseEntity.ok(service.submitDriverFeedback(id, dto.getRating(), dto.getFeedback(), dto.getStaffTimelineReason()));
     }
 
@@ -325,11 +370,32 @@ public class TripRequestController {
         return user != null && user.getRole() == Role.DRIVER;
     }
 
+    private boolean isSystemUser(User user) {
+        return user != null && user.getRole() == Role.SYSTEM_USER;
+    }
+
     private UUID requireDriverId(User user) {
         if (!isDriver(user) || user.getId() == null) {
             throw new AuthorizationException("Authenticated driver is required.");
         }
         return user.getId();
+    }
+
+    private UUID resolveRequesterId(UUID requestedRequesterId, User user) {
+        if (isSystemUser(user)) {
+            UUID currentUserId = user.getId();
+            if (!currentUserId.equals(requestedRequesterId)) {
+                throw new AuthorizationException("Users can only access their own trip requests.");
+            }
+            return currentUserId;
+        }
+        return requestedRequesterId;
+    }
+
+    private void assertRequesterCanAccessTrip(TripRequest trip, User user) {
+        if (isSystemUser(user) && !user.getId().equals(trip.getRequesterId())) {
+            throw new AuthorizationException("Users can only access their own trip requests.");
+        }
     }
 
     private void assertDriverCanAccessDriverId(UUID driverId, User user) {

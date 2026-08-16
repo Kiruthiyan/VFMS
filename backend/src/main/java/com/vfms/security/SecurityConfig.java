@@ -53,8 +53,9 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers.frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(auth -> auth
+                        // --- Health checks for hosting platforms/load balancers ---
+                        .requestMatchers("/health", "/actuator/health").permitAll()
                         // --- Authentication (public) ---
                         .requestMatchers(
                                 "/api/auth/login",

@@ -7,7 +7,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 export default function DriversLayout({ children }: { children: React.ReactNode }) {
   return (
     <Suspense>
-      <RoleGuard allowedRole="APPROVER">
+      <RoleGuard allowedRoles={["APPROVER", "ADMIN"]}>
         <DashboardShell>
           {children}
         </DashboardShell>

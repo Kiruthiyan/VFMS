@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED_PREFIXES = ["/admin", "/dashboards", "/drivers", "/settings"];
+const PROTECTED_PREFIXES = ["/admin", "/dashboards", "/drivers", "/settings", "/trips"];
 
 /**
  * Global proxy entry point.
