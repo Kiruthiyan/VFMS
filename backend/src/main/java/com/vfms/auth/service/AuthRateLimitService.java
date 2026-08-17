@@ -48,10 +48,9 @@ public class AuthRateLimitService {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
+        // X-Forwarded-For is client-controlled and not validated against any
+        // trusted proxy list in this deployment, so it must not be trusted
+        // for rate-limit key derivation (trivially spoofable to bypass limits).
         return request.getRemoteAddr();
     }
 }

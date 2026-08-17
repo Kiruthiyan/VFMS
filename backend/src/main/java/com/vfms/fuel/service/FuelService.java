@@ -111,14 +111,6 @@ public class FuelService {
     }
 
     @Transactional(readOnly = true)
-    public List<FuelRecordResponse> getAllRecordsWithRealTimeData() {
-        return fuelRecordRepository.findAllByOrderByFuelDateDesc()
-                .stream()
-                .map(this::toResponseWithRealTimeData)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
     public FuelRecordResponse getById(UUID id) {
         FuelRecord record = fuelRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
@@ -136,29 +128,10 @@ public class FuelService {
     }
 
     @Transactional(readOnly = true)
-    public FuelRecordResponse getFuelRecordWithRealTimeData(UUID id) {
-        FuelRecord record = fuelRecordRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
-        return toResponseWithRealTimeData(record);
-    }
-
-    @Transactional(readOnly = true)
     public List<FuelRecordResponse> getByVehicle(Long vehicleId) {
         return fuelRecordRepository.findByVehicleIdOrderByFuelDateDesc(vehicleId)
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<FuelRecordResponse> getByVehicleWithRealTimeData(Long vehicleId) {
-        if (!vehicleRepository.existsById(vehicleId)) {
-            throw new ResourceNotFoundException("Vehicle not found: " + vehicleId);
-        }
-
-        return fuelRecordRepository.findByVehicleIdOrderByFuelDateDesc(vehicleId)
-                .stream()
-                .map(this::toResponseWithRealTimeData)
                 .collect(Collectors.toList());
     }
 
@@ -326,6 +299,15 @@ public class FuelService {
             throw new ResourceNotFoundException("Fuel record not found: " + id);
         }
         fuelRecordRepository.deleteById(id);
+    }
+
+    @Transactional
+    public FuelRecordResponse removeReceipt(UUID id) {
+        FuelRecord record = fuelRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fuel record not found: " + id));
+        record.setReceiptUrl(null);
+        record.setReceiptFileName(null);
+        return toResponse(fuelRecordRepository.save(record));
     }
 
     /**
@@ -541,10 +523,6 @@ public class FuelService {
                 .createdBy(record.getCreatedBy())
                 .createdAt(record.getCreatedAt())
                 .build();
-    }
-
-    public FuelRecordResponse toResponseWithRealTimeData(FuelRecord record) {
-        return toResponse(record);
     }
 
     private FuelRecordResponse toResponseWithEfficiency(FuelRecord record) {

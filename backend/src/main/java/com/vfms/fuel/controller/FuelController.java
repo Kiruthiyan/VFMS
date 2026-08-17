@@ -62,19 +62,9 @@ public class FuelController {
         return ResponseEntity.ok(fuelService.getById(id));
     }
 
-    @GetMapping("/{id}/with-vehicle-data")
-    public ResponseEntity<FuelRecordResponse> getFuelRecordWithVehicleData(@PathVariable UUID id) {
-        return ResponseEntity.ok(fuelService.getFuelRecordWithRealTimeData(id));
-    }
-
     @GetMapping("/{id}/receipt")
     public ResponseEntity<FuelReceiptAccessResponse> getFuelReceiptAccessUrl(@PathVariable UUID id) {
         return ResponseEntity.ok(new FuelReceiptAccessResponse(fuelService.createReceiptAccessUrl(id)));
-    }
-
-    @GetMapping("/realtime/all")
-    public ResponseEntity<List<FuelRecordResponse>> getAllRecordsWithRealTimeData() {
-        return ResponseEntity.ok(fuelService.getAllRecordsWithRealTimeData());
     }
 
     @GetMapping("/search")
@@ -89,11 +79,6 @@ public class FuelController {
     @GetMapping("/vehicle/{vehicleId}")
     public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicle(@PathVariable Long vehicleId) {
         return ResponseEntity.ok(fuelService.getByVehicle(vehicleId));
-    }
-
-    @GetMapping("/vehicle/{vehicleId}/realtime")
-    public ResponseEntity<List<FuelRecordResponse>> getFuelByVehicleRealTime(@PathVariable Long vehicleId) {
-        return ResponseEntity.ok(fuelService.getByVehicleWithRealTimeData(vehicleId));
     }
 
     @GetMapping("/driver/{driverId}")
@@ -134,5 +119,10 @@ public class FuelController {
     public ResponseEntity<Void> deleteFuelRecord(@PathVariable UUID id) {
         fuelService.deleteFuelRecord(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/receipt")
+    public ResponseEntity<FuelRecordResponse> removeFuelReceipt(@PathVariable UUID id) {
+        return ResponseEntity.ok(fuelService.removeReceipt(id));
     }
 }

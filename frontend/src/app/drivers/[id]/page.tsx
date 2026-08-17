@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -258,10 +259,7 @@ export default function DriverDetailsPage() {
 									</TabsContent>
 
 									<TabsContent value="feedbacks">
-										<DriverFeedbacksTab
-											ratingPercentage={driverUser.ratingPercentage}
-											feedbacks={driverUser.feedbacks ?? []}
-										/>
+										<DriverFeedbacksTab driverUserId={id ?? ''} />
 									</TabsContent>
 								</Tabs>
 							)}
@@ -334,42 +332,85 @@ function DriverStarRating({ ratingPercentage }: { ratingPercentage?: number | nu
 	);
 }
 
-function DriverFeedbacksTab({
-	ratingPercentage,
-	feedbacks,
-}: {
-	ratingPercentage?: number | null;
-	feedbacks: DriverFeedback[];
-}) {
+function DriverFeedbacksTab({ driverUserId }: { driverUserId: string }) {
+	const [trips, setTrips] = React.useState<any[]>([]);
+	const [loading, setLoading] = React.useState(true);
+
+	React.useEffect(() => {
+		if (!driverUserId) return;
+		setLoading(true);
+		apiFetch<any[]>(`/api/trips/driver/${driverUserId}`)
+			.then(data => setTrips(Array.isArray(data) ? data : []))
+			.catch(() => setTrips([]))
+			.finally(() => setLoading(false));
+	}, [driverUserId]);
+
+	const ratedTrips = trips.filter(t => t.driverRating && t.driverRating > 0);
+	const avgRating = ratedTrips.length > 0
+		? ratedTrips.reduce((sum: number, t: any) => sum + t.driverRating, 0) / ratedTrips.length
+		: null;
+
+	const formatDate = (d: string) =>
+		new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
 	return (
 		<Card>
 			<CardHeader className="border-b border-border bg-muted/30 px-4 py-3">
 				<CardTitle className="text-sm font-semibold">Driver Feedbacks</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4 px-4 pb-4 pt-4">
+				{/* Overall Rating */}
 				<div className="rounded-lg border border-border bg-background p-4">
 					<p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Overall Rating</p>
-					<DriverStarRating ratingPercentage={ratingPercentage} />
-					<p className="mt-2 text-xs text-muted-foreground">
-						Rating will sync from staff trip scheduling feedback.
-					</p>
+					{loading ? (
+						<p className="text-xs text-muted-foreground">Loading…</p>
+					) : avgRating !== null ? (
+						<div className="flex items-center gap-3">
+							<div className="flex gap-0.5">
+								{Array.from({ length: 5 }).map((_, i) => (
+									<Star
+										key={i}
+										className={`h-6 w-6 ${i < Math.round(avgRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
+									/>
+								))}
+							</div>
+							<span className="text-2xl font-black text-foreground">{avgRating.toFixed(1)}</span>
+							<span className="text-sm text-muted-foreground">/ 5.0 ({ratedTrips.length} {ratedTrips.length === 1 ? 'rating' : 'ratings'})</span>
+						</div>
+					) : (
+						<p className="text-xs text-muted-foreground">No ratings yet. Ratings appear after completed trips are reviewed.</p>
+					)}
 				</div>
 
+				{/* Individual Feedback Entries */}
 				<div className="space-y-2">
-					{feedbacks.map((item, index) => (
-						<div key={item.id ?? index} className="rounded-lg border border-border p-3">
+					{loading && <p className="py-4 text-center text-xs text-muted-foreground">Loading feedbacks…</p>}
+					{!loading && ratedTrips.map((trip: any) => (
+						<div key={trip.id} className="rounded-lg border border-border p-3">
 							<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-								<DriverStarRating ratingPercentage={item.ratingPercentage} />
-								<span className="text-xs text-muted-foreground">{item.createdAt ?? 'Date not available'}</span>
+								<div className="flex gap-0.5">
+									{Array.from({ length: 5 }).map((_, i) => (
+										<Star
+											key={i}
+											className={`h-4 w-4 ${i < trip.driverRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
+										/>
+									))}
+								</div>
+								<span className="text-xs text-muted-foreground">
+									{trip.endTime ? formatDate(trip.endTime) : trip.updatedAt ? formatDate(trip.updatedAt) : 'Date not available'}
+								</span>
 							</div>
-							<p className="text-sm text-foreground">{item.feedback || item.comment || 'No feedback comment provided.'}</p>
-							<p className="mt-2 text-xs text-muted-foreground">Given by: {item.givenBy || 'Staff'}</p>
+							{trip.driverFeedback && (
+								<p className="text-sm text-foreground italic">"{trip.driverFeedback}"</p>
+							)}
+							<p className="mt-1 text-xs text-muted-foreground truncate" title={trip.destination}>
+								Trip: {trip.destination ? trip.destination.replace(/ -> /g, ' → ') : 'N/A'}
+							</p>
 						</div>
 					))}
-
-					{feedbacks.length === 0 && (
+					{!loading && ratedTrips.length === 0 && (
 						<p className="py-4 text-center text-xs text-muted-foreground">
-							No feedbacks yet. Feedbacks from Staff Dashboard / Trip Scheduling will appear here.
+							No feedbacks yet. Feedback from completed trip ratings will appear here.
 						</p>
 					)}
 				</div>

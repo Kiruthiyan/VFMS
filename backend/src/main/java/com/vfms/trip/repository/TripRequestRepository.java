@@ -65,4 +65,9 @@ public interface TripRequestRepository extends JpaRepository<TripRequest, UUID> 
            "WHERE t.assignedVehicleId IS NOT NULL " +
            "AND t.status IN :statuses")
     List<Long> findActiveVehicleIds(@Param("statuses") List<TripStatus> statuses);
+
+    // Average driver rating (1-5) across only trips the driver has actually been rated on
+    @Query("SELECT AVG(t.driverRating) FROM TripRequest t " +
+           "WHERE t.assignedDriverId = :driverId AND t.driverRating IS NOT NULL")
+    Double findAverageDriverRating(@Param("driverId") UUID driverId);
 }

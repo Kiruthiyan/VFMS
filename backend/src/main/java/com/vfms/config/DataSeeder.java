@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Creates the initial administrator account on startup only when:
@@ -32,7 +33,6 @@ import java.util.List;
 public class DataSeeder implements ApplicationRunner {
 
     private static final String SYSTEM_ACTOR = "system";
-    private static final String LEGACY_DEMO_CLEANUP_REASON = "Demo user cleanup";
 
     private final UserRepository userRepository;
     private final EmployeeRegistryRepository employeeRegistryRepository;
@@ -46,7 +46,6 @@ public class DataSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         logEmployeeRegistryState();
-        restoreUsersSoftDeletedByLegacyDemoCleanup();
 
         if (teamUsersSeedEnabled) {
             seedTeamUsers();
@@ -118,8 +117,11 @@ public class DataSeeder implements ApplicationRunner {
             log.info("[SEED] Created employee registry record for {}", normalizedEmail);
         }
 
-        // 2. Ensure User exists and is fully enabled/approved
-        if (!userRepository.existsByEmail(normalizedEmail)) {
+        // 2. Ensure User exists and is fully enabled/approved.
+        // Uses findByEmail (includes soft-deleted) to avoid unique constraint violation
+        // when a soft-deleted record still occupies the email slot.
+        Optional<User> existing = userRepository.findByEmail(normalizedEmail);
+        if (existing.isEmpty()) {
             User.UserBuilder userBuilder = User.builder()
                     .fullName(fullName)
                     .email(normalizedEmail)
@@ -145,11 +147,33 @@ public class DataSeeder implements ApplicationRunner {
                         .certifications("Heavy Vehicle License");
             }
 
-            User user = userBuilder.build();
-            userRepository.save(user);
+            userRepository.save(userBuilder.build());
             log.info("[SEED] Seeded team user: {} with role: {}", normalizedEmail, role);
         } else {
-            log.info("[SEED] Team user already exists - skipping: {}", normalizedEmail);
+            User user = existing.get();
+            boolean modified = false;
+
+            if (user.getDeletedAt() != null) {
+                user.setDeletedAt(null);
+                user.setDeletedReason(null);
+                user.setDeletedBy(null);
+                user.setStatusBeforeDeletion(null);
+                user.setRestoredBy(SYSTEM_ACTOR);
+                modified = true;
+            }
+
+            if (user.getStatus() != UserStatus.APPROVED || !user.isEnabled()) {
+                user.setStatus(UserStatus.APPROVED);
+                user.setEnabled(true);
+                modified = true;
+            }
+
+            if (modified) {
+                userRepository.save(user);
+                log.info("[SEED] Restored/reactivated team user: {}", normalizedEmail);
+            } else {
+                log.info("[SEED] Team user already active - skipping: {}", normalizedEmail);
+            }
         }
     }
 
@@ -180,35 +204,6 @@ public class DataSeeder implements ApplicationRunner {
                 "[SEED] Default admin created - email: {}, password change required on first login.",
                 admin.getEmail()
         );
-    }
-
-    private void restoreUsersSoftDeletedByLegacyDemoCleanup() {
-        List<User> users = userRepository
-                .findByDeletedAtIsNotNullAndDeletedByAndDeletedReasonOrderByDeletedAtDesc(
-                        SYSTEM_ACTOR,
-                        LEGACY_DEMO_CLEANUP_REASON
-                );
-
-        if (users.isEmpty()) {
-            return;
-        }
-
-        for (User user : users) {
-            UserStatus restoredStatus = user.getStatusBeforeDeletion() != null
-                    ? user.getStatusBeforeDeletion()
-                    : UserStatus.APPROVED;
-
-            user.setStatus(restoredStatus);
-            user.setDeletedAt(null);
-            user.setDeletedReason(null);
-            user.setDeletedBy(null);
-            user.setStatusBeforeDeletion(null);
-            user.setRestoredBy(SYSTEM_ACTOR);
-            user.setEnabled(true);
-            userRepository.save(user);
-        }
-
-        log.warn("[SEED] Restored {} account(s) previously soft-deleted by legacy demo cleanup.", users.size());
     }
 
     private void logEmployeeRegistryState() {

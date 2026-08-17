@@ -214,13 +214,41 @@ public class TripRequestController {
     }
 
     /**
-     * Marks the trip as currently ongoing/started.
+     * Marks the trip as START_PENDING (driver requests start; requester must confirm).
      */
     @PatchMapping("/{id}/start")
     public ResponseEntity<TripRequest> startTrip(
             @PathVariable UUID id,
+            @RequestBody(required = false) StartTripDTO dto,
             @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(service.startTrip(id, requireDriverId(user)));
+        String reason = dto != null ? dto.getReason() : null;
+        return ResponseEntity.ok(service.startTrip(id, requireDriverId(user), reason));
+    }
+
+    /**
+     * Confirms passenger is onboard; transitions START_PENDING → ONGOING and sets startTime.
+     * Only requester (SYSTEM_USER) or ADMIN may confirm — not the assigned driver.
+     */
+    @PatchMapping("/{id}/confirm-start")
+    public ResponseEntity<TripRequest> confirmStart(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user) {
+        if (isDriver(user)) {
+            throw new AuthorizationException("Drivers cannot confirm their own trip start.");
+        }
+        return ResponseEntity.ok(service.confirmStart(id, user != null ? user.getId() : null));
+    }
+
+    /**
+     * Returns enriched driver and vehicle details for a trip's assignments.
+     */
+    @GetMapping("/{id}/assignment-details")
+    public ResponseEntity<java.util.Map<String, Object>> getAssignmentDetails(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user) {
+        TripRequest trip = service.getTripById(id);
+        assertRequesterCanAccessTrip(trip, user);
+        return ResponseEntity.ok(service.getAssignmentDetails(id));
     }
 
     /**
@@ -350,6 +378,12 @@ public class TripRequestController {
             @AuthenticationPrincipal User user) {
         assertRequesterCanAccessTrip(service.getTripById(id), user);
         return ResponseEntity.ok(service.submitDriverFeedback(id, dto.getRating(), dto.getFeedback(), dto.getStaffTimelineReason()));
+    }
+
+    // Static DTO for holding start-trip requests (optional early-start reason)
+    @lombok.Data
+    public static class StartTripDTO {
+        private String reason;
     }
 
     // Static DTO for holding feedback requests

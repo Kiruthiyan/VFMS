@@ -40,6 +40,7 @@ const EMPTY_FORM: InfractionFormData = {
 };
 
 const driverIdCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const todayIso = new Date().toISOString().slice(0, 10);
 
 // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -222,15 +223,15 @@ export default function InfractionsPage() {
                 </div>
                 <div>
                   <Label htmlFor="infraction-date">Incident Date *</Label>
-                  <Input id="infraction-date" type="date" required value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  <Input id="infraction-date" type="date" required max={todayIso} value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div>
                   <Label htmlFor="infraction-description">Description</Label>
-                  <Input id="infraction-description" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  <Input id="infraction-description" maxLength={1000} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div>
                   <Label htmlFor="infraction-penalty">Penalty Notes</Label>
-                  <Input id="infraction-penalty" value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  <Input id="infraction-penalty" maxLength={500} value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div className="flex pt-4 mt-2">
                   <Button type="submit" disabled={submitting} className="h-11 w-full rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500">{submitting ? 'Saving...' : 'Log Infraction'}</Button>

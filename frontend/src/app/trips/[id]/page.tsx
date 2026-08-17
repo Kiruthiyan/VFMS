@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import {
     ArrowLeft, Calendar, MapPin, Users, Clock, Star,
-    Loader2, CheckCircle, Play, Square, Ban, AlertTriangle, ThumbsUp, ThumbsDown
+    Loader2, CheckCircle, Play, Square, Ban, AlertTriangle,
+    ThumbsUp, ThumbsDown, User, Car, AlertCircle
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/role-context";
@@ -48,6 +49,25 @@ interface Trip {
     driverTimelineReason?: string | null;
     staffTimelineReason?: string | null;
     stopArrivalTimes?: string | null;
+    earlyStartReason?: string | null;
+}
+
+interface AssignmentDetails {
+    driver?: {
+        id: string;
+        fullName: string;
+        firstName: string;
+        lastName: string;
+        employeeId: string | null;
+    };
+    vehicle?: {
+        isRental: boolean;
+        plateNumber: string | null;
+        brand?: string | null;
+        model?: string | null;
+        color?: string | null;
+        vehicleType?: string | null;
+    };
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -56,13 +76,15 @@ const STATUS_STYLES: Record<string, string> = {
     APPROVED:         "bg-green-50 text-green-700 border-green-200 font-bold",
     DRIVER_CONFIRMED: "bg-teal-50 text-teal-700 border-teal-200 font-bold",
     DRIVER_REJECTED:  "bg-orange-50 text-orange-700 border-orange-200 font-bold",
+    START_PENDING:    "bg-yellow-50 text-yellow-700 border-yellow-200 font-bold",
     REJECTED:         "bg-red-50 text-red-700 border-red-200 font-bold",
     ONGOING:          "bg-purple-50 text-purple-700 border-purple-200 font-bold",
     COMPLETED:        "bg-blue-50 text-blue-700 border-blue-200 font-bold",
     CANCELLED:        "bg-slate-100 text-slate-500 border-slate-300 font-bold",
+    EXPIRED:          "bg-red-50 text-red-700 border-red-200 font-bold",
 };
 
-const TERMINAL_STATUSES = ["COMPLETED", "CANCELLED", "REJECTED"];
+const TERMINAL_STATUSES = ["COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"];
 
 const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleString("en-GB", {
@@ -88,6 +110,16 @@ export default function TripDetailPage() {
     const [completeReason, setCompleteReason] = useState("");
     const [cancelReasonMode, setCancelReasonMode] = useState(false);
     const [cancelReason, setCancelReason] = useState("");
+
+    // Early start reason modal state
+    const [earlyStartMode, setEarlyStartMode] = useState(false);
+    const [earlyStartReason, setEarlyStartReason] = useState("");
+
+    // Assignment details (enriched driver + vehicle info)
+    const [assignmentDetails, setAssignmentDetails] = useState<AssignmentDetails | null>(null);
+    const [assignmentLoading, setAssignmentLoading] = useState(false);
+    const [driverProfilePicUrl, setDriverProfilePicUrl] = useState<string | null>(null);
+
     const {
         data: trip = null,
         isLoading: loading,
@@ -101,6 +133,26 @@ export default function TripDetailPage() {
         },
     });
 
+    // Fetch enriched assignment details when trip has assignments
+    useEffect(() => {
+        if (!trip || (!trip.assignedDriverId && !trip.assignedVehicleId)) return;
+        setAssignmentLoading(true);
+        api.get(`/trips/${id}/assignment-details`)
+            .then(res => setAssignmentDetails(res.data))
+            .catch(() => setAssignmentDetails(null))
+            .finally(() => setAssignmentLoading(false));
+
+        // Fetch driver profile picture
+        if (trip.assignedDriverId) {
+            api.get(`/drivers/${trip.assignedDriverId}/profile-picture`)
+                .then(res => {
+                    const url = res.data?.fileUrl;
+                    if (url) setDriverProfilePicUrl(url);
+                })
+                .catch(() => setDriverProfilePicUrl(null));
+        }
+    }, [trip?.assignedDriverId, trip?.assignedVehicleId, id]);
+
     const checkReturnDeviation = () => {
         if (!trip) return false;
         const now = new Date();
@@ -108,6 +160,14 @@ export default function TripDetailPage() {
         const diffMs = Math.abs(now.getTime() - returnTime.getTime());
         return diffMs > 30 * 60 * 1000;
     };
+
+    const isEarlyStart = () => {
+        if (!trip) return false;
+        const now = new Date();
+        const departure = new Date(trip.departureTime);
+        return now.getTime() < departure.getTime() - 30 * 60 * 1000;
+    };
+
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
     const handleFeedbackSubmit = async (e: React.FormEvent) => {
@@ -155,6 +215,24 @@ export default function TripDetailPage() {
         setDriverRejectReason("");
     };
 
+    const handleStartTrip = () => {
+        if (isEarlyStart()) {
+            setEarlyStartMode(true);
+        } else {
+            handleAction("start");
+        }
+    };
+
+    const handleEarlyStartConfirm = async () => {
+        if (earlyStartReason.trim().length < 10) {
+            setError("Early start reason must be at least 10 characters");
+            return;
+        }
+        await handleAction("start", { reason: earlyStartReason });
+        setEarlyStartMode(false);
+        setEarlyStartReason("");
+    };
+
     if (loading) return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -168,6 +246,14 @@ export default function TripDetailPage() {
     );
 
     const isDriverRejectedNote = trip.approvalNotes?.startsWith("Driver rejected:");
+
+    // Stop arrival validation
+    const stops = trip.destination?.split(" -> ") ?? [];
+    const expectedStops = Math.max(0, stops.length - 2);
+    const loggedStops = trip.stopArrivalTimes
+        ? trip.stopArrivalTimes.split(",").filter((t: string) => t.trim()).length
+        : 0;
+    const stopsAllLogged = expectedStops === 0 || loggedStops >= expectedStops;
 
     return (
         <div className="vfms-detail-page">
@@ -189,13 +275,10 @@ export default function TripDetailPage() {
                                 </div>
                                 <div>
                                     <CardTitle className="text-white text-lg font-bold">Trip Details</CardTitle>
-                                    <p className="text-blue-200 text-xs mt-0.5 font-mono">
-                                        {trip.id.slice(0, 8)}...
-                                    </p>
                                 </div>
                             </div>
-                            <Badge variant="outline" className={STATUS_STYLES[trip.status]}>
-                                {trip.status.replace("_", " ")}
+                            <Badge variant="outline" className={STATUS_STYLES[trip.status] ?? "font-bold"}>
+                                {trip.status.replace(/_/g, " ")}
                             </Badge>
                         </div>
                     </CardHeader>
@@ -299,24 +382,67 @@ export default function TripDetailPage() {
                             )}
                         </div>
 
-                        {/* Assignments */}
+                        {/* Enriched Assignment Details */}
                         {(trip.assignedDriverId || trip.assignedVehicleId) && (
-                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Assignments</p>
-                                {trip.assignedDriverId && (
-                                    <div className="flex items-center gap-2 text-sm text-slate-700">
-                                        <span className="font-medium text-slate-500">Driver:</span>
-                                        <span className="font-mono text-xs bg-white border border-slate-200 px-2 py-0.5 rounded">
-                                            {trip.assignedDriverId}
-                                        </span>
+                                {assignmentLoading && (
+                                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                                        <Loader2 className="h-3 w-3 animate-spin" /> Loading details...
                                     </div>
                                 )}
+                                {/* Driver Card */}
+                                {trip.assignedDriverId && (
+                                    <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                                        <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                                            {driverProfilePicUrl ? (
+                                                <img src={driverProfilePicUrl} alt="Driver" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="h-5 w-5 text-slate-400" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Driver</p>
+                                            <p className="text-slate-900 font-semibold text-sm truncate">
+                                                {assignmentDetails?.driver?.fullName ?? "Loading…"}
+                                            </p>
+                                            {assignmentDetails?.driver?.employeeId && (
+                                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                                    ID: {assignmentDetails.driver.employeeId}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Vehicle Card */}
                                 {trip.assignedVehicleId && (
-                                    <div className="flex items-center gap-2 text-sm text-slate-700">
-                                        <span className="font-medium text-slate-500">Vehicle:</span>
-                                        <span className="font-mono text-xs bg-white border border-slate-200 px-2 py-0.5 rounded">
-                                            {trip.assignedVehicleId}
-                                        </span>
+                                    <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                                        <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                                            <Car className="h-5 w-5 text-blue-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                                Vehicle {assignmentDetails?.vehicle?.isRental ? "(Rental)" : ""}
+                                            </p>
+                                            {assignmentDetails?.vehicle ? (
+                                                assignmentDetails.vehicle.isRental ? (
+                                                    <>
+                                                        <p className="text-slate-900 font-semibold text-sm">{assignmentDetails.vehicle.vehicleType}</p>
+                                                        <p className="text-xs text-slate-500 font-medium mt-0.5">{assignmentDetails.vehicle.plateNumber}</p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-slate-900 font-semibold text-sm">
+                                                            {[assignmentDetails.vehicle.brand, assignmentDetails.vehicle.model].filter(Boolean).join(" ")}
+                                                            {assignmentDetails.vehicle.color ? ` · ${assignmentDetails.vehicle.color}` : ""}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500 font-medium mt-0.5">{assignmentDetails.vehicle.plateNumber}</p>
+                                                    </>
+                                                )
+                                            ) : (
+                                                <p className="text-slate-500 text-sm">Loading…</p>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -340,6 +466,15 @@ export default function TripDetailPage() {
                                         <span className="text-slate-900 font-semibold">{formatDate(trip.endTime)}</span>
                                     </div>
                                 )}
+                                {trip.earlyStartReason && (
+                                    <div className="flex items-start gap-3 text-sm mt-1">
+                                        <span className="w-2 h-2 rounded-full bg-yellow-500 shrink-0 mt-1" />
+                                        <div>
+                                            <span className="text-slate-500 font-medium block text-xs uppercase tracking-wider mb-0.5">Early Start Reason</span>
+                                            <span className="text-slate-700 italic">"{trip.earlyStartReason}"</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -354,11 +489,11 @@ export default function TripDetailPage() {
                                             <span className="text-slate-500 font-semibold text-sm">Rating:</span>
                                             <div className="flex text-amber-400">
                                                 {Array.from({ length: 5 }).map((_, i) => (
-                                                    <Star 
-                                                        key={i} 
+                                                    <Star
+                                                        key={i}
                                                         className={`h-4.5 w-4.5 fill-current ${
                                                             i < (trip.driverRating ?? 0) ? "text-amber-400" : "text-slate-200"
-                                                        }`} 
+                                                        }`}
                                                     />
                                                 ))}
                                             </div>
@@ -418,25 +553,21 @@ export default function TripDetailPage() {
                                                         value={feedback}
                                                         onChange={(e) => setFeedback(e.target.value)}
                                                         rows={3}
-                                                        className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-medium"
+                                                        className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                                                     />
                                                 </div>
 
                                                 {endDeviates && (
-                                                    <div className="space-y-1 bg-amber-50/50 border border-amber-200/60 rounded-xl p-3.5">
-                                                        <label className="text-xs font-bold text-amber-800 uppercase tracking-wider block">
-                                                            Timeline Justification Reason <span className="text-red-500">*</span>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                                                            Timeline Deviation Reason <span className="text-red-500">*</span>
                                                         </label>
-                                                        <p className="text-[11px] text-amber-600 mb-2">
-                                                            This trip ended outside the 30-minute return window. Please provide a reason for the discrepancy.
-                                                        </p>
                                                         <textarea
-                                                            placeholder="Provide a reason for the early/late return..."
+                                                            placeholder="The trip ended outside the scheduled return window. Please explain..."
                                                             value={staffTimelineReason}
                                                             onChange={(e) => setStaffTimelineReason(e.target.value)}
                                                             rows={2}
-                                                            className="flex w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none font-medium"
-                                                            required
+                                                            className="flex w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
                                                         />
                                                     </div>
                                                 )}
@@ -444,9 +575,10 @@ export default function TripDetailPage() {
                                                 <Button
                                                     type="submit"
                                                     disabled={submittingFeedback || (endDeviates && !staffTimelineReason.trim())}
-                                                    className="w-full font-bold h-10"
+                                                    className="w-full"
                                                 >
-                                                    {submittingFeedback ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Driver Feedback"}
+                                                    {submittingFeedback ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                                    Submit Feedback
                                                 </Button>
                                             </form>
                                         );
@@ -486,14 +618,14 @@ export default function TripDetailPage() {
 
                         <div className="border-t border-slate-100" />
 
-                        {/* Contextual status info for staff/admin on non-actionable trips */}
+                        {/* Contextual status info */}
                         {["APPROVER", "ADMIN"].includes(currentUser.role) && trip.status === "NEW" && (
                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                                 <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                                 <div>
                                     <p className="text-sm font-bold text-amber-700">Waiting for user submission</p>
                                     <p className="text-xs text-amber-600 mt-0.5">
-                                        This trip is still with the requester. Staff can review it once the user submits it for approval.
+                                        This trip is still with the requester. Admin can submit it directly below.
                                     </p>
                                 </div>
                             </div>
@@ -518,9 +650,51 @@ export default function TripDetailPage() {
                                 </div>
                             </div>
                         )}
+                        {/* START_PENDING — driver's view */}
+                        {currentUser.role === "DRIVER" && trip.status === "START_PENDING" && trip.assignedDriverId === currentUser.id && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+                                <Clock className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-bold text-yellow-700">Awaiting passenger confirmation</p>
+                                    <p className="text-xs text-yellow-600 mt-0.5">
+                                        The requester has been notified. Waiting for them to confirm all passengers are onboard.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        {/* START_PENDING — requester / admin view */}
+                        {["SYSTEM_USER", "ADMIN"].includes(currentUser.role) && trip.status === "START_PENDING" && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+                                <AlertCircle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-bold text-yellow-700">Driver has requested to start the trip</p>
+                                    <p className="text-xs text-yellow-600 mt-0.5">
+                                        Confirm that all passengers are inside the vehicle before the trip begins.
+                                    </p>
+                                    {trip.earlyStartReason && (
+                                        <p className="text-xs text-yellow-700 mt-1.5 font-medium italic">
+                                            Early start reason: "{trip.earlyStartReason}"
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        {/* EXPIRED info */}
+                        {trip.status === "EXPIRED" && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                                <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-bold text-red-700">Trip has expired</p>
+                                    <p className="text-xs text-red-600 mt-0.5">
+                                        Departure window has passed without the trip being started.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-3 font-semibold">
+
                             {/* System User: edit & submit */}
                             {currentUser.role === "SYSTEM_USER" && trip.status === "NEW" && (
                                 <>
@@ -543,7 +717,20 @@ export default function TripDetailPage() {
                                 </>
                             )}
 
-                            {/* Staff: review & assign (also for driver-rejected trips) */}
+                            {/* ADMIN: submit NEW trips directly */}
+                            {currentUser.role === "ADMIN" && trip.status === "NEW" && (
+                                <Button
+                                    onClick={() => handleAction("submit")}
+                                    disabled={actionLoading === "submit"}
+                                    className="flex-1"
+                                >
+                                    {actionLoading === "submit"
+                                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                                        : "Submit for Approval"}
+                                </Button>
+                            )}
+
+                            {/* Staff / Admin: review & approve (also for driver-rejected trips) */}
                             {["APPROVER", "ADMIN"].includes(currentUser.role) &&
                                 ["SUBMITTED", "DRIVER_REJECTED"].includes(trip.status) && (
                                 <Button
@@ -552,6 +739,20 @@ export default function TripDetailPage() {
                                 >
                                     <CheckCircle className="mr-2 h-4 w-4" />
                                     {trip.status === "DRIVER_REJECTED" ? "Reassign Driver & Vehicle" : "Review & Approve"}
+                                </Button>
+                            )}
+
+                            {/* Requester / ADMIN: confirm passenger onboard (START_PENDING) */}
+                            {["SYSTEM_USER", "ADMIN"].includes(currentUser.role) && trip.status === "START_PENDING" && (
+                                <Button
+                                    onClick={() => handleAction("confirm-start")}
+                                    disabled={actionLoading === "confirm-start"}
+                                    variant="success"
+                                    className="flex-1"
+                                >
+                                    {actionLoading === "confirm-start"
+                                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                                        : <><CheckCircle className="mr-2 h-4 w-4" /> Confirm Passenger Onboard</>}
                                 </Button>
                             )}
 
@@ -621,9 +822,9 @@ export default function TripDetailPage() {
                             )}
 
                             {/* Driver: start confirmed trip */}
-                            {currentUser.role === "DRIVER" && trip.status === "DRIVER_CONFIRMED" && (
+                            {currentUser.role === "DRIVER" && trip.status === "DRIVER_CONFIRMED" && trip.assignedDriverId === currentUser.id && (
                                 <Button
-                                    onClick={() => handleAction("start")}
+                                    onClick={handleStartTrip}
                                     disabled={actionLoading === "start"}
                                     className="flex-1"
                                 >
@@ -634,8 +835,16 @@ export default function TripDetailPage() {
                             )}
 
                             {/* Driver: complete ongoing trip */}
-                            {currentUser.role === "DRIVER" && trip.status === "ONGOING" && (
+                            {currentUser.role === "DRIVER" && trip.status === "ONGOING" && trip.assignedDriverId === currentUser.id && (
                                 <>
+                                    {!stopsAllLogged && (
+                                        <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                                            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-amber-700 font-medium">
+                                                Please log arrival at all intermediate stops ({loggedStops}/{expectedStops} logged) before completing the trip.
+                                            </p>
+                                        </div>
+                                    )}
                                     <Button
                                         onClick={() => {
                                             if (checkReturnDeviation()) {
@@ -644,9 +853,9 @@ export default function TripDetailPage() {
                                                 handleAction("complete");
                                             }
                                         }}
-                                        disabled={actionLoading === "complete"}
+                                        disabled={actionLoading === "complete" || !stopsAllLogged}
                                         variant="success"
-                                        className="flex-1"
+                                        className="flex-1 disabled:opacity-50"
                                     >
                                         {actionLoading === "complete"
                                             ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -677,9 +886,9 @@ export default function TripDetailPage() {
                                             </div>
                                             <DialogFooter>
                                                 <Button variant="outline" onClick={() => { setCompleteReasonMode(false); setCompleteReason(""); }}>Cancel</Button>
-                                                <Button 
+                                                <Button
                                                     variant="success"
-                                                    className="font-bold" 
+                                                    className="font-bold"
                                                     disabled={!completeReason.trim() || actionLoading === "complete"}
                                                     onClick={async () => {
                                                         await handleAction("complete", { reason: completeReason });
@@ -735,8 +944,8 @@ export default function TripDetailPage() {
                                             </div>
                                             <DialogFooter>
                                                 <Button variant="outline" onClick={() => { setCancelReasonMode(false); setCancelReason(""); }}>Go Back</Button>
-                                                <Button 
-                                                    variant="destructive" 
+                                                <Button
+                                                    variant="destructive"
                                                     disabled={!cancelReason.trim() || actionLoading === "cancel"}
                                                     onClick={async () => {
                                                         await handleAction("cancel", { notes: cancelReason, approverId: currentUser.id });
@@ -753,6 +962,44 @@ export default function TripDetailPage() {
                                 </>
                             )}
                         </div>
+
+                        {/* Early Start Reason Modal */}
+                        <Dialog open={earlyStartMode} onOpenChange={(open) => {
+                            if (!open) { setEarlyStartMode(false); setEarlyStartReason(""); setError(""); }
+                        }}>
+                            <DialogContent>
+                                <DialogHeader className="vfms-form-header rounded-t-xl px-6 py-5 pl-8">
+                                    <DialogTitle>Early Start Reason Required</DialogTitle>
+                                    <DialogDescription>
+                                        You are starting this trip more than 30 minutes before the scheduled departure ({formatDate(trip.departureTime)}). Please provide a reason.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                    <textarea
+                                        placeholder="e.g. Passenger requested early pickup due to flight schedule..."
+                                        value={earlyStartReason}
+                                        onChange={e => setEarlyStartReason(e.target.value)}
+                                        rows={3}
+                                        className="flex w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
+                                    />
+                                    <p className={`text-xs mt-1.5 ${earlyStartReason.trim().length >= 10 ? "text-green-600" : "text-slate-400"}`}>
+                                        {earlyStartReason.trim().length} / 10 chars minimum
+                                    </p>
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => { setEarlyStartMode(false); setEarlyStartReason(""); }}>Cancel</Button>
+                                    <Button
+                                        className="font-bold"
+                                        disabled={earlyStartReason.trim().length < 10 || actionLoading === "start"}
+                                        onClick={handleEarlyStartConfirm}
+                                    >
+                                        {actionLoading === "start" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                        Start Trip Early
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
                     </CardContent>
                 </Card>
             </div>

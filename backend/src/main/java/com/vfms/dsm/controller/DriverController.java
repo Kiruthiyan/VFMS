@@ -10,6 +10,7 @@ import com.vfms.dsm.entity.DriverAggregate.DriverLeave;
 import com.vfms.dsm.entity.DriverAggregate.DriverPerformanceScore;
 import com.vfms.dsm.entity.DriverAggregate.DriverReadinessCache;
 import com.vfms.dsm.service.*;
+import com.vfms.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -152,8 +154,8 @@ public class DriverController {
     public ResponseEntity<DriverLeave> processLeave(
             @PathVariable Long leaveId,
             @Valid @RequestBody LeaveApprovalRequest request,
-            @RequestHeader("X-User-Id") String approvedBy) {
-        return ResponseEntity.ok(recordService.processLeave(leaveId, request, approvedBy));
+            @AuthenticationPrincipal User approver) {
+        return ResponseEntity.ok(recordService.processLeave(leaveId, request, approver.getEmail()));
     }
 
     @GetMapping("/api/drivers/{driverId:[0-9a-fA-F\\-]{36}}/leaves")

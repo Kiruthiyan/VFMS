@@ -108,11 +108,11 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{userId}/toggle-status")
-    public ResponseEntity<ApiResponse<Void>> toggleStatus(
+    public ResponseEntity<ApiResponse<UserSummaryResponse>> toggleStatus(
             @PathVariable UUID userId) {
-        adminUserService.toggleUserStatus(userId);
+        UserSummaryResponse updated = adminUserService.toggleUserStatus(userId);
         return ResponseEntity.ok(
-                ApiResponse.success("User status updated.", null));
+                ApiResponse.success("User status updated.", updated));
     }
 
     @PutMapping("/{userId}")

@@ -285,11 +285,17 @@ class AdminUserServiceTest {
 
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
 
-        adminUserService.toggleUserStatus(id);
+        var deactivated = adminUserService.toggleUserStatus(id);
         assertEquals(UserStatus.DEACTIVATED, user.getStatus());
+        assertFalse(user.isAccountEnabled());
+        assertEquals(UserStatus.DEACTIVATED, deactivated.getStatus());
+        assertFalse(deactivated.isEnabled());
 
-        adminUserService.toggleUserStatus(id);
+        var reactivated = adminUserService.toggleUserStatus(id);
         assertEquals(UserStatus.APPROVED, user.getStatus());
+        assertTrue(user.isAccountEnabled());
+        assertEquals(UserStatus.APPROVED, reactivated.getStatus());
+        assertTrue(reactivated.isEnabled());
 
         verify(userRepository, times(2)).save(user);
     }

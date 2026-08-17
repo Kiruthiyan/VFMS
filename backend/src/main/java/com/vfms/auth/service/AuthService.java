@@ -450,6 +450,9 @@ public class AuthService {
         if (user.getDeletedAt() != null) {
             throw new AuthorizationException("This account is archived. Please ask an administrator to restore it from Deleted Users.");
         }
+        if (!user.isAccountEnabled()) {
+            throw new AuthorizationException("Your account is currently deactivated. Please contact your administrator to restore access.");
+        }
         if (!user.isEmailVerified() || user.getStatus() == UserStatus.EMAIL_UNVERIFIED) {
             throw new ValidationException("Please verify your email before signing in.");
         }

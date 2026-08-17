@@ -36,6 +36,12 @@ const inputClass =
   'disabled:opacity-60 disabled:bg-slate-50 transition-all duration-200 ' +
   'shadow-sm hover:border-slate-300';
 
+const todayIso = new Date().toISOString().slice(0, 10);
+
+function datesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string) {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
 function errorMessage(error: unknown, fallback: string) {
   if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
   const response = (error as { response?: { data?: { message?: unknown } } }).response;
@@ -73,6 +79,28 @@ export default function DriverLeaveRequestsPage() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (form.startDate < todayIso) {
+      toast.error('Leave start date cannot be in the past.');
+      return;
+    }
+    if (form.endDate < form.startDate) {
+      toast.error('Leave end date cannot be before the start date.');
+      return;
+    }
+    const overlapping = requests.some(
+      (r) =>
+        (r.status ?? 'PENDING') !== 'REJECTED' &&
+        (r.status ?? 'PENDING') !== 'CANCELLED' &&
+        r.startDate &&
+        r.endDate &&
+        datesOverlap(form.startDate, form.endDate, r.startDate, r.endDate)
+    );
+    if (overlapping) {
+      toast.error('Leave dates overlap with an existing request.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const added = await submitLeaveRequest(form);
@@ -180,6 +208,7 @@ export default function DriverLeaveRequestsPage() {
                         id="leave-start"
                         type="date"
                         required
+                        min={todayIso}
                         value={form.startDate}
                         onChange={(e) => setForm((c) => ({ ...c, startDate: e.target.value }))}
                         className={inputClass}
@@ -209,6 +238,7 @@ export default function DriverLeaveRequestsPage() {
                       id="leave-reason"
                       value={form.reason ?? ''}
                       onChange={(e) => setForm((c) => ({ ...c, reason: e.target.value }))}
+                      maxLength={1000}
                       rows={4}
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300 resize-none"
                     />

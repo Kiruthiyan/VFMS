@@ -162,6 +162,7 @@ public class AdminUserService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Long> getUserCounts() {
         Map<String, Long> counts = new LinkedHashMap<>();
         counts.put("total", userRepository.countByDeletedAtIsNull());
@@ -255,6 +256,7 @@ public class AdminUserService {
         user.setDeletedReason(request.getReason());
         user.setDeletedBy(SecurityContextProvider.getCurrentUserEmail());
         user.setStatus(UserStatus.DEACTIVATED);
+        user.setEnabled(false);
         userRepository.save(user);
 
         revokeUserSessions(user);
@@ -282,6 +284,7 @@ public class AdminUserService {
         user.setDeletedBy(null);
         user.setStatusBeforeDeletion(null);
         user.setRestoredBy(SecurityContextProvider.getCurrentUserEmail());
+        user.setEnabled(restoredStatus == UserStatus.APPROVED);
         userRepository.save(user);
 
         log.info("[ADMIN-RESTORE] User restored: {} ({}) to status: {}",
@@ -289,7 +292,7 @@ public class AdminUserService {
     }
 
     @Transactional
-    public void toggleUserStatus(UUID userId) {
+    public UserSummaryResponse toggleUserStatus(UUID userId) {
         assertActorCanManageUsers();
         User user = findUser(userId);
 
@@ -304,9 +307,11 @@ public class AdminUserService {
                 assertNotLastActiveAdmin(user);
             }
             user.setStatus(UserStatus.DEACTIVATED);
+            user.setEnabled(false);
             revokeUserSessions(user);
         } else if (user.getStatus() == UserStatus.DEACTIVATED) {
             user.setStatus(UserStatus.APPROVED);
+            user.setEnabled(true);
         } else {
             throw new ValidationException(
                     "Only APPROVED or DEACTIVATED accounts can be toggled. Current status: "
@@ -314,6 +319,7 @@ public class AdminUserService {
         }
 
         userRepository.save(user);
+        return toSummary(user);
     }
 
     @Transactional
@@ -376,6 +382,7 @@ public class AdminUserService {
 
         if (verifiedStaffRecord != null) {
             user.setFullName(normalizeRequired(verifiedStaffRecord.getFullName()));
+            assertEmailAvailableForAccount(normalizeEmail(verifiedStaffRecord.getEmail()), user.getId());
             user.setEmail(verifiedStaffRecord.getEmail());
             user.setPhone(normalizePhone(verifiedStaffRecord.getPhone()));
             user.setNic(normalizeNic(verifiedStaffRecord.getNic()));
@@ -485,7 +492,7 @@ public class AdminUserService {
         return tempPassword.toString();
     }
 
-    private String generateNextDriverId() {
+    private synchronized String generateNextDriverId() {
         String prefix = "DRV-";
         List<String> existingIds = userRepository.findAllEmployeeIdsByPrefix(prefix);
 
@@ -803,6 +810,7 @@ public class AdminUserService {
                 .nic(user.getNic())
                 .role(user.getRole())
                 .status(user.getStatus())
+                .enabled(user.isAccountEnabled())
                 .emailVerified(user.isEmailVerified())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())

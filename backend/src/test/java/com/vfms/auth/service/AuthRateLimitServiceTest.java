@@ -40,6 +40,23 @@ class AuthRateLimitServiceTest {
     }
 
     @Test
+    @DisplayName("ignores spoofable X-Forwarded-For header and keys on the socket remote address")
+    void check_shouldIgnoreForwardedForHeader() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.0.5");
+        request.addHeader("X-Forwarded-For", "203.0.113.10");
+        when(attemptRepository.countByRateKeyAndAttemptedAtAfter(eq("login:10.0.0.5"), any()))
+                .thenReturn(0L);
+
+        service.check(request, "login");
+
+        ArgumentCaptor<AuthRateLimitAttempt> captor =
+                ArgumentCaptor.forClass(AuthRateLimitAttempt.class);
+        verify(attemptRepository).save(captor.capture());
+        assertEquals("login:10.0.0.5", captor.getValue().getRateKey());
+    }
+
+    @Test
     @DisplayName("records allowed attempts using action and client IP")
     void check_shouldRecordAllowedAttempt() {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -60,7 +77,7 @@ class AuthRateLimitServiceTest {
     @DisplayName("blocks attempts that exceed the configured window limit")
     void check_shouldBlockWhenLimitReached() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("X-Forwarded-For", "203.0.113.10, 10.0.0.1");
+        request.setRemoteAddr("203.0.113.10");
         when(attemptRepository.countByRateKeyAndAttemptedAtAfter(eq("forgot-password:203.0.113.10"), any()))
                 .thenReturn(2L);
 

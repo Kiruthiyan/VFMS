@@ -134,12 +134,9 @@ public class TripRequestService {
     private TripRequest findById(UUID id) {
         TripRequest trip = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + id));
-        // Auto-expire check during lookup
-        if (trip.getStatus() != null && trip.getDepartureTime() != null &&
-                (trip.getStatus() == TripStatus.APPROVED || trip.getStatus() == TripStatus.DRIVER_CONFIRMED) &&
-                LocalDateTime.now().isAfter(trip.getDepartureTime().plusMinutes(30))) {
-            trip.setStatus(TripStatus.EXPIRED);
-            trip = repository.save(trip);
+        checkAndExpireTrip(trip);
+        if (trip.getStatus() == TripStatus.EXPIRED) {
+            trip = repository.findById(id).orElse(trip);
         }
         return trip;
     }
@@ -271,12 +268,12 @@ public class TripRequestService {
         return rejectByDriver(findAssignedDriverTrip(tripId, driverId), dto);
     }
 
-    public TripRequest startTrip(UUID tripId) {
-        return startTrip(findById(tripId));
+    public TripRequest startTrip(UUID tripId, String reason) {
+        return startTrip(findById(tripId), reason);
     }
 
-    public TripRequest startTrip(UUID tripId, UUID driverId) {
-        return startTrip(findAssignedDriverTrip(tripId, driverId));
+    public TripRequest startTrip(UUID tripId, UUID driverId, String reason) {
+        return startTrip(findAssignedDriverTrip(tripId, driverId), reason);
     }
 
     public TripRequest completeTrip(UUID tripId) {
@@ -348,23 +345,42 @@ public class TripRequestService {
         return repository.save(trip);
     }
 
-    private TripRequest startTrip(TripRequest trip) {
+    private TripRequest startTrip(TripRequest trip, String reason) {
         if (trip.getStatus() != TripStatus.DRIVER_CONFIRMED) {
             throw new ValidationException("Only DRIVER_CONFIRMED trips can be started");
         }
 
         LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(trip.getDepartureTime().minusMinutes(30)) ||
-                now.isAfter(trip.getDepartureTime().plusMinutes(30))) {
-            if (now.isAfter(trip.getDepartureTime().plusMinutes(30))) {
-                trip.setStatus(TripStatus.EXPIRED);
-                repository.save(trip);
+        // Late start — auto-expire
+        if (now.isAfter(trip.getDepartureTime().plusMinutes(30))) {
+            trip.setStatus(TripStatus.EXPIRED);
+            repository.save(trip);
+            throw new ValidationException("Trip has expired: departure window has passed");
+        }
+        // Early start (>30 min before departure) — require reason
+        if (now.isBefore(trip.getDepartureTime().minusMinutes(30))) {
+            String trimmed = (reason != null) ? reason.trim() : "";
+            if (trimmed.length() < 10) {
+                throw new ValidationException("Early start reason required (min 10 characters) when starting more than 30 minutes before departure");
             }
-            throw new ValidationException("Trip cannot be started");
+            trip.setEarlyStartReason(trimmed);
         }
 
+        // Transition to START_PENDING; requester must confirm passenger onboard
+        trip.setStatus(TripStatus.START_PENDING);
+        return repository.save(trip);
+    }
+
+    public TripRequest confirmStart(UUID tripId, UUID confirmerId) {
+        TripRequest trip = findById(tripId);
+        if (trip.getStatus() != TripStatus.START_PENDING) {
+            throw new ValidationException("Only START_PENDING trips can be confirmed");
+        }
+        if (confirmerId != null && confirmerId.equals(trip.getAssignedDriverId())) {
+            throw new ValidationException("The assigned driver cannot confirm their own trip start");
+        }
         trip.setStatus(TripStatus.ONGOING);
-        trip.setStartTime(now);
+        trip.setStartTime(LocalDateTime.now());
         return repository.save(trip);
     }
 
@@ -438,8 +454,64 @@ public class TripRequestService {
         return repository.findActiveVehicleIds(List.of(
             TripStatus.APPROVED,
             TripStatus.DRIVER_CONFIRMED,
+            TripStatus.START_PENDING,
             TripStatus.ONGOING
         ));
+    }
+
+    @SuppressWarnings("unchecked")
+    public java.util.Map<String, Object> getAssignmentDetails(UUID tripId) {
+        TripRequest trip = findById(tripId);
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+
+        if (trip.getAssignedDriverId() != null) {
+            List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT first_name, last_name, employee_id FROM drivers WHERE id = :id"
+            ).setParameter("id", trip.getAssignedDriverId()).getResultList();
+            if (!rows.isEmpty()) {
+                Object[] r = rows.get(0);
+                java.util.Map<String, Object> driver = new java.util.HashMap<>();
+                driver.put("id", trip.getAssignedDriverId().toString());
+                driver.put("firstName", r[0]);
+                driver.put("lastName", r[1]);
+                driver.put("fullName", r[0] + " " + r[1]);
+                driver.put("employeeId", r[2]);
+                result.put("driver", driver);
+            }
+        }
+
+        if (trip.getAssignedVehicleId() != null) {
+            Long vid = trip.getAssignedVehicleId();
+            java.util.Map<String, Object> vehicle = new java.util.HashMap<>();
+            if (vid >= 100_000_000L) {
+                long rentalId = vid - 100_000_000L;
+                List<Object[]> rows = entityManager.createNativeQuery(
+                    "SELECT vehicle_type, plate_number FROM rental_records WHERE id = :id"
+                ).setParameter("id", rentalId).getResultList();
+                if (!rows.isEmpty()) {
+                    Object[] r = rows.get(0);
+                    vehicle.put("isRental", true);
+                    vehicle.put("vehicleType", r[0]);
+                    vehicle.put("plateNumber", r[1]);
+                }
+            } else {
+                List<Object[]> rows = entityManager.createNativeQuery(
+                    "SELECT plate_number, brand, model, color, vehicle_type FROM vehicles WHERE id = :id"
+                ).setParameter("id", vid).getResultList();
+                if (!rows.isEmpty()) {
+                    Object[] r = rows.get(0);
+                    vehicle.put("isRental", false);
+                    vehicle.put("plateNumber", r[0]);
+                    vehicle.put("brand", r[1]);
+                    vehicle.put("model", r[2]);
+                    vehicle.put("color", r[3]);
+                    vehicle.put("vehicleType", r[4]);
+                }
+            }
+            if (!vehicle.isEmpty()) result.put("vehicle", vehicle);
+        }
+
+        return result;
     }
 
     public TripRequest cancelTrip(UUID tripId, UUID cancelledBy, String reason) {
@@ -450,6 +522,8 @@ public class TripRequestService {
         }
         trip.setStatus(TripStatus.CANCELLED);
         trip.setApprovalNotes(reason);
+        trip.setAssignedDriverId(null);
+        trip.setAssignedVehicleId(null);
         return repository.save(trip);
     }
 
@@ -504,8 +578,11 @@ public class TripRequestService {
         if (trip == null || trip.getStatus() == null || trip.getDepartureTime() == null) {
             return;
         }
-        if ((trip.getStatus() == TripStatus.APPROVED || trip.getStatus() == TripStatus.DRIVER_CONFIRMED) &&
-                LocalDateTime.now().isAfter(trip.getDepartureTime().plusMinutes(30))) {
+        boolean isExpirable = trip.getStatus() == TripStatus.NEW
+                || trip.getStatus() == TripStatus.SUBMITTED
+                || trip.getStatus() == TripStatus.APPROVED
+                || trip.getStatus() == TripStatus.DRIVER_CONFIRMED;
+        if (isExpirable && LocalDateTime.now().isAfter(trip.getDepartureTime().plusMinutes(30))) {
             trip.setStatus(TripStatus.EXPIRED);
             repository.save(trip);
         }

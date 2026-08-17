@@ -47,7 +47,7 @@ public class DriverSelfController {
     @PutMapping("/profile")
     public ResponseEntity<DriverResponse> updateMyProfile(
             @AuthenticationPrincipal User user,
-            @RequestBody DriverProfileUpdateRequest request) {
+            @Valid @RequestBody DriverProfileUpdateRequest request) {
         return ResponseEntity.ok(driverService.updateMyProfile(user.getEmail(), request));
     }
 

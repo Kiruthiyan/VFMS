@@ -33,7 +33,7 @@ interface Trip {
     endTime?: string | null;
 }
 
-const STATUS_OPTIONS = ["ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED"];
+const STATUS_OPTIONS = ["ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED", "START_PENDING", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED"];
 
 const STATUS_STYLES: Record<string, string> = {
     NEW:              "border-slate-200 bg-slate-50 text-slate-700",
@@ -41,8 +41,9 @@ const STATUS_STYLES: Record<string, string> = {
     APPROVED:         "border-emerald-200 bg-emerald-50 text-emerald-700",
     DRIVER_CONFIRMED: "border-teal-200 bg-teal-50 text-teal-700",
     DRIVER_REJECTED:  "border-orange-200 bg-orange-50 text-orange-700",
+    START_PENDING:    "border-yellow-200 bg-yellow-50 text-yellow-700",
     REJECTED:         "border-red-200 bg-red-50 text-red-700",
-    EXPIRED:          "border-red-200 bg-red-50 text-red-700",
+    EXPIRED:          "border-red-300 bg-red-50 text-red-700",
     ONGOING:          "border-blue-200 bg-blue-50 text-blue-700",
     COMPLETED:        "border-emerald-200 bg-emerald-50 text-emerald-700",
     CANCELLED:        "border-slate-300 bg-slate-100 text-slate-600",
@@ -54,6 +55,7 @@ const STATUS_ICONS: Record<string, any> = {
     APPROVED: CheckCircle,
     DRIVER_CONFIRMED: CheckCircle,
     DRIVER_REJECTED: XCircle,
+    START_PENDING: Clock,
     REJECTED: XCircle,
     EXPIRED: AlertCircle,
     ONGOING: Clock,

@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, SearchCheck, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -19,6 +20,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ADMIN_MANAGED_ROLE_OPTIONS, ROLE_LABELS } from "@/lib/auth";
 import { ROLE_GUIDANCE } from "@/lib/constants/user-management";
+import { updateUserSchema } from "@/lib/validators/admin/update-user-schema";
 
 interface EditUserDialogProps {
   user: UserSummary;
@@ -75,6 +77,7 @@ export function EditUserDialog({
     setValue,
     formState: { isSubmitting, errors },
   } = useForm<UpdateUserRequest>({
+    resolver: zodResolver(updateUserSchema),
     shouldUnregister: true,
     defaultValues: {
       fullName: user.fullName ?? "",

@@ -108,7 +108,10 @@ export default function PerformancePage() {
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="flex items-center justify-center h-full text-slate-400">No data available</div>
+                            <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400">
+                                <span className="text-sm font-medium">No data available</span>
+                                <span className="text-xs text-center">Ratings appear once completed trips are reviewed by requesters</span>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -130,7 +133,7 @@ export default function PerformancePage() {
                                     </div>
                                     <div>
                                         <h4 className="text-2xl font-bold">{topName}</h4>
-                                        <p className="text-indigo-400 text-sm">ID: {topPerformer?.driverId || topPerformer?.id}</p>
+                                        <p className="text-indigo-400 text-sm">ID: {topPerformer?.employeeId || topPerformer?.driverName || topPerformer?.name || 'N/A'}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">

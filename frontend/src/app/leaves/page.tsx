@@ -19,8 +19,6 @@ type Decision = 'APPROVED' | 'REJECTED';
 
 export default function LeavesPage() {
   const [leaves, setLeaves] = useState<DriverLeave[]>([]);
-  const [approvalStatus, setApprovalStatus] = useState<Decision>('APPROVED');
-  const [approvalNotes, setApprovalNotes] = useState('');
 
   const fetchLeaves = async () => {
     try {
@@ -34,28 +32,6 @@ export default function LeavesPage() {
   useEffect(() => {
     fetchLeaves();
   }, []);
-
-  const processLeave = async (id: number) => {
-    try {
-      await apiFetch(`/api/drivers/leaves/${id}/process`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          status: approvalStatus,
-          approvalNotes,
-        }),
-        headers: {
-          'X-User-Id': 'ADMIN',
-        },
-      });
-
-      toast.success('Leave processed');
-      setApprovalNotes('');
-      setApprovalStatus('APPROVED');
-      fetchLeaves();
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
-    }
-  };
 
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fade-in">
@@ -108,66 +84,7 @@ export default function LeavesPage() {
                         <StatusBadge status={leave.status} />
                       </TableCell>
                       <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <button
-                              className="h-7 px-2.5 text-xs rounded-md font-medium border transition-colors"
-                              style={{
-                                borderColor: 'hsl(var(--secondary))',
-                                color: 'hsl(var(--secondary))',
-                                backgroundColor: 'transparent',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))';
-                                e.currentTarget.style.color = 'hsl(var(--secondary-foreground))';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = 'hsl(var(--secondary))';
-                              }}
-                            >
-                              Process
-                            </button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-xl overflow-hidden p-0">
-                            <DialogHeader className="vfms-form-header px-6 py-5 pl-8">
-                              <DialogTitle className="text-white">Process Leave Request</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 px-6 pb-6 pt-5">
-                              <div>
-                                <Label>Decision</Label>
-                                <Select
-                                  value={approvalStatus}
-                                  onValueChange={(value) => setApprovalStatus(value as Decision)}
-                                >
-                                  <SelectTrigger className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus:border-amber-400 focus:ring-amber-400/40">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="APPROVED">Approve</SelectItem>
-                                    <SelectItem value="REJECTED">Reject</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label>Notes</Label>
-                                <Input
-                                  value={approvalNotes}
-                                  onChange={(e) => setApprovalNotes(e.target.value)}
-                                  className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40"
-                                />
-                              </div>
-                              <div className="flex pt-2">
-                                <button
-                                  className="h-11 w-full rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500"
-                                  onClick={() => processLeave(leave.id)}
-                                >
-                                  Submit Decision
-                                </button>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <ProcessLeaveDialog leaveId={leave.id} onProcessed={fetchLeaves} />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -213,5 +130,112 @@ function PageHeader({
         </div>
       </div>
     </div>
+  );
+}
+
+function ProcessLeaveDialog({
+  leaveId,
+  onProcessed,
+}: {
+  leaveId: number;
+  onProcessed: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<Decision>('APPROVED');
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const resetAndOpen = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setApprovalStatus('APPROVED');
+      setApprovalNotes('');
+    }
+    setOpen(nextOpen);
+  };
+
+  const processLeave = async () => {
+    setSubmitting(true);
+    try {
+      await apiFetch(`/api/drivers/leaves/${leaveId}/process`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: approvalStatus,
+          approvalNotes,
+        }),
+      });
+
+      toast.success('Leave processed');
+      setOpen(false);
+      onProcessed();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={resetAndOpen}>
+      <DialogTrigger asChild>
+        <button
+          className="h-7 px-2.5 text-xs rounded-md font-medium border transition-colors"
+          style={{
+            borderColor: 'hsl(var(--secondary))',
+            color: 'hsl(var(--secondary))',
+            backgroundColor: 'transparent',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))';
+            e.currentTarget.style.color = 'hsl(var(--secondary-foreground))';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'hsl(var(--secondary))';
+          }}
+        >
+          Process
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-xl overflow-hidden p-0">
+        <DialogHeader className="vfms-form-header px-6 py-5 pl-8">
+          <DialogTitle className="text-white">Process Leave Request</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 px-6 pb-6 pt-5">
+          <div>
+            <Label>Decision</Label>
+            <Select
+              value={approvalStatus}
+              onValueChange={(value) => setApprovalStatus(value as Decision)}
+            >
+              <SelectTrigger className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus:border-amber-400 focus:ring-amber-400/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="APPROVED">Approve</SelectItem>
+                <SelectItem value="REJECTED">Reject</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Notes</Label>
+            <Input
+              value={approvalNotes}
+              maxLength={1000}
+              onChange={(e) => setApprovalNotes(e.target.value)}
+              className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40"
+            />
+          </div>
+          <div className="flex pt-2">
+            <button
+              disabled={submitting}
+              className="h-11 w-full rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500 disabled:opacity-60"
+              onClick={() => void processLeave()}
+            >
+              {submitting ? 'Submitting...' : 'Submit Decision'}
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

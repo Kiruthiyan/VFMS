@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import {
   ChevronDown,
@@ -17,6 +17,7 @@ import {
 import type { UserSummary } from "@/lib/api/admin";
 import {
   getErrorMessage,
+  isUserActive,
   restoreUserApi,
   toggleUserStatusApi,
 } from "@/lib/api/admin";
@@ -92,8 +93,7 @@ export function UserTable({
     setTogglingId(user.id);
     try {
       await toggleUserStatusApi(user.id);
-      const action =
-        user.status === "APPROVED" ? "deactivated" : "reactivated";
+      const action = isUserActive(user) ? "deactivated" : "activated";
       toast.success(`${user.fullName} has been ${action}.`);
       onRefresh();
     } catch (err) {
@@ -163,7 +163,8 @@ export function UserTable({
           </thead>
           <tbody className="divide-y divide-slate-100 bg-slate-50">
             {users.map((user) => (
-              <tr key={user.id} className="transition-colors hover:bg-white">
+              <Fragment key={user.id}>
+              <tr className="transition-colors hover:bg-white">
                 <td className="px-6 py-4">
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-sm font-bold uppercase text-slate-950 shadow-sm ring-1 ring-black/5">
@@ -193,7 +194,7 @@ export function UserTable({
                 </td>
 
                 <td className="px-6 py-4">
-                  <UserStatusBadge status={user.status} />
+                  <UserStatusBadge status={user.status} enabled={user.enabled} />
                 </td>
 
                 <td className="px-6 py-4 text-sm font-medium text-slate-700">
@@ -267,19 +268,19 @@ export function UserTable({
                             onClick={() => setStatusTarget(user)}
                             disabled={togglingId === user.id || isSelf(user)}
                             className={`rounded-xl border bg-white p-2 shadow-sm transition-colors disabled:opacity-40 ${
-                              user.status === "APPROVED"
+                              isUserActive(user)
                                 ? "border-amber-200 text-amber-600 hover:bg-amber-50"
                                 : "border-slate-200 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
                             }`}
                             title={
                               isSelf(user)
                                 ? "You cannot change your own status"
-                                : user.status === "APPROVED"
+                                : isUserActive(user)
                                   ? "Deactivate"
-                                  : "Reactivate"
+                                  : "Activate"
                             }
                           >
-                            {user.status === "APPROVED" ? (
+                            {isUserActive(user) ? (
                               <UserX size={14} />
                             ) : (
                               <UserCheck size={14} />
@@ -307,14 +308,40 @@ export function UserTable({
                   </div>
                 </td>
               </tr>
-            ))}
 
-            {users.map(
-              (user) =>
-                expandedRow === user.id && (
-                  <tr key={`${user.id}-expanded`} className="bg-slate-50">
+              {expandedRow === user.id && (
+                  <tr className="bg-slate-50">
                     <td colSpan={5} className="px-6 py-4">
                       <div className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 text-xs md:grid-cols-4">
+                        <div className="md:col-span-4 grid gap-4 border-b border-slate-100 pb-4 sm:grid-cols-2 lg:grid-cols-4">
+                          <div>
+                            <p className="mb-1 font-medium text-slate-500">Full Name</p>
+                            <p className="text-slate-900">{user.fullName}</p>
+                          </div>
+                          <div>
+                            <p className="mb-1 font-medium text-slate-500">Email</p>
+                            <p className="truncate text-slate-900">{user.email}</p>
+                          </div>
+                          <div>
+                            <p className="mb-1 font-medium text-slate-500">Role</p>
+                            <UserRoleBadge role={user.role} />
+                          </div>
+                          <div>
+                            <p className="mb-1 font-medium text-slate-500">Account Status</p>
+                            <UserStatusBadge status={user.status} enabled={user.enabled} />
+                          </div>
+                          <div>
+                            <p className="mb-1 font-medium text-slate-500">
+                              {showDeletedActions ? "Deleted On" : "Registered On"}
+                            </p>
+                            <p className="text-slate-900">
+                              {showDeletedActions
+                                ? formatDateTime(user.deletedAt)
+                                : formatDate(user.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+
                         <div>
                           <p className="mb-1 font-medium text-slate-500">Phone</p>
                           <p className="text-slate-900">{user.phone || "N/A"}</p>
@@ -467,8 +494,9 @@ export function UserTable({
                       </div>
                     </td>
                   </tr>
-                )
-            )}
+              )}
+              </Fragment>
+            ))}
           </tbody>
         </table>
       </div>
@@ -501,12 +529,12 @@ export function UserTable({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {statusTarget?.status === "APPROVED"
+              {statusTarget && isUserActive(statusTarget)
                 ? "Deactivate account?"
-                : "Reactivate account?"}
+                : "Activate account?"}
             </DialogTitle>
             <DialogDescription>
-              {statusTarget?.status === "APPROVED"
+              {statusTarget && isUserActive(statusTarget)
                 ? `${statusTarget.fullName} will lose system access and active sessions will be revoked.`
                 : `${statusTarget?.fullName ?? "This user"} will be able to sign in again with their approved account.`}
             </DialogDescription>
@@ -522,7 +550,7 @@ export function UserTable({
             </Button>
             <Button
               type="button"
-              variant={statusTarget?.status === "APPROVED" ? "destructive" : "success"}
+              variant={statusTarget && isUserActive(statusTarget) ? "destructive" : "success"}
               onClick={() => {
                 if (statusTarget) {
                   void handleToggleStatus(statusTarget);
@@ -532,9 +560,9 @@ export function UserTable({
             >
               {statusTarget && togglingId === statusTarget.id
                 ? "Processing..."
-                : statusTarget?.status === "APPROVED"
+                : statusTarget && isUserActive(statusTarget)
                   ? "Deactivate"
-                  : "Reactivate"}
+                  : "Activate"}
             </Button>
           </DialogFooter>
         </DialogContent>

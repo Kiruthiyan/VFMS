@@ -22,7 +22,7 @@ public class UpdateUserRequest {
     @Pattern(regexp = "^$|^[0-9+\\-()\\s]{10,15}$", message = "Invalid phone number format")
     private String phone;
 
-    @Pattern(regexp = "^$|^[0-9]{9,12}$", message = "NIC must be 9-12 digits")
+    @Pattern(regexp = "^$|^(?:\\d{9}[VvXx]|\\d{12})$", message = "Please enter a valid NIC number.")
     private String nic;
 
     // Role change — admin can now change any role

@@ -596,7 +596,7 @@ export default function ExportPage() {
                                                     onClick={() => handleDeleteReport(report.id)}
                                                     className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors"
                                                 >
-                                                    Remove from History
+                                                    Delete
                                                 </button>
                                             </td>
                                         </tr>

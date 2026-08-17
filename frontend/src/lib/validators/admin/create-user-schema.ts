@@ -24,7 +24,7 @@ export const createUserSchema = z
     nic: z
       .string()
       .min(1, "NIC is required.")
-      .regex(/^[0-9]{9,12}$/, "NIC must be 9-12 digits."),
+      .regex(/^(?:\d{9}[VvXx]|\d{12})$/, "Please enter a valid NIC number."),
     role: userRoleSchema,
     licenseNumber: z.string().optional(),
     licenseExpiryDate: z.string().optional(),
@@ -57,6 +57,15 @@ export const createUserSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.role === "DRIVER") {
+      const phone = data.phone?.trim() ?? "";
+      if (!phone) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Phone number is required for driver accounts.",
+          path: ["phone"],
+        });
+      }
+
       const licenseNumber = data.licenseNumber?.trim() ?? "";
       if (!licenseNumber) {
         ctx.addIssue({

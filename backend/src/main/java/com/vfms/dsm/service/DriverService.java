@@ -8,6 +8,7 @@ import com.vfms.dsm.mapper.DriverMapper;
 import com.vfms.dsm.repository.DriverRepository;
 import com.vfms.common.exception.ResourceNotFoundException;
 import com.vfms.common.exception.ValidationException;
+import com.vfms.trip.repository.TripRequestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,7 @@ public class DriverService {
     private final DriverMapper driverMapper;
     private final DriverRepository driverRepository;
     private final DriverSupabaseStorageService storageService;
+    private final TripRequestRepository tripRequestRepository;
 
     @Transactional(readOnly = true)
     public Page<DriverUserResponse> getDriverUsers(Pageable pageable) {
@@ -84,6 +86,7 @@ public class DriverService {
     public DriverResponse getMyProfile(String email) {
         User user = findByEmail(email);
         DriverResponse response = driverMapper.toResponse(user);
+        response.setRatingPercentage(computeRatingPercentage(user.getId()));
         driverRepository.findDocumentsByDriverAndType(user.getId(), DriverDocument.DocumentEntityType.PROFILE)
                 .stream()
                 .filter(storageService::isSupabaseDocument)
@@ -107,7 +110,23 @@ public class DriverService {
         if (request.getEmergencyContactName() != null) user.setEmergencyContactName(request.getEmergencyContactName());
         if (request.getEmergencyContactPhone() != null) user.setEmergencyContactPhone(request.getEmergencyContactPhone());
         userRepository.save(user);
-        return driverMapper.toResponse(user);
+        DriverResponse response = driverMapper.toResponse(user);
+        response.setRatingPercentage(computeRatingPercentage(user.getId()));
+        return response;
+    }
+
+    /**
+     * Converts the average of valid (non-null) driver_rating values on the
+     * driver's own trip_requests rows (1-5 stars) into a 0-100 percentage for
+     * the existing DriverRating UI widget. Returns null when the driver has
+     * no rated trips yet, so the UI can show "Not rated" instead of 0%.
+     */
+    private Integer computeRatingPercentage(UUID driverId) {
+        Double averageRating = tripRequestRepository.findAverageDriverRating(driverId);
+        if (averageRating == null) {
+            return null;
+        }
+        return (int) Math.round(averageRating / 5.0 * 100);
     }
 
     public void removeProfilePicture(String email) {

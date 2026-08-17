@@ -1,5 +1,6 @@
 package com.vfms.fuel.dto;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Size;
@@ -23,6 +24,7 @@ public class PatchFuelRecordRequest {
     private LocalDate fuelDate;
 
     @DecimalMin(value = "0.01", message = "Quantity must be greater than 0")
+    @DecimalMax(value = "2000.00", message = "Quantity must not exceed 2000 litres")
     @Digits(integer = 6, fraction = 2, message = "Quantity must have up to 6 digits and 2 decimals")
     private BigDecimal quantity;
 
@@ -31,6 +33,7 @@ public class PatchFuelRecordRequest {
     private BigDecimal costPerLitre;
 
     @DecimalMin(value = "0.0", message = "Odometer cannot be negative")
+    @DecimalMax(value = "2000000.0", message = "Odometer reading must not exceed 2,000,000 km")
     private Double odometerReading;
 
     @Size(max = 120, message = "Fuel station must not exceed 120 characters")

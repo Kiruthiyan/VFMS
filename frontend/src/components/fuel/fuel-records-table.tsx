@@ -163,7 +163,7 @@ export function FuelRecordsTable({ records }: FuelRecordsTableProps) {
                           Cost / Litre
                         </p>
                         <p className="font-semibold text-slate-900">
-                          LKR {Number(record.costPerLitre).toFixed(2)}
+                          {formatLKR(Number(record.costPerLitre))}
                         </p>
                       </div>
                       <div>

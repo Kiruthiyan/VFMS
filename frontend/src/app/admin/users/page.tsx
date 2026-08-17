@@ -113,6 +113,12 @@ export default function UserManagementDashboardPage() {
     };
 
     users.forEach((user) => {
+      if (
+        (user.role === "SYSTEM_USER" || user.role === "DRIVER") &&
+        user.status !== "APPROVED"
+      ) {
+        return;
+      }
       summary[user.role] += 1;
     });
 
@@ -127,8 +133,12 @@ export default function UserManagementDashboardPage() {
   const summaryValues = useMemo(
     () => ({
       total: counts?.total ?? users.length,
-      staff: users.filter((user) => user.role === "SYSTEM_USER").length,
-      drivers: users.filter((user) => user.role === "DRIVER").length,
+      staff: users.filter(
+        (user) => user.role === "SYSTEM_USER" && user.status === "APPROVED"
+      ).length,
+      drivers: users.filter(
+        (user) => user.role === "DRIVER" && user.status === "APPROVED"
+      ).length,
       deleted: counts?.deleted ?? 0,
     }),
     [counts, users]

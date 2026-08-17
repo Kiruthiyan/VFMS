@@ -16,7 +16,7 @@ import {
   getErrorMessage,
   updateFuelRecordApi,
 } from "@/lib/api/fuel";
-import { todayStr } from "@/lib/fuel-utils";
+import { formatLKR, todayStr } from "@/lib/fuel-utils";
 import { cn } from "@/lib/utils";
 import {
   fuelEntrySchema,
@@ -95,7 +95,7 @@ export function FuelEntryForm({
   const costPerLitre = useWatch({ control, name: "costPerLitre" });
   const estimatedTotal =
     quantity && costPerLitre
-      ? (Number(quantity) * Number(costPerLitre)).toFixed(2)
+      ? Number(quantity) * Number(costPerLitre)
       : null;
 
   function resetReceiptSelection() {
@@ -376,7 +376,7 @@ export function FuelEntryForm({
             Estimated Total Cost
           </span>
           <span className="text-2xl font-semibold text-slate-950">
-            LKR {estimatedTotal}
+            {formatLKR(estimatedTotal)}
           </span>
         </div>
       )}

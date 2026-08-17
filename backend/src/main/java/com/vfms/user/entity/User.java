@@ -195,6 +195,17 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return deletedAt == null && status == UserStatus.APPROVED;
+        return enabled && deletedAt == null && status == UserStatus.APPROVED;
+    }
+
+    /**
+     * Raw persisted {@code enabled} column, distinct from {@link #isEnabled()}
+     * (the Spring Security UserDetails contract, which also folds in
+     * deletedAt/status). Lombok's generated getter for the {@code enabled}
+     * field is suppressed because {@link #isEnabled()} already exists with
+     * that name, so this exposes the underlying flag directly.
+     */
+    public boolean isAccountEnabled() {
+        return enabled;
     }
 }

@@ -6,6 +6,7 @@ public enum TripStatus {
     APPROVED,
     DRIVER_CONFIRMED,
     DRIVER_REJECTED,
+    START_PENDING,
     REJECTED,
     ONGOING,
     COMPLETED,

@@ -103,6 +103,9 @@ public class DriverRecordService {
     public DriverInfraction resolveInfraction(Long id) {
         DriverInfraction value = repository.findInfractionById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Infraction not found: " + id));
+        if (value.getResolutionStatus() == DriverInfraction.ResolutionStatus.RESOLVED) {
+            throw new ValidationException("Infraction is already resolved.");
+        }
         value.setResolutionStatus(DriverInfraction.ResolutionStatus.RESOLVED);
         value.setResolvedAt(LocalDate.now());
         return repository.saveInfraction(value);
@@ -117,8 +120,13 @@ public class DriverRecordService {
     // ── Leaves ────────────────────────────────────────────────────────────────
 
     public DriverLeave requestLeave(LeaveRequest request) {
+        User user = driverService.findById(request.getDriverId());
+        validateLeaveDates(request.getStartDate(), request.getEndDate());
+        List<DriverLeave.LeaveStatus> excluded = List.of(DriverLeave.LeaveStatus.REJECTED, DriverLeave.LeaveStatus.CANCELLED);
+        if (repository.countOverlappingLeaves(user.getId(), request.getStartDate(), request.getEndDate(), excluded) > 0)
+            throw new ValidationException("Leave dates overlap with an existing request.");
         return repository.saveLeave(DriverLeave.builder()
-                .user(driverService.findById(request.getDriverId()))
+                .user(user)
                 .leaveType(request.getLeaveType())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
@@ -129,10 +137,23 @@ public class DriverRecordService {
     public DriverLeave processLeave(Long id, LeaveApprovalRequest request, String approvedBy) {
         DriverLeave leave = repository.findLeaveById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave not found: " + id));
+        if (leave.getStatus() != DriverLeave.LeaveStatus.PENDING) {
+            throw new ValidationException(
+                    "Only PENDING leave requests can be approved or rejected. Current status: " + leave.getStatus());
+        }
         leave.setStatus(request.getStatus());
         leave.setApprovedBy(approvedBy);
         leave.setApprovalNotes(request.getApprovalNotes());
         return repository.saveLeave(leave);
+    }
+
+    private void validateLeaveDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isBefore(LocalDate.now())) {
+            throw new ValidationException("Leave start date cannot be in the past.");
+        }
+        if (endDate.isBefore(startDate)) {
+            throw new ValidationException("Leave end date cannot be before the start date.");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -213,6 +234,7 @@ public class DriverRecordService {
 
     public DriverLeave submitLeaveRequest(String email, DriverSelfLeaveRequest request) {
         User user = driverService.findByEmail(email);
+        validateLeaveDates(request.getStartDate(), request.getEndDate());
         List<DriverLeave.LeaveStatus> excluded = List.of(DriverLeave.LeaveStatus.REJECTED, DriverLeave.LeaveStatus.CANCELLED);
         if (repository.countOverlappingLeaves(user.getId(), request.getStartDate(), request.getEndDate(), excluded) > 0)
             throw new ValidationException("Leave dates overlap with an existing request.");

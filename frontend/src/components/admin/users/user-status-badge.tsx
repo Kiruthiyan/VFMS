@@ -24,21 +24,32 @@ const STATUS_LABELS: Record<UserStatus, string> = {
 
 export function UserStatusBadge({
   status,
+  enabled = true,
   className,
 }: {
   status: UserStatus;
+  enabled?: boolean;
   className?: string;
 }) {
+  // APPROVED/DEACTIVATED are collapsed into a single Active/Deactivated
+  // state so the row shows one clear badge instead of a status badge plus
+  // a separate "disabled" indicator. Other lifecycle statuses (Pending,
+  // Rejected, Unverified) are unaffected by the enabled flag and keep
+  // their own label.
+  const effectiveStatus: UserStatus =
+    status === "APPROVED" && !enabled ? "DEACTIVATED" : status;
+  const label = effectiveStatus === "APPROVED" ? "Active" : STATUS_LABELS[effectiveStatus];
+
   return (
     <span
       className={cn(
         "inline-flex items-center px-3 py-1 rounded-lg",
         "text-xs font-semibold border",
-        STATUS_STYLES[status],
+        STATUS_STYLES[effectiveStatus],
         className
       )}
     >
-      {STATUS_LABELS[status]}
+      {label}
     </span>
   );
 }
