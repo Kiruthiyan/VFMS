@@ -195,6 +195,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return enabled && deletedAt == null && status == UserStatus.APPROVED;
+        return deletedAt == null && status == UserStatus.APPROVED;
     }
 }
