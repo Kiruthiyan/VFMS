@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { rentalApi, RentalRecord, RentalStatus } from "@/lib/api/rental";
 import {
@@ -9,6 +10,7 @@ import {
 } from "@/lib/api/trip-availability";
 import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
 import { FleetSummaryCard } from "@/components/fleet/FleetSummaryCard";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,21 +32,23 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/lib/role-context";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function RentalsPage() {
   const router = useRouter();
   const { canCreate } = useRole();
-  const [rentals, setRentals] = useState<RentalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [activeTripVehicleIds, setActiveTripVehicleIds] = useState<Set<number>>(
-    new Set(),
-  );
-
-  const fetchRentals = useCallback(async () => {
-    setLoading(true);
-    try {
+  const {
+    data,
+    error,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.rentals(statusFilter),
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
       const rentalsRequest =
         statusFilter !== "ALL"
           ? rentalApi.getByStatus(statusFilter as RentalStatus)
@@ -53,18 +57,22 @@ export default function RentalsPage() {
         rentalsRequest,
         tripAvailabilityApi.getActiveVehicleIds().catch((): number[] => []),
       ]);
-      setRentals(res.data);
-      setActiveTripVehicleIds(new Set(tripVehicleIds));
-    } catch {
-      toast.error("Failed to load rentals");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter]);
+      return {
+        rentals: res.data,
+        activeTripVehicleIds: new Set(tripVehicleIds),
+      };
+    },
+  });
+
+  const rentals = data?.rentals ?? [];
+  const activeTripVehicleIds = data?.activeTripVehicleIds ?? new Set<number>();
+  const loading = isLoading;
 
   useEffect(() => {
-    fetchRentals();
-  }, [fetchRentals]);
+    if (error) {
+      toast.error("Failed to load rentals");
+    }
+  }, [error]);
 
   const filtered = rentals.filter((r) => {
     const q = search.toLowerCase();
@@ -96,39 +104,35 @@ export default function RentalsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-              External Vehicle Rentals
-            </h1>
-            <p className="text-slate-500 mt-1">
-              Rent vehicles from vendors to supplement the company fleet
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="vfms-refresh-button"
-              onClick={fetchRentals}
-              disabled={loading}
-              aria-label="Refresh rentals"
-              title="Refresh rentals"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-              />
-            </Button>
-            {canCreate && (
+        <PageHeader
+          title="External Vehicle Rentals"
+          description="Rent vehicles from vendors to supplement the company fleet"
+          icon={Car}
+          actions={
+            <>
               <Button
-                onClick={() => router.push("/dashboards/fleet/rentals/create")}
+                variant="outline"
+                size="icon"
+                className="vfms-refresh-button"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                aria-label="Refresh rentals"
+                title="Refresh rentals"
               >
-                <Plus className="mr-2 h-4 w-4" /> Rent a Vehicle
+                <RefreshCw
+                  className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+                />
               </Button>
-            )}
-          </div>
-        </div>
+              {canCreate && (
+                <Button
+                  onClick={() => router.push("/dashboards/fleet/rentals/create")}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Rent a Vehicle
+                </Button>
+              )}
+            </>
+          }
+        />
 
         {/* Summary */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -162,8 +166,8 @@ export default function RentalsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-xl border border-slate-200/60 shadow-sm focus-within:ring-2 focus-within:ring-blue-950/10 transition-all">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-xl border border-slate-200/60 shadow-sm focus-within:ring-2 focus-within:ring-blue-950/10 transition-all">
+          <div className="relative min-w-[200px] flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search by plate, vendor, type, purpose..."
@@ -172,9 +176,9 @@ export default function RentalsPage() {
               className="pl-9 border-none bg-transparent focus-visible:ring-0 text-slate-900"
             />
           </div>
-          <div className="h-6 w-px bg-slate-200" />
+          <div className="hidden h-6 w-px bg-slate-200 sm:block" />
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48 bg-white text-slate-900">
+            <SelectTrigger className="w-full min-w-[9rem] bg-white text-slate-900 sm:w-48">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent className="bg-white text-slate-900">
@@ -207,7 +211,7 @@ export default function RentalsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-            <table className="w-full border-separate border-spacing-0 text-left text-sm">
+            <table className="w-full min-w-[860px] border-separate border-spacing-0 text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
                   <th className="rounded-tl-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">

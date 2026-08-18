@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
 
@@ -13,9 +14,9 @@ import {
   getFuelFormMetadataApi,
   getFuelRecordByIdApi,
   getErrorMessage,
-  type FuelLookupOption,
   type FuelRecord,
 } from "@/lib/api/fuel";
+import { queryKeys } from "@/lib/query-keys";
 import type { FuelEntryFormValues } from "@/lib/validators/fuel/fuel-entry-schema";
 
 function toDateInputValue(dateStr: string): string {
@@ -40,40 +41,37 @@ export default function EditFuelEntryPage() {
   const params = useParams();
   const recordId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const [vehicles, setVehicles] = useState<FuelLookupOption[]>([]);
-  const [drivers, setDrivers] = useState<FuelLookupOption[]>([]);
-  const [initialValues, setInitialValues] = useState<Partial<FuelEntryFormValues>>();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadPageData = useCallback(async () => {
-    if (!recordId) {
-      setError("Invalid fuel record ID");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const [metadata, record] = await Promise.all([
-        getFuelFormMetadataApi(),
-        getFuelRecordByIdApi(recordId),
-      ]);
-      setVehicles(metadata.vehicles);
-      setDrivers(metadata.drivers);
-      setInitialValues(toFormValues(record));
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [recordId]);
-
-  useEffect(() => {
-    void loadPageData();
-  }, [loadPageData]);
+  const {
+    data: metadata,
+    error: metadataError,
+    isLoading: metadataLoading,
+  } = useQuery({
+    queryKey: queryKeys.fuelMetadata,
+    queryFn: getFuelFormMetadataApi,
+    placeholderData: (previous) => previous,
+  });
+  const {
+    data: record,
+    error: recordError,
+    isLoading: recordLoading,
+  } = useQuery({
+    queryKey: queryKeys.fuelRecord(recordId ?? "missing"),
+    queryFn: () => getFuelRecordByIdApi(recordId as string),
+    enabled: Boolean(recordId),
+    placeholderData: (previous) => previous,
+  });
+  const initialValues = useMemo(
+    () => (record ? toFormValues(record) : undefined),
+    [record]
+  );
+  const loading = metadataLoading || recordLoading;
+  const errorMessage = !recordId
+    ? "Invalid fuel record ID"
+    : metadataError
+      ? getErrorMessage(metadataError)
+      : recordError
+        ? getErrorMessage(recordError)
+        : null;
 
   const handleSuccess = () => {
     router.push(`/admin/fuel/${recordId}`);
@@ -103,15 +101,15 @@ export default function EditFuelEntryPage() {
               <div className="flex justify-center py-10">
                 <LoadingSpinner size={24} className="text-slate-950" />
               </div>
-            ) : error ? (
-              <FormMessage type="error" message={error} />
+            ) : errorMessage ? (
+              <FormMessage type="error" message={errorMessage} />
             ) : initialValues && recordId ? (
               <FuelEntryForm
                 mode="edit"
                 recordId={recordId}
                 initialValues={initialValues}
-                vehicles={vehicles}
-                drivers={drivers}
+                vehicles={metadata?.vehicles ?? []}
+                drivers={metadata?.drivers ?? []}
                 onSuccess={handleSuccess}
               />
             ) : (

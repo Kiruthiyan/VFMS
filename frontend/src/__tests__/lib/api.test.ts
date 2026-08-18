@@ -16,6 +16,7 @@ describe("api", () => {
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
     );
     expect(api.defaults.timeout).toBe(15000);
+    expect(api.defaults.withCredentials).toBe(true);
 
     const contentType =
       (api.defaults.headers as Record<string, string>)["Content-Type"] ??

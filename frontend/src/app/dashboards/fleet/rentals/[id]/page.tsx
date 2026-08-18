@@ -13,7 +13,14 @@ import { RentalStatusBadge } from "@/components/rental/RentalStatusBadge";
 import { FleetFileDropzone } from "@/components/fleet/FleetFileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Loader2,
@@ -41,6 +48,7 @@ export default function RentalDetailPage() {
 
   // Dialog state
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [returnDate, setReturnDate] = useState("");
 
   const fetchRental = useCallback(async () => {
@@ -85,15 +93,18 @@ export default function RentalDetailPage() {
     }
   };
 
-  const handleClose = async () => {
-    if (confirm("Close this rental permanently?")) {
-      try {
-        await rentalApi.close(Number(id));
-        toast.success("Rental closed");
-        fetchRental();
-      } catch {
-        toast.error("Failed to close rental");
-      }
+  const handleClose = () => {
+    setCloseDialogOpen(true);
+  };
+
+  const submitCloseRental = async () => {
+    setCloseDialogOpen(false);
+    try {
+      await rentalApi.close(Number(id));
+      toast.success("Rental closed");
+      fetchRental();
+    } catch {
+      toast.error("Failed to close rental");
     }
   };
 
@@ -123,7 +134,7 @@ export default function RentalDetailPage() {
 
   const handleOpenDocument = async (url: string) => {
     try {
-      await openAuthenticatedDocument(url);
+      await openAuthenticatedDocument(url, "rental");
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -230,7 +241,7 @@ export default function RentalDetailPage() {
                    <DollarSign className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vendor's Daily Rate</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vendor&apos;s Daily Rate</p>
                   <p className="font-semibold text-slate-800 text-[15px]">
                     Rs.{rental.costPerDay.toLocaleString()} <span className="text-xs text-slate-400 font-normal">/day (as quoted)</span>
                   </p>
@@ -362,6 +373,32 @@ export default function RentalDetailPage() {
               </Button>
               <Button variant="success" onClick={submitConfirmReturn}>
                 Confirm Return
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Close rental record?</DialogTitle>
+              <DialogDescription>
+                This will permanently close the returned rental record after
+                invoice and return details are complete.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              <span className="font-medium text-slate-900">
+                Rental #{rental.id}
+              </span>{" "}
+              for {rental.plateNumber} from {rental.vendorName}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCloseDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={submitCloseRental}>
+                Close Rental
               </Button>
             </DialogFooter>
           </DialogContent>

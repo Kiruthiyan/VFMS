@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Download, FileBarChart, PieChart, TrendingUp, BarChart3, Activity } from "lucide-react";
 import Link from "next/link";
 
@@ -46,10 +47,7 @@ const reportCards = [
 export default function ReportsPage() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 p-8">
-            <div>
-                <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-                <p className="text-muted-foreground mt-1">Deep dive into fleet performance and costs</p>
-            </div>
+            <PageHeader title="Reports & Analytics" description="Deep dive into fleet performance and costs" />
 
             <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm">
                 <CardHeader className="vfms-card-header px-6 py-4 pl-8">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Stethoscope, Palmtree } from "lucide-react";
 import * as dsmReports from "@/lib/api/dsm-reports";
@@ -71,10 +72,7 @@ export default function LeaveAnalytics() {
 
     return (
         <div className="space-y-6 p-8 bg-slate-50/50 min-h-screen animate-in fade-in duration-700">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Leave Impact Analysis</h1>
-                <p className="text-slate-500 mt-1">Driver availability trends and workforce absence tracking</p>
-            </div>
+            <PageHeader title="Leave Impact Analysis" description="Driver availability trends and workforce absence tracking" />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="border-none shadow-sm">
@@ -182,7 +180,7 @@ export default function LeaveAnalytics() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4">Driver Name</th>
@@ -198,7 +196,7 @@ export default function LeaveAnalytics() {
                                         <td className="px-6 py-4 font-bold text-slate-900">{l.driverName}</td>
                                         <td className="px-6 py-4 text-slate-500">{l.startDate || 'N/A'}</td>
                                         <td className="px-6 py-4 text-slate-500">{l.endDate || 'N/A'}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 max-w-[240px] truncate">
                                             <span className="font-medium text-slate-700">{l.reason || l.type || 'Leave reason not provided'}</span>
                                         </td>
                                         <td className="px-6 py-4">

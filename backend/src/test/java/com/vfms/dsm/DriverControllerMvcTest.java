@@ -19,16 +19,15 @@ class DriverControllerMvcTest {
 
     @Test
     void getDriverUsers_unauthenticated_isDenied() throws Exception {
-        // AuthorizationDeniedException is mapped to 500 by GlobalExceptionHandler on permitAll paths
         mockMvc.perform(get("/api/drivers/from-users"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(roles = "DRIVER")
     void getDriverUsers_driverRole_isDenied() throws Exception {
         mockMvc.perform(get("/api/drivers/from-users"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     @Test

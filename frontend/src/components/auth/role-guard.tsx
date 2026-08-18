@@ -80,6 +80,7 @@ export function RoleGuard({ allowedRole, allowedRoles, children }: RoleGuardProp
     pathname,
     router,
     searchParams,
+    accessToken,
     user,
   ]);
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { vendorApi, Vendor } from "@/lib/api/rental";
+import { vendorApi } from "@/lib/api/rental";
 import { FleetSummaryCard } from "@/components/fleet/FleetSummaryCard";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,32 +27,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function VendorsPage() {
   const router = useRouter();
   const { canAdmin } = useRole();
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-
-  const fetchVendors = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: vendors = [],
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: [...queryKeys.vendors, canAdmin ? "all" : "active"],
+    queryFn: async () => {
       const res = canAdmin
         ? await vendorApi.getAllIncludingInactive()
         : await vendorApi.getAll();
-      setVendors(res.data);
-    } catch {
-      toast.error("Failed to load vendors");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+  });
 
   useEffect(() => {
-    fetchVendors();
-  }, [canAdmin]);
+    if (error) {
+      toast.error("Failed to load vendors");
+    }
+  }, [error]);
 
   const filtered = vendors.filter((v) => {
     const q = search.toLowerCase();
@@ -74,39 +78,35 @@ export default function VendorsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-              Rental Vendor Management
-            </h1>
-            <p className="text-slate-500 mt-1">
-              Manage vendors who supply vehicles to the company
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="vfms-refresh-button"
-              onClick={fetchVendors}
-              disabled={loading}
-              aria-label="Refresh vendors"
-              title="Refresh vendors"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-              />
-            </Button>
-            {canAdmin && (
+        <PageHeader
+          title="Rental Vendor Management"
+          description="Manage vendors who supply vehicles to the company"
+          icon={Building2}
+          actions={
+            <>
               <Button
-                onClick={() => router.push("/dashboards/fleet/vendors/add")}
+                variant="outline"
+                size="icon"
+                className="vfms-refresh-button"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                aria-label="Refresh vendors"
+                title="Refresh vendors"
               >
-                <Plus className="mr-2 h-4 w-4" /> Add Vendor
+                <RefreshCw
+                  className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+                />
               </Button>
-            )}
-          </div>
-        </div>
+              {canAdmin && (
+                <Button
+                  onClick={() => router.push("/dashboards/fleet/vendors/add")}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add Vendor
+                </Button>
+              )}
+            </>
+          }
+        />
 
         {/* Summary */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -140,8 +140,8 @@ export default function VendorsPage() {
         </div>
 
         {/* Search + Filter */}
-        <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-xl border border-slate-200/60 shadow-sm focus-within:ring-2 focus-within:ring-blue-950/10 transition-all">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap items-center gap-3 bg-white/80 backdrop-blur-md p-2 rounded-xl border border-slate-200/60 shadow-sm focus-within:ring-2 focus-within:ring-blue-950/10 transition-all">
+          <div className="relative min-w-[200px] flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search by name, contact person, email..."
@@ -150,10 +150,10 @@ export default function VendorsPage() {
               className="pl-9 border-none bg-transparent focus-visible:ring-0 text-slate-900"
             />
           </div>
-          <div className="h-6 w-px bg-slate-200" />
+          <div className="hidden h-6 w-px bg-slate-200 sm:block" />
           {canAdmin && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 bg-white text-slate-900">
+              <SelectTrigger className="w-full min-w-[9rem] bg-white text-slate-900 sm:w-40">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent className="bg-white text-slate-900">
@@ -186,7 +186,7 @@ export default function VendorsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-            <table className="w-full border-separate border-spacing-0 text-left text-sm">
+            <table className="w-full min-w-[860px] border-separate border-spacing-0 text-left text-sm">
               <thead className="bg-blue-950 border-b border-blue-900">
                 <tr>
                   <th className="rounded-tl-2xl px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-white/90">
@@ -220,12 +220,12 @@ export default function VendorsPage() {
                         <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950 shadow-sm ring-1 ring-black/5">
                           <Building2 className="h-5 w-5" />
                         </div>
-                        <div>
-                          <div className="font-medium text-slate-900">
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-900 truncate max-w-[220px]">
                             {v.name}
                           </div>
                           {v.address && (
-                            <div className="text-slate-400 text-xs">
+                            <div className="text-slate-400 text-xs truncate max-w-[220px]">
                               {v.address}
                             </div>
                           )}

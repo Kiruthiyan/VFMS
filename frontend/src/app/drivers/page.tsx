@@ -1,12 +1,16 @@
 'use client';
 
 import { ChangeEvent, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Search, Star, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
+import { getDriverDisplayId } from '@/lib/driver-display';
+import { queryKeys } from '@/lib/query-keys';
 import { DriverReadinessCache, PageResponse } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,9 +52,11 @@ type AvailabilityFilter = 'ALL' | 'AVAILABLE' | 'UNAVAILABLE';
 const driverIdCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
 function compareDriverIds(left: DriverUser, right: DriverUser) {
-  if (!left.employeeId) return right.employeeId ? 1 : 0;
-  if (!right.employeeId) return -1;
-  return driverIdCollator.compare(left.employeeId, right.employeeId);
+  const leftDisplayId = getDriverDisplayId(left.employeeId, '');
+  const rightDisplayId = getDriverDisplayId(right.employeeId, '');
+  if (!leftDisplayId) return rightDisplayId ? 1 : 0;
+  if (!rightDisplayId) return -1;
+  return driverIdCollator.compare(leftDisplayId, rightDisplayId);
 }
 
 function getDaysUntil(expiryDate: string | null): number | null {
@@ -131,37 +137,38 @@ function getSafeRatingPercentage(ratingPercentage?: number | null) {
 
 export default function DriversPage() {
   const router = useRouter();
-  const [drivers, setDrivers] = useState<DriverUser[]>([]);
-  const [readinessByDriverId, setReadinessByDriverId] = useState<Record<string, DriverReadinessCache>>({});
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>('ALL');
 
-  const fetchDrivers = async () => {
-    try {
-      setLoading(true);
+  const { data, error, isLoading } = useQuery({
+    queryKey: queryKeys.drivers,
+    queryFn: async () => {
       const [driverPage, readiness] = await Promise.all([
         apiFetch<PageResponse<DriverUser>>('/api/drivers/from-users?page=0&size=500'),
         apiFetch<DriverReadinessCache[]>('/api/drivers/readiness').catch(() => []),
       ]);
-      setDrivers([...driverPage.content].sort(compareDriverIds));
-      setReadinessByDriverId(Object.fromEntries(readiness.map((item) => [item.driverId, item])));
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to load drivers');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        drivers: [...driverPage.content].sort(compareDriverIds),
+        readinessByDriverId: Object.fromEntries(readiness.map((item) => [item.driverId, item])),
+      };
+    },
+  });
+
+  const drivers = data?.drivers ?? [];
+  const readinessByDriverId = data?.readinessByDriverId ?? {};
+  const loading = isLoading;
 
   useEffect(() => {
-    fetchDrivers();
-  }, []);
+    if (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load drivers');
+    }
+  }, [error]);
 
   const readinessFor = (driver: DriverUser) =>
     getDriverReadiness(driver, driver.driverId ? readinessByDriverId[driver.driverId] ?? null : null);
 
   const filtered = drivers.filter((driver) => {
-    const matchesSearch = `${driver.employeeId || ''} ${driver.fullName} ${driver.email} ${driver.nic} ${driver.phone}`
+    const matchesSearch = `${getDriverDisplayId(driver.employeeId, '')} ${driver.fullName} ${driver.email} ${driver.nic} ${driver.phone}`
       .toLowerCase()
       .includes(search.toLowerCase());
     if (!matchesSearch) return false;
@@ -179,9 +186,9 @@ export default function DriversPage() {
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fade-in">
       <PageHeader
-        icon={<Users className="w-5 h-5" />}
+        icon={Users}
         title="Drivers"
-        subtitle="Manage driver profiles"
+        description="Manage driver profiles"
       />
 
       <div className="space-y-6">
@@ -297,7 +304,7 @@ export default function DriversPage() {
                           role="button"
                         >
                         <TableCell className="font-semibold text-sm text-foreground">
-                          {d.employeeId || '—'}
+                          {getDriverDisplayId(d.employeeId, '-')}
                         </TableCell>
                         <TableCell className="font-medium text-sm text-foreground">
                           {d.fullName}
@@ -334,28 +341,6 @@ export default function DriversPage() {
               )}
             </CardContent>
           </Card>
-      </div>
-    </div>
-  );
-}
-
-function PageHeader({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
-        {icon}
-      </div>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-        <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
       </div>
     </div>
   );

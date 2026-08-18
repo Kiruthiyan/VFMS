@@ -30,6 +30,7 @@ public class DatabaseMigrationRunner {
             stmt.execute("ALTER TABLE trip_requests ADD COLUMN IF NOT EXISTS driver_timeline_reason VARCHAR(1000)");
             stmt.execute("ALTER TABLE trip_requests ADD COLUMN IF NOT EXISTS staff_timeline_reason VARCHAR(1000)");
             stmt.execute("ALTER TABLE trip_requests ADD COLUMN IF NOT EXISTS stop_arrival_times VARCHAR(2000)");
+            stmt.execute("ALTER TABLE trip_requests ADD COLUMN IF NOT EXISTS trip_activity_log TEXT");
 
             // SQL query to remove the existing constraint (if it exists) so we can replace it cleanly
             String dropConstraint = "ALTER TABLE trip_requests DROP CONSTRAINT IF EXISTS trip_requests_status_check";
@@ -39,7 +40,7 @@ public class DatabaseMigrationRunner {
                     ALTER TABLE trip_requests ADD CONSTRAINT trip_requests_status_check
                     CHECK (status IN (
                         'NEW', 'SUBMITTED', 'APPROVED',
-                        'DRIVER_CONFIRMED', 'DRIVER_REJECTED',
+                        'DRIVER_CONFIRMED', 'DRIVER_REJECTED', 'START_PENDING',
                         'REJECTED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'EXPIRED'
                     ))
                     """;

@@ -19,15 +19,21 @@ import com.vfms.common.exception.ValidationException;
 import com.vfms.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Duration;
 
 /**
  * Exposes the public authentication, signup, and verification endpoints used
@@ -38,9 +44,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String REFRESH_COOKIE_NAME = "vfms_refresh_token";
+
     private final AuthService authService;
     private final OtpService otpService;
     private final AuthRateLimitService authRateLimitService;
+
+    @Value("${application.security.jwt.refresh-token.expiration}")
+    private long refreshTokenExpirationMs;
+
+    @Value("${vfms.auth.refresh-cookie.secure:true}")
+    private boolean refreshCookieSecure;
+
+    @Value("${vfms.auth.refresh-cookie.same-site:None}")
+    private String refreshCookieSameSite;
 
     /**
      * Sends an email verification code for OTP-based flows that still depend on
@@ -104,9 +121,10 @@ public class AuthController {
             HttpServletRequest httpRequest
     ) {
         authRateLimitService.check(httpRequest, "login");
-        return ResponseEntity.ok(
-                ApiResponse.success("Login successful", authService.login(request))
-        );
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(response.getRefreshToken()).toString())
+                .body(ApiResponse.success("Login successful", response));
     }
 
     /**
@@ -114,11 +132,16 @@ public class AuthController {
      */
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(
-            @Valid @RequestBody RefreshTokenRequest request
+            @RequestBody(required = false) RefreshTokenRequest request,
+            @CookieValue(name = REFRESH_COOKIE_NAME, required = false) String cookieRefreshToken
     ) {
-        return ResponseEntity.ok(
-                ApiResponse.success("Token refreshed successfully", authService.refresh(request))
-        );
+        String refreshToken = request != null && request.getRefreshToken() != null
+                ? request.getRefreshToken()
+                : cookieRefreshToken;
+        AuthResponse response = authService.refresh(refreshToken);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(response.getRefreshToken()).toString())
+                .body(ApiResponse.success("Token refreshed successfully", response));
     }
 
     /**
@@ -127,7 +150,29 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal User user) {
         authService.logout(user);
-        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                .body(ApiResponse.success("Logged out successfully", null));
+    }
+
+    private ResponseCookie buildRefreshCookie(String refreshToken) {
+        return ResponseCookie.from(REFRESH_COOKIE_NAME, refreshToken)
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/api/auth")
+                .maxAge(Duration.ofMillis(refreshTokenExpirationMs))
+                .build();
+    }
+
+    private ResponseCookie clearRefreshCookie() {
+        return ResponseCookie.from(REFRESH_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
     }
 
     /**

@@ -136,6 +136,13 @@ function mapFriendlyMessage(
     return ERROR_MESSAGES.ACCOUNT_DISABLED;
   }
 
+  if (
+    normalizedMessage.includes("deleted") ||
+    normalizedMessage.includes("archived")
+  ) {
+    return "This account is archived. Please ask an administrator to restore it from Deleted Users.";
+  }
+
   if (message && message !== "Validation failed") {
     return message;
   }
@@ -339,13 +346,11 @@ export async function resendVerificationApi(
 }
 
 export async function refreshTokenApi(
-  refreshToken: string
+  refreshToken?: string
 ): Promise<AuthResponse> {
   const response = await api.post<ApiEnvelope<AuthResponse>>(
     "/api/auth/refresh",
-    {
-      refreshToken,
-    }
+    refreshToken ? { refreshToken } : undefined
   );
   return unwrapResponse(response.data);
 }

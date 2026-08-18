@@ -1,10 +1,13 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useRole, Role } from "@/lib/role-context";
-import { Bell, ChevronDown, Menu, User, LogOut, Settings } from "lucide-react";
+import { Bell, ChevronDown, Menu, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { apiFetch } from "@/lib/api";
+import { getDriverDisplayId, isUuid } from "@/lib/driver-display";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,8 +35,19 @@ const DEMO_ROLE_ENABLED =
   process.env.NODE_ENV !== "production" &&
   process.env.NEXT_PUBLIC_ENABLE_DEMO_ROLE === "true";
 
+interface DriverBreadcrumbResponse {
+  employeeId: string | null;
+  fullName?: string | null;
+}
+
+function getDriverDetailId(pathname: string): string | null {
+  const normalizedPathname = pathname.replace("/dashboards", "");
+  const match = normalizedPathname.match(/^\/drivers\/([0-9a-fA-F-]{36})$/);
+  return match?.[1] ?? null;
+}
+
 // Build readable breadcrumb from pathname
-function getBreadcrumb(pathname: string): string {
+function getBreadcrumb(pathname: string, labels: Record<string, string> = {}): string {
   const segments = pathname
     .replace("/dashboards", "")
     .split("/")
@@ -41,7 +55,9 @@ function getBreadcrumb(pathname: string): string {
   if (segments.length === 0) return "Dashboard Overview";
   return segments
     .map((s) => {
+      if (labels[s]) return labels[s];
       if (/^\d+$/.test(s)) return "Details";
+      if (isUuid(s)) return "Details";
       if (s === "create") return "Create";
       if (s === "add") return "Add";
       if (s === "edit") return "Edit";
@@ -56,8 +72,29 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { role, setRole, currentUser } = useRole();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const [showRolePicker, setShowRolePicker] = useState(false);
+  const driverDetailId = getDriverDetailId(pathname);
+  const { data: driverBreadcrumb } = useQuery({
+    queryKey: ["driver-breadcrumb", driverDetailId],
+    enabled: Boolean(driverDetailId),
+    queryFn: async () => {
+      if (!driverDetailId) {
+        throw new Error("Driver id is missing.");
+      }
+      return apiFetch<DriverBreadcrumbResponse>(
+        `/api/drivers/from-users/${driverDetailId}`
+      );
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
-  const breadcrumb = getBreadcrumb(pathname);
+  const driverLabel = getDriverDisplayId(
+    driverBreadcrumb?.employeeId,
+    driverBreadcrumb?.fullName || "Driver Details"
+  );
+  const breadcrumbLabels =
+    driverDetailId && driverLabel ? { [driverDetailId]: driverLabel } : {};
+
+  const breadcrumb = getBreadcrumb(pathname, breadcrumbLabels);
   
   // Dynamically calculate initials from actual data
   const initials = currentUser?.name
@@ -89,11 +126,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
       {/* Right section */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-        {/* Notification */}
-        <button className="relative h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </button>
+
 
         {/* Divider */}
         <div className="hidden h-6 w-px bg-slate-200 sm:block" />

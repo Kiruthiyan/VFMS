@@ -99,13 +99,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
         log.error("Unexpected runtime exception", ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred: " + ex.toString());
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected server error occurred.");
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAll(Exception ex) {
         log.error("Unhandled exception", ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Server Error: " + ex.toString());
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected server error occurred.");
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message) {

@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { forgotPasswordApi, getErrorMessage } from "@/lib/api/auth";
-import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/lib/constants/routes";
+import { AUTH_ROUTES } from "@/lib/constants/routes";
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
@@ -74,7 +74,6 @@ export function ForgotPasswordForm() {
             prompt="Remembered your password?"
             actionLabel="Sign in"
             actionHref={AUTH_ROUTES.LOGIN}
-            homeHref={PUBLIC_ROUTES.HOME}
           />
         </div>
       </AuthStatusPanel>
@@ -146,7 +145,6 @@ export function ForgotPasswordForm() {
         prompt="Remembered your password?"
         actionLabel="Sign in"
         actionHref={AUTH_ROUTES.LOGIN}
-        homeHref={PUBLIC_ROUTES.HOME}
       />
     </motion.form>
   );

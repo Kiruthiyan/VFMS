@@ -19,6 +19,7 @@ public class UserSummaryResponse {
     private String nic;
     private Role role;
     private UserStatus status;
+    private boolean enabled;
     private boolean emailVerified;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

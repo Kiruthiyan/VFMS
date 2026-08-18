@@ -23,22 +23,22 @@ public interface DriverAggregateRepository extends JpaRepository<DriverAggregate
     List<DriverAggregate> findAllCanonical();
 
     // Fetch a single JSONB column without materializing the entire aggregate
-    @Query(value = "select coalesce(documents, '[]'::jsonb) from drivers where id = :id", nativeQuery = true)
+    @Query(value = "select coalesce(documents, '[]'::jsonb)::text from drivers where id = :id", nativeQuery = true)
     Optional<String> findDocumentsJsonById(@Param("id") UUID id);
 
     // Fetch only the 'leaves' JSONB to avoid deserializing the full aggregate
-    @Query(value = "select coalesce(leaves, '[]'::jsonb) from drivers where id = :id", nativeQuery = true)
+    @Query(value = "select coalesce(leaves, '[]'::jsonb)::text from drivers where id = :id", nativeQuery = true)
     Optional<String> findLeavesJsonById(@Param("id") UUID id);
 
     // Fetch only the 'certifications' JSONB to avoid deserializing the full aggregate
-    @Query(value = "select coalesce(certifications, '[]'::jsonb) from drivers where id = :id", nativeQuery = true)
+    @Query(value = "select coalesce(certifications, '[]'::jsonb)::text from drivers where id = :id", nativeQuery = true)
     Optional<String> findCertificationsJsonById(@Param("id") UUID id);
 
     // Fetch only the 'licenses' JSONB to avoid deserializing the full aggregate
-    @Query(value = "select coalesce(licenses, '[]'::jsonb) from drivers where id = :id", nativeQuery = true)
+    @Query(value = "select coalesce(licenses, '[]'::jsonb)::text from drivers where id = :id", nativeQuery = true)
     Optional<String> findLicensesJsonById(@Param("id") UUID id);
 
     // Fetch only the 'infractions' JSONB to avoid deserializing the full aggregate
-    @Query(value = "select coalesce(infractions, '[]'::jsonb) from drivers where id = :id", nativeQuery = true)
+    @Query(value = "select coalesce(infractions, '[]'::jsonb)::text from drivers where id = :id", nativeQuery = true)
     Optional<String> findInfractionsJsonById(@Param("id") UUID id);
 }

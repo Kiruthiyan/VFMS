@@ -1,10 +1,13 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Star, UserRound, X, Hash, User, CreditCard, Mail, Phone, FileText, Calendar, Award, Briefcase } from 'lucide-react';
 import { apiFetch, getErrorMessage, resolveBackendAssetUrl } from '@/lib/api';
+import { getDriverDisplayId } from '@/lib/driver-display';
 import { DriverDocument } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -15,6 +18,7 @@ import { DriverDocumentsTab } from '@/components/drivers/DriverDocumentsTab';
 import { DriverTripsTab } from '@/components/drivers/DriverTripsTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DriverQuickList } from '@/components/driver/DriverQuickList';
+import { queryKeys } from '@/lib/query-keys';
 
 /** Shape returned by GET /api/drivers/from-users/{userId} */
 interface DriverUserDetail {
@@ -58,50 +62,37 @@ export default function DriverDetailsPage() {
 		? requestedTab
 		: 'overview';
 
-	const [driverUser, setDriverUser] = useState<DriverUserDetail | null>(null);
-	const [profilePicture, setProfilePicture] = useState<DriverDocument | null>(null);
 	const [showProfilePicturePreview, setShowProfilePicturePreview] = useState(false);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const {
+		data,
+		error,
+		isLoading: loading,
+	} = useQuery({
+		queryKey: queryKeys.driver(id ?? ''),
+		enabled: Boolean(id),
+		queryFn: async () => {
+			if (!id) throw new Error('Driver user id is missing from URL.');
+			const driverUser = await apiFetch<DriverUserDetail>(`/api/drivers/from-users/${id}`);
+			let profilePicture: DriverDocument | null = null;
+			if (driverUser.id) {
+				try {
+					profilePicture = await apiFetch<DriverDocument>(`/api/drivers/${driverUser.id}/profile-picture`);
+				} catch {
+					profilePicture = null;
+				}
+			}
+			return { driverUser, profilePicture };
+		},
+	});
+	const driverUser = data?.driverUser ?? null;
+	const profilePicture = data?.profilePicture ?? null;
+	const errorMessage = error ? getErrorMessage(error) : null;
 	const profilePictureUrl = profilePicture?.fileUrl ? resolveBackendAssetUrl(profilePicture.fileUrl) : '';
+	const displayDriverId = getDriverDisplayId(driverUser?.employeeId, '-');
 
 	/** User UUID — same value used for all driver sub-resource APIs */
 	const driverResourceId = id;
 	const linkedDriverId = driverUser?.driverId ?? null;
-
-	const fetchDriverUser = async () => {
-		if (!id) {
-			setError('Driver user id is missing from URL.');
-			setLoading(false);
-			return;
-		}
-
-		try {
-			setLoading(true);
-			setError(null);
-			// Fetch user-creation data from users table
-			const data = await apiFetch<DriverUserDetail>(`/api/drivers/from-users/${id}`);
-			setDriverUser(data);
-
-			// Fetch profile picture using user UUID
-			if (data.id) {
-				try {
-					const profilePic = await apiFetch<DriverDocument>(`/api/drivers/${data.id}/profile-picture`);
-					setProfilePicture(profilePic);
-				} catch {
-					setProfilePicture(null);
-				}
-			}
-		} catch (e) {
-			setError(getErrorMessage(e));
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		void fetchDriverUser();
-	}, [id]);
 
 	return (
 		<div className="p-6 md:p-8 space-y-6 animate-fade-in">
@@ -136,13 +127,13 @@ export default function DriverDetailsPage() {
 						<CardContent>
 							{loading && <p className="text-sm text-muted-foreground">Loading driver...</p>}
 
-							{!loading && error && (
+							{!loading && errorMessage && (
 								<p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
-									{error}
+									{errorMessage}
 								</p>
 							)}
 
-							{!loading && !error && driverUser && id && (
+							{!loading && !errorMessage && driverUser && id && (
 								<Tabs defaultValue={initialTab} className="w-full">
 									<div className="w-full overflow-x-auto mb-6">
 										<TabsList className="w-full flex border-b border-slate-200 bg-transparent h-auto p-0 rounded-none justify-start">
@@ -188,7 +179,7 @@ export default function DriverDetailsPage() {
 													<Hash className="h-5 w-5 text-blue-600" />
 													<div>
 														<p className="vfms-detail-label">Driver ID</p>
-														<p className="vfms-detail-value">{driverUser.employeeId || '-'}</p>
+														<p className="vfms-detail-value">{displayDriverId}</p>
 													</div>
 												</div>
 												<div className="vfms-detail-tile">
@@ -268,10 +259,7 @@ export default function DriverDetailsPage() {
 									</TabsContent>
 
 									<TabsContent value="feedbacks">
-										<DriverFeedbacksTab
-											ratingPercentage={driverUser.ratingPercentage}
-											feedbacks={driverUser.feedbacks ?? []}
-										/>
+										<DriverFeedbacksTab driverUserId={id ?? ''} />
 									</TabsContent>
 								</Tabs>
 							)}
@@ -279,7 +267,7 @@ export default function DriverDetailsPage() {
 					</Card>
 				</div>
 
-				{driverUser && !loading && !error && (
+				{driverUser && !loading && !errorMessage && (
 					<DriverQuickList activeDriverId={linkedDriverId ?? driverUser.id} />
 				)}
 			</div>
@@ -309,15 +297,6 @@ export default function DriverDetailsPage() {
 					</div>
 				</div>
 			)}
-		</div>
-	);
-}
-
-function Detail({ label, value, className }: { label: string; value?: string; className?: string }) {
-	return (
-		<div className={className}>
-			<p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
-			<p className="text-sm font-medium text-foreground mt-1">{value || '-'}</p>
 		</div>
 	);
 }
@@ -353,42 +332,85 @@ function DriverStarRating({ ratingPercentage }: { ratingPercentage?: number | nu
 	);
 }
 
-function DriverFeedbacksTab({
-	ratingPercentage,
-	feedbacks,
-}: {
-	ratingPercentage?: number | null;
-	feedbacks: DriverFeedback[];
-}) {
+function DriverFeedbacksTab({ driverUserId }: { driverUserId: string }) {
+	const [trips, setTrips] = React.useState<any[]>([]);
+	const [loading, setLoading] = React.useState(true);
+
+	React.useEffect(() => {
+		if (!driverUserId) return;
+		setLoading(true);
+		apiFetch<any[]>(`/api/trips/driver/${driverUserId}`)
+			.then(data => setTrips(Array.isArray(data) ? data : []))
+			.catch(() => setTrips([]))
+			.finally(() => setLoading(false));
+	}, [driverUserId]);
+
+	const ratedTrips = trips.filter(t => t.driverRating && t.driverRating > 0);
+	const avgRating = ratedTrips.length > 0
+		? ratedTrips.reduce((sum: number, t: any) => sum + t.driverRating, 0) / ratedTrips.length
+		: null;
+
+	const formatDate = (d: string) =>
+		new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
 	return (
 		<Card>
 			<CardHeader className="border-b border-border bg-muted/30 px-4 py-3">
 				<CardTitle className="text-sm font-semibold">Driver Feedbacks</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4 px-4 pb-4 pt-4">
+				{/* Overall Rating */}
 				<div className="rounded-lg border border-border bg-background p-4">
 					<p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Overall Rating</p>
-					<DriverStarRating ratingPercentage={ratingPercentage} />
-					<p className="mt-2 text-xs text-muted-foreground">
-						Rating will sync from staff trip scheduling feedback.
-					</p>
+					{loading ? (
+						<p className="text-xs text-muted-foreground">Loading…</p>
+					) : avgRating !== null ? (
+						<div className="flex items-center gap-3">
+							<div className="flex gap-0.5">
+								{Array.from({ length: 5 }).map((_, i) => (
+									<Star
+										key={i}
+										className={`h-6 w-6 ${i < Math.round(avgRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
+									/>
+								))}
+							</div>
+							<span className="text-2xl font-black text-foreground">{avgRating.toFixed(1)}</span>
+							<span className="text-sm text-muted-foreground">/ 5.0 ({ratedTrips.length} {ratedTrips.length === 1 ? 'rating' : 'ratings'})</span>
+						</div>
+					) : (
+						<p className="text-xs text-muted-foreground">No ratings yet. Ratings appear after completed trips are reviewed.</p>
+					)}
 				</div>
 
+				{/* Individual Feedback Entries */}
 				<div className="space-y-2">
-					{feedbacks.map((item, index) => (
-						<div key={item.id ?? index} className="rounded-lg border border-border p-3">
+					{loading && <p className="py-4 text-center text-xs text-muted-foreground">Loading feedbacks…</p>}
+					{!loading && ratedTrips.map((trip: any) => (
+						<div key={trip.id} className="rounded-lg border border-border p-3">
 							<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-								<DriverStarRating ratingPercentage={item.ratingPercentage} />
-								<span className="text-xs text-muted-foreground">{item.createdAt ?? 'Date not available'}</span>
+								<div className="flex gap-0.5">
+									{Array.from({ length: 5 }).map((_, i) => (
+										<Star
+											key={i}
+											className={`h-4 w-4 ${i < trip.driverRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
+										/>
+									))}
+								</div>
+								<span className="text-xs text-muted-foreground">
+									{trip.endTime ? formatDate(trip.endTime) : trip.updatedAt ? formatDate(trip.updatedAt) : 'Date not available'}
+								</span>
 							</div>
-							<p className="text-sm text-foreground">{item.feedback || item.comment || 'No feedback comment provided.'}</p>
-							<p className="mt-2 text-xs text-muted-foreground">Given by: {item.givenBy || 'Staff'}</p>
+							{trip.driverFeedback && (
+								<p className="text-sm text-foreground italic">"{trip.driverFeedback}"</p>
+							)}
+							<p className="mt-1 text-xs text-muted-foreground truncate" title={trip.destination}>
+								Trip: {trip.destination ? trip.destination.replace(/ -> /g, ' → ') : 'N/A'}
+							</p>
 						</div>
 					))}
-
-					{feedbacks.length === 0 && (
+					{!loading && ratedTrips.length === 0 && (
 						<p className="py-4 text-center text-xs text-muted-foreground">
-							No feedbacks yet. Feedbacks from Staff Dashboard / Trip Scheduling will appear here.
+							No feedbacks yet. Feedback from completed trip ratings will appear here.
 						</p>
 					)}
 				</div>

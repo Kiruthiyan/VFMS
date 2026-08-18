@@ -65,7 +65,7 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
     clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<CertFormData>({
-    defaultValues: { certType: 'DEFENSIVE_DRIVING' },
+    defaultValues: { certType: undefined },
   });
 
   const formErrorMessages = Object.values(errors)
@@ -127,6 +127,63 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
     <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
       <CardHeader className="vfms-card-header flex flex-row items-center justify-between px-4 py-3 pl-8">
         <CardTitle className="text-sm font-semibold text-white">Certifications &amp; Training</CardTitle>
+        <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (next) { reset(); clearErrors(); } }}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 bg-white text-xs">
+              <Plus className="h-3.5 w-3.5" /> Add Certification
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg overflow-hidden p-0">
+            <DialogHeader className="vfms-form-header px-6 py-5 pl-8">
+              <DialogTitle className="text-white">Add Certification</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-6 pb-6 pt-5">
+              {formErrorMessages.length > 0 && <FormErrorSummary messages={formErrorMessages} />}
+              <div>
+                <Label htmlFor="cert-type">Type *</Label>
+                <Controller
+                  control={control}
+                  name="certType"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="cert-type" className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus:border-amber-400 focus:ring-amber-400/40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {certTypes.map((type) => (
+                          <SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div>
+                <Label htmlFor="cert-name">Name *</Label>
+                <Input id="cert-name" {...register('certName')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+              </div>
+              <div>
+                <Label htmlFor="cert-issuer">Issued By</Label>
+                <Input id="cert-issuer" {...register('issuedBy')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="cert-issue-date">Issue Date *</Label>
+                  <Input id="cert-issue-date" type="date" {...register('issueDate')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                </div>
+                <div>
+                  <Label htmlFor="cert-expiry-date">Expiry Date</Label>
+                  <Input id="cert-expiry-date" type="date" {...register('expiryDate')} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                </div>
+              </div>
+              <div className="flex pt-2">
+                <Button type="submit" disabled={isSubmitting} className="h-11 w-full rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500">
+                  {isSubmitting ? 'Saving...' : 'Add Certification'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-3">
         <div className="space-y-2">

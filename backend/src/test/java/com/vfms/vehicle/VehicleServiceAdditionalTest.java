@@ -2,10 +2,13 @@ package com.vfms.vehicle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vfms.common.exception.ResourceNotFoundException;
+import com.vfms.vehicle.dto.VehicleRequestDto;
 import com.vfms.vehicle.dto.VehicleResponseDto;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +30,7 @@ class VehicleServiceAdditionalTest {
 
     private Vehicle activeVehicle;
     private Vehicle retiredVehicle;
+    private VehicleRequestDto updateRequest;
 
     @BeforeEach
     void setUp() {
@@ -46,6 +50,12 @@ class VehicleServiceAdditionalTest {
                 .model("Sunny")
                 .status(VehicleStatus.RETIRED)
                 .active(false)
+                .build();
+
+        updateRequest = VehicleRequestDto.builder()
+                .plateNumber("CAR-1001")
+                .brand("Toyota")
+                .model("Aqua")
                 .build();
     }
 
@@ -86,5 +96,31 @@ class VehicleServiceAdditionalTest {
         when(vehicleRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> vehicleService.updateVehicleStatus(999L, VehicleStatus.AVAILABLE));
+    }
+
+    @Test
+    void updateVehicle_ThrowsWhenVehicleIsRetired() {
+        when(vehicleRepository.findById(2L)).thenReturn(Optional.of(retiredVehicle));
+
+        assertThrows(IllegalStateException.class, () -> vehicleService.updateVehicle(2L, updateRequest));
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
+    }
+
+    @Test
+    void updateVehicleStatus_ThrowsWhenVehicleIsRetired() {
+        when(vehicleRepository.findById(2L)).thenReturn(Optional.of(retiredVehicle));
+
+        assertThrows(IllegalStateException.class,
+                () -> vehicleService.updateVehicleStatus(2L, VehicleStatus.AVAILABLE));
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
+    }
+
+    @Test
+    void updateVehicleStatus_ThrowsWhenRetiringThroughStatusUpdate() {
+        when(vehicleRepository.findById(1L)).thenReturn(Optional.of(activeVehicle));
+
+        assertThrows(IllegalStateException.class,
+                () -> vehicleService.updateVehicleStatus(1L, VehicleStatus.RETIRED));
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 }

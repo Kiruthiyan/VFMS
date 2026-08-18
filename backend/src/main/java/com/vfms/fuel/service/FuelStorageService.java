@@ -14,6 +14,9 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -30,6 +33,13 @@ public class FuelStorageService {
             "image/png",
             "image/webp",
             "application/pdf"
+    );
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".pdf"
     );
 
     private final SupabaseStorageConfig config;
@@ -128,12 +138,74 @@ public class FuelStorageService {
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
             throw new ValidationException(
                     "Invalid receipt file type.",
                     Map.of("receipt", "Receipt must be a JPEG, PNG, WebP image, or PDF.")
             );
         }
+
+        String originalFilename = file.getOriginalFilename();
+        String lowerFilename = originalFilename == null
+                ? ""
+                : originalFilename.toLowerCase(Locale.ROOT);
+        boolean allowedExtension = ALLOWED_EXTENSIONS.stream().anyMatch(lowerFilename::endsWith);
+        if (!allowedExtension) {
+            throw new ValidationException(
+                    "Invalid receipt file type.",
+                    Map.of("receipt", "Receipt filename must end with .jpg, .jpeg, .png, .webp, or .pdf.")
+            );
+        }
+
+        if (!hasExpectedFileSignature(file, contentType.toLowerCase(Locale.ROOT))) {
+            throw new ValidationException(
+                    "Invalid receipt file type.",
+                    Map.of("receipt", "Receipt content does not match the selected file type.")
+            );
+        }
+    }
+
+    private boolean hasExpectedFileSignature(MultipartFile file, String contentType) {
+        byte[] header = new byte[12];
+        int read;
+        try (InputStream inputStream = file.getInputStream()) {
+            read = inputStream.read(header);
+        } catch (IOException ex) {
+            throw new ValidationException("Could not read receipt file.", ex);
+        }
+
+        if (read < 4) {
+            return false;
+        }
+
+        return switch (contentType) {
+            case "application/pdf" -> header[0] == '%'
+                    && header[1] == 'P'
+                    && header[2] == 'D'
+                    && header[3] == 'F';
+            case "image/jpeg" -> (header[0] & 0xFF) == 0xFF
+                    && (header[1] & 0xFF) == 0xD8
+                    && (header[2] & 0xFF) == 0xFF;
+            case "image/png" -> read >= 8
+                    && (header[0] & 0xFF) == 0x89
+                    && header[1] == 'P'
+                    && header[2] == 'N'
+                    && header[3] == 'G'
+                    && header[4] == 0x0D
+                    && header[5] == 0x0A
+                    && header[6] == 0x1A
+                    && header[7] == 0x0A;
+            case "image/webp" -> read >= 12
+                    && header[0] == 'R'
+                    && header[1] == 'I'
+                    && header[2] == 'F'
+                    && header[3] == 'F'
+                    && header[8] == 'W'
+                    && header[9] == 'E'
+                    && header[10] == 'B'
+                    && header[11] == 'P';
+            default -> false;
+        };
     }
 
     String sanitizeFilename(String original) {

@@ -2,29 +2,41 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, Droplets, FileCheck2, ShieldCheck, Users } from "lucide-react";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AlertTriangle, CheckCircle2, Droplets, ShieldCheck, Users, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 import api from "@/lib/api";
-import { getUserCountsApi, type UserCounts } from "@/lib/api/admin";
 import { vehicleApi, type Vehicle } from "@/lib/api/vehicle";
 import { maintenanceApi, type MaintenanceRequest } from "@/lib/api/maintenance";
 
+interface DashboardTrip {
+  id?: string;
+  status?: string;
+}
+
 interface DashboardSnapshot {
-  counts: UserCounts | null;
   vehicles: Vehicle[];
-  trips: any[];
+  trips: DashboardTrip[];
   maintenance: MaintenanceRequest[];
 }
 
 const DEFAULT_SNAPSHOT: DashboardSnapshot = {
-  counts: null,
   vehicles: [],
   trips: [],
   maintenance: [],
 };
+
+function readTripArray(payload: unknown): DashboardTrip[] {
+  if (Array.isArray(payload)) {
+    return payload as DashboardTrip[];
+  }
+  if (payload && typeof payload === "object" && "data" in payload) {
+    const nested = (payload as { data?: unknown }).data;
+    return Array.isArray(nested) ? (nested as DashboardTrip[]) : [];
+  }
+  return [];
+}
 
 export default function ApproverDashboardPage() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot>(DEFAULT_SNAPSHOT);
@@ -33,13 +45,12 @@ export default function ApproverDashboardPage() {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const [counts, vehicles, trips, maintenance] = await Promise.all([
-          getUserCountsApi().catch(() => null),
+        const [vehicles, trips, maintenance] = await Promise.all([
           vehicleApi.getAll().then(r => r.data).catch(() => []),
-          api.get("/api/trips").then((r: any) => r.data.data || []).catch(() => []),
+          api.get<unknown>("/api/trips").then((r) => readTripArray(r.data)).catch(() => []),
           maintenanceApi.getAll().then(r => r.data).catch(() => []),
         ]);
-        setSnapshot({ counts, vehicles, trips, maintenance });
+        setSnapshot({ vehicles, trips, maintenance });
       } finally {
         setLoading(false);
       }
@@ -48,16 +59,16 @@ export default function ApproverDashboardPage() {
   }, []);
 
   const summaryCards = useMemo(() => {
-    const counts = snapshot.counts;
+    const pendingTrips = snapshot.trips.filter((trip) => trip.status === "SUBMITTED").length;
     const activeMaintenance = snapshot.maintenance.filter(
       (req) => req.status === "SUBMITTED" || req.status === "NEW" || req.status === "APPROVED"
     ).length;
 
     return [
       {
-        title: "Total Users",
-        value: counts?.total ?? 0,
-        description: "Across all active and archived accounts",
+        title: "Pending Trips",
+        value: pendingTrips,
+        description: "Trip requests waiting for review",
         icon: Users,
         iconAccent: "bg-blue-50 text-blue-600",
       },
@@ -125,106 +136,69 @@ export default function ApproverDashboardPage() {
             ))}
           </section>
 
-          <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
-            <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-amber-400">
-                  <ShieldCheck className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Review Focus
-                  </p>
-                  <h2 className="mt-2 text-xl font-bold text-slate-950">Workspace readiness</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    This approver area now follows the same dark-sidebar and light-workspace system as the rest of VFMS, so future review modules can land in a consistent structure.
-                  </p>
-                </div>
-              </div>
-            </article>
-
-            <article className="rounded-[28px] border border-slate-200 bg-slate-900 p-6 text-white shadow-xl shadow-slate-900/10">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300">
-                Next capabilities
-              </p>
-              <div className="mt-4 space-y-3">
-                {[
-                  "Pending request queues with filters and review badges",
-                  "Approval and rejection decision flows with evidence context",
-                  "History panels for audit visibility and follow-up actions",
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 rounded-2xl bg-white/5 px-4 py-3">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-amber-300" />
-                    <p className="text-sm text-slate-200">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </section>
-
           <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <Link
               href="/trips"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Trip Requests</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Review, assign, and approve trip requests.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/drivers"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Drivers</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Manage and monitor driver profiles and certifications.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/drivers/leave-requests"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Leave Requests</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Approve or reject leave applications.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/drivers/infractions"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Infractions</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Log and review driver safety infractions.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/dashboards/fleet/maintenance?status=SUBMITTED"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Maintenance Approvals</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Review pending vehicle maintenance requests.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/dashboards/fleet/maintenance"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">All Maintenance</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">View complete maintenance request history.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/dashboards/fleet/vehicles"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Vehicle Registry</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">View all registered vehicles and current status.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/dashboards/fleet/rentals"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Vehicle Rentals</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Review rental vehicle activity and costs.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/settings/change-password"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Security Settings</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Update your credentials and secure session.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
           </section>
         </>

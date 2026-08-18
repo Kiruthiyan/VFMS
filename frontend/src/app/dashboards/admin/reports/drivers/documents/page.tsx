@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { FileText, CheckCircle2, FileWarning } from "lucide-react";
 import * as dsmReports from "@/lib/api/dsm-reports";
@@ -45,10 +46,7 @@ export default function DocumentTracking() {
 
     return (
         <div className="space-y-6 p-8 bg-slate-50/50 min-h-screen animate-in fade-in duration-700">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Document Tracking</h1>
-                <p className="text-slate-500 mt-1">Audit verification of mandatory uploads and digital document compliance</p>
-            </div>
+            <PageHeader title="Document Tracking" description="Audit verification of mandatory uploads and digital document compliance" />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="border-none shadow-sm">
@@ -101,7 +99,7 @@ export default function DocumentTracking() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-widest border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4">Driver Name</th>

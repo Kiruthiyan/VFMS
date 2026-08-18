@@ -29,23 +29,45 @@ public class VfmsApplication {
                     .load();
 
             String[] keys = {
+                "SPRING_PROFILES_ACTIVE",
                 "DB_URL",
                 "DB_USER",
                 "DB_PASSWORD",
                 "DB_DRIVER",
                 "HIBERNATE_DIALECT",
                 "JWT_SECRET",
+                "JWT_EXPIRATION_MS",
+                "JWT_REFRESH_EXPIRATION_MS",
+                "MAIL_HOST",
+                "MAIL_PORT",
                 "MAIL_USERNAME",
                 "MAIL_PASSWORD",
                 "CORS_ALLOWED_ORIGINS",
                 "FRONTEND_URL",
                 "SUPABASE_STORAGE_URL",
+                "SUPABASE_SERVICE_KEY",
+                "SUPABASE_STORAGE_BUCKET",
+                "DRIVER_SUPABASE_STORAGE_BUCKET",
+                "DRIVER_SUPABASE_SIGNED_URL_TTL_SECONDS",
+                "STAFF_SUPABASE_STORAGE_BUCKET",
+                "STAFF_SUPABASE_SIGNED_URL_TTL_SECONDS",
+                "FLEET_SUPABASE_STORAGE_BUCKET",
+                "FLEET_SUPABASE_SIGNED_URL_TTL_SECONDS",
+                "REPORT_SUPABASE_STORAGE_BUCKET",
+                "REPORT_SUPABASE_SIGNED_URL_TTL_SECONDS",
+                "SUPABASE_SIGNED_URL_TTL_SECONDS",
                 "ADMIN_SEED_ENABLED",
+                "ADMIN_SEED_CLEANUP_DEMO_USERS",
                 "ADMIN_SEED_EMAIL",
                 "ADMIN_SEED_PASSWORD",
                 "ADMIN_SEED_FULL_NAME",
                 "ADMIN_SEED_PHONE",
-                "ADMIN_SEED_NIC"
+                "ADMIN_SEED_NIC",
+                "TEAM_USERS_SEED_ENABLED",
+                "OTP_VALIDITY_MINUTES",
+                "AUTH_RATE_LIMIT_MAX",
+                "VFMS_TEMP_PASSWORD_LENGTH",
+                "VFMS_TEMP_PASSWORD_CHARS"
             };
 
             for (String key : keys) {

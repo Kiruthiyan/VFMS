@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 
+import { FuelManagementNav } from "@/components/admin/fuel/fuel-management-nav";
 import { FuelEntryForm } from "@/components/fuel/fuel-entry-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,34 +13,21 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   getFuelFormMetadataApi,
   getErrorMessage,
-  type FuelLookupOption,
 } from "@/lib/api/fuel";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function CreateFuelEntryPage() {
   const router = useRouter();
-  const [vehicles, setVehicles] = useState<FuelLookupOption[]>([]);
-  const [drivers, setDrivers] = useState<FuelLookupOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadMetadata = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const metadata = await getFuelFormMetadataApi();
-      setVehicles(metadata.vehicles);
-      setDrivers(metadata.drivers);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadMetadata();
-  }, [loadMetadata]);
+  const {
+    data: metadata,
+    error,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.fuelMetadata,
+    queryFn: getFuelFormMetadataApi,
+    placeholderData: (previous) => previous,
+  });
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   const handleSuccess = () => {
     router.push("/admin/fuel");
@@ -56,6 +44,10 @@ export default function CreateFuelEntryPage() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fuel
         </Button>
 
+        <div className="mb-6">
+          <FuelManagementNav />
+        </div>
+
         <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white p-0 pb-4 shadow-sm">
           <CardHeader className="vfms-form-header py-5 pl-8">
             <CardTitle className="flex items-center gap-3 text-lg text-white">
@@ -70,12 +62,12 @@ export default function CreateFuelEntryPage() {
                 <div className="flex justify-center py-10">
                   <LoadingSpinner size={24} className="text-slate-950" />
                 </div>
-              ) : error ? (
-                <FormMessage type="error" message={error} />
+              ) : errorMessage ? (
+                <FormMessage type="error" message={errorMessage} />
               ) : (
                 <FuelEntryForm
-                  vehicles={vehicles}
-                  drivers={drivers}
+                  vehicles={metadata?.vehicles ?? []}
+                  drivers={metadata?.drivers ?? []}
                   onSuccess={handleSuccess}
                 />
               )}

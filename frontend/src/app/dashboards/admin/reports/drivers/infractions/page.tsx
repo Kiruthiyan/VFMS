@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import * as dsmReports from "@/lib/api/dsm-reports";
-import { 
+import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
@@ -63,10 +64,7 @@ export default function InfractionAnalytics() {
 
     return (
         <div className="space-y-6 p-8 bg-slate-50/50 min-h-screen animate-in fade-in duration-700">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Infraction & Risk Analysis</h1>
-                <p className="text-slate-500 mt-1">Monitoring violations, risk profiles, and driver compliance history</p>
-            </div>
+            <PageHeader title="Infraction & Risk Analysis" description="Monitoring violations, risk profiles, and driver compliance history" />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="border-none shadow-sm">
@@ -165,7 +163,7 @@ export default function InfractionAnalytics() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-medium">
                                 <tr>
                                     <th className="px-6 py-4">Incident ID</th>

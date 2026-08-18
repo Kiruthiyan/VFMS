@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, FileText, Table, BarChart, Car, User, Droplet, Wrench, Calendar, ClipboardList, RefreshCw } from "lucide-react";
@@ -57,8 +58,8 @@ export default function ExportPage() {
         try {
             await reportService.deleteReportDocument(id);
             toast({
-                title: "Report Deleted",
-                description: "The saved report has been deleted from Supabase storage.",
+                title: "Removed from History",
+                description: "The report file and database record are preserved for audit history.",
             });
             await loadSavedReports();
         } catch (error) {
@@ -224,12 +225,7 @@ export default function ExportPage() {
                 </Button>
             </div>
 
-            <div className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Report Export Center</h1>
-                    <p className="text-slate-500 mt-2 font-medium">Download live data summaries in high-quality PDF or Excel</p>
-                </div>
-            </div>
+            <PageHeader title="Report Export Center" description="Download live data summaries in high-quality PDF or Excel" />
 
             {/* Date Filtering Section */}
             <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm">
@@ -539,7 +535,7 @@ export default function ExportPage() {
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full border-collapse text-left text-sm text-slate-500">
+                            <table className="w-full min-w-[760px] border-collapse text-left text-sm text-slate-500">
                                 <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-700">
                                     <tr>
                                         <th scope="col" className="px-6 py-3 border-b">Report Name</th>

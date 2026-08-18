@@ -101,4 +101,12 @@ class MaintenanceServiceAdditionalTest {
 
         assertThrows(IllegalStateException.class, () -> maintenanceService.uploadInvoice(50L, "supabase://x/y.pdf"));
     }
+
+    @Test
+    void uploadQuotation_ThrowsWhenRequestIsNotNew() {
+        request.setStatus(MaintenanceStatus.SUBMITTED);
+        when(maintenanceRepository.findById(50L)).thenReturn(Optional.of(request));
+
+        assertThrows(IllegalStateException.class, () -> maintenanceService.uploadQuotation(50L, "supabase://x/y.pdf"));
+    }
 }

@@ -72,6 +72,13 @@ public class VehicleService {
     public VehicleResponseDto updateVehicle(Long id, VehicleRequestDto request) {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+        ensureVehicleIsEditable(vehicle);
+        vehicleRepository.findByPlateNumber(request.getPlateNumber())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException(
+                            "Vehicle with plate number '" + request.getPlateNumber() + "' already exists");
+                });
 
         vehicle.setPlateNumber(request.getPlateNumber());
         vehicle.setBrand(request.getBrand());
@@ -105,10 +112,20 @@ public class VehicleService {
     public VehicleResponseDto updateVehicleStatus(Long id, VehicleStatus newStatus) {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+        ensureVehicleIsEditable(vehicle);
+        if (newStatus == VehicleStatus.RETIRED) {
+            throw new IllegalStateException("Use the retire endpoint to retire vehicles.");
+        }
 
         vehicle.setStatus(newStatus);
 
         return mapToResponse(vehicleRepository.save(vehicle));
+    }
+
+    private void ensureVehicleIsEditable(Vehicle vehicle) {
+        if (vehicle.getStatus() == VehicleStatus.RETIRED || Boolean.FALSE.equals(vehicle.getActive())) {
+            throw new IllegalStateException("Retired vehicles are read-only and cannot be edited.");
+        }
     }
 
     private VehicleResponseDto mapToResponse(Vehicle v) {

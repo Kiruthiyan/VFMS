@@ -88,7 +88,11 @@ public class DriverCredentialService {
         return repository.saveCertification(cert);
     }
 
-    public void deleteCertification(Long id) { repository.deleteCertification(id); }
+    public void deleteCertification(Long id) {
+        repository.findCertificationById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Certification not found: " + id));
+        repository.deleteCertification(id);
+    }
 
     @Transactional(readOnly = true)
     public QualificationCheckResponse checkQualification(UUID driverId, String vehicleCategory) {

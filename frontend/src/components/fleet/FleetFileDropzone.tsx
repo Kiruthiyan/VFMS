@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { ExternalLink, FileText, Upload, X } from "lucide-react";
 
@@ -21,9 +22,8 @@ type FleetFileDropzoneProps = {
 
 const ACCEPTED_DOCUMENTS = {
   "application/pdf": [".pdf"],
-  "image/jpeg": [".jpg", ".jpeg"],
-  "image/png": [".png"],
 };
+const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 
 export function FleetFileDropzone({
   title,
@@ -33,17 +33,23 @@ export function FleetFileDropzone({
   existingFileName,
   onFileChange,
   onOpenExisting,
-  emptyLabel = "Drag a PDF or image here, or choose a file",
+  emptyLabel = "Drag a PDF here, or choose a file",
   uploadLabel = "Upload",
   replaceLabel = "Replace",
 }: FleetFileDropzoneProps) {
+  const [fileError, setFileError] = useState<string | null>(null);
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     accept: ACCEPTED_DOCUMENTS,
     disabled: readonly,
+    maxSize: MAX_DOCUMENT_BYTES,
     multiple: false,
     noClick: true,
     onDrop: (acceptedFiles) => {
+      setFileError(null);
       onFileChange(acceptedFiles[0] ?? null);
+    },
+    onDropRejected: () => {
+      setFileError("Upload a PDF file that is 5 MB or smaller.");
     },
   });
 
@@ -128,6 +134,9 @@ export function FleetFileDropzone({
             </div>
           )}
         </div>
+        {fileError && (
+          <p className="mt-3 text-xs font-medium text-red-600">{fileError}</p>
+        )}
       </div>
     </div>
   );

@@ -30,8 +30,8 @@ const DEFAULT_FORM: VehicleFormData = {
   brand: "",
   model: "",
   year: new Date().getFullYear(),
-  vehicleType: "CAR",
-  fuelType: "PETROL",
+  vehicleType: "" as VehicleType,
+  fuelType: "" as FuelType,
   department: "",
   color: "",
   seatingCapacity: undefined,
@@ -162,7 +162,7 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                       onValueChange={(value) => field.onChange(value as VehicleType)}
                     >
                       <SelectTrigger className="bg-white text-slate-900">
-                        <SelectValue />
+                        <SelectValue placeholder="Select vehicle type" />
                       </SelectTrigger>
                       <SelectContent className="bg-white text-slate-900">
                         <SelectItem value="CAR">Car</SelectItem>
@@ -188,7 +188,7 @@ export function VehicleForm({ title, initialData, onSubmit }: Props) {
                       onValueChange={(value) => field.onChange(value as FuelType)}
                     >
                       <SelectTrigger className="bg-white text-slate-900">
-                        <SelectValue />
+                        <SelectValue placeholder="Select fuel type" />
                       </SelectTrigger>
                       <SelectContent className="bg-white text-slate-900">
                         <SelectItem value="PETROL">Petrol</SelectItem>

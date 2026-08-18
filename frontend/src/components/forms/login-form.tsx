@@ -21,7 +21,6 @@ import { getErrorMessage, loginApi, type AuthResponse } from "@/lib/api/auth";
 import {
   AUTH_ROUTES,
   DEFAULT_ROUTES,
-  PUBLIC_ROUTES,
   ROLE_DASHBOARDS,
   SETTINGS_ROUTES,
 } from "@/lib/constants/routes";
@@ -89,7 +88,11 @@ export function LoginForm() {
       className="space-y-4"
       noValidate
     >
-      <AuthInlineMessage type="error" message={serverError} />
+      <AuthInlineMessage
+        type="error"
+        title="Unable to sign in"
+        message={serverError}
+      />
 
       <div className="space-y-4">
         <AuthField
@@ -134,7 +137,7 @@ export function LoginForm() {
 
       <Button
         type="submit"
-        className="w-full bg-slate-950 text-white hover:bg-slate-800 [&_svg]:text-white"
+        className="w-full"
         disabled={isSubmitting}
       >
         {isSubmitting ? (
@@ -154,7 +157,6 @@ export function LoginForm() {
         prompt="Need a new account?"
         actionLabel="Sign up"
         actionHref={AUTH_ROUTES.SIGNUP}
-        homeHref={PUBLIC_ROUTES.HOME}
       />
     </motion.form>
   );

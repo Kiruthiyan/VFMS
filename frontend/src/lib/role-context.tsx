@@ -94,9 +94,11 @@ const RoleContext = createContext<RoleContextType>(defaultContext);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const authUser = useAuthStore((state) => state.user);
+  const authHydrated = useAuthStore((state) => state.hydrated);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const [demoRole, setDemoRoleState] = useState<Role | null>(null);
   const [drivers, setDrivers] = useState<User[]>([]);
-  const [driversLoading, setDriversLoading] = useState(true);
+  const [driversLoading, setDriversLoading] = useState(false);
 
   useEffect(() => {
     if (!DEMO_ROLE_ENABLED) {
@@ -143,9 +145,30 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const fixedUsers = authUser ? [currentUser] : [];
 
   useEffect(() => {
+    if (
+      !authHydrated ||
+      !accessToken ||
+      !authUser ||
+      authUser.status !== "APPROVED" ||
+      effectiveRole === "DRIVER"
+    ) {
+      setDrivers([]);
+      setDriversLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    let active = true;
+
+    setDriversLoading(true);
+
     api
-      .get("/trips/all-drivers")
+      .get("/trips/all-drivers", { signal: controller.signal })
       .then((res) => {
+        if (!active) {
+          return;
+        }
+
         const driverUsers: User[] = res.data.map(
           (d: {
             id: string;
@@ -161,9 +184,24 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         );
         setDrivers(driverUsers);
       })
-      .catch(() => setDrivers([]))
-      .finally(() => setDriversLoading(false));
-  }, []);
+      .catch((error) => {
+        if (!active || error?.code === "ERR_CANCELED") {
+          return;
+        }
+
+        setDrivers([]);
+      })
+      .finally(() => {
+        if (active) {
+          setDriversLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [accessToken, authHydrated, authUser, effectiveRole]);
 
   const value: RoleContextType = {
     ...buildPermissionContext(effectiveRole),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/role-context";
 import api, { getErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Trip {
     id: string;
@@ -31,7 +33,7 @@ interface Trip {
     endTime?: string | null;
 }
 
-const STATUS_OPTIONS = ["ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED"];
+const STATUS_OPTIONS = ["ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED", "START_PENDING", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED"];
 
 const STATUS_STYLES: Record<string, string> = {
     NEW:              "border-slate-200 bg-slate-50 text-slate-700",
@@ -39,8 +41,9 @@ const STATUS_STYLES: Record<string, string> = {
     APPROVED:         "border-emerald-200 bg-emerald-50 text-emerald-700",
     DRIVER_CONFIRMED: "border-teal-200 bg-teal-50 text-teal-700",
     DRIVER_REJECTED:  "border-orange-200 bg-orange-50 text-orange-700",
+    START_PENDING:    "border-yellow-200 bg-yellow-50 text-yellow-700",
     REJECTED:         "border-red-200 bg-red-50 text-red-700",
-    EXPIRED:          "border-red-200 bg-red-50 text-red-700",
+    EXPIRED:          "border-red-300 bg-red-50 text-red-700",
     ONGOING:          "border-blue-200 bg-blue-50 text-blue-700",
     COMPLETED:        "border-emerald-200 bg-emerald-50 text-emerald-700",
     CANCELLED:        "border-slate-300 bg-slate-100 text-slate-600",
@@ -52,6 +55,7 @@ const STATUS_ICONS: Record<string, any> = {
     APPROVED: CheckCircle,
     DRIVER_CONFIRMED: CheckCircle,
     DRIVER_REJECTED: XCircle,
+    START_PENDING: Clock,
     REJECTED: XCircle,
     EXPIRED: AlertCircle,
     ONGOING: Clock,
@@ -77,8 +81,6 @@ const formatDate = (dateStr: string) =>
     });
 
 export default function TripsPage() {
-    const [trips, setTrips] = useState<Trip[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchDestination, setSearchDestination] = useState("");
     const [searchPurpose, setSearchPurpose] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -87,23 +89,14 @@ export default function TripsPage() {
     const { currentUser } = useRole();
     const authHydrated = useAuthStore((state) => state.hydrated);
 
-    useEffect(() => {
-        if (!authHydrated) {
-            return;
-        }
-
-        if (currentUser.id === "anonymous") {
-            setTrips([]);
-            setLoading(false);
-            return;
-        }
-
-        fetchTrips();
-    }, [authHydrated, currentUser.id, currentUser.role]);
-
-    const fetchTrips = async () => {
-        setLoading(true);
-        try {
+    const {
+        data: trips = [],
+        error,
+        isLoading,
+    } = useQuery({
+        queryKey: queryKeys.trips(currentUser.role, currentUser.id),
+        enabled: authHydrated && currentUser.id !== "anonymous",
+        queryFn: async (): Promise<Trip[]> => {
             let response;
             if (currentUser.role === "SYSTEM_USER") {
                 response = await api.get(`/trips/requester/${currentUser.id}/history`);
@@ -113,13 +106,16 @@ export default function TripsPage() {
                 // ADMIN and APPROVER see all trips
                 response = await api.get("/trips");
             }
-            setTrips(response.data);
-        } catch (error) {
+            return response.data;
+        },
+    });
+    const loading = !authHydrated || isLoading;
+
+    useEffect(() => {
+        if (error) {
             console.warn("Failed to fetch trips:", getErrorMessage(error));
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [error]);
 
     const filteredTrips = trips.filter(t => {
         const matchesDestination = searchDestination === "" ||

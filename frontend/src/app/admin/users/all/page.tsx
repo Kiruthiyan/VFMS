@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft,
   ChevronRight,
@@ -28,21 +29,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { UserRole, UserStatus } from "@/lib/auth";
+import type { UserRole } from "@/lib/auth";
 import {
   getAllUsersApi,
   getErrorMessage,
   getUserCountsApi,
-  type UserCounts,
-  type UserSummary,
+  isUserActive,
 } from "@/lib/api/admin";
+import { queryKeys } from "@/lib/query-keys";
 
 const ITEMS_PER_PAGE = 15;
 
-const BASE_STATUS_FILTER_OPTIONS: { label: string; value: UserStatus | "ALL" }[] = [
+type SimpleStatusFilter = "ALL" | "ACTIVE" | "DEACTIVATED";
+
+const STATUS_FILTER_OPTIONS: { label: string; value: SimpleStatusFilter }[] = [
   { label: "All", value: "ALL" },
-  { label: "Approved", value: "APPROVED" },
-  { label: "Rejected", value: "REJECTED" },
+  { label: "Active", value: "ACTIVE" },
   { label: "Deactivated", value: "DEACTIVATED" },
 ];
 
@@ -55,43 +57,41 @@ const ROLE_FILTER_OPTIONS: { label: string; value: UserRole | "ALL" }[] = [
 ];
 
 export default function AllUsersPage() {
-  const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
-  const [counts, setCounts] = useState<UserCounts | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<SimpleStatusFilter>("ALL");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const {
+    data,
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: [...queryKeys.adminUsers, "all"],
+    queryFn: async () => {
       const [usersData, countsData] = await Promise.all([
         getAllUsersApi(),
         getUserCountsApi(),
       ]);
-
-      setAllUsers(usersData);
-      setCounts(countsData);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+      return { allUsers: usersData, counts: countsData };
+    },
+    placeholderData: (previous) => previous,
+  });
+  const allUsers = useMemo(() => data?.allUsers ?? [], [data?.allUsers]);
+  const counts = data?.counts ?? null;
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   const filtered = useMemo(() => {
     let result = allUsers;
 
-    if (statusFilter !== "ALL") {
-      result = result.filter((user) => user.status === statusFilter);
+    if (statusFilter === "ACTIVE") {
+      result = result.filter((user) => isUserActive(user));
+    } else if (statusFilter === "DEACTIVATED") {
+      result = result.filter(
+        (user) => user.status === "DEACTIVATED" || (user.status === "APPROVED" && !user.enabled)
+      );
     }
 
     if (roleFilter !== "ALL") {
@@ -120,36 +120,12 @@ export default function AllUsersPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const hasPendingUsers = useMemo(
-    () => allUsers.some((user) => user.status === "PENDING_APPROVAL"),
-    [allUsers]
-  );
-
-  const statusFilterOptions = useMemo(() => {
-    if (!hasPendingUsers) {
-      return BASE_STATUS_FILTER_OPTIONS;
-    }
-
-    return [
-      BASE_STATUS_FILTER_OPTIONS[0],
-      BASE_STATUS_FILTER_OPTIONS[1],
-      { label: "Pending", value: "PENDING_APPROVAL" as const },
-      ...BASE_STATUS_FILTER_OPTIONS.slice(2),
-    ];
-  }, [hasPendingUsers]);
-
   const hasActiveFilters =
     statusFilter !== "ALL" || roleFilter !== "ALL" || search.trim().length > 0;
 
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, roleFilter, search]);
-
-  useEffect(() => {
-    if (!hasPendingUsers && statusFilter === "PENDING_APPROVAL") {
-      setStatusFilter("ALL");
-    }
-  }, [hasPendingUsers, statusFilter]);
 
   return (
 
@@ -164,14 +140,14 @@ export default function AllUsersPage() {
                 variant="outline"
                 size="icon"
                 className="vfms-refresh-button"
-                onClick={fetchAll}
-                disabled={loading}
+                onClick={() => void refetch()}
+                disabled={isFetching}
                 aria-label="Refresh all users"
                 title="Refresh all users"
               >
                 <RefreshCw
                   size={16}
-                  className={loading ? "animate-spin" : ""}
+                  className={isFetching ? "animate-spin" : ""}
                 />
               </Button>
 
@@ -272,14 +248,14 @@ export default function AllUsersPage() {
               <Select
                 value={statusFilter}
                 onValueChange={(value) =>
-                  setStatusFilter(value as UserStatus | "ALL")
+                  setStatusFilter(value as SimpleStatusFilter)
                 }
               >
                 <SelectTrigger className="h-12 w-full rounded-2xl bg-white text-slate-900 shadow-sm">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusFilterOptions.map((option) => (
+                  {STATUS_FILTER_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -299,8 +275,8 @@ export default function AllUsersPage() {
               </p>
             </div>
           </div>
-        ) : error ? (
-          <FormMessage type="error" message={error} />
+        ) : errorMessage ? (
+          <FormMessage type="error" message={errorMessage} />
         ) : (
           <>
             <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
@@ -329,7 +305,7 @@ export default function AllUsersPage() {
                 users={paginatedUsers}
                 showReviewActions={true}
                 showDeletedActions={false}
-                onRefresh={fetchAll}
+                onRefresh={() => void refetch()}
               />
             </section>
 

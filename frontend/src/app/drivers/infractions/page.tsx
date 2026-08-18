@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { AlertTriangle, Plus, RefreshCw, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch, getErrorMessage } from '@/lib/api';
+import { getDriverDisplayId } from '@/lib/driver-display';
 import { DriverInfraction, PageResponse } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -39,8 +40,9 @@ const EMPTY_FORM: InfractionFormData = {
 };
 
 const driverIdCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const todayIso = new Date().toISOString().slice(0, 10);
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function severityConfig(severity: string | null | undefined) {
   switch (severity) {
@@ -64,7 +66,7 @@ function formatInfractionType(type: string | null | undefined) {
 }
 
 function formatDate(dateStr: string | null | undefined) {
-  if (!dateStr) return '—';
+  if (!dateStr) return 'â€”';
   return new Date(dateStr).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -72,7 +74,7 @@ function formatDate(dateStr: string | null | undefined) {
   });
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function InfractionsPage() {
   const [infractions, setInfractions] = useState<DriverInfraction[]>([]);
@@ -105,9 +107,11 @@ export default function InfractionsPage() {
     try {
       const page = await apiFetch<PageResponse<DriverOption>>('/api/drivers/from-users?page=0&size=500');
       setDrivers([...page.content].sort((left, right) => {
-        if (!left.employeeId) return right.employeeId ? 1 : 0;
-        if (!right.employeeId) return -1;
-        return driverIdCollator.compare(left.employeeId, right.employeeId);
+        const leftDisplayId = getDriverDisplayId(left.employeeId, '');
+        const rightDisplayId = getDriverDisplayId(right.employeeId, '');
+        if (!leftDisplayId) return rightDisplayId ? 1 : 0;
+        if (!rightDisplayId) return -1;
+        return driverIdCollator.compare(leftDisplayId, rightDisplayId);
       }));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
@@ -184,7 +188,14 @@ export default function InfractionsPage() {
                       <SelectValue placeholder="Select a driver" />
                     </SelectTrigger>
                     <SelectContent>
-                      {drivers.map((driver) => <SelectItem key={driver.id} value={driver.id}>{driver.employeeId ? `${driver.employeeId} — ` : ''}{driver.fullName}</SelectItem>)}
+                      {drivers.map((driver) => {
+                        const displayDriverId = getDriverDisplayId(driver.employeeId, '');
+                        return (
+                          <SelectItem key={driver.id} value={driver.id}>
+                            {displayDriverId ? `${displayDriverId} - ` : ''}{driver.fullName}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -212,15 +223,15 @@ export default function InfractionsPage() {
                 </div>
                 <div>
                   <Label htmlFor="infraction-date">Incident Date *</Label>
-                  <Input id="infraction-date" type="date" required value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  <Input id="infraction-date" type="date" required max={todayIso} value={form.incidentDate} onChange={(event) => setForm((current) => ({ ...current, incidentDate: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div>
                   <Label htmlFor="infraction-description">Description</Label>
-                  <Input id="infraction-description" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  <Input id="infraction-description" maxLength={1000} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div>
                   <Label htmlFor="infraction-penalty">Penalty Notes</Label>
-                  <Input id="infraction-penalty" value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
+                  <Input id="infraction-penalty" maxLength={500} value={form.penaltyNotes} onChange={(event) => setForm((current) => ({ ...current, penaltyNotes: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border-slate-200 bg-white shadow-sm focus-visible:border-amber-400 focus-visible:ring-amber-400/40" />
                 </div>
                 <div className="flex pt-4 mt-2">
                   <Button type="submit" disabled={submitting} className="h-11 w-full rounded-xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-500">{submitting ? 'Saving...' : 'Log Infraction'}</Button>
@@ -285,7 +296,7 @@ export default function InfractionsPage() {
                   return (
                     <TableRow key={inf.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-semibold text-sm text-foreground">
-                        {inf.driver?.fullName || '—'}
+                        {inf.driver?.fullName || 'â€”'}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatInfractionType(inf.infractionType)}
@@ -307,7 +318,7 @@ export default function InfractionsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-[260px] truncate">
-                        {inf.description || '—'}
+                        {inf.description || 'â€”'}
                       </TableCell>
                       <TableCell className="text-right">
                         {inf.resolutionStatus !== 'RESOLVED' && (

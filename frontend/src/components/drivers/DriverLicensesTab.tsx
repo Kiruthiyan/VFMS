@@ -1,13 +1,15 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { apiFetch, getErrorMessage, resolveBackendAssetUrl } from '@/lib/api';
+import { apiFetch, getErrorMessage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Eye, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { DriverDocument } from '@/types';
+import { DocumentPreviewDialog } from './DocumentPreviewDialog';
 
 export function DriverLicensesTab({ driverId }: { driverId: string }) {
   const [licenseDocuments, setLicenseDocuments] = useState<DriverDocument[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<DriverDocument | null>(null);
 
   const fetchLicenseDocuments = useCallback(async () => {
     try {
@@ -43,11 +45,15 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
                 </div>
               </div>
               {doc.fileUrl ? (
-                <a href={resolveBackendAssetUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600">
-                    <Download className="h-3.5 w-3.5" />
-                  </Button>
-                </a>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-amber-600"
+                  onClick={() => setPreviewDoc(doc)}
+                  title="Preview document"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
               ) : (
                 <Button
                   variant="ghost"
@@ -56,7 +62,7 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
                   title="Document access link is unavailable"
                   className="h-7 w-7 text-muted-foreground"
                 >
-                  <Download className="h-3.5 w-3.5" />
+                  <Eye className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
@@ -66,6 +72,14 @@ export function DriverLicensesTab({ driverId }: { driverId: string }) {
           )}
         </div>
       </div>
+
+      <DocumentPreviewDialog
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+        fileUrl={previewDoc?.fileUrl}
+        fileName={previewDoc?.fileName}
+        mimeType={previewDoc?.mimeType}
+      />
     </section>
   );
 }

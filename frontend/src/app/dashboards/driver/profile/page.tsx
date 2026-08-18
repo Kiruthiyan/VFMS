@@ -1,25 +1,26 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  User, MapPin, Phone, Shield, Calendar, CreditCard,
+  User, Phone, Shield, Calendar, CreditCard,
   Badge, Camera, Loader2, Star, Trash2, Pencil, Check, X,
-  Upload, AlertTriangle, Plus, Award, Save, UserRound, Mail
+  Upload, AlertTriangle, Plus, Award, Save, UserRound, Mail, FileText, Eye
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import {
   getMyProfile, uploadProfilePicture, removeProfilePicture,
   type DriverProfileResponse,
-  uploadMyDocument,
+  uploadMyDocument, getMyDocuments, deleteMyDocument, type DocumentItem,
   getMyCertifications, addMyCertification,
   type CertificationItem, type CertificationPayload,
   getMyInfractions, type InfractionItem,
 } from '@/lib/api/driver-portal';
 import { resolveBackendAssetUrl } from '@/lib/api';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { queryKeys } from '@/lib/query-keys';
+import { DocumentPreviewDialog } from '@/components/drivers/DocumentPreviewDialog';
 const CERTIFICATION_TYPES = ['DEFENSIVE_DRIVING', 'FIRST_AID', 'HAZMAT', 'HEAVY_VEHICLE', 'PASSENGER_TRANSPORT', 'OTHER'];
 const EMPTY_CERTIFICATION: CertificationPayload = {
   certType: 'DEFENSIVE_DRIVING',
@@ -28,6 +29,25 @@ const EMPTY_CERTIFICATION: CertificationPayload = {
   issueDate: '',
   expiryDate: '',
 };
+const PROFILE_PICTURE_MAX_BYTES = 5 * 1024 * 1024;
+const PROFILE_PICTURE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const PROFILE_PICTURE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
+
+function validateProfilePicture(file: File): string | null {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const hasSupportedType = file.type ? PROFILE_PICTURE_TYPES.has(file.type) : false;
+  const hasSupportedExtension = PROFILE_PICTURE_EXTENSIONS.has(extension);
+
+  if (!hasSupportedType && !hasSupportedExtension) {
+    return 'Profile picture must be a JPEG, PNG, or WebP image.';
+  }
+
+  if (file.size > PROFILE_PICTURE_MAX_BYTES) {
+    return 'Profile picture must be 5 MB or smaller.';
+  }
+
+  return null;
+}
 
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
@@ -153,15 +173,17 @@ function ProfileInfoTile({ icon: Icon, label, value }: { icon: React.ElementType
 }
 
 function InfractionWarningsSection() {
-  const [infractions, setInfractions] = useState<InfractionItem[]>([]);
-  const [loadingInfractions, setLoadingInfractions] = useState(true);
+  const { data: infractions = [], error, isLoading: loadingInfractions } = useQuery({
+    queryKey: queryKeys.driverInfractions,
+    queryFn: async () => {
+      const items = await getMyInfractions();
+      return items.filter((item) => item.resolutionStatus !== 'RESOLVED');
+    },
+  });
 
   useEffect(() => {
-    getMyInfractions()
-      .then((items) => setInfractions(items.filter((item) => item.resolutionStatus !== 'RESOLVED')))
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Failed to load infraction notices')))
-      .finally(() => setLoadingInfractions(false));
-  }, []);
+    if (error) toast.error(getApiErrorMessage(error, 'Failed to load infraction notices'));
+  }, [error]);
 
   if (loadingInfractions) {
     return (
@@ -211,18 +233,22 @@ function InfractionWarningsSection() {
 }
 
 function CertificationsSection() {
-  const [certifications, setCertifications] = useState<CertificationItem[]>([]);
-  const [loadingCertifications, setLoadingCertifications] = useState(true);
+  const queryClient = useQueryClient();
   const [showCertificationForm, setShowCertificationForm] = useState(false);
   const [certificationForm, setCertificationForm] = useState<CertificationPayload>({ ...EMPTY_CERTIFICATION });
   const [savingCertification, setSavingCertification] = useState(false);
+  const {
+    data: certifications = [],
+    error,
+    isLoading: loadingCertifications,
+  } = useQuery({
+    queryKey: queryKeys.driverCertifications,
+    queryFn: getMyCertifications,
+  });
 
   useEffect(() => {
-    getMyCertifications()
-      .then(setCertifications)
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Failed to load certifications')))
-      .finally(() => setLoadingCertifications(false));
-  }, []);
+    if (error) toast.error(getApiErrorMessage(error, 'Failed to load certifications'));
+  }, [error]);
 
   const openCertificationForm = () => {
     setCertificationForm({ ...EMPTY_CERTIFICATION });
@@ -234,7 +260,8 @@ function CertificationsSection() {
     setSavingCertification(true);
     try {
       const added = await addMyCertification(certificationForm);
-      setCertifications((current) => [...current, added]);
+      queryClient.setQueryData<CertificationItem[]>(queryKeys.driverCertifications, (current = []) => [...current, added]);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverCertifications });
       setShowCertificationForm(false);
       toast.success('Certification added');
     } catch (error: unknown) {
@@ -353,8 +380,8 @@ function CertificationsSection() {
 }
 
 export default function DriverProfilePage() {
-  const [profile, setProfile] = useState<DriverProfileResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [localProfile, setLocalProfile] = useState<DriverProfileResponse | null>(null);
   const [uploadingPic, setUploadingPic] = useState(false);
   const [showProfilePicturePreview, setShowProfilePicturePreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -364,6 +391,26 @@ export default function DriverProfilePage() {
   const [otherDocumentName, setOtherDocumentName] = useState('');
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
+  const [deletingDocId, setDeletingDocId] = useState<number | null>(null);
+
+  const { data: myDocuments = [] } = useQuery({
+    queryKey: queryKeys.driverDocuments,
+    queryFn: getMyDocuments,
+  });
+
+  const handleDeleteDocument = async (id: number) => {
+    setDeletingDocId(id);
+    try {
+      await deleteMyDocument(id);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverDocuments });
+      toast.success('Document deleted');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Delete failed'));
+    } finally {
+      setDeletingDocId(null);
+    }
+  };
 
   // Inline edit states
   const [editingName, setEditingName] = useState(false);
@@ -374,22 +421,42 @@ export default function DriverProfilePage() {
   const [phoneInput, setPhoneInput] = useState('');
   const [savingPhone, setSavingPhone] = useState(false);
 
+  const {
+    data: cachedProfile,
+    error: profileError,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.driverProfile,
+    queryFn: getMyProfile,
+  });
+  const profile = localProfile ?? cachedProfile ?? null;
+
   useEffect(() => {
-    getMyProfile()
-      .then((data) => { setProfile(data); })
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Failed to load profile')))
-      .finally(() => setLoading(false));
-  }, []);
+    if (cachedProfile) setLocalProfile(cachedProfile);
+  }, [cachedProfile]);
+
+  useEffect(() => {
+    if (profileError) toast.error(getApiErrorMessage(profileError, 'Failed to load profile'));
+  }, [profileError]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const validationError = validateProfilePicture(file);
+    if (validationError) {
+      toast.error(validationError);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setUploadingPic(true);
     try {
       await uploadProfilePicture(file);
       // Re-fetch profile to get updated photo URL
       const updated = await getMyProfile();
-      setProfile(updated);
+      setLocalProfile(updated);
+      queryClient.setQueryData(queryKeys.driverProfile, updated);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
       toast.success('Profile picture updated');
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, 'Failed to upload photo'));
@@ -405,7 +472,9 @@ export default function DriverProfilePage() {
     try {
       await removeProfilePicture();
       const updated = await getMyProfile();
-      setProfile(updated);
+      setLocalProfile(updated);
+      queryClient.setQueryData(queryKeys.driverProfile, updated);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
       toast.success('Profile picture removed');
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, 'Failed to remove photo'));
@@ -428,6 +497,8 @@ export default function DriverProfilePage() {
     setUploadingDoc(true);
     try {
       await uploadMyDocument(file, selectedDocType, undefined, documentName);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverDocuments });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverLicenses });
       if (selectedDocType === 'OTHER') setOtherDocumentName('');
       toast.success('Document uploaded');
     } catch (error: unknown) {
@@ -538,7 +609,7 @@ export default function DriverProfilePage() {
                       : <Camera style={{ width: '0.75rem', height: '0.75rem', color: 'hsl(var(--foreground))' }} />
                     }
                   </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+                  <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePhotoUpload} />
                 </div>
 
                 <div style={{ flex: '1 1 18rem', minWidth: 0, paddingTop: '1rem' }}>
@@ -568,7 +639,9 @@ export default function DriverProfilePage() {
                             try {
                               await import('@/lib/api/driver-portal').then(m => m.updateMyProfile({ fullName: newName }));
                               const updated = await import('@/lib/api/driver-portal').then(m => m.getMyProfile());
-                              setProfile(updated);
+                              setLocalProfile(updated);
+                              queryClient.setQueryData(queryKeys.driverProfile, updated);
+                              await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
                               setEditingName(false);
                               toast.success('Name updated');
                             } catch (error: unknown) {
@@ -693,6 +766,86 @@ export default function DriverProfilePage() {
                   onChange={handleDocUpload}
                 />
                 <span style={{ fontSize: '0.72rem', color: 'hsl(var(--muted-foreground))', lineHeight: 1.45 }}>PDF, JPG, PNG, WEBP accepted</span>
+
+                {myDocuments.length > 0 && (() => {
+                  const licenseDocs = myDocuments.filter((d) => d.entityType === 'LICENSE');
+                  const otherDocs = myDocuments.filter((d) => d.entityType !== 'LICENSE');
+                  const renderDocRow = (doc: DocumentItem) => (
+                    <div
+                      key={doc.id}
+                      role="button"
+                      tabIndex={doc.fileUrl ? 0 : -1}
+                      onClick={() => doc.fileUrl && setPreviewDoc(doc)}
+                      onKeyDown={(e) => { if (doc.fileUrl && (e.key === 'Enter' || e.key === ' ')) setPreviewDoc(doc); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
+                        padding: '0.6rem 0.75rem', borderRadius: '0.75rem', border: '1px solid hsl(var(--border))',
+                        background: 'hsl(210 40% 98%)', cursor: doc.fileUrl ? 'pointer' : 'default',
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
+                        <span style={{
+                          width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem', flexShrink: 0,
+                          background: 'hsl(38 92% 50% / 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <FileText style={{ width: '0.875rem', height: '0.875rem', color: 'hsl(32 95% 44%)' }} />
+                        </span>
+                        <span style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {doc.fileName}
+                          </p>
+                          <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
+                            {(doc.fileSize / 1024).toFixed(1)} KB
+                          </p>
+                        </span>
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                        <Eye style={{ width: '0.9rem', height: '0.9rem', color: 'hsl(var(--muted-foreground))' }} />
+                        <button
+                          type="button"
+                          aria-label={`Delete ${doc.fileName}`}
+                          title="Delete document"
+                          disabled={deletingDocId === doc.id}
+                          onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc.id); }}
+                          style={{
+                            width: '1.5rem', height: '1.5rem', borderRadius: '0.375rem', border: 'none',
+                            background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: deletingDocId === doc.id ? 'default' : 'pointer', color: 'hsl(var(--muted-foreground))',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = 'hsl(0 72% 51%)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = 'hsl(var(--muted-foreground))'; }}
+                        >
+                          {deletingDocId === doc.id ? (
+                            <Loader2 style={{ width: '0.85rem', height: '0.85rem', animation: 'spin 1s linear infinite' }} />
+                          ) : (
+                            <Trash2 style={{ width: '0.85rem', height: '0.85rem' }} />
+                          )}
+                        </button>
+                      </span>
+                    </div>
+                  );
+
+                  return (
+                    <div style={{ display: 'grid', gap: '1rem', marginTop: '0.25rem' }}>
+                      {licenseDocs.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                            License
+                          </p>
+                          {licenseDocs.map(renderDocRow)}
+                        </div>
+                      )}
+                      {otherDocs.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                            Other Documents
+                          </p>
+                          {otherDocs.map(renderDocRow)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </ProfileSection>
             </div>
@@ -755,7 +908,9 @@ export default function DriverProfilePage() {
                           try {
                             await import('@/lib/api/driver-portal').then(m => m.updateMyProfile({ phone: phoneInput }));
                             const updated = await import('@/lib/api/driver-portal').then(m => m.getMyProfile());
-                            setProfile(updated);
+                            setLocalProfile(updated);
+                            queryClient.setQueryData(queryKeys.driverProfile, updated);
+                            await queryClient.invalidateQueries({ queryKey: queryKeys.driverProfile });
                             setEditingPhone(false);
                             toast.success('Phone updated');
                           } catch (error: unknown) {
@@ -797,6 +952,14 @@ export default function DriverProfilePage() {
         </div>
         </div>
       )}
+
+      <DocumentPreviewDialog
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+        fileUrl={previewDoc?.fileUrl}
+        fileName={previewDoc?.fileName}
+        mimeType={previewDoc?.mimeType}
+      />
 
       {showProfilePicturePreview && avatarSrc && (
         <div

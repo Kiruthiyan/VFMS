@@ -5,12 +5,12 @@ import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     ArrowLeft, CheckCircle, XCircle,
-    Calendar, MapPin, Users, Loader2, AlertTriangle, Car, User
+    Calendar, Users, Loader2, AlertTriangle, Car, User
 } from "lucide-react";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
+import { getDriverDisplayId } from "@/lib/driver-display";
 import { useRole } from "@/lib/role-context";
 
 const TripMap = dynamic(() => import("../../components/TripMap"), { ssr: false });
@@ -37,6 +37,12 @@ interface DriverOption {
     firstName: string;
     lastName: string;
     employeeId: string;
+}
+
+function formatDriverOption(driver: DriverOption) {
+    const driverCode = getDriverDisplayId(driver.employeeId, "");
+    const driverName = [driver.firstName, driver.lastName].filter(Boolean).join(" ").trim();
+    return driverCode ? `${driverCode} - ${driverName || "Driver"}` : driverName || "Driver";
 }
 
 const formatDate = (dateStr: string) =>
@@ -127,8 +133,8 @@ export default function ApproveTripPage() {
                 assignedDriverId: form.assignedDriverId,
             });
             router.push(`/trips/${id}`);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Failed to approve trip");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err) || "Failed to approve trip");
         } finally {
             setActionLoading("");
         }
@@ -148,8 +154,8 @@ export default function ApproveTripPage() {
         try {
             await api.patch(`/trips/${id}/reject`, form);
             router.push(`/trips/${id}`);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Failed to reject trip");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err) || "Failed to reject trip");
         } finally {
             setActionLoading("");
         }
@@ -310,7 +316,7 @@ export default function ApproveTripPage() {
                                             <option value="">-- Select a driver --</option>
                                             {drivers.map(d => (
                                                 <option key={d.id} value={d.id}>
-                                                    {d.employeeId} — {d.firstName}
+                                                    {formatDriverOption(d)}
                                                 </option>
                                             ))}
                                         </select>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FileText, Filter, Plus, RefreshCw, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import {
@@ -9,9 +10,10 @@ import {
   getErrorMessage,
   extractUniqVehicles,
   extractUniqueDrivers,
-  type FuelRecord,
 } from "@/lib/api/fuel";
+import { queryKeys } from "@/lib/query-keys";
 
+import { FuelManagementNav } from "@/components/admin/fuel/fuel-management-nav";
 import { FuelRecordsTable } from "@/components/fuel/fuel-records-table";
 import { FuelFilterBar } from "@/components/fuel/fuel-filter-bar";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -21,28 +23,27 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FuelEntryLogsPage() {
-  const [records, setRecords] = useState<FuelRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filterParams, setFilterParams] = useState<{
+    from: string;
+    to: string;
+    vehicleId?: string;
+    driverId?: string;
+  } | null>(null);
   const [filtering, setFiltering] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: records = [],
+    error,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: filterParams ? [...queryKeys.fuelRecords, "filtered", filterParams] : queryKeys.fuelRecords,
+    queryFn: () => filterParams ? getFilteredFuelRecordsApi(filterParams) : getAllFuelRecordsApi(),
+  });
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   const vehicles = extractUniqVehicles(records);
   const drivers = extractUniqueDrivers(records);
-
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getAllFuelRecordsApi();
-      setRecords(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleFilter = async (params: {
     from: string;
@@ -51,15 +52,10 @@ export default function FuelEntryLogsPage() {
     driverId?: string;
   }) => {
     setFiltering(true);
-    setError(null);
-    try {
-      const data = await getFilteredFuelRecordsApi(params);
-      setRecords(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
+    setFilterParams(params);
+    window.setTimeout(() => {
       setFiltering(false);
-    }
+    }, 0);
   };
 
   return (
@@ -94,19 +90,24 @@ export default function FuelEntryLogsPage() {
                 variant="outline"
                 size="icon"
                 className="vfms-refresh-button"
-                onClick={fetchAll}
-                disabled={loading}
+                onClick={() => {
+                  setFilterParams(null);
+                  void refetch();
+                }}
+                disabled={isFetching}
                 aria-label="Refresh fuel logs"
                 title="Refresh fuel logs"
               >
                 <RefreshCw
                   size={16}
-                  className={loading ? "animate-spin" : ""}
+                  className={isFetching ? "animate-spin" : ""}
                 />
               </Button>
             </>
           }
         />
+
+        <FuelManagementNav />
 
         <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <CardHeader className="vfms-card-header px-6 py-5 pl-8">
@@ -141,8 +142,8 @@ export default function FuelEntryLogsPage() {
               </p>
             </div>
           </div>
-        ) : error ? (
-          <FormMessage type="error" message={error} />
+        ) : errorMessage ? (
+          <FormMessage type="error" message={errorMessage} />
         ) : records.length === 0 ? (
           <Card className="rounded-[28px] py-16 text-center shadow-sm">
             <CardContent>

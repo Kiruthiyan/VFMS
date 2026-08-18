@@ -8,7 +8,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { cn } from "@/lib/utils";
 
 export const authInputClassName =
-  "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 shadow-sm transition-all duration-200 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60";
+  "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 shadow-sm transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60";
 
 export const authSelectClassName = cn(
   authInputClassName,
@@ -322,16 +322,12 @@ interface AuthFormLinksProps {
   prompt: string;
   actionLabel: string;
   actionHref: string;
-  homeHref: string;
-  homeLabel?: string;
 }
 
 export function AuthFormLinks({
   prompt,
   actionLabel,
   actionHref,
-  homeHref,
-  homeLabel = "Back to home",
 }: AuthFormLinksProps) {
   return (
     <div className="border-t border-slate-200 pt-3 text-center">
@@ -344,12 +340,6 @@ export function AuthFormLinks({
           {actionLabel}
         </Link>
       </p>
-      <Link
-        href={homeHref}
-        className="mt-1.5 inline-flex text-xs font-medium text-slate-500 transition-colors hover:text-amber-600"
-      >
-        {homeLabel}
-      </Link>
     </div>
   );
 }

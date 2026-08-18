@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Loader2, Navigation, MapPin, CheckCircle, RefreshCw, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 
 // Dynamically load Leaflet on the client side only
@@ -33,7 +33,10 @@ export default function TripMap({
     mapHeight = "h-[260px]"
 }: TripMapProps) {
     const mapRef = useRef<any>(null);
-    const mapContainerId = "trip-route-map";
+    // Unique per component instance — a shared static id let two TripMap instances
+    // (e.g. mid-navigation between approve/details pages) fight over the same Leaflet
+    // container, which crashed with "_leaflet_pos" once the first instance unmounted.
+    const mapContainerId = `trip-route-map-${useId()}`;
 
     // Parse initial values from serialized destination
     const parseItinerary = (str: string) => {

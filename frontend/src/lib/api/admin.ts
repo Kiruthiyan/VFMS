@@ -11,6 +11,7 @@ export interface UserSummary {
   nic: string;
   role: UserRole;
   status: UserStatus;
+  enabled: boolean;
   emailVerified: boolean;
   createdAt: string;
   updatedAt: string | null;
@@ -32,6 +33,10 @@ export interface UserSummary {
   officeLocation: string | null;
   designation: string | null;
   approvalLevel: string | null;
+}
+
+export function isUserActive(user: Pick<UserSummary, "status" | "enabled">): boolean {
+  return user.status === "APPROVED" && user.enabled;
 }
 
 export interface CreateUserRequest {
@@ -337,11 +342,13 @@ export async function restoreUserApi(
 
 export async function toggleUserStatusApi(
   userId: string
-): Promise<{ message: string }> {
+): Promise<{ message: string; data: UserSummary }> {
   try {
-    const response = await api.patch<{ success: boolean; message: string }>(
-      `/api/admin/users/${userId}/toggle-status`
-    );
+    const response = await api.patch<{
+      success: boolean;
+      message: string;
+      data: UserSummary;
+    }>(`/api/admin/users/${userId}/toggle-status`);
     return response.data;
   } catch (error) {
     throw buildAdminApiError(

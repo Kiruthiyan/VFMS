@@ -49,7 +49,7 @@ export default function EditMaintenancePage({
     resolver: zodResolver(maintenanceFormSchema) as Resolver<MaintenanceFormData>,
     defaultValues: {
       vehicleId: 0,
-      maintenanceType: "ROUTINE_SERVICE",
+      maintenanceType: "" as MaintenanceType,
       description: "",
       estimatedCost: undefined,
     },
@@ -100,7 +100,7 @@ export default function EditMaintenancePage({
     }
 
     try {
-      await openAuthenticatedDocument(request.quotationUrl);
+      await openAuthenticatedDocument(request.quotationUrl, "maintenance");
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -259,7 +259,7 @@ export default function EditMaintenancePage({
                 />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-200">
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200">
                 <Button
                   type="submit"
                   disabled={isSubmitting}

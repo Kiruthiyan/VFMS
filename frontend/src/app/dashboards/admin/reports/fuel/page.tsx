@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Fuel, Navigation, Droplets, MapPin, Search, DollarSign, Car } from "lucide-react";
 import { reportService } from "@/services/reportService";
@@ -117,13 +118,11 @@ export default function FuelAnalysisPage() {
 
 
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <Fuel className="w-8 h-8 text-amber-500" />
-                    Fuel Analysis Dashboard
-                </h1>
-                <p className="text-slate-500 mt-1">Operational intelligence on fuel consumption, costs, and fleet efficiency</p>
-            </div>
+            <PageHeader
+                title="Fuel Analysis Dashboard"
+                description="Operational intelligence on fuel consumption, costs, and fleet efficiency"
+                icon={Fuel}
+            />
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -270,7 +269,7 @@ export default function FuelAnalysisPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-widest border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4">Vehicle</th>

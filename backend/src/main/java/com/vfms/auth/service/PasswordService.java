@@ -36,10 +36,10 @@ public class PasswordService {
     private final PasswordEncoder passwordEncoder;
 
     // Password complexity constants
-    private static final String PASSWORD_PATTERN = 
-        "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
-    private static final String PASSWORD_COMPLEXITY_MSG = 
-        "Password must contain: uppercase letter, lowercase letter, digit (0-9), and special character (@$!%*?&)";
+    private static final String PASSWORD_PATTERN =
+        "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,128}$";
+    private static final String PASSWORD_COMPLEXITY_MSG =
+        "Password must contain: uppercase letter, lowercase letter, digit (0-9), and special character";
 
     // ── FORGOT PASSWORD ───────────────────────────────────────────────────
 

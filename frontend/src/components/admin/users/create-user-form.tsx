@@ -266,7 +266,7 @@ export function CreateUserForm({
               disabled={isSubmitting}
               className={inputClass}
             >
-              {ADMIN_MANAGED_ROLE_OPTIONS.map((role) => (
+              {ADMIN_MANAGED_ROLE_OPTIONS.filter((role) => role !== "ADMIN").map((role) => (
                 <option key={role} value={role}>
                   {ROLE_LABELS[role]}
                 </option>

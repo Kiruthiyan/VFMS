@@ -85,6 +85,25 @@ class RentalServiceAdditionalTest {
     }
 
     @Test
+    void uploadAgreement_ThrowsWhenRentalIsNotActive() {
+        activeRental.setStatus(RentalStatus.RETURNED);
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(activeRental));
+
+        assertThrows(IllegalStateException.class, () -> rentalService.uploadAgreement(100L, "supabase://bucket/rentals/x.pdf"));
+    }
+
+    @Test
+    void createRental_ThrowsWhenVendorIsInactive() {
+        vendor.setActive(false);
+        when(rentalRepository.findByPlateNumberIgnoreCaseAndStatus("WP-CAB-7788", RentalStatus.ACTIVE))
+                .thenReturn(List.of());
+        when(vendorRepository.findById(1L)).thenReturn(Optional.of(vendor));
+
+        assertThrows(IllegalStateException.class, () -> rentalService.createRental(requestDto));
+        verify(rentalRepository, never()).save(any(RentalRecord.class));
+    }
+
+    @Test
     void closeRental_SuccessWhenReturned() {
         activeRental.setStatus(RentalStatus.RETURNED);
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(activeRental));

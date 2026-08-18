@@ -47,7 +47,7 @@ public class DriverSelfController {
     @PutMapping("/profile")
     public ResponseEntity<DriverResponse> updateMyProfile(
             @AuthenticationPrincipal User user,
-            @RequestBody DriverProfileUpdateRequest request) {
+            @Valid @RequestBody DriverProfileUpdateRequest request) {
         return ResponseEntity.ok(driverService.updateMyProfile(user.getEmail(), request));
     }
 
@@ -101,7 +101,7 @@ public class DriverSelfController {
     @PostMapping("/certifications")
     public ResponseEntity<DriverCertification> addMyCertification(
             @AuthenticationPrincipal User user,
-            @RequestBody DriverSelfCertificationRequest request) {
+            @Valid @RequestBody DriverSelfCertificationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(credentialService.addMyCertification(user.getEmail(), request));
     }

@@ -28,6 +28,7 @@ public class RentalService {
         Vendor vendor = vendorRepository
                 .findById(request.getVendorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor", request.getVendorId()));
+        ensureVendorActive(vendor);
 
         RentalRecord rental = RentalRecord.builder()
                 .vendor(vendor)
@@ -61,6 +62,7 @@ public class RentalService {
         Vendor vendor = vendorRepository
                 .findById(request.getVendorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor", request.getVendorId()));
+        ensureVendorActive(vendor);
 
         rental.setVendor(vendor);
         rental.setVehicleType(request.getVehicleType());
@@ -112,6 +114,7 @@ public class RentalService {
         RentalRecord rental = rentalRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
+        ensureAgreementUploadAllowed(rental);
         rental.setAgreementUrl(agreementUrl);
         return mapToResponse(rentalRepository.save(rental));
     }
@@ -122,13 +125,22 @@ public class RentalService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id));
 
-        // Invoices are only valid once the vehicle has been returned, since the final billable amount cannot be confirmed while the rental is still ongoing.
-        if (rental.getStatus() != RentalStatus.RETURNED && rental.getStatus() != RentalStatus.CLOSED) {
-            throw new IllegalStateException("Invoice can only be uploaded for returned/closed rentals");
-        }
+        ensureInvoiceUploadAllowed(rental);
 
         rental.setInvoiceUrl(invoiceUrl);
         return mapToResponse(rentalRepository.save(rental));
+    }
+
+    @Transactional(readOnly = true)
+    public void assertAgreementUploadAllowed(Long id) {
+        ensureAgreementUploadAllowed(rentalRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id)));
+    }
+
+    @Transactional(readOnly = true)
+    public void assertInvoiceUploadAllowed(Long id) {
+        ensureInvoiceUploadAllowed(rentalRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("RentalRecord", id)));
     }
 
     @Transactional
@@ -234,6 +246,25 @@ public class RentalService {
     private void validateRentalDates(RentalRequestDto request) {
         if (request.getEndDate() != null && request.getEndDate().isBefore(request.getStartDate())) {
             throw new IllegalArgumentException("End date cannot be before the start date.");
+        }
+    }
+
+    private void ensureVendorActive(Vendor vendor) {
+        if (Boolean.FALSE.equals(vendor.getActive())) {
+            throw new IllegalStateException("Cannot assign an inactive vendor to a rental.");
+        }
+    }
+
+    private void ensureAgreementUploadAllowed(RentalRecord rental) {
+        if (rental.getStatus() != RentalStatus.ACTIVE) {
+            throw new IllegalStateException("Agreement can only be uploaded while the rental is ACTIVE");
+        }
+    }
+
+    private void ensureInvoiceUploadAllowed(RentalRecord rental) {
+        // Invoices are only valid once the vehicle has been returned, since the final billable amount cannot be confirmed while the rental is still ongoing.
+        if (rental.getStatus() != RentalStatus.RETURNED && rental.getStatus() != RentalStatus.CLOSED) {
+            throw new IllegalStateException("Invoice can only be uploaded for returned/closed rentals");
         }
     }
 

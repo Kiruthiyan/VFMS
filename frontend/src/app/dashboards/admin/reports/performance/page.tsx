@@ -6,10 +6,8 @@ import Link from "next/link";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { reportService } from "@/services/reportService";
-import { 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
 import { ArrowLeft, Star, Award, UserCheck, Navigation } from "lucide-react";
 
 export default function PerformancePage() {
@@ -37,12 +35,6 @@ export default function PerformancePage() {
     const topName = topPerformer?.driverName || topPerformer?.name || 'N/A';
     const topRating = topPerformer?.rating || topPerformer?.performanceRating || 0;
 
-    const chartData = drivers.map(d => ({
-        name: (d.driverName || d.name || 'Unknown').split(' ')[0],
-        totalTrips: d.totalTrips || 0,
-        performanceRating: d.rating || d.performanceRating || 0,
-    }));
-
     const avgLabel = avgScore.toFixed(1) + " / 5.0";
     const distanceLabel = totalFleetDistance.toLocaleString() + " km";
 
@@ -58,13 +50,11 @@ export default function PerformancePage() {
                 </Button>
             </div>
 
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <Award className="w-8 h-8 text-indigo-500" />
-                    Driver Analytics & Performance
-                </h1>
-                <p className="text-slate-500 mt-1">Personnel evaluation, safety metrics, and operational rankings</p>
-            </div>
+            <PageHeader
+                title="Driver Analytics & Performance"
+                description="Personnel evaluation, safety metrics, and operational rankings"
+                icon={Award}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
@@ -88,64 +78,40 @@ export default function PerformancePage() {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2 border-none shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Productivity vs. Quality</CardTitle>
-                        <CardDescription>Trip completion volume against performance scores</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[350px]">
-                        {chartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                    <Tooltip cursor={{fill: 'transparent'}} />
-                                    <Legend verticalAlign="top" align="right" iconType="circle" />
-                                    <Bar dataKey="totalTrips" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} name="Total Trips" />
-                                    <Bar dataKey="performanceRating" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={10} name="Rating" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="flex items-center justify-center h-full text-slate-400">No data available</div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-sm bg-indigo-900 text-white relative overflow-hidden">
+            <div className="grid grid-cols-1 gap-6">
+                <Card className="border-none shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <Award className="w-32 h-32" />
+                        <Award className="w-32 h-32 text-indigo-900" />
                     </div>
                     <CardHeader>
-                        <CardTitle className="text-white">Top Performer</CardTitle>
-                        <CardDescription className="text-indigo-300">Highest rated operator</CardDescription>
+                        <CardTitle>Top Performer</CardTitle>
+                        <CardDescription>Highest rated operator</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {topPerformer ? (
                             <>
                                 <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center text-2xl font-black">
+                                    <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-900 flex items-center justify-center text-2xl font-black">
                                         {topName.charAt(0)}
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-bold">{topName}</h4>
-                                        <p className="text-indigo-400 text-sm">ID: {topPerformer?.driverId || topPerformer?.id}</p>
+                                        <h4 className="text-2xl font-bold text-slate-900">{topName}</h4>
+                                        <p className="text-sm text-slate-500">ID: {topPerformer?.employeeId || topPerformer?.driverName || topPerformer?.name || 'N/A'}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                        <p className="text-[10px] uppercase font-bold text-indigo-400">Rating</p>
-                                        <p className="text-xl font-black mt-1">{topRating.toFixed(1)} / 5.0</p>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <p className="text-[10px] uppercase font-bold text-slate-500">Rating</p>
+                                        <p className="text-xl font-black mt-1 text-slate-900">{topRating.toFixed(1)} / 5.0</p>
                                     </div>
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                        <p className="text-[10px] uppercase font-bold text-indigo-400">Trips</p>
-                                        <p className="text-xl font-black mt-1">{topPerformer?.totalTrips || 0}</p>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <p className="text-[10px] uppercase font-bold text-slate-500">Trips</p>
+                                        <p className="text-xl font-black mt-1 text-slate-900">{topPerformer?.totalTrips || 0}</p>
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <p className="text-indigo-300">No data available</p>
+                            <p className="text-slate-400">No data available</p>
                         )}
                     </CardContent>
                 </Card>
@@ -158,7 +124,7 @@ export default function PerformancePage() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-widest border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4">Driver Name</th>

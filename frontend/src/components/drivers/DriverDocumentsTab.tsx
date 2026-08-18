@@ -1,16 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Download, FileText, Trash2 } from 'lucide-react';
+import { Eye, FileText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { apiFetch, resolveBackendAssetUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { DriverDocument } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DocumentPreviewDialog } from './DocumentPreviewDialog';
 
 export function DriverDocumentsTab({ driverId }: { driverId: string }) {
   const [documents, setDocuments] = useState<DriverDocument[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<DriverDocument | null>(null);
 
   const fetchDocuments = useCallback(() => {
     apiFetch<DriverDocument[]>(`/api/drivers/${driverId}/documents`)
@@ -57,11 +59,15 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
 
               <div className="flex gap-1">
                 {doc.fileUrl ? (
-                  <a href={resolveBackendAssetUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600">
-                      <Download className="h-3.5 w-3.5" />
-                    </Button>
-                  </a>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-amber-600"
+                    onClick={() => setPreviewDoc(doc)}
+                    title="Preview document"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
                 ) : (
                   <Button
                     variant="ghost"
@@ -70,7 +76,7 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
                     title="Document access link is unavailable"
                     className="h-7 w-7 text-muted-foreground"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <Eye className="h-3.5 w-3.5" />
                   </Button>
                 )}
                 <Button
@@ -90,6 +96,14 @@ export function DriverDocumentsTab({ driverId }: { driverId: string }) {
           )}
         </div>
       </CardContent>
+
+      <DocumentPreviewDialog
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+        fileUrl={previewDoc?.fileUrl}
+        fileName={previewDoc?.fileName}
+        mimeType={previewDoc?.mimeType}
+      />
     </Card>
   );
 }

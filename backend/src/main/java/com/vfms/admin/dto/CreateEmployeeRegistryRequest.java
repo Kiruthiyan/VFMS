@@ -27,7 +27,7 @@ public class CreateEmployeeRegistryRequest {
     private String phone;
 
     @NotBlank(message = "NIC is required")
-    @Pattern(regexp = "^[0-9]{9,12}$", message = "NIC must be 9-12 digits")
+    @Pattern(regexp = "^(?:\\d{9}[VvXx]|\\d{12})$", message = "Please enter a valid NIC number.")
     private String nic;
 
     @NotBlank(message = "Department is required")

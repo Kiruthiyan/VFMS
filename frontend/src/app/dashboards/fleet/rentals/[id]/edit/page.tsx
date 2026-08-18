@@ -96,7 +96,7 @@ export default function EditRentalPage() {
     }
 
     try {
-      await openAuthenticatedDocument(rental.agreementUrl);
+      await openAuthenticatedDocument(rental.agreementUrl, "rental");
     } catch (error) {
       toast.error(getErrorMessage(error));
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Loader2, Plus, X, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
@@ -16,6 +17,7 @@ import {
   type LeaveRequestItem,
   type LeaveRequestPayload,
 } from '@/lib/api/driver-portal';
+import { queryKeys } from '@/lib/query-keys';
 
 const LEAVE_TYPES = ['ANNUAL', 'MEDICAL', 'EMERGENCY', 'UNPAID'];
 type LeaveFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -34,6 +36,12 @@ const inputClass =
   'disabled:opacity-60 disabled:bg-slate-50 transition-all duration-200 ' +
   'shadow-sm hover:border-slate-300';
 
+const todayIso = new Date().toISOString().slice(0, 10);
+
+function datesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string) {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
 function errorMessage(error: unknown, fallback: string) {
   if (typeof error !== 'object' || error === null || !('response' in error)) return fallback;
   const response = (error as { response?: { data?: { message?: unknown } } }).response;
@@ -41,12 +49,19 @@ function errorMessage(error: unknown, fallback: string) {
 }
 
 export default function DriverLeaveRequestsPage() {
-  const [requests, setRequests] = useState<LeaveRequestItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<LeaveRequestPayload>({ ...EMPTY_FORM });
   const [submitting, setSubmitting] = useState(false);
   const [filter, setFilter] = useState<LeaveFilter>('ALL');
+  const {
+    data: requests = [],
+    error,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.driverLeaves,
+    queryFn: getMyLeaveRequests,
+  });
 
   const counts: Record<LeaveFilter, number> = {
     ALL: requests.length,
@@ -59,18 +74,38 @@ export default function DriverLeaveRequestsPage() {
     filter === 'ALL' ? requests : requests.filter((r) => (r.status ?? 'PENDING') === filter);
 
   useEffect(() => {
-    getMyLeaveRequests()
-      .then(setRequests)
-      .catch((error) => toast.error(errorMessage(error, 'Failed to load leave requests')))
-      .finally(() => setLoading(false));
-  }, []);
+    if (error) toast.error(errorMessage(error, 'Failed to load leave requests'));
+  }, [error]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (form.startDate < todayIso) {
+      toast.error('Leave start date cannot be in the past.');
+      return;
+    }
+    if (form.endDate < form.startDate) {
+      toast.error('Leave end date cannot be before the start date.');
+      return;
+    }
+    const overlapping = requests.some(
+      (r) =>
+        (r.status ?? 'PENDING') !== 'REJECTED' &&
+        (r.status ?? 'PENDING') !== 'CANCELLED' &&
+        r.startDate &&
+        r.endDate &&
+        datesOverlap(form.startDate, form.endDate, r.startDate, r.endDate)
+    );
+    if (overlapping) {
+      toast.error('Leave dates overlap with an existing request.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const added = await submitLeaveRequest(form);
-      setRequests((current) => [added, ...current]);
+      queryClient.setQueryData<LeaveRequestItem[]>(queryKeys.driverLeaves, (current = []) => [added, ...current]);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverLeaves });
       setForm({ ...EMPTY_FORM });
       setOpen(false);
       toast.success('Leave request submitted');
@@ -85,7 +120,8 @@ export default function DriverLeaveRequestsPage() {
     if (!window.confirm('Are you sure you want to cancel this leave request?')) return;
     try {
       await deleteLeaveRequest(id);
-      setRequests((current) => current.filter((r) => r.id !== id));
+      queryClient.setQueryData<LeaveRequestItem[]>(queryKeys.driverLeaves, (current = []) => current.filter((r) => r.id !== id));
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverLeaves });
       toast.success('Leave request cancelled');
     } catch (error: unknown) {
       toast.error(errorMessage(error, 'Failed to cancel leave request'));
@@ -172,6 +208,7 @@ export default function DriverLeaveRequestsPage() {
                         id="leave-start"
                         type="date"
                         required
+                        min={todayIso}
                         value={form.startDate}
                         onChange={(e) => setForm((c) => ({ ...c, startDate: e.target.value }))}
                         className={inputClass}
@@ -201,6 +238,7 @@ export default function DriverLeaveRequestsPage() {
                       id="leave-reason"
                       value={form.reason ?? ''}
                       onChange={(e) => setForm((c) => ({ ...c, reason: e.target.value }))}
+                      maxLength={1000}
                       rows={4}
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-200 shadow-sm hover:border-slate-300 resize-none"
                     />

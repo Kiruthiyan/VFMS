@@ -2,7 +2,7 @@ export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS:
     "Invalid email or password. Please check your details and try again.",
   ACCOUNT_DISABLED:
-    "This account is deactivated. Please contact your administrator.",
+    "Your account is currently deactivated. Please contact your administrator to restore access.",
   EMAIL_NOT_VERIFIED: "Please verify your email before signing in.",
   ACCOUNT_PENDING:
     "Your account is awaiting administrator approval.",
@@ -50,7 +50,8 @@ export const ERROR_MESSAGES = {
   TOKEN_EXPIRED: "Your session has expired. Please log in again.",
   VALIDATION_ERROR: "Please review the highlighted information and try again.",
   USER_NOT_FOUND: "User not found.",
-  USER_DEACTIVATED: "This account has been deactivated.",
+  USER_DEACTIVATED:
+    "Your account is currently deactivated. Please contact your administrator to restore access.",
   USER_NOT_APPROVED: "Your account is pending approval.",
   NOT_FOUND: "The requested resource was not found.",
   PASSWORD_CHANGED_SUCCESS: "Password changed successfully!",
