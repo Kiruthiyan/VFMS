@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Droplets,
+  ArrowRight,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
@@ -140,72 +141,34 @@ export default function DriverDashboardPage() {
             ))}
           </section>
 
-          <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
-            <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-amber-400">
-                  <UserCircle className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Driver Workspace
-                  </p>
-                  <h2 className="mt-2 text-xl font-bold text-slate-950">Everything in one place</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Your driver dashboard gives you centralized access to trip schedules, leave management, and your personal driver profile — all in one consistent workspace designed for clarity and speed.
-                  </p>
-                </div>
-              </div>
-            </article>
-
-            <article className="rounded-[28px] border border-slate-200 bg-slate-900 p-6 text-white shadow-xl shadow-slate-900/10">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300">
-                Available Features
-              </p>
-              <div className="mt-4 space-y-3">
-                {[
-                  "View and track your assigned trips and schedules",
-                  "Manage your personal driver profile and certifications",
-                  "Submit and review leave requests",
-                  "Keep your security and login credentials updated",
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 rounded-2xl bg-white/5 px-4 py-3">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-amber-300" />
-                    <p className="text-sm text-slate-200">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </section>
-
           <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <Link
               href="/dashboards/driver/profile"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">My Profile</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Manage your profile, documents, and certifications.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/dashboards/driver/leave-requests"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Leave Request</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Submit and track your leave applications.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/dashboards/driver/trips"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">My Trips</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">View your assigned and completed trips.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
             <Link
               href="/settings/change-password"
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
+              className="flex items-center justify-between rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300"
             >
               <p className="text-sm font-semibold text-slate-950">Security Settings</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Update your credentials and secure session.</p>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
           </section>
         </>

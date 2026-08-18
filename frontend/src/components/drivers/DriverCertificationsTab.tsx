@@ -65,7 +65,7 @@ export function DriverCertificationsTab({ driverId }: { driverId: string }) {
     clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<CertFormData>({
-    defaultValues: { certType: 'DEFENSIVE_DRIVING' },
+    defaultValues: { certType: undefined },
   });
 
   const formErrorMessages = Object.values(errors)

@@ -44,14 +44,14 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white py-2 pr-3 pl-3 text-sm font-medium text-slate-900 shadow-sm transition-colors outline-none select-none hover:border-slate-300 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400/30 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-70 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-placeholder:text-slate-500 data-[size=default]:h-10 data-[size=sm]:h-9 data-[size=sm]:rounded-xl *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 *:data-[slot=select-value]:truncate *:data-[slot=select-value]:overflow-hidden dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm font-medium text-slate-900 shadow-sm transition-colors outline-none select-none hover:border-slate-300 focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400/30 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-70 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-placeholder:text-slate-500 data-[size=default]:h-10 data-[size=sm]:h-9 data-[size=sm]:rounded-xl [&>span]:line-clamp-1 [&>span]:flex-1 [&>span]:text-left [&>span]:min-w-0 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+        <ChevronDownIcon className="pointer-events-none size-4 shrink-0 ml-auto text-muted-foreground" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
