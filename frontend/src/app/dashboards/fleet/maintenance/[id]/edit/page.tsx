@@ -49,7 +49,7 @@ export default function EditMaintenancePage({
     resolver: zodResolver(maintenanceFormSchema) as Resolver<MaintenanceFormData>,
     defaultValues: {
       vehicleId: 0,
-      maintenanceType: "ROUTINE_SERVICE",
+      maintenanceType: "" as MaintenanceType,
       description: "",
       estimatedCost: undefined,
     },

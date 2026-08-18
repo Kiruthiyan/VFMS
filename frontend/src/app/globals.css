@@ -746,7 +746,7 @@ body {
   text-transform: uppercase;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .vfms-form-section-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1284,8 +1284,8 @@ main .vfms-form-header p {
     padding: 3.5rem 1.25rem 1.25rem;
   }
 
-  main .flex.justify-between,
-  main .flex.items-center.justify-between {
+  main .flex.justify-between:not([data-slot="select-trigger"]),
+  main .flex.items-center.justify-between:not([data-slot="select-trigger"]) {
     align-items: stretch !important;
     flex-direction: column !important;
     gap: 1rem !important;

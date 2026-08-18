@@ -126,11 +126,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
       {/* Right section */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-        {/* Notification */}
-        <button className="relative h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </button>
+
 
         {/* Divider */}
         <div className="hidden h-6 w-px bg-slate-200 sm:block" />

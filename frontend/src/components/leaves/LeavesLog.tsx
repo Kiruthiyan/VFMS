@@ -10,22 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Simple header component reused from leaves page
-function PageHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
-          <span style={{ color: 'hsl(var(--primary-foreground))' }}>{icon}</span>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-          <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { PageHeader } from '@/components/ui/page-header';
 
 type FilterOption = 'ALL' | 'APPROVED' | 'REJECTED';
 
@@ -53,9 +38,9 @@ export default function LeavesLog() {
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={<CalendarDays className="w-5 h-5" />}
+        icon={CalendarDays}
         title="Leave Requests - Log"
-        subtitle="Approved and Rejected leave history"
+        description="Approved and Rejected leave history"
       />
       <div className="flex items-center space-x-4 mb-4">
         <Select value={filter} onValueChange={(value) => setFilter(value as FilterOption)}>
