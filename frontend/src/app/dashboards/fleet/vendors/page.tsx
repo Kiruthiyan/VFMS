@@ -220,12 +220,12 @@ export default function VendorsPage() {
                         <div className="h-10 w-10 bg-amber-400 rounded-lg flex items-center justify-center text-blue-950 shadow-sm ring-1 ring-black/5">
                           <Building2 className="h-5 w-5" />
                         </div>
-                        <div>
-                          <div className="font-medium text-slate-900">
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-900 truncate max-w-[220px]">
                             {v.name}
                           </div>
                           {v.address && (
-                            <div className="text-slate-400 text-xs">
+                            <div className="text-slate-400 text-xs truncate max-w-[220px]">
                               {v.address}
                             </div>
                           )}

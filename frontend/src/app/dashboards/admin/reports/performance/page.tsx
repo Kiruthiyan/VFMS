@@ -8,9 +8,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { reportService } from "@/services/reportService";
-import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
 import { ArrowLeft, Star, Award, UserCheck, Navigation } from "lucide-react";
 
 export default function PerformancePage() {
@@ -37,12 +34,6 @@ export default function PerformancePage() {
     const topPerformer = [...drivers].sort((a, b) => (b.rating || b.performanceRating || 0) - (a.rating || a.performanceRating || 0))[0];
     const topName = topPerformer?.driverName || topPerformer?.name || 'N/A';
     const topRating = topPerformer?.rating || topPerformer?.performanceRating || 0;
-
-    const chartData = drivers.map(d => ({
-        name: (d.driverName || d.name || 'Unknown').split(' ')[0],
-        totalTrips: d.totalTrips || 0,
-        performanceRating: d.rating || d.performanceRating || 0,
-    }));
 
     const avgLabel = avgScore.toFixed(1) + " / 5.0";
     const distanceLabel = totalFleetDistance.toLocaleString() + " km";
@@ -87,67 +78,40 @@ export default function PerformancePage() {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2 border-none shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Productivity vs. Quality</CardTitle>
-                        <CardDescription>Trip completion volume against performance scores</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[350px]">
-                        {chartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                    <Tooltip cursor={{fill: 'transparent'}} />
-                                    <Legend verticalAlign="top" align="right" iconType="circle" />
-                                    <Bar dataKey="totalTrips" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} name="Total Trips" />
-                                    <Bar dataKey="performanceRating" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={10} name="Rating" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400">
-                                <span className="text-sm font-medium">No data available</span>
-                                <span className="text-xs text-center">Ratings appear once completed trips are reviewed by requesters</span>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-sm bg-indigo-900 text-white relative overflow-hidden">
+            <div className="grid grid-cols-1 gap-6">
+                <Card className="border-none shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <Award className="w-32 h-32" />
+                        <Award className="w-32 h-32 text-indigo-900" />
                     </div>
                     <CardHeader>
-                        <CardTitle className="text-white">Top Performer</CardTitle>
-                        <CardDescription className="text-indigo-300">Highest rated operator</CardDescription>
+                        <CardTitle>Top Performer</CardTitle>
+                        <CardDescription>Highest rated operator</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {topPerformer ? (
                             <>
                                 <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center text-2xl font-black">
+                                    <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-900 flex items-center justify-center text-2xl font-black">
                                         {topName.charAt(0)}
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-bold">{topName}</h4>
-                                        <p className="text-indigo-400 text-sm">ID: {topPerformer?.employeeId || topPerformer?.driverName || topPerformer?.name || 'N/A'}</p>
+                                        <h4 className="text-2xl font-bold text-slate-900">{topName}</h4>
+                                        <p className="text-sm text-slate-500">ID: {topPerformer?.employeeId || topPerformer?.driverName || topPerformer?.name || 'N/A'}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                        <p className="text-[10px] uppercase font-bold text-indigo-400">Rating</p>
-                                        <p className="text-xl font-black mt-1">{topRating.toFixed(1)} / 5.0</p>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <p className="text-[10px] uppercase font-bold text-slate-500">Rating</p>
+                                        <p className="text-xl font-black mt-1 text-slate-900">{topRating.toFixed(1)} / 5.0</p>
                                     </div>
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                        <p className="text-[10px] uppercase font-bold text-indigo-400">Trips</p>
-                                        <p className="text-xl font-black mt-1">{topPerformer?.totalTrips || 0}</p>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <p className="text-[10px] uppercase font-bold text-slate-500">Trips</p>
+                                        <p className="text-xl font-black mt-1 text-slate-900">{topPerformer?.totalTrips || 0}</p>
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <p className="text-indigo-300">No data available</p>
+                            <p className="text-slate-400">No data available</p>
                         )}
                     </CardContent>
                 </Card>

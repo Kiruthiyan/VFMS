@@ -196,7 +196,7 @@ export default function LeaveAnalytics() {
                                         <td className="px-6 py-4 font-bold text-slate-900">{l.driverName}</td>
                                         <td className="px-6 py-4 text-slate-500">{l.startDate || 'N/A'}</td>
                                         <td className="px-6 py-4 text-slate-500">{l.endDate || 'N/A'}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 max-w-[240px] truncate">
                                             <span className="font-medium text-slate-700">{l.reason || l.type || 'Leave reason not provided'}</span>
                                         </td>
                                         <td className="px-6 py-4">

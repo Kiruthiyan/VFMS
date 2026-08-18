@@ -80,16 +80,33 @@ public class ReportService {
     }
 
     public List<DriverPerformanceDTO> getDriverPerformance() {
-        java.util.Map<java.util.UUID, String> namesById = driverRepository.findAllDriverIdsAndNames();
-        return namesById.entrySet().stream().map(entry ->
-            DriverPerformanceDTO.builder()
-                    .driverId(entry.getKey())
-                    .driverName(entry.getValue() != null ? entry.getValue() : "Driver-" + entry.getKey().toString().substring(0, 8))
-                    .totalTrips(0L)
-                    .totalDistance(0.0)
-                    .rating(0.0)
-                    .build()
-        ).collect(Collectors.toList());
+        Map<UUID, String> namesById = driverRepository.findAllDriverIdsAndNames();
+        List<TripRequest> trips = tripRequestRepository.findAll();
+
+        return namesById.entrySet().stream().map(entry -> {
+            UUID driverId = entry.getKey();
+            List<TripRequest> driverTrips = trips.stream()
+                    .filter(t -> driverId.equals(t.getAssignedDriverId()))
+                    .collect(Collectors.toList());
+
+            double distance = driverTrips.stream()
+                    .mapToDouble(t -> t.getDistanceKm() != null ? t.getDistanceKm().doubleValue() : 0.0)
+                    .sum();
+
+            List<TripRequest> ratedTrips = driverTrips.stream()
+                    .filter(t -> t.getDriverRating() != null)
+                    .collect(Collectors.toList());
+            double avgRating = ratedTrips.isEmpty() ? 0.0 :
+                    ratedTrips.stream().mapToInt(TripRequest::getDriverRating).average().orElse(0.0);
+
+            return DriverPerformanceDTO.builder()
+                    .driverId(driverId)
+                    .driverName(entry.getValue() != null ? entry.getValue() : "Driver-" + driverId.toString().substring(0, 8))
+                    .totalTrips((long) driverTrips.size())
+                    .totalDistance(distance)
+                    .rating(avgRating)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     public TripStatsDTO getTripStats() {

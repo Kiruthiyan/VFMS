@@ -829,7 +829,7 @@ main .rounded-\[2rem\] {
   border-radius: 1rem !important;
 }
 
-main [data-slot="card"],
+main [data-slot="card"]:not([class*="bg-slate-950"]):not([class*="bg-slate-900"]):not([class*="bg-blue-950"]):not([class*="bg-red-9"]):not([class*="bg-amber-9"]):not([class*="bg-green-9"]):not([class*="bg-indigo"]):not([class*="bg-purple"]),
 main section[class*="bg-white"],
 main article[class*="bg-white"],
 main div[class*="bg-white"][class*="shadow"],
@@ -845,15 +845,25 @@ main h1 {
 
 main h2,
 main h3,
-main [data-slot="card-title"] {
+main [data-slot="card-title"]:not([class*="text-white"]) {
   color: var(--vfms-text);
   letter-spacing: 0 !important;
 }
 
 main p,
-main td,
 main label {
   overflow-wrap: anywhere;
+}
+
+main td {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+main td.cell-wrap,
+main td[class*="whitespace-normal"] {
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 main [data-slot="card-header"][class*="bg-blue-950"],
