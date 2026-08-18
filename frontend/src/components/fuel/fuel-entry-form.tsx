@@ -307,7 +307,7 @@ export function FuelEntryForm({
           </span>
           Fuel Quantity and Cost
         </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-slate-900">
               Quantity (L) <span className="text-red-600">*</span>
@@ -483,7 +483,7 @@ export function FuelEntryForm({
         </div>
       </div>
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-wrap gap-3 pt-2">
         {!isEditMode && (
           <button
             type="button"

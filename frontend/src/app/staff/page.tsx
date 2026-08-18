@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect, type ChangeEvent, type ReactNode } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { getStaffList, UserSummaryResponse } from '@/lib/api/staff-profile';
 import { useAuthStore } from '@/store/auth-store';
+import { PageHeader } from '../../components/ui/page-header';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader } from '../../components/ui/card';
@@ -44,9 +45,9 @@ export default function StaffPage() {
     <DashboardShell>
       <div className="space-y-6 animate-fade-in">
         <PageHeader
-          icon={<Users2 className="w-5 h-5" />}
+          icon={Users2}
           title="Staff"
-          subtitle="View staff members (SYSTEM_USER &amp; APPROVER)"
+          description="View staff members (SYSTEM_USER & APPROVER)"
         />
 
         <Card className="shadow-sm border-muted">
@@ -151,30 +152,6 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     <div className="space-y-1">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
       <p className="text-sm font-medium text-foreground break-all">{value}</p>
-    </div>
-  );
-}
-
-function PageHeader({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: ReactNode;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
-          <span style={{ color: 'hsl(var(--primary-foreground))' }}>{icon}</span>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-          <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
-        </div>
-      </div>
     </div>
   );
 }

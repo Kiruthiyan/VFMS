@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Car, DollarSign, Clock, Calendar } from "lucide-react";
 import { reportService } from "@/services/reportService";
@@ -64,10 +65,7 @@ export default function RentalAnalyticsPage() {
             </div>
 
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Rental Insights</h1>
-                <p className="text-slate-500 mt-1">Analyzing external vehicle costs, vendors, and utilization purposes</p>
-            </div>
+            <PageHeader title="Rental Insights" description="Analyzing external vehicle costs, vendors, and utilization purposes" />
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -194,7 +192,7 @@ export default function RentalAnalyticsPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="text-xs text-slate-500 uppercase bg-slate-50/50">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold">Vendor</th>

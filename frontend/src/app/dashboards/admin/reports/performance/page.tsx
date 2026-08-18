@@ -6,8 +6,9 @@ import Link from "next/link";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { reportService } from "@/services/reportService";
-import { 
+import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { ArrowLeft, Star, Award, UserCheck, Navigation } from "lucide-react";
@@ -58,13 +59,11 @@ export default function PerformancePage() {
                 </Button>
             </div>
 
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <Award className="w-8 h-8 text-indigo-500" />
-                    Driver Analytics & Performance
-                </h1>
-                <p className="text-slate-500 mt-1">Personnel evaluation, safety metrics, and operational rankings</p>
-            </div>
+            <PageHeader
+                title="Driver Analytics & Performance"
+                description="Personnel evaluation, safety metrics, and operational rankings"
+                icon={Award}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
@@ -161,7 +160,7 @@ export default function PerformancePage() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-widest border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4">Driver Name</th>

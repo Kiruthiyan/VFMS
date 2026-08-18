@@ -430,7 +430,7 @@ export default function VehicleDetailPage({
               <div className="space-y-6">
                 {/* Summary Stats */}
                 {!historyLoading && maintenanceHistory.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="p-4 bg-slate-50 rounded-lg flex items-center gap-3">
                       <div className="h-9 w-9 bg-amber-100 rounded-lg flex items-center justify-center">
                         <Wrench className="h-5 w-5 text-amber-600" />
@@ -499,7 +499,7 @@ export default function VehicleDetailPage({
                   </div>
                 ) : (
                   <div className="rounded-xl shadow-md ring-1 ring-slate-200/50 border-0 overflow-x-auto">
-                    <table className="w-full border-separate border-spacing-0 text-left text-sm">
+                    <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">
                       <thead className="bg-blue-950">
                         <tr>
                           <th className="rounded-tl-2xl px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white/90">

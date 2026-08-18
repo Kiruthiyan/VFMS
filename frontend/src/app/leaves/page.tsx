@@ -1,11 +1,12 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch, getErrorMessage } from '@/lib/api';
 import { DriverLeave } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,9 +48,9 @@ export default function LeavesPage() {
         <TabsContent value="pending">
           <div className="space-y-6">
             <PageHeader
-            icon={<CalendarDays className="w-5 h-5" />}
+            icon={CalendarDays}
             title="Leave Requests"
-            subtitle="Pending driver leave approvals"
+            description="Pending driver leave approvals"
           />
           <Card className="shadow-sm border-muted">
             <CardHeader className="py-3 px-4 border-b border-border bg-muted/30">
@@ -105,30 +106,6 @@ export default function LeavesPage() {
         <LeavesLog />
       </TabsContent>
     </Tabs>
-    </div>
-  );
-}
-
-function PageHeader({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: ReactNode;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
-          <span style={{ color: 'hsl(var(--primary-foreground))' }}>{icon}</span>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-          <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
-        </div>
-      </div>
     </div>
   );
 }

@@ -259,7 +259,7 @@ export default function EditMaintenancePage({
                 />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-200">
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200">
                 <Button
                   type="submit"
                   disabled={isSubmitting}

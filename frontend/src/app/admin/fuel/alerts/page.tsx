@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 
 
+import { FuelManagementNav } from "@/components/admin/fuel/fuel-management-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -385,6 +386,8 @@ export default function FuelAlertsPage() {
           }
         />
 
+        <FuelManagementNav />
+
         {loading && (
           <div className="flex justify-center py-24">
             <div className="text-center">
@@ -530,8 +533,8 @@ export default function FuelAlertsPage() {
                       Alert Details ({filteredAlerts.length})
                     </p>
                   </div>
-                  <div className="overflow-x-auto lg:overflow-x-hidden">
-                    <Table className="min-w-[760px] table-fixed text-left text-sm lg:min-w-0 lg:w-full">
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-[760px] table-fixed text-left text-sm">
                       <TableHeader>
                         <TableRow className="border-b border-slate-900 bg-slate-950 hover:bg-slate-950">
                           <TableHead className="w-[17%] px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-white/90">

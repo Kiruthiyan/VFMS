@@ -149,7 +149,7 @@ export default function CreateMaintenancePage() {
                       onValueChange={(value) => field.onChange(value as MaintenanceType)}
                     >
                       <SelectTrigger className="bg-white text-slate-900">
-                        <SelectValue />
+                        <SelectValue placeholder="Select maintenance type" />
                       </SelectTrigger>
                       <SelectContent className="bg-white text-slate-900">
                         <SelectItem value="BREAKDOWN">Breakdown</SelectItem>
@@ -216,7 +216,7 @@ export default function CreateMaintenancePage() {
               />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-200">
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200">
                 <Button
                   type="submit"
                   disabled={isSubmitting}

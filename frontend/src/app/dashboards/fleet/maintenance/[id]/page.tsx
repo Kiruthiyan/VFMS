@@ -373,7 +373,6 @@ export default function MaintenanceDetailPage({
                 <FleetFileDropzone
                   title="Invoice"
                   readonly={
-                    Boolean(request.invoiceUrl) ||
                     !canCreate ||
                     request.status === "NEW" ||
                     request.status === "SUBMITTED" ||

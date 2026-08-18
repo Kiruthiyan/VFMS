@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Car, CheckCircle2, Clock, Calendar, PlayCircle, XCircle } from "lucide-react";
 import { reportService, VehicleUtilization, TripStats } from "@/services/reportService";
@@ -73,10 +74,7 @@ export default function UtilizationPage() {
                 </Button>
             </div>
 
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Vehicle Utilization Analytics</h1>
-                <p className="text-slate-500 mt-1">Fleet workload distribution and trip lifecycle metrics</p>
-            </div>
+            <PageHeader title="Vehicle Utilization Analytics" description="Fleet workload distribution and trip lifecycle metrics" />
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -208,7 +206,7 @@ export default function UtilizationPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full min-w-[760px] text-sm text-left">
                             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
                                 <tr>
                                     <th className="px-6 py-4">Vehicle Plate</th>

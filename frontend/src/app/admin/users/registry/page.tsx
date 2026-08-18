@@ -95,7 +95,7 @@ export default function EmployeeRegistryPage() {
                       <tbody className="divide-y divide-slate-100 bg-slate-50/70">
                         {records.map((record) => (
                           <tr key={record.id} className="transition-colors hover:bg-white">
-                            <td className="px-7 py-5 font-bold text-slate-950">
+                            <td className="truncate px-7 py-5 font-bold text-slate-950">
                               {record.employeeId}
                             </td>
                             <td className="px-7 py-5 font-medium text-slate-800">
@@ -104,7 +104,7 @@ export default function EmployeeRegistryPage() {
                             <td className="truncate px-7 py-5 text-slate-600" title={record.email}>
                               {record.email}
                             </td>
-                            <td className="px-7 py-5 text-slate-700">
+                            <td className="truncate px-7 py-5 text-slate-700">
                               {record.department}
                             </td>
                             <td className="px-7 py-5 text-center">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { reportService } from "@/services/reportService";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { ArrowLeft, AlertTriangle, Clock, TrendingDown, TrendingUp, CheckCircle2, Timer, DollarSign } from "lucide-react";
@@ -82,10 +83,7 @@ export default function MaintenancePage() {
                 </Button>
             </div>
 
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Maintenance Analytics</h1>
-                <p className="text-slate-500 mt-1">Deep dive into fleet maintenance costs</p>
-            </div>
+            <PageHeader title="Maintenance Analytics" description="Deep dive into fleet maintenance costs" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="border-none shadow-sm bg-white overflow-hidden group">
@@ -219,7 +217,7 @@ export default function MaintenancePage() {
                 </CardHeader>
                 <CardContent>
                     <div className="relative overflow-x-auto rounded-lg">
-                        <table className="w-full text-sm text-left text-slate-500">
+                        <table className="w-full min-w-[760px] text-sm text-left text-slate-500">
                             <thead className="text-xs text-slate-700 uppercase bg-slate-50">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold">Vehicle</th>

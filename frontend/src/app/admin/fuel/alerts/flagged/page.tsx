@@ -7,6 +7,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 
+import { FuelManagementNav } from "@/components/admin/fuel/fuel-management-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -112,6 +113,8 @@ export default function FlaggedRecordsPage() {
             </>
           }
         />
+
+        <FuelManagementNav />
 
         {loading && (
           <div className="flex justify-center py-24">

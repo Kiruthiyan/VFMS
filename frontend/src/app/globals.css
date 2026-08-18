@@ -843,138 +843,6 @@ main h1 {
   letter-spacing: 0 !important;
 }
 
-main .space-y-8 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]),
-main .space-y-6 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) {
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-  align-items: flex-end !important;
-  gap: 1rem;
-  border: 1px solid var(--vfms-border);
-  border-radius: 1.75rem;
-  background: #ffffff;
-  padding: 4.9rem 1.45rem 1.55rem;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
-}
-
-main .space-y-8 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"])::before,
-main .space-y-6 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"])::before {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 7.5rem;
-  background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.2), transparent 55%),
-    radial-gradient(circle at top right, rgba(148, 163, 184, 0.14), transparent 45%);
-  content: "";
-}
-
-main .space-y-8 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"])::after,
-main .space-y-6 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"])::after {
-  position: absolute;
-  top: 1.45rem;
-  left: 1.45rem;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #fde68a;
-  border-radius: 999px;
-  background: #fffbeb;
-  padding: 0.42rem 0.9rem;
-  color: #b45309;
-  content: "FLEETPRO WORKSPACE";
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  line-height: 1;
-}
-
-main .space-y-8 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) > *,
-main .space-y-6 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) > * {
-  position: relative;
-  z-index: 1;
-}
-
-main .space-y-8 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) h1,
-main .space-y-6 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) h1 {
-  font-size: clamp(1.75rem, 4vw, 2.35rem) !important;
-  font-weight: 900 !important;
-  letter-spacing: 0 !important;
-  line-height: 1.1 !important;
-}
-
-main .space-y-8 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) p,
-main .space-y-6 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) p {
-  max-width: 46rem;
-  color: var(--vfms-muted) !important;
-  font-size: 0.98rem !important;
-  line-height: 1.55 !important;
-}
-
-main [class*="space-y-"] > div:has(> h1):not([data-slot]):not([class*="border"]):not([class*="bg-"]),
-main [class*="space-y-"] > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) {
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-  align-items: flex-end !important;
-  gap: 1rem;
-  border: 1px solid var(--vfms-border);
-  border-radius: 1.75rem;
-  background: #ffffff;
-  padding: 4.9rem 1.45rem 1.55rem;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
-}
-
-main [class*="space-y-"] > div:has(> h1):not([data-slot]):not([class*="border"]):not([class*="bg-"])::before,
-main [class*="space-y-"] > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"])::before {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 7.5rem;
-  background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.2), transparent 55%),
-    radial-gradient(circle at top right, rgba(148, 163, 184, 0.14), transparent 45%);
-  content: "";
-}
-
-main [class*="space-y-"] > div:has(> h1):not([data-slot]):not([class*="border"]):not([class*="bg-"])::after,
-main [class*="space-y-"] > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"])::after {
-  position: absolute;
-  top: 1.45rem;
-  left: 1.45rem;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #fde68a;
-  border-radius: 999px;
-  background: #fffbeb;
-  padding: 0.42rem 0.9rem;
-  color: #b45309;
-  content: "FLEETPRO WORKSPACE";
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  line-height: 1;
-}
-
-main [class*="space-y-"] > div:has(> h1):not([data-slot]):not([class*="border"]):not([class*="bg-"]) > *,
-main [class*="space-y-"] > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) > * {
-  position: relative;
-  z-index: 1;
-}
-
-main [class*="space-y-"] > div:has(> h1):not([data-slot]):not([class*="border"]):not([class*="bg-"]) h1,
-main [class*="space-y-"] > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) h1 {
-  font-size: clamp(1.75rem, 4vw, 2.35rem) !important;
-  font-weight: 900 !important;
-  letter-spacing: 0 !important;
-  line-height: 1.1 !important;
-}
-
-main [class*="space-y-"] > div:has(> h1):not([data-slot]):not([class*="border"]):not([class*="bg-"]) p,
-main [class*="space-y-"] > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) p {
-  max-width: 46rem;
-  color: var(--vfms-muted) !important;
-  font-size: 0.98rem !important;
-  line-height: 1.55 !important;
-}
-
 main h2,
 main h3,
 main [data-slot="card-title"] {
@@ -1396,6 +1264,14 @@ main .vfms-form-header p {
 @media (max-width: 768px) {
   .vfms-detail-container {
     padding: 1rem;
+  }
+
+  main .space-y-8 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]),
+  main .space-y-6 > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]),
+  main [class*="space-y-"] > .flex:has(h1):not([data-slot]):not([class*="bg-white"]):not([class*="bg-slate-950"]) {
+    overflow: visible;
+    align-items: stretch !important;
+    padding: 3.5rem 1.25rem 1.25rem;
   }
 
   main .flex.justify-between,

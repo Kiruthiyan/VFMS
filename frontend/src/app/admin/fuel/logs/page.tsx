@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/fuel";
 import { queryKeys } from "@/lib/query-keys";
 
+import { FuelManagementNav } from "@/components/admin/fuel/fuel-management-nav";
 import { FuelRecordsTable } from "@/components/fuel/fuel-records-table";
 import { FuelFilterBar } from "@/components/fuel/fuel-filter-bar";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -105,6 +106,8 @@ export default function FuelEntryLogsPage() {
             </>
           }
         />
+
+        <FuelManagementNav />
 
         <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <CardHeader className="vfms-card-header px-6 py-5 pl-8">

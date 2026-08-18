@@ -2,20 +2,19 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertCircle,
   BarChart3,
   Droplets,
   FileText,
-  Flag,
   Fuel,
   Plus,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 
+import { FuelManagementNav } from "@/components/admin/fuel/fuel-management-nav";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { FormMessage } from "@/components/ui/form-message";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
@@ -67,33 +66,6 @@ export default function FuelDashboardPage() {
     },
   ];
 
-  const operationCards = [
-    {
-      title: "Fuel Logs",
-      href: "/admin/fuel/logs",
-      icon: FileText,
-      action: "View",
-    },
-    {
-      title: "New Fuel Entry",
-      href: "/admin/fuel/create",
-      icon: Plus,
-      action: "Create",
-    },
-    {
-      title: "Fuel Alerts",
-      href: "/admin/fuel/alerts",
-      icon: AlertCircle,
-      action: "Review",
-    },
-    {
-      title: "Flagged Records",
-      href: "/admin/fuel/alerts/flagged",
-      icon: Flag,
-      action: "Resolve",
-    },
-  ];
-
   return (
       <div className="space-y-6">
         <PageHeader
@@ -117,6 +89,8 @@ export default function FuelDashboardPage() {
             </>
           }
         />
+
+        <FuelManagementNav />
 
         {loading && (
           <div className="flex justify-center py-24">
@@ -166,42 +140,6 @@ export default function FuelDashboardPage() {
                 );
               })}
             </div>
-
-            <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="vfms-card-header flex flex-col gap-1 px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-950">
-                    <Fuel className="text-amber-600" size={22} />
-                    Fuel Operations
-                  </CardTitle>
-                </div>
-              </div>
-              <CardContent className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
-                {operationCards.map((card) => {
-                  const Icon = card.icon;
-                  return (
-                    <Link
-                      key={card.href}
-                      href={card.href}
-                      className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-200 hover:bg-slate-50 hover:shadow-md"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700 transition-colors group-hover:bg-amber-100">
-                          <Icon size={20} strokeWidth={2.1} />
-                        </div>
-                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
-                          {card.action}
-                        </span>
-                      </div>
-                      <h3 className="mt-4 text-base font-bold text-slate-950">
-                        {card.title}
-                      </h3>
-                    </Link>
-                  );
-                })}
-              </CardContent>
-            </Card>
-
           </>
         )}
       </div>

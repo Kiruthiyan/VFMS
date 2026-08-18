@@ -10,6 +10,7 @@ import { getDriverDisplayId } from '@/lib/driver-display';
 import { queryKeys } from '@/lib/query-keys';
 import { DriverReadinessCache, PageResponse } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -185,9 +186,9 @@ export default function DriversPage() {
   return (
     <div className="p-6 md:p-8 space-y-6 animate-fade-in">
       <PageHeader
-        icon={<Users className="w-5 h-5" />}
+        icon={Users}
         title="Drivers"
-        subtitle="Manage driver profiles"
+        description="Manage driver profiles"
       />
 
       <div className="space-y-6">
@@ -340,28 +341,6 @@ export default function DriversPage() {
               )}
             </CardContent>
           </Card>
-      </div>
-    </div>
-  );
-}
-
-function PageHeader({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ backgroundColor: 'hsl(var(--primary))' }}>
-        {icon}
-      </div>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-        <p className="text-sm font-medium text-muted-foreground mt-1">{subtitle}</p>
       </div>
     </div>
   );

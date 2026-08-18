@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 
+import { FuelManagementNav } from "@/components/admin/fuel/fuel-management-nav";
 import { FuelEntryForm } from "@/components/fuel/fuel-entry-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,10 @@ export default function CreateFuelEntryPage() {
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fuel
         </Button>
+
+        <div className="mb-6">
+          <FuelManagementNav />
+        </div>
 
         <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white p-0 pb-4 shadow-sm">
           <CardHeader className="vfms-form-header py-5 pl-8">

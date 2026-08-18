@@ -25,7 +25,7 @@ import {
   verifyStaffDetailsApi,
   verifyStaffEmailApi,
 } from '@/lib/api/auth';
-import { AUTH_ROUTES, PUBLIC_ROUTES } from '@/lib/constants/routes';
+import { AUTH_ROUTES } from '@/lib/constants/routes';
 import {
   signupStep1Schema,
   signupStep3Schema,
@@ -467,7 +467,6 @@ export function SignupForm() {
             prompt="Already have an account?"
             actionLabel="Sign in"
             actionHref={AUTH_ROUTES.LOGIN}
-            homeHref={PUBLIC_ROUTES.HOME}
           />
         </motion.form>
       ) : null}
@@ -552,7 +551,6 @@ export function SignupForm() {
             prompt="Already have an account?"
             actionLabel="Sign in"
             actionHref={AUTH_ROUTES.LOGIN}
-            homeHref={PUBLIC_ROUTES.HOME}
           />
         </motion.form>
       ) : null}
@@ -612,7 +610,6 @@ export function SignupForm() {
             prompt="Already have an account?"
             actionLabel="Sign in"
             actionHref={AUTH_ROUTES.LOGIN}
-            homeHref={PUBLIC_ROUTES.HOME}
           />
         </motion.form>
       ) : null}
@@ -719,7 +716,6 @@ export function SignupForm() {
         prompt="Already have an account?"
         actionLabel="Sign in"
         actionHref={AUTH_ROUTES.LOGIN}
-        homeHref={PUBLIC_ROUTES.HOME}
       />
     </div>
   </motion.form>
