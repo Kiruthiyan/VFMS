@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination:
+          "http://fleetpro-env.eba-ykv5nd5g.ap-south-1.elasticbeanstalk.com/api/:path*",
+      },
+    ];
+  },
   async redirects() {
     return [
       {

@@ -13,7 +13,9 @@ describe("api", () => {
 
   it("creates the axios instance with the expected defaults", () => {
     expect(api.defaults.baseURL).toBe(
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+      process.env.NODE_ENV === "production"
+        ? ""
+        : process.env.NEXT_PUBLIC_API_URL || ""
     );
     expect(api.defaults.timeout).toBe(15000);
     expect(api.defaults.withCredentials).toBe(true);

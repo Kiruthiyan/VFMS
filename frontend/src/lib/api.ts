@@ -4,11 +4,18 @@ import { AUTH_ROUTES } from "@/lib/constants/routes";
 import { invalidateQueriesForMutation } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
 
-//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-const API_BASE_URL = "https://fleetpro-env.eba-ykv5nd5g.ap-south-1.elasticbeanstalk.com";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://fleetpro-env.eba-ykv5nd5g.ap-south-1.elasticbeanstalk.com";
+
+const API_BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? ""
+    : process.env.NEXT_PUBLIC_API_URL || "";
+
 /** API root with `/api` suffix (e.g. report export URLs). */
 export function resolveApiBaseUrl(): string {
-  const root = API_BASE_URL.replace(/\/$/, "");
+  const root = BACKEND_URL.replace(/\/$/, "");
   return root.endsWith("/api") ? root : `${root}/api`;
 }
 
@@ -21,7 +28,7 @@ export function resolveBackendAssetUrl(pathOrUrl: string): string {
     return encodeURI(pathOrUrl);
   }
 
-  const root = API_BASE_URL.replace(/\/$/, "");
+  const root = BACKEND_URL.replace(/\/$/, "");
   const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
   return encodeURI(`${root}${path}`);
 }
