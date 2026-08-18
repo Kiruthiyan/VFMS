@@ -4,8 +4,8 @@ import { AUTH_ROUTES } from "@/lib/constants/routes";
 import { invalidateQueriesForMutation } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE_URL = "https://fleetpro-env.eba-ykv5nd5g.ap-south-1.elasticbeanstalk.com";
 /** API root with `/api` suffix (e.g. report export URLs). */
 export function resolveApiBaseUrl(): string {
   const root = API_BASE_URL.replace(/\/$/, "");
