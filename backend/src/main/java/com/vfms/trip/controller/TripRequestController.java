@@ -282,13 +282,24 @@ public class TripRequestController {
     }
 
     /**
-     * Cancels the trip outright. Extracts approver ID and cancellation notes from the DTO.
+     * Cancels the trip. Requester (owner)/ADMIN/APPROVER may cancel from most pre-start statuses;
+     * the assigned DRIVER may cancel their own trip only once DRIVER_CONFIRMED/START_PENDING.
      */
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<TripRequest> cancelTrip(@PathVariable UUID id, @RequestBody(required = false) ApprovalDTO dto) {
-        UUID approverId = dto != null ? dto.getApproverId() : null;
+    public ResponseEntity<TripRequest> cancelTrip(
+            @PathVariable UUID id,
+            @RequestBody(required = false) ApprovalDTO dto,
+            @AuthenticationPrincipal User user) {
         String notes = dto != null ? dto.getNotes() : null;
-        return ResponseEntity.ok(service.cancelTrip(id, approverId, notes));
+        String actorLabel = (user != null ? user.getRole().name() : "UNKNOWN") +
+                " (" + (user != null ? user.getFullName() : "Unknown") + ")";
+        if (isDriver(user)) {
+            return ResponseEntity.ok(service.cancelTrip(id, requireDriverId(user), notes, true, actorLabel));
+        }
+        TripRequest trip = service.getTripById(id);
+        assertRequesterCanAccessTrip(trip, user);
+        UUID approverId = dto != null ? dto.getApproverId() : null;
+        return ResponseEntity.ok(service.cancelTrip(id, approverId, notes, false, actorLabel));
     }
 
     // ==========================================

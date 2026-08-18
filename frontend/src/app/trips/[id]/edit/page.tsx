@@ -246,7 +246,7 @@ export default function EditTripPage() {
             <div className="max-w-none mx-auto space-y-4">
 
                 <button
-                    onClick={() => router.push("/trips")}
+                    onClick={() => router.push(currentUser.role === "SYSTEM_USER" ? "/trips/requester" : "/trips")}
                     className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4" /> Back
@@ -470,7 +470,7 @@ export default function EditTripPage() {
                                     type="button"
                                     variant="outline"
                                     className="flex-1"
-                                    onClick={() => router.push("/trips")}
+                                    onClick={() => router.push(currentUser.role === "SYSTEM_USER" ? "/trips/requester" : "/trips")}
                                 >
                                     Cancel
                                 </Button>

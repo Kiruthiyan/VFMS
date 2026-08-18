@@ -18,7 +18,7 @@ import {
 import {
     ArrowLeft, Calendar, MapPin, Users, Clock, Star,
     Loader2, CheckCircle, Play, Square, Ban, AlertTriangle,
-    ThumbsUp, ThumbsDown, User, Car, AlertCircle
+    ThumbsUp, ThumbsDown, User, Car, AlertCircle, ChevronDown, ChevronUp, Phone
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRole } from "@/lib/role-context";
@@ -59,6 +59,7 @@ interface AssignmentDetails {
         firstName: string;
         lastName: string;
         employeeId: string | null;
+        phone?: string | null;
     };
     vehicle?: {
         isRental: boolean;
@@ -68,7 +69,17 @@ interface AssignmentDetails {
         color?: string | null;
         vehicleType?: string | null;
     };
+    activityLog?: string | null;
 }
+
+const getLogDotColor = (line: string) => {
+    const lower = line.toLowerCase();
+    if (lower.includes("cancel") || lower.includes("reject") || lower.includes("expire")) return "bg-red-500";
+    if (lower.includes("approve") || lower.includes("confirm") || lower.includes("complete") || lower.includes("accept")) return "bg-green-500";
+    if (lower.includes("early start") || lower.includes("start_pending") || lower.includes("awaiting")) return "bg-yellow-500";
+    if (lower.includes("started") || lower.includes("ongoing") || lower.includes("arrived")) return "bg-purple-500";
+    return "bg-slate-400";
+};
 
 const STATUS_STYLES: Record<string, string> = {
     NEW:              "bg-slate-50 text-slate-700 border-slate-200 font-bold",
@@ -84,7 +95,7 @@ const STATUS_STYLES: Record<string, string> = {
     EXPIRED:          "bg-red-50 text-red-700 border-red-200 font-bold",
 };
 
-const TERMINAL_STATUSES = ["COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"];
+const TERMINAL_STATUSES = ["ONGOING", "COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"];
 
 const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleString("en-GB", {
@@ -119,6 +130,7 @@ export default function TripDetailPage() {
     const [assignmentDetails, setAssignmentDetails] = useState<AssignmentDetails | null>(null);
     const [assignmentLoading, setAssignmentLoading] = useState(false);
     const [driverProfilePicUrl, setDriverProfilePicUrl] = useState<string | null>(null);
+    const [activityLogOpen, setActivityLogOpen] = useState(true);
 
     const {
         data: trip = null,
@@ -133,9 +145,9 @@ export default function TripDetailPage() {
         },
     });
 
-    // Fetch enriched assignment details when trip has assignments
+    // Fetch enriched assignment details + activity log (always, since activity log exists from trip creation)
     useEffect(() => {
-        if (!trip || (!trip.assignedDriverId && !trip.assignedVehicleId)) return;
+        if (!trip) return;
         setAssignmentLoading(true);
         api.get(`/trips/${id}/assignment-details`)
             .then(res => setAssignmentDetails(res.data))
@@ -151,7 +163,7 @@ export default function TripDetailPage() {
                 })
                 .catch(() => setDriverProfilePicUrl(null));
         }
-    }, [trip?.assignedDriverId, trip?.assignedVehicleId, id]);
+    }, [trip?.id, trip?.assignedDriverId, trip?.assignedVehicleId, id]);
 
     const checkReturnDeviation = () => {
         if (!trip) return false;
@@ -245,7 +257,15 @@ export default function TripDetailPage() {
         </div>
     );
 
-    const isDriverRejectedNote = trip.approvalNotes?.startsWith("Driver rejected:");
+    const isDriverRejectedNote = trip.approvalNotes?.startsWith("Driver rejected by");
+
+    const backHref = currentUser.role === "DRIVER" ? "/dashboards/driver/trips"
+        : currentUser.role === "SYSTEM_USER" ? "/trips/requester"
+        : "/trips";
+
+    const activityLogLines = assignmentDetails?.activityLog
+        ? assignmentDetails.activityLog.split("\n").filter(l => l.trim())
+        : [];
 
     // Stop arrival validation
     const stops = trip.destination?.split(" -> ") ?? [];
@@ -260,7 +280,7 @@ export default function TripDetailPage() {
             <div className="vfms-detail-container max-w-7xl space-y-6">
 
                 <button
-                    onClick={() => router.push("/trips")}
+                    onClick={() => router.push(backHref)}
                     className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4" /> Back to Trips
@@ -391,8 +411,8 @@ export default function TripDetailPage() {
                                         <Loader2 className="h-3 w-3 animate-spin" /> Loading details...
                                     </div>
                                 )}
-                                {/* Driver Card */}
-                                {trip.assignedDriverId && (
+                                {/* Driver Card — hidden on the DRIVER's own dashboard (they don't need their own details/photo) */}
+                                {trip.assignedDriverId && currentUser.role !== "DRIVER" && (
                                     <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
                                         <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                                             {driverProfilePicUrl ? (
@@ -409,6 +429,11 @@ export default function TripDetailPage() {
                                             {assignmentDetails?.driver?.employeeId && (
                                                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                                                     ID: {assignmentDetails.driver.employeeId}
+                                                </p>
+                                            )}
+                                            {assignmentDetails?.driver?.phone && (
+                                                <p className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1">
+                                                    <Phone className="h-3 w-3" /> {assignmentDetails.driver.phone}
                                                 </p>
                                             )}
                                         </div>
@@ -466,20 +491,45 @@ export default function TripDetailPage() {
                                         <span className="text-slate-900 font-semibold">{formatDate(trip.endTime)}</span>
                                     </div>
                                 )}
-                                {trip.earlyStartReason && (
-                                    <div className="flex items-start gap-3 text-sm mt-1">
-                                        <span className="w-2 h-2 rounded-full bg-yellow-500 shrink-0 mt-1" />
-                                        <div>
-                                            <span className="text-slate-500 font-medium block text-xs uppercase tracking-wider mb-0.5">Early Start Reason</span>
-                                            <span className="text-slate-700 italic">"{trip.earlyStartReason}"</span>
-                                        </div>
+                            </div>
+                        )}
+
+                        {/* Activity Log — collapsible, default-open, all roles */}
+                        {activityLogLines.length > 0 && (
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => setActivityLogOpen(o => !o)}
+                                    className="w-full flex items-center justify-between px-4 py-3 text-left"
+                                >
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Activity Log</p>
+                                    {activityLogOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                                </button>
+                                {activityLogOpen && (
+                                    <div className="px-4 pb-4 space-y-3">
+                                        {activityLogLines.map((line, idx) => {
+                                            const sepIdx = line.indexOf(" | ");
+                                            const timestamp = sepIdx >= 0 ? line.slice(0, sepIdx) : "";
+                                            const event = sepIdx >= 0 ? line.slice(sepIdx + 3) : line;
+                                            return (
+                                                <div key={idx} className="flex gap-3 text-sm">
+                                                    <span className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${getLogDotColor(line)}`} />
+                                                    <div className="min-w-0">
+                                                        <p className="text-slate-800 font-medium">{event}</p>
+                                                        {timestamp && (
+                                                            <p className="text-xs text-slate-400 mt-0.5">{formatDate(timestamp)}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Driver Feedback Section (Only for COMPLETED trips) */}
-                        {trip.status === "COMPLETED" && (
+                        {/* Driver Feedback Section (Only for COMPLETED trips; hidden from the DRIVER role — drivers shouldn't see their own rating/feedback) */}
+                        {trip.status === "COMPLETED" && currentUser.role !== "DRIVER" && (
                             <div className="border-t border-slate-100 pt-5 space-y-4">
                                 {trip.driverRating ? (
                                     /* Read-only Feedback Summary */
@@ -587,8 +637,8 @@ export default function TripDetailPage() {
                             </div>
                         )}
 
-                        {/* Approval / Driver rejection notes */}
-                        {trip.approvalNotes && (
+                        {/* Approval / Driver rejection notes — not shown to SYSTEM_USER */}
+                        {trip.approvalNotes && currentUser.role !== "SYSTEM_USER" && (
                             <div className={`border rounded-lg p-4 ${
                                 isDriverRejectedNote
                                     ? "bg-orange-50 border-orange-200"
@@ -905,9 +955,12 @@ export default function TripDetailPage() {
                                 </>
                             )}
 
-                            {/* Cancel — only SYSTEM_USER and ADMIN, not STAFF or DRIVER */}
-                            {["SYSTEM_USER", "ADMIN"].includes(currentUser.role) &&
-                                !TERMINAL_STATUSES.includes(trip.status) && (
+                            {/* Cancel — SYSTEM_USER/ADMIN for most pre-start statuses; DRIVER only for own DRIVER_CONFIRMED/START_PENDING trip */}
+                            {(
+                                (["SYSTEM_USER", "ADMIN"].includes(currentUser.role) && !TERMINAL_STATUSES.includes(trip.status)) ||
+                                (currentUser.role === "DRIVER" && trip.assignedDriverId === currentUser.id &&
+                                    ["DRIVER_CONFIRMED", "START_PENDING"].includes(trip.status))
+                            ) && (
                                 <>
                                     <Button
                                         onClick={() => setCancelReasonMode(true)}

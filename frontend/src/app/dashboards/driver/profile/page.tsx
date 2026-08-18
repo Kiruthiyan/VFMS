@@ -6,13 +6,13 @@ import { toast } from 'sonner';
 import {
   User, Phone, Shield, Calendar, CreditCard,
   Badge, Camera, Loader2, Star, Trash2, Pencil, Check, X,
-  Upload, AlertTriangle, Plus, Award, Save, UserRound, Mail
+  Upload, AlertTriangle, Plus, Award, Save, UserRound, Mail, FileText, Eye
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import {
   getMyProfile, uploadProfilePicture, removeProfilePicture,
   type DriverProfileResponse,
-  uploadMyDocument,
+  uploadMyDocument, getMyDocuments, deleteMyDocument, type DocumentItem,
   getMyCertifications, addMyCertification,
   type CertificationItem, type CertificationPayload,
   getMyInfractions, type InfractionItem,
@@ -20,6 +20,7 @@ import {
 import { resolveBackendAssetUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { queryKeys } from '@/lib/query-keys';
+import { DocumentPreviewDialog } from '@/components/drivers/DocumentPreviewDialog';
 const CERTIFICATION_TYPES = ['DEFENSIVE_DRIVING', 'FIRST_AID', 'HAZMAT', 'HEAVY_VEHICLE', 'PASSENGER_TRANSPORT', 'OTHER'];
 const EMPTY_CERTIFICATION: CertificationPayload = {
   certType: 'DEFENSIVE_DRIVING',
@@ -390,6 +391,26 @@ export default function DriverProfilePage() {
   const [otherDocumentName, setOtherDocumentName] = useState('');
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
+  const [deletingDocId, setDeletingDocId] = useState<number | null>(null);
+
+  const { data: myDocuments = [] } = useQuery({
+    queryKey: queryKeys.driverDocuments,
+    queryFn: getMyDocuments,
+  });
+
+  const handleDeleteDocument = async (id: number) => {
+    setDeletingDocId(id);
+    try {
+      await deleteMyDocument(id);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.driverDocuments });
+      toast.success('Document deleted');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Delete failed'));
+    } finally {
+      setDeletingDocId(null);
+    }
+  };
 
   // Inline edit states
   const [editingName, setEditingName] = useState(false);
@@ -745,6 +766,86 @@ export default function DriverProfilePage() {
                   onChange={handleDocUpload}
                 />
                 <span style={{ fontSize: '0.72rem', color: 'hsl(var(--muted-foreground))', lineHeight: 1.45 }}>PDF, JPG, PNG, WEBP accepted</span>
+
+                {myDocuments.length > 0 && (() => {
+                  const licenseDocs = myDocuments.filter((d) => d.entityType === 'LICENSE');
+                  const otherDocs = myDocuments.filter((d) => d.entityType !== 'LICENSE');
+                  const renderDocRow = (doc: DocumentItem) => (
+                    <div
+                      key={doc.id}
+                      role="button"
+                      tabIndex={doc.fileUrl ? 0 : -1}
+                      onClick={() => doc.fileUrl && setPreviewDoc(doc)}
+                      onKeyDown={(e) => { if (doc.fileUrl && (e.key === 'Enter' || e.key === ' ')) setPreviewDoc(doc); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem',
+                        padding: '0.6rem 0.75rem', borderRadius: '0.75rem', border: '1px solid hsl(var(--border))',
+                        background: 'hsl(210 40% 98%)', cursor: doc.fileUrl ? 'pointer' : 'default',
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
+                        <span style={{
+                          width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem', flexShrink: 0,
+                          background: 'hsl(38 92% 50% / 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <FileText style={{ width: '0.875rem', height: '0.875rem', color: 'hsl(32 95% 44%)' }} />
+                        </span>
+                        <span style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {doc.fileName}
+                          </p>
+                          <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
+                            {(doc.fileSize / 1024).toFixed(1)} KB
+                          </p>
+                        </span>
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                        <Eye style={{ width: '0.9rem', height: '0.9rem', color: 'hsl(var(--muted-foreground))' }} />
+                        <button
+                          type="button"
+                          aria-label={`Delete ${doc.fileName}`}
+                          title="Delete document"
+                          disabled={deletingDocId === doc.id}
+                          onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc.id); }}
+                          style={{
+                            width: '1.5rem', height: '1.5rem', borderRadius: '0.375rem', border: 'none',
+                            background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: deletingDocId === doc.id ? 'default' : 'pointer', color: 'hsl(var(--muted-foreground))',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = 'hsl(0 72% 51%)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = 'hsl(var(--muted-foreground))'; }}
+                        >
+                          {deletingDocId === doc.id ? (
+                            <Loader2 style={{ width: '0.85rem', height: '0.85rem', animation: 'spin 1s linear infinite' }} />
+                          ) : (
+                            <Trash2 style={{ width: '0.85rem', height: '0.85rem' }} />
+                          )}
+                        </button>
+                      </span>
+                    </div>
+                  );
+
+                  return (
+                    <div style={{ display: 'grid', gap: '1rem', marginTop: '0.25rem' }}>
+                      {licenseDocs.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                            License
+                          </p>
+                          {licenseDocs.map(renderDocRow)}
+                        </div>
+                      )}
+                      {otherDocs.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                            Other Documents
+                          </p>
+                          {otherDocs.map(renderDocRow)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </ProfileSection>
             </div>
@@ -851,6 +952,14 @@ export default function DriverProfilePage() {
         </div>
         </div>
       )}
+
+      <DocumentPreviewDialog
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+        fileUrl={previewDoc?.fileUrl}
+        fileName={previewDoc?.fileName}
+        mimeType={previewDoc?.mimeType}
+      />
 
       {showProfilePicturePreview && avatarSrc && (
         <div

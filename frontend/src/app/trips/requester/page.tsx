@@ -29,20 +29,28 @@ const statusStyles: Record<string, string> = {
     NEW: "bg-slate-50 text-slate-700 border-slate-200 font-bold",
     SUBMITTED: "bg-amber-50 text-amber-700 border-amber-200 font-bold",
     APPROVED: "bg-green-50 text-green-700 border-green-200 font-bold",
+    DRIVER_CONFIRMED: "bg-teal-50 text-teal-700 border-teal-200 font-bold",
+    DRIVER_REJECTED: "bg-orange-50 text-orange-700 border-orange-200 font-bold",
+    START_PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200 font-bold",
     REJECTED: "bg-red-50 text-red-700 border-red-200 font-bold",
     ONGOING: "bg-purple-50 text-purple-700 border-purple-200 font-bold",
     COMPLETED: "bg-blue-50 text-blue-700 border-blue-200 font-bold",
     CANCELLED: "bg-slate-100 text-slate-500 border-slate-300 font-bold",
+    EXPIRED: "bg-red-50 text-red-700 border-red-200 font-bold",
 };
 
 const statusIcons: Record<string, any> = {
     NEW: AlertCircle,
     SUBMITTED: Clock,
     APPROVED: CheckCircle,
+    DRIVER_CONFIRMED: CheckCircle,
+    DRIVER_REJECTED: XCircle,
+    START_PENDING: Clock,
     REJECTED: XCircle,
     ONGOING: Clock,
     COMPLETED: CheckCircle,
     CANCELLED: XCircle,
+    EXPIRED: XCircle,
 };
 
 const formatRoute = (dest: string) => {
@@ -87,7 +95,10 @@ export default function RequesterTripsPage() {
         }
     };
 
-    const filters = ["ALL", "NEW", "SUBMITTED", "APPROVED", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED"];
+    const filters = [
+        "ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED",
+        "START_PENDING", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED"
+    ];
 
     const filtered = activeFilter === "ALL"
         ? trips

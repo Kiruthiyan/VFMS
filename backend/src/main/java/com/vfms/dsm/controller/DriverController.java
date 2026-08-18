@@ -97,6 +97,9 @@ public class DriverController {
         return ResponseEntity.ok(recordService.getDocumentsByDriver(driverId));
     }
 
+    // Overrides the class-level @PreAuthorize — profile picture is read-only and needed
+    // by every role that can view a trip's driver details, not just APPROVER/ADMIN.
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('APPROVER','ADMIN','SYSTEM_USER','DRIVER')")
     @GetMapping("/api/drivers/{driverId}/profile-picture")
     public ResponseEntity<DriverDocument> getProfilePicture(@PathVariable UUID driverId) {
         DriverDocument document = recordService.getProfilePicture(driverId);

@@ -20,9 +20,17 @@ interface Trip {
 
 const TRIP_FILTERS = [
   { value: 'ALL', label: 'All' },
+  { value: 'NEW', label: 'New' },
+  { value: 'SUBMITTED', label: 'Submitted' },
+  { value: 'APPROVED', label: 'Approved' },
   { value: 'DRIVER_CONFIRMED', label: 'Confirmed' },
-  { value: 'DRIVER_REJECTED', label: 'Rejected' },
+  { value: 'DRIVER_REJECTED', label: 'Rejected (Driver)' },
+  { value: 'START_PENDING', label: 'Start Pending' },
   { value: 'ONGOING', label: 'Ongoing' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'EXPIRED', label: 'Expired' },
 ] as const;
 
 const statusColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -31,10 +39,12 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
   APPROVED: { bg: 'hsl(142 76% 94%)', text: 'hsl(142 71% 45%)', border: 'hsl(142 71% 70%)' },
   DRIVER_CONFIRMED: { bg: 'hsl(142 76% 94%)', text: 'hsl(142 71% 32%)', border: 'hsl(142 71% 70%)' },
   DRIVER_REJECTED: { bg: 'hsl(25 100% 95%)', text: 'hsl(25 100% 45%)', border: 'hsl(25 100% 80%)' },
+  START_PENDING: { bg: 'hsl(48 96% 95%)', text: 'hsl(38 92% 35%)', border: 'hsl(48 96% 78%)' },
   ONGOING: { bg: 'hsl(45 96% 95%)', text: 'hsl(35 92% 32%)', border: 'hsl(45 96% 78%)' },
   COMPLETED: { bg: 'hsl(210 40% 96%)', text: 'hsl(215 25% 27%)', border: 'hsl(214 32% 84%)' },
   REJECTED: { bg: 'hsl(0 84% 97%)', text: 'hsl(0 84% 60%)', border: 'hsl(0 84% 74%)' },
   CANCELLED: { bg: 'hsl(0 0% 96%)', text: 'hsl(0 0% 40%)', border: 'hsl(0 0% 85%)' },
+  EXPIRED: { bg: 'hsl(0 84% 97%)', text: 'hsl(0 84% 60%)', border: 'hsl(0 84% 74%)' },
 };
 
 type DriverTripsTabProps = {

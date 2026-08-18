@@ -85,6 +85,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/staff-profile/**").authenticated()
                         // --- Driver self-service portal (ROLE_DRIVER only, IDOR-safe) ---
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
+                        // --- Driver profile picture: read-only, needed by all trip-viewing roles ---
+                        .requestMatchers(HttpMethod.GET, "/api/drivers/*/profile-picture")
+                        .hasAnyRole("ADMIN", "APPROVER", "SYSTEM_USER", "DRIVER")
                         // --- Driver/staff management (approver/admin only) ---
                         .requestMatchers("/api/drivers/**", "/api/internal/drivers/**")
                         .hasAnyRole("ADMIN", "APPROVER")
@@ -95,6 +98,8 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "^/api/trips/[0-9a-fA-F\\-]{36}$"
                         ))
+                        .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER")
+                        .requestMatchers(HttpMethod.GET, "/api/trips/*/assignment-details")
                         .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER", "DRIVER")
                         .requestMatchers(HttpMethod.GET, "/api/trips/**")
                         .hasAnyRole("ADMIN", "SYSTEM_USER", "APPROVER")
@@ -107,14 +112,16 @@ public class SecurityConfig {
                                 "/api/trips/*/approve",
                                 "/api/trips/*/reject",
                                 "/api/trips/*/assign-driver",
-                                "/api/trips/*/assign-vehicle",
-                                "/api/trips/*/cancel"
+                                "/api/trips/*/assign-vehicle"
                         ).hasAnyRole("ADMIN", "APPROVER")
                         .requestMatchers(
                                 HttpMethod.PATCH,
                                 "/api/trips/*/submit",
-                                "/api/trips/*/feedback"
+                                "/api/trips/*/feedback",
+                                "/api/trips/*/confirm-start"
                         ).hasAnyRole("ADMIN", "SYSTEM_USER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/trips/*/cancel")
+                        .hasAnyRole("ADMIN", "APPROVER", "SYSTEM_USER", "DRIVER")
                         .requestMatchers(
                                 HttpMethod.PATCH,
                                 "/api/trips/*/driver-accept",

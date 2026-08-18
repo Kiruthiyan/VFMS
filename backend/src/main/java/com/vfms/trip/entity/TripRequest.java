@@ -93,6 +93,9 @@ public class TripRequest {
     @Column(name = "early_start_reason", length = 500)
     private String earlyStartReason;
 
+    @Column(name = "trip_activity_log", columnDefinition = "TEXT")
+    private String tripActivityLog;
+
     // Automatic audit timestamps managed by Hibernate
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -101,4 +104,12 @@ public class TripRequest {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // Appends a timestamped event to the activity log without ever overwriting prior history
+    public void appendActivityLog(String event) {
+        String entry = LocalDateTime.now() + " | " + event;
+        this.tripActivityLog = (this.tripActivityLog == null || this.tripActivityLog.isBlank())
+                ? entry
+                : this.tripActivityLog + "\n" + entry;
+    }
 }

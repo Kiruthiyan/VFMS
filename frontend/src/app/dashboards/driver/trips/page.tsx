@@ -36,11 +36,23 @@ interface Trip {
 }
 
 const statusStyles: Record<string, string> = {
+  NEW: "bg-slate-50 text-slate-700 border-slate-200",
+  SUBMITTED: "bg-amber-50 text-amber-700 border-amber-200",
   APPROVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  DRIVER_CONFIRMED: "bg-teal-50 text-teal-700 border-teal-200",
+  DRIVER_REJECTED: "bg-orange-50 text-orange-700 border-orange-200",
+  START_PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  REJECTED: "bg-red-50 text-red-700 border-red-200",
   ONGOING: "bg-amber-50 text-amber-700 border-amber-200",
   COMPLETED: "bg-slate-100 text-slate-700 border-slate-300",
   CANCELLED: "bg-slate-100 text-slate-500 border-slate-300",
+  EXPIRED: "bg-red-50 text-red-700 border-red-200",
 };
+
+const STATUS_FILTERS = [
+  "ALL", "NEW", "SUBMITTED", "APPROVED", "DRIVER_CONFIRMED", "DRIVER_REJECTED",
+  "START_PENDING", "ONGOING", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED"
+];
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleString("en-GB", {
@@ -55,6 +67,7 @@ export default function DriverTripsPage() {
   const [rejectingTripId, setRejectingTripId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState("ALL");
 
   const {
     data: trips = [],
@@ -113,14 +126,36 @@ export default function DriverTripsPage() {
     }
   };
 
+  const filteredTrips = activeFilter === "ALL" ? trips : trips.filter(t => t.status === activeFilter);
+
   return (
     <div className="space-y-6">
       <PageHeader title="My Trips" description="View your assigned trip history" icon={MapPin} />
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {STATUS_FILTERS.map(filter => (
+          <button
+            key={filter}
+            onClick={() => setActiveFilter(filter)}
+            className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+              activeFilter === filter
+                ? "bg-slate-950 text-white"
+                : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            {filter.replace(/_/g, " ")}
+            {filter !== "ALL" && (
+              <span className="ml-1.5 opacity-70">({trips.filter(t => t.status === filter).length})</span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
         </div>
-      ) : trips.length === 0 ? (
+      ) : filteredTrips.length === 0 ? (
         <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',textAlign:'center',color:'hsl(var(--muted-foreground))' }}>
           <div style={{ width:'4rem',height:'4rem',borderRadius:'1rem',background:'hsl(var(--muted))',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'1.25rem' }}>
             <MapPin style={{ width:'2rem',height:'2rem',opacity:0.4 }}/>
@@ -132,7 +167,7 @@ export default function DriverTripsPage() {
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
-          {trips.map(trip => (
+          {filteredTrips.map(trip => (
             <div key={trip.id} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md">
               <div className="h-1 bg-amber-400" />
 
